@@ -3,12 +3,13 @@ package server
 import (
 	"github.com/gofiber/fiber/v2"
 
+	"github.com/rj-davidson/greenrats/internal/auth"
 	"github.com/rj-davidson/greenrats/internal/features/tournaments"
 )
 
 // setupRoutes configures all routes for the server.
 func (s *Server) setupRoutes() {
-	// Health check endpoint (no prefix)
+	// Health check endpoint (no prefix) - public
 	s.app.Get("/health", s.healthCheck)
 
 	// API v1 routes
@@ -17,26 +18,27 @@ func (s *Server) setupRoutes() {
 	// Public routes
 	v1.Get("/", s.apiInfo)
 
-	// SSE routes for live updates
+	// SSE routes for live updates - public
 	v1.Get("/sse/:topic", s.sseHandler.HandleSSE)
 	v1.Get("/tournaments/:id/live", s.sseHandler.HandleTournamentSSE)
 
-	// Tournament routes
+	// Tournament routes - optional auth (personalized data when auth present)
+	tournamentGroup := v1.Group("/tournaments", auth.OptionalMiddleware(*s.authConfig))
 	tournamentService := tournaments.NewService(s.db)
 	tournamentHandler := tournaments.NewHandler(tournamentService)
-	tournamentHandler.RegisterRoutes(v1)
+	tournamentHandler.RegisterRoutesWithGroup(tournamentGroup)
 
-	// Golfer routes
-	// golfers := v1.Group("/golfers")
+	// Golfer routes - public
+	// golferGroup := v1.Group("/golfers")
 
-	// League routes (requires auth)
-	// leagues := v1.Group("/leagues")
+	// League routes - requires auth
+	// leagueGroup := v1.Group("/leagues", auth.Middleware(*s.authConfig))
 
-	// Pick routes (requires auth)
-	// picks := v1.Group("/picks")
+	// Pick routes - requires auth
+	// pickGroup := v1.Group("/picks", auth.Middleware(*s.authConfig))
 
-	// User routes (requires auth)
-	// users := v1.Group("/users")
+	// User routes - requires auth
+	// userGroup := v1.Group("/users", auth.Middleware(*s.authConfig))
 }
 
 // healthCheck returns the health status of the API.

@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -9,9 +8,16 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
+const (
+	// WorkOS issuer for JWT validation
+	workOSIssuer = "https://api.workos.com/"
+)
+
 // Config holds WorkOS authentication configuration.
 type Config struct {
-	ClientID string
+	ClientID     string
+	JWKSProvider *JWKSProvider
+	SkipVerify   bool // Development only - skips signature verification
 }
 
 // Claims represents the JWT claims from WorkOS.
@@ -25,6 +31,7 @@ type Claims struct {
 }
 
 // Middleware creates a Fiber middleware for WorkOS JWT verification.
+// Returns 401 if authentication is missing or invalid.
 func Middleware(cfg Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		// Get Authorization header
@@ -46,7 +53,7 @@ func Middleware(cfg Config) fiber.Handler {
 		tokenString := parts[1]
 
 		// Parse and validate token
-		claims, err := verifyToken(c.Context(), tokenString, cfg.ClientID)
+		claims, err := verifyToken(tokenString, cfg)
 		if err != nil {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": fmt.Sprintf("invalid token: %v", err),
@@ -63,58 +70,8 @@ func Middleware(cfg Config) fiber.Handler {
 	}
 }
 
-// verifyToken validates the JWT and returns claims.
-func verifyToken(_ context.Context, tokenString, clientID string) (*Claims, error) {
-	claims := &Claims{}
-
-	// Parse token with claims
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		// For development/testing, we can skip signature verification
-		// In production, fetch JWKS from https://api.workos.com/sso/jwks/{clientID}
-		// and verify the signature properly
-
-		// Check algorithm
-		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-
-		// TODO: Implement JWKS fetching and caching for production
-		// For now, return nil to skip verification (NOT for production use)
-		return nil, fmt.Errorf("JWKS verification not implemented - configure for production")
-	})
-
-	// For development, parse without verification
-	if err != nil {
-		// Fallback: parse without verification for development
-		token, _, err = new(jwt.Parser).ParseUnverified(tokenString, claims)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if !token.Valid && token.Claims == nil {
-		return nil, fmt.Errorf("invalid token")
-	}
-
-	// Verify audience matches client ID
-	aud, err := claims.GetAudience()
-	if err == nil && len(aud) > 0 {
-		validAudience := false
-		for _, a := range aud {
-			if a == clientID {
-				validAudience = true
-				break
-			}
-		}
-		if !validAudience && clientID != "" {
-			return nil, fmt.Errorf("invalid audience")
-		}
-	}
-
-	return claims, nil
-}
-
 // OptionalMiddleware extracts user info if present but doesn't require auth.
+// Allows requests to proceed without authentication.
 func OptionalMiddleware(cfg Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
@@ -127,8 +84,9 @@ func OptionalMiddleware(cfg Config) fiber.Handler {
 			return c.Next()
 		}
 
-		claims, err := verifyToken(c.Context(), parts[1], cfg.ClientID)
+		claims, err := verifyToken(parts[1], cfg)
 		if err != nil {
+			// For optional auth, silently continue on verification failure
 			return c.Next()
 		}
 
@@ -139,4 +97,60 @@ func OptionalMiddleware(cfg Config) fiber.Handler {
 
 		return c.Next()
 	}
+}
+
+// verifyToken validates the JWT and returns claims.
+func verifyToken(tokenString string, cfg Config) (*Claims, error) {
+	claims := &Claims{}
+
+	// Development mode: parse without verification
+	if cfg.SkipVerify {
+		token, _, err := new(jwt.Parser).ParseUnverified(tokenString, claims)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse token: %w", err)
+		}
+		if token.Claims == nil {
+			return nil, fmt.Errorf("invalid token claims")
+		}
+		return claims, nil
+	}
+
+	// Production mode: verify with JWKS
+	if cfg.JWKSProvider == nil {
+		return nil, fmt.Errorf("JWKS provider not configured")
+	}
+
+	// Parse and verify token signature using JWKS
+	token, err := jwt.ParseWithClaims(tokenString, claims, cfg.JWKSProvider.Keyfunc,
+		jwt.WithValidMethods([]string{"RS256"}),
+		jwt.WithIssuer(workOSIssuer),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify token: %w", err)
+	}
+
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+
+	// Verify audience matches client ID
+	if cfg.ClientID != "" {
+		aud, err := claims.GetAudience()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get audience: %w", err)
+		}
+
+		validAudience := false
+		for _, a := range aud {
+			if a == cfg.ClientID {
+				validAudience = true
+				break
+			}
+		}
+		if !validAudience {
+			return nil, fmt.Errorf("invalid audience")
+		}
+	}
+
+	return claims, nil
 }

@@ -17,9 +17,14 @@ func NewHandler(service *Service) *Handler {
 // RegisterRoutes registers tournament routes on the given router.
 func (h *Handler) RegisterRoutes(router fiber.Router) {
 	tournaments := router.Group("/tournaments")
-	tournaments.Get("/", h.List)
-	tournaments.Get("/active", h.GetActive)
-	tournaments.Get("/:id", h.GetByID)
+	h.RegisterRoutesWithGroup(tournaments)
+}
+
+// RegisterRoutesWithGroup registers tournament routes on an existing group.
+func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
+	group.Get("/", h.List)
+	group.Get("/active", h.GetActive)
+	group.Get("/:id", h.GetByID)
 }
 
 // List handles GET /tournaments
