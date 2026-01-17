@@ -15,6 +15,10 @@ func (s *Server) setupRoutes() {
 	// Public routes
 	v1.Get("/", s.apiInfo)
 
+	// SSE routes for live updates
+	v1.Get("/sse/:topic", s.sseHandler.HandleSSE)
+	v1.Get("/tournaments/:id/live", s.sseHandler.HandleTournamentSSE)
+
 	// Tournament routes (will be expanded in feature scaffolding)
 	// tournaments := v1.Group("/tournaments")
 
@@ -34,8 +38,9 @@ func (s *Server) setupRoutes() {
 // healthCheck returns the health status of the API.
 func (s *Server) healthCheck(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
-		"status": "healthy",
+		"status":  "healthy",
 		"service": "greenrats-api",
+		"sse_clients": s.sseBroker.ClientCount(),
 	})
 }
 
