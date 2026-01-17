@@ -1,9 +1,4 @@
-import {
-  withAuth,
-  getSignInUrl,
-  getSignUpUrl,
-  signOut,
-} from "@workos-inc/authkit-nextjs";
+import { withAuth, getSignInUrl, getSignUpUrl, signOut } from "@workos-inc/authkit-nextjs";
 
 export async function getCurrentUser() {
   const { user } = await withAuth();

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
 import type { SSEMessage, SSEEventType } from "./types";
+import { useEffect, useRef, useCallback, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -18,12 +18,7 @@ interface UseSSEReturn {
   error: Event | null;
 }
 
-export function useSSE({
-  topic,
-  onMessage,
-  onError,
-  enabled = true,
-}: UseSSEOptions): UseSSEReturn {
+export function useSSE({ topic, onMessage, onError, enabled = true }: UseSSEOptions): UseSSEReturn {
   const [isConnected, setIsConnected] = useState(false);
   const [lastMessage, setLastMessage] = useState<SSEMessage | null>(null);
   const [error, setError] = useState<Event | null>(null);
@@ -81,10 +76,7 @@ export function useSSE({
   return { isConnected, lastMessage, error };
 }
 
-export function useTournamentSSE(
-  tournamentId: string,
-  onUpdate?: (message: SSEMessage) => void
-) {
+export function useTournamentSSE(tournamentId: string, onUpdate?: (message: SSEMessage) => void) {
   return useSSE({
     topic: `tournament:${tournamentId}`,
     onMessage: onUpdate,

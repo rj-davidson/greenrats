@@ -1,18 +1,34 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import reactHooks from "eslint-plugin-react-hooks";
+import { defineConfig } from "eslint/config";
+import { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import tseslint from "typescript-eslint";
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
-export default eslintConfig;
+export default defineConfig(
+  // global ignores (replacement for .eslintignore)
+  {
+    ignores: ["**/*.js", "**/*.cjs"],
+  },
+  reactHooks.configs.flat["recommended-latest"],
+  {
+    files: ["**/*.{js,ts,jsx,tsx}"],
+    ignores: ["**/.next/**", "components/shadcn/**"],
+
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: __dirname,
+      },
+    },
+    plugins: {
+      "@typescript-eslint": tseslint.plugin,
+    },
+    rules: {
+      "@typescript-eslint/no-unnecessary-condition": "warn",
+      "@typescript-eslint/no-unnecessary-type-assertion": "warn",
+    },
+  },
+);

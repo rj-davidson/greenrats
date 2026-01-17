@@ -8,17 +8,14 @@ class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
-    public data?: unknown
+    public data?: unknown,
   ) {
     super(message);
     this.name = "ApiError";
   }
 }
 
-async function request<T>(
-  endpoint: string,
-  options: RequestOptions = {}
-): Promise<T> {
+async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { params, ...init } = options;
 
   let url = `${API_BASE_URL}${endpoint}`;
@@ -38,11 +35,7 @@ async function request<T>(
 
   if (!response.ok) {
     const data = await response.json().catch(() => null);
-    throw new ApiError(
-      response.status,
-      data?.error || response.statusText,
-      data
-    );
+    throw new ApiError(response.status, data?.error || response.statusText, data);
   }
 
   if (response.status === 204) {

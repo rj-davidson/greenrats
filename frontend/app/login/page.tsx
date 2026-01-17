@@ -1,5 +1,3 @@
-import { getSignInUrl } from "@workos-inc/authkit-nextjs";
-import { redirect } from "next/navigation";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -8,6 +6,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card";
+import { getSignInUrl } from "@workos-inc/authkit-nextjs";
+import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
   const signInUrl = await getSignInUrl();

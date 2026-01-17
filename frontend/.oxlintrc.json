@@ -1,0 +1,31 @@
+{
+  "ignorePatterns": ["components/shadcn/**"],
+  "plugins": ["nextjs", "typescript", "unicorn", "eslint", "oxc", "import"],
+  "settings": {
+    "better-tailwindcss": {
+      "entryPoint": "app/globals.css"
+    }
+  },
+  "jsPlugins": ["eslint-plugin-better-tailwindcss"],
+  "rules": {
+    "typescript/ban-ts-comment": "error",
+    "eslint/no-unused-vars": "error",
+    "eslint/no-console": "warn",
+    "better-tailwindcss/enforce-consistent-class-order": ["warn"],
+    "better-tailwindcss/no-conflicting-classes": ["error"],
+    "better-tailwindcss/no-duplicate-classes": ["warn"],
+    "better-tailwindcss/no-unnecessary-whitespace": ["warn"],
+    "import/no-relative-packages": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["./*", "../*"],
+            "message": "Use absolute imports instead of relative imports."
+          }
+        ]
+      }
+    ]
+  }
+}
