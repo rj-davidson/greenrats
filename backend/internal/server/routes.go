@@ -2,6 +2,8 @@ package server
 
 import (
 	"github.com/gofiber/fiber/v2"
+
+	"github.com/rj-davidson/greenrats/internal/features/tournaments"
 )
 
 // setupRoutes configures all routes for the server.
@@ -19,8 +21,10 @@ func (s *Server) setupRoutes() {
 	v1.Get("/sse/:topic", s.sseHandler.HandleSSE)
 	v1.Get("/tournaments/:id/live", s.sseHandler.HandleTournamentSSE)
 
-	// Tournament routes (will be expanded in feature scaffolding)
-	// tournaments := v1.Group("/tournaments")
+	// Tournament routes
+	tournamentService := tournaments.NewService(s.db)
+	tournamentHandler := tournaments.NewHandler(tournamentService)
+	tournamentHandler.RegisterRoutes(v1)
 
 	// Golfer routes
 	// golfers := v1.Group("/golfers")
