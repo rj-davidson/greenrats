@@ -1,4 +1,4 @@
-import { QueryClient } from "@tanstack/react-query";
+import { QueryClient, isServer } from "@tanstack/react-query";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -9,14 +9,25 @@ function makeQueryClient() {
         refetchOnWindowFocus: false,
         retry: 1,
       },
+      dehydrate: {
+        // Include pending queries in dehydration for SSR streaming
+        shouldDehydrateQuery: (query) =>
+          query.state.status === "pending" ||
+          query.state.status === "success",
+      },
     },
   });
 }
 
 let browserQueryClient: QueryClient | undefined = undefined;
 
+/**
+ * Get the query client for the current environment.
+ * - Server: Creates a new client for each request
+ * - Browser: Reuses a singleton client
+ */
 export function getQueryClient() {
-  if (typeof window === "undefined") {
+  if (isServer) {
     // Server: always make a new query client
     return makeQueryClient();
   }
