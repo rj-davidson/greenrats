@@ -1,6 +1,6 @@
 module github.com/rj-davidson/greenrats
 
-go 1.23.0
+go 1.25.6
 
 require (
 	entgo.io/ent v0.14.5

@@ -90,7 +90,7 @@ bun remove <package-name>                  # Remove dependency
 
 ### Backend Architecture
 
-**Language**: Go 1.23
+**Language**: Go 1.25
 
 **Key Frameworks & Libraries**:
 - **HTTP**: Fiber v2
@@ -307,7 +307,7 @@ Recommended `.golangci.yml` configuration:
 ```yaml
 run:
   timeout: 5m
-  go: "1.23"
+  go: "1.25"
 
 linters:
   enable:

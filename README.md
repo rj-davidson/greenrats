@@ -24,7 +24,7 @@ docker compose up --build
 
 ### Prerequisites
 
-- Go 1.23+
+- Go 1.25+
 - Bun 1.x
 - Docker & Docker Compose
 - PostgreSQL 16 (via Docker or local)
