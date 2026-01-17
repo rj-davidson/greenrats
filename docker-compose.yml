@@ -64,9 +64,10 @@ services:
     container_name: greenrats-frontend
     environment:
       NEXT_PUBLIC_API_URL: http://api:8000
+      PRIVATE_API_URL: http://api:8000
       WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:-}
       WORKOS_API_KEY: ${WORKOS_API_KEY:-}
-      WORKOS_REDIRECT_URI: http://localhost:3000/callback
+      WORKOS_REDIRECT_URI: http://localhost:3000/api/auth/callback
       WORKOS_COOKIE_PASSWORD: ${WORKOS_COOKIE_PASSWORD:-}
     ports:
       - "3000:3000"

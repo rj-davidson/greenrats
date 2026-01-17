@@ -22,8 +22,14 @@ func (s *Server) setupRoutes() {
 	v1.Get("/sse/:topic", s.sseHandler.HandleSSE)
 	v1.Get("/tournaments/:id/live", s.sseHandler.HandleTournamentSSE)
 
+	// Configure user provisioning middleware
+	ensureUserCfg := auth.EnsureUserConfig{UserService: s.userService}
+
 	// Tournament routes - optional auth (personalized data when auth present)
-	tournamentGroup := v1.Group("/tournaments", auth.OptionalMiddleware(*s.authConfig))
+	tournamentGroup := v1.Group("/tournaments",
+		auth.OptionalMiddleware(*s.authConfig),
+		auth.OptionalEnsureUserMiddleware(ensureUserCfg),
+	)
 	tournamentService := tournaments.NewService(s.db)
 	tournamentHandler := tournaments.NewHandler(tournamentService)
 	tournamentHandler.RegisterRoutesWithGroup(tournamentGroup)
@@ -31,14 +37,23 @@ func (s *Server) setupRoutes() {
 	// Golfer routes - public
 	// golferGroup := v1.Group("/golfers")
 
-	// League routes - requires auth
-	// leagueGroup := v1.Group("/leagues", auth.Middleware(*s.authConfig))
+	// League routes - requires auth and user provisioning
+	// leagueGroup := v1.Group("/leagues",
+	//     auth.Middleware(*s.authConfig),
+	//     auth.EnsureUserMiddleware(ensureUserCfg),
+	// )
 
-	// Pick routes - requires auth
-	// pickGroup := v1.Group("/picks", auth.Middleware(*s.authConfig))
+	// Pick routes - requires auth and user provisioning
+	// pickGroup := v1.Group("/picks",
+	//     auth.Middleware(*s.authConfig),
+	//     auth.EnsureUserMiddleware(ensureUserCfg),
+	// )
 
-	// User routes - requires auth
-	// userGroup := v1.Group("/users", auth.Middleware(*s.authConfig))
+	// User routes - requires auth and user provisioning
+	// userGroup := v1.Group("/users",
+	//     auth.Middleware(*s.authConfig),
+	//     auth.EnsureUserMiddleware(ensureUserCfg),
+	// )
 }
 
 // healthCheck returns the health status of the API.

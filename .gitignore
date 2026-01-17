@@ -56,8 +56,10 @@ coverage/
 
 # Misc
 *.pem
+.mcp.json
 .turbo
 *.tsbuildinfo
 
 # Docker
 docker-compose.override.yml
+/backend/cmd/ingest/pricing_plans/*

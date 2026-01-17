@@ -7,9 +7,17 @@ import {
   CardTitle,
 } from "@/components/shadcn/card";
 import { withAuth } from "@workos-inc/authkit-nextjs";
+import { makeServerRequest } from "@/lib/query/server-requestor";
 
 export default async function DashboardPage() {
   const { user } = await withAuth({ ensureSignedIn: true });
+
+  // Fetch tournaments from backend (this triggers user auto-creation)
+  try {
+    await makeServerRequest.get("/api/v1/tournaments");
+  } catch (error) {
+    console.error("Failed to fetch tournaments:", error);
+  }
 
   return (
     <main className="container mx-auto p-8">

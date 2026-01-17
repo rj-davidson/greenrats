@@ -11,6 +11,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/internal/auth"
 	"github.com/rj-davidson/greenrats/internal/config"
+	"github.com/rj-davidson/greenrats/internal/features/users"
 	"github.com/rj-davidson/greenrats/internal/sse"
 )
 
@@ -23,6 +24,7 @@ type Server struct {
 	sseHandler   *sse.Handler
 	authConfig   *auth.Config
 	jwksProvider *auth.JWKSProvider
+	userService  *users.Service
 }
 
 // New creates a new Server instance.
@@ -61,6 +63,9 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 		authCfg.SkipVerify = true
 	}
 
+	// Initialize user service
+	userService := users.NewService(db)
+
 	s := &Server{
 		app:          app,
 		config:       cfg,
@@ -69,6 +74,7 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 		sseHandler:   sseHandler,
 		authConfig:   authCfg,
 		jwksProvider: jwksProvider,
+		userService:  userService,
 	}
 
 	s.setupMiddleware()
