@@ -1,16 +1,16 @@
 module github.com/rj-davidson/greenrats
 
-go 1.25.6
+go 1.23.0
 
 require (
 	entgo.io/ent v0.14.5
 	github.com/go-resty/resty/v2 v2.17.1
 	github.com/gofiber/fiber/v2 v2.52.10
 	github.com/golang-jwt/jwt/v5 v5.3.0
+	github.com/google/uuid v1.6.0
 	github.com/lib/pq v1.10.9
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
-	github.com/workos/workos-go/v4 v4.46.1
 )
 
 require (
@@ -24,8 +24,6 @@ require (
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/google/go-cmp v0.6.0 // indirect
-	github.com/google/go-querystring v1.0.0 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/hashicorp/hcl/v2 v2.18.1 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/compress v1.17.9 // indirect
