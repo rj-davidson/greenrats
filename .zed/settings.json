@@ -3,7 +3,7 @@
   "auto_install_extensions": {
     "oxc": true,
     "oxlint": true,
-    "go": true
+    "go": true,
   },
   "languages": {
     "Go": {
@@ -11,42 +11,42 @@
       "tab_size": 4,
       "formatter": {
         "language_server": {
-          "name": "gopls"
-        }
-      }
+          "name": "gopls",
+        },
+      },
     },
     "TSX": {
       "code_actions_on_format": {
         "source.fixAll.oxlint": true,
-        "source.organizeImports.oxlint": true
+        "source.organizeImports.oxlint": true,
       },
       "format_on_save": "on",
       "formatter": {
         "language_server": {
-          "name": "oxfmt"
-        }
+          "name": "oxfmt",
+        },
       },
-      "preferred_line_length": 100
+      "preferred_line_length": 100,
     },
     "TypeScript": {
       "code_actions_on_format": {
         "source.fixAll.oxlint": true,
-        "source.organizeImports.oxlint": true
+        "source.organizeImports.oxlint": true,
       },
       "format_on_save": "on",
       "formatter": {
         "language_server": {
-          "name": "oxfmt"
-        }
+          "name": "oxfmt",
+        },
       },
-      "preferred_line_length": 100
+      "preferred_line_length": 100,
     },
     "CSS": {
-      "format_on_save": "on"
+      "format_on_save": "on",
     },
     "JSON": {
-      "format_on_save": "on"
-    }
+      "format_on_save": "on",
+    },
   },
   "lsp": {
     "gopls": {
@@ -58,14 +58,14 @@
           "constantValues": false,
           "functionTypeParameters": false,
           "parameterNames": false,
-          "rangeVariableTypes": false
-        }
-      }
+          "rangeVariableTypes": false,
+        },
+      },
     },
     "oxlint": {
       "binary": {
         "path": "frontend/node_modules/.bin/oxlint",
-        "arguments": ["--lsp"]
+        "arguments": ["--lsp"],
       },
       "initialization_options": {
         "settings": {
@@ -75,28 +75,28 @@
           "run": "onType",
           "fixKind": "safe_fix",
           "unusedDisableDirectives": "deny",
-          "disableNestedConfig": false
-        }
-      }
+          "disableNestedConfig": false,
+        },
+      },
     },
     "oxfmt": {
       "binary": {
         "path": "frontend/node_modules/.bin/oxfmt",
-        "arguments": ["--lsp"]
+        "arguments": ["--lsp"],
       },
       "settings": {
-        "fmt.configPath": "frontend/.oxfmtrc.json"
-      }
+        "fmt.configPath": "frontend/.oxfmtrc.json",
+      },
     },
     "eslint": {},
     "vtsls": {
       "settings": {
         "typescript": {
           "preferences": {
-            "importModuleSpecifier": "non-relative"
-          }
-        }
-      }
-    }
-  }
+            "importModuleSpecifier": "non-relative",
+          },
+        },
+      },
+    },
+  },
 }
