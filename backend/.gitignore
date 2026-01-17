@@ -1,0 +1,30 @@
+# Environment files
+.env
+.env.local
+
+# Binary outputs
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test outputs
+*.test
+*.out
+coverage.txt
+coverage.html
+
+# Air tmp directory
+tmp/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
