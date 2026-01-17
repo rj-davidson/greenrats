@@ -16,5 +16,63 @@ services:
       timeout: 5s
       retries: 5
 
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: greenrats-api
+    command: ["/app/api"]
+    environment:
+      PORT: 8000
+      ENV: development
+      DATABASE_URL: postgres://greenrats:greenrats@postgres:5432/greenrats?sslmode=disable
+      WORKOS_API_KEY: ${WORKOS_API_KEY:-}
+      WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:-}
+      SCRATCHGOLF_API_KEY: ${SCRATCHGOLF_API_KEY:-}
+      SCRATCHGOLF_BASE_URL: ${SCRATCHGOLF_BASE_URL:-https://api.scratchgolf.com}
+      BALLDONTLIE_API_KEY: ${BALLDONTLIE_API_KEY:-}
+      BALLDONTLIE_BASE_URL: ${BALLDONTLIE_BASE_URL:-https://api.balldontlie.io}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  ingest:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: greenrats-ingest
+    command: ["/app/ingest"]
+    environment:
+      ENV: development
+      DATABASE_URL: postgres://greenrats:greenrats@postgres:5432/greenrats?sslmode=disable
+      SCRATCHGOLF_API_KEY: ${SCRATCHGOLF_API_KEY:-}
+      SCRATCHGOLF_BASE_URL: ${SCRATCHGOLF_BASE_URL:-https://api.scratchgolf.com}
+      BALLDONTLIE_API_KEY: ${BALLDONTLIE_API_KEY:-}
+      BALLDONTLIE_BASE_URL: ${BALLDONTLIE_BASE_URL:-https://api.balldontlie.io}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: greenrats-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://api:8000
+      WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:-}
+      WORKOS_API_KEY: ${WORKOS_API_KEY:-}
+      WORKOS_REDIRECT_URI: http://localhost:3000/callback
+      WORKOS_COOKIE_PASSWORD: ${WORKOS_COOKIE_PASSWORD:-}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    restart: unless-stopped
+
 volumes:
   postgres_data:
