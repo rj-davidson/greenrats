@@ -22,6 +22,8 @@ type Tx struct {
 	Pick *PickClient
 	// Tournament is the client for interacting with the Tournament builders.
 	Tournament *TournamentClient
+	// TournamentEntry is the client for interacting with the TournamentEntry builders.
+	TournamentEntry *TournamentEntryClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -160,6 +162,7 @@ func (tx *Tx) init() {
 	tx.LeagueMembership = NewLeagueMembershipClient(tx.config)
 	tx.Pick = NewPickClient(tx.config)
 	tx.Tournament = NewTournamentClient(tx.config)
+	tx.TournamentEntry = NewTournamentEntryClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

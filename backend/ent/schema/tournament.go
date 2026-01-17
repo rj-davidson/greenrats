@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // Tournament holds the schema definition for the Tournament entity.
@@ -15,6 +14,7 @@ type Tournament struct {
 // Mixin of the Tournament.
 func (Tournament) Mixin() []ent.Mixin {
 	return []ent.Mixin{
+		IDMixin{},
 		BaseMixin{},
 	}
 }
@@ -22,12 +22,16 @@ func (Tournament) Mixin() []ent.Mixin {
 // Fields of the Tournament.
 func (Tournament) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).
-			Default(uuid.New).
-			Immutable(),
-		field.String("external_id").
+		field.String("scratchgolf_id").
+			Optional().
+			Nillable().
 			Unique().
-			NotEmpty(),
+			Comment("ScratchGolf API ID (string)"),
+		field.Int("bdl_id").
+			Optional().
+			Nillable().
+			Unique().
+			Comment("BallDontLie API ID (int)"),
 		field.String("name").
 			NotEmpty(),
 		field.Time("start_date"),
@@ -36,6 +40,16 @@ func (Tournament) Fields() []ent.Field {
 			Values("upcoming", "active", "completed").
 			Default("upcoming"),
 		field.Int("season_year"),
+		field.String("course").
+			Optional().
+			Nillable(),
+		field.String("location").
+			Optional().
+			Nillable(),
+		field.Int("purse").
+			Optional().
+			Nillable().
+			Comment("Total prize money in dollars"),
 	}
 }
 
@@ -44,5 +58,6 @@ func (Tournament) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("picks", Pick.Type),
 		edge.To("golfers", Golfer.Type),
+		edge.To("entries", TournamentEntry.Type),
 	}
 }

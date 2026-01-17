@@ -17,6 +17,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -83,6 +84,7 @@ func checkColumn(t, c string) error {
 			leaguemembership.Table: leaguemembership.ValidColumn,
 			pick.Table:             pick.ValidColumn,
 			tournament.Table:       tournament.ValidColumn,
+			tournamententry.Table:  tournamententry.ValidColumn,
 			user.Table:             user.ValidColumn,
 		})
 	})

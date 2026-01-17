@@ -7,7 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 )
 
@@ -209,29 +209,6 @@ func JoinedAtLT(v time.Time) predicate.LeagueMembership {
 // JoinedAtLTE applies the LTE predicate on the "joined_at" field.
 func JoinedAtLTE(v time.Time) predicate.LeagueMembership {
 	return predicate.LeagueMembership(sql.FieldLTE(FieldJoinedAt, v))
-}
-
-// HasCreatedBy applies the HasEdge predicate on the "created_by" edge.
-func HasCreatedBy() predicate.LeagueMembership {
-	return predicate.LeagueMembership(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, CreatedByTable, CreatedByColumn),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasCreatedByWith applies the HasEdge predicate on the "created_by" edge with a given conditions (other predicates).
-func HasCreatedByWith(preds ...predicate.User) predicate.LeagueMembership {
-	return predicate.LeagueMembership(func(s *sql.Selector) {
-		step := newCreatedByStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
 }
 
 // HasUser applies the HasEdge predicate on the "user" edge.

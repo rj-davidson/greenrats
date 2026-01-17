@@ -7,7 +7,28 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/mixin"
+	"github.com/gofrs/uuid/v5"
 )
+
+// GenerateUUID7 generates a new UUID7 (time-sortable, better indexing).
+func GenerateUUID7() uuid.UUID {
+	id, _ := uuid.NewV7()
+	return id
+}
+
+// IDMixin provides a UUID7 primary key.
+type IDMixin struct {
+	mixin.Schema
+}
+
+// Fields of the IDMixin.
+func (IDMixin) Fields() []ent.Field {
+	return []ent.Field{
+		field.UUID("id", uuid.UUID{}).
+			Default(GenerateUUID7).
+			Immutable(),
+	}
+}
 
 // BaseMixin provides created_at and updated_at fields.
 type BaseMixin struct {

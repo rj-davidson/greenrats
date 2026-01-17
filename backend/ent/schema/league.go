@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // League holds the schema definition for the League entity.
@@ -15,6 +14,7 @@ type League struct {
 // Mixin of the League.
 func (League) Mixin() []ent.Mixin {
 	return []ent.Mixin{
+		IDMixin{},
 		OwnershipMixin{},
 	}
 }
@@ -22,14 +22,12 @@ func (League) Mixin() []ent.Mixin {
 // Fields of the League.
 func (League) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).
-			Default(uuid.New).
-			Immutable(),
 		field.String("name").
 			NotEmpty(),
 		field.String("code").
 			Unique().
-			NotEmpty(),
+			NotEmpty().
+			Comment("Shareable join code"),
 		field.Int("season_year"),
 	}
 }

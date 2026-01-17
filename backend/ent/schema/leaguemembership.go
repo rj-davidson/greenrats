@@ -7,7 +7,6 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
-	"github.com/google/uuid"
 )
 
 // LeagueMembership holds the schema definition for the LeagueMembership entity.
@@ -18,16 +17,14 @@ type LeagueMembership struct {
 // Mixin of the LeagueMembership.
 func (LeagueMembership) Mixin() []ent.Mixin {
 	return []ent.Mixin{
-		OwnershipMixin{},
+		IDMixin{},
+		BaseMixin{},
 	}
 }
 
 // Fields of the LeagueMembership.
 func (LeagueMembership) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).
-			Default(uuid.New).
-			Immutable(),
 		field.Enum("role").
 			Values("owner", "member").
 			Default("member"),

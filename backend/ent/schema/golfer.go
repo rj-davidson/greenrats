@@ -4,7 +4,6 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
 )
 
 // Golfer holds the schema definition for the Golfer entity.
@@ -15,6 +14,7 @@ type Golfer struct {
 // Mixin of the Golfer.
 func (Golfer) Mixin() []ent.Mixin {
 	return []ent.Mixin{
+		IDMixin{},
 		BaseMixin{},
 	}
 }
@@ -22,19 +22,39 @@ func (Golfer) Mixin() []ent.Mixin {
 // Fields of the Golfer.
 func (Golfer) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).
-			Default(uuid.New).
-			Immutable(),
-		field.String("external_id").
+		field.String("scratchgolf_id").
+			Optional().
+			Nillable().
 			Unique().
-			NotEmpty(),
-		field.String("name").
-			NotEmpty(),
-		field.String("country").
-			NotEmpty(),
-		field.Int("world_ranking").
+			Comment("ScratchGolf API ID (string)"),
+		field.Int("bdl_id").
+			Optional().
+			Nillable().
+			Unique().
+			Comment("BallDontLie API ID (int)"),
+		field.String("first_name").
 			Optional().
 			Nillable(),
+		field.String("last_name").
+			Optional().
+			Nillable(),
+		field.String("name").
+			NotEmpty().
+			Comment("Display name"),
+		field.String("country").
+			Optional().
+			Nillable().
+			Comment("Full country name"),
+		field.String("country_code").
+			Default("UNK").
+			Comment("3-letter ISO country code"),
+		field.Int("owgr").
+			Optional().
+			Nillable().
+			Comment("Official World Golf Ranking"),
+		field.Bool("active").
+			Default(true).
+			Comment("Whether the player is currently active"),
 		field.String("image_url").
 			Optional().
 			Nillable(),
@@ -45,6 +65,7 @@ func (Golfer) Fields() []ent.Field {
 func (Golfer) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("picks", Pick.Type),
+		edge.To("entries", TournamentEntry.Type),
 		edge.From("tournaments", Tournament.Type).
 			Ref("golfers"),
 	}

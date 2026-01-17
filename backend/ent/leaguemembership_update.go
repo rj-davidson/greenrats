@@ -11,7 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/predicate"
@@ -51,17 +51,6 @@ func (_u *LeagueMembershipUpdate) SetNillableRole(v *leaguemembership.Role) *Lea
 	return _u
 }
 
-// SetCreatedByID sets the "created_by" edge to the User entity by ID.
-func (_u *LeagueMembershipUpdate) SetCreatedByID(id uuid.UUID) *LeagueMembershipUpdate {
-	_u.mutation.SetCreatedByID(id)
-	return _u
-}
-
-// SetCreatedBy sets the "created_by" edge to the User entity.
-func (_u *LeagueMembershipUpdate) SetCreatedBy(v *User) *LeagueMembershipUpdate {
-	return _u.SetCreatedByID(v.ID)
-}
-
 // SetUserID sets the "user" edge to the User entity by ID.
 func (_u *LeagueMembershipUpdate) SetUserID(id uuid.UUID) *LeagueMembershipUpdate {
 	_u.mutation.SetUserID(id)
@@ -87,12 +76,6 @@ func (_u *LeagueMembershipUpdate) SetLeague(v *League) *LeagueMembershipUpdate {
 // Mutation returns the LeagueMembershipMutation object of the builder.
 func (_u *LeagueMembershipUpdate) Mutation() *LeagueMembershipMutation {
 	return _u.mutation
-}
-
-// ClearCreatedBy clears the "created_by" edge to the User entity.
-func (_u *LeagueMembershipUpdate) ClearCreatedBy() *LeagueMembershipUpdate {
-	_u.mutation.ClearCreatedBy()
-	return _u
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -150,9 +133,6 @@ func (_u *LeagueMembershipUpdate) check() error {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "LeagueMembership.role": %w`, err)}
 		}
 	}
-	if _u.mutation.CreatedByCleared() && len(_u.mutation.CreatedByIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "LeagueMembership.created_by"`)
-	}
 	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "LeagueMembership.user"`)
 	}
@@ -179,35 +159,6 @@ func (_u *LeagueMembershipUpdate) sqlSave(ctx context.Context) (_node int, err e
 	}
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(leaguemembership.FieldRole, field.TypeEnum, value)
-	}
-	if _u.mutation.CreatedByCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   leaguemembership.CreatedByTable,
-			Columns: []string{leaguemembership.CreatedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.CreatedByIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   leaguemembership.CreatedByTable,
-			Columns: []string{leaguemembership.CreatedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -307,17 +258,6 @@ func (_u *LeagueMembershipUpdateOne) SetNillableRole(v *leaguemembership.Role) *
 	return _u
 }
 
-// SetCreatedByID sets the "created_by" edge to the User entity by ID.
-func (_u *LeagueMembershipUpdateOne) SetCreatedByID(id uuid.UUID) *LeagueMembershipUpdateOne {
-	_u.mutation.SetCreatedByID(id)
-	return _u
-}
-
-// SetCreatedBy sets the "created_by" edge to the User entity.
-func (_u *LeagueMembershipUpdateOne) SetCreatedBy(v *User) *LeagueMembershipUpdateOne {
-	return _u.SetCreatedByID(v.ID)
-}
-
 // SetUserID sets the "user" edge to the User entity by ID.
 func (_u *LeagueMembershipUpdateOne) SetUserID(id uuid.UUID) *LeagueMembershipUpdateOne {
 	_u.mutation.SetUserID(id)
@@ -343,12 +283,6 @@ func (_u *LeagueMembershipUpdateOne) SetLeague(v *League) *LeagueMembershipUpdat
 // Mutation returns the LeagueMembershipMutation object of the builder.
 func (_u *LeagueMembershipUpdateOne) Mutation() *LeagueMembershipMutation {
 	return _u.mutation
-}
-
-// ClearCreatedBy clears the "created_by" edge to the User entity.
-func (_u *LeagueMembershipUpdateOne) ClearCreatedBy() *LeagueMembershipUpdateOne {
-	_u.mutation.ClearCreatedBy()
-	return _u
 }
 
 // ClearUser clears the "user" edge to the User entity.
@@ -419,9 +353,6 @@ func (_u *LeagueMembershipUpdateOne) check() error {
 			return &ValidationError{Name: "role", err: fmt.Errorf(`ent: validator failed for field "LeagueMembership.role": %w`, err)}
 		}
 	}
-	if _u.mutation.CreatedByCleared() && len(_u.mutation.CreatedByIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "LeagueMembership.created_by"`)
-	}
 	if _u.mutation.UserCleared() && len(_u.mutation.UserIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "LeagueMembership.user"`)
 	}
@@ -465,35 +396,6 @@ func (_u *LeagueMembershipUpdateOne) sqlSave(ctx context.Context) (_node *League
 	}
 	if value, ok := _u.mutation.Role(); ok {
 		_spec.SetField(leaguemembership.FieldRole, field.TypeEnum, value)
-	}
-	if _u.mutation.CreatedByCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   leaguemembership.CreatedByTable,
-			Columns: []string{leaguemembership.CreatedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.CreatedByIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   leaguemembership.CreatedByTable,
-			Columns: []string{leaguemembership.CreatedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if _u.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{

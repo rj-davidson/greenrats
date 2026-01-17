@@ -8,7 +8,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 )
 
 const (
@@ -24,21 +24,12 @@ const (
 	FieldRole = "role"
 	// FieldJoinedAt holds the string denoting the joined_at field in the database.
 	FieldJoinedAt = "joined_at"
-	// EdgeCreatedBy holds the string denoting the created_by edge name in mutations.
-	EdgeCreatedBy = "created_by"
 	// EdgeUser holds the string denoting the user edge name in mutations.
 	EdgeUser = "user"
 	// EdgeLeague holds the string denoting the league edge name in mutations.
 	EdgeLeague = "league"
 	// Table holds the table name of the leaguemembership in the database.
 	Table = "league_memberships"
-	// CreatedByTable is the table that holds the created_by relation/edge.
-	CreatedByTable = "league_memberships"
-	// CreatedByInverseTable is the table name for the User entity.
-	// It exists in this package in order to avoid circular dependency with the "user" package.
-	CreatedByInverseTable = "users"
-	// CreatedByColumn is the table column denoting the created_by relation/edge.
-	CreatedByColumn = "league_membership_created_by"
 	// UserTable is the table that holds the user relation/edge.
 	UserTable = "league_memberships"
 	// UserInverseTable is the table name for the User entity.
@@ -68,7 +59,6 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"league_memberships",
-	"league_membership_created_by",
 	"user_league_memberships",
 }
 
@@ -154,13 +144,6 @@ func ByJoinedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldJoinedAt, opts...).ToFunc()
 }
 
-// ByCreatedByField orders the results by created_by field.
-func ByCreatedByField(field string, opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newCreatedByStep(), sql.OrderByField(field, opts...))
-	}
-}
-
 // ByUserField orders the results by user field.
 func ByUserField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -173,13 +156,6 @@ func ByLeagueField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
 		sqlgraph.OrderByNeighborTerms(s, newLeagueStep(), sql.OrderByField(field, opts...))
 	}
-}
-func newCreatedByStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(CreatedByInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, CreatedByTable, CreatedByColumn),
-	)
 }
 func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(

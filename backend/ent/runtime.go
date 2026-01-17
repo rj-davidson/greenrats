@@ -5,13 +5,14 @@ package ent
 import (
 	"time"
 
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/schema"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -22,150 +23,204 @@ func init() {
 	golferMixin := schema.Golfer{}.Mixin()
 	golferMixinFields0 := golferMixin[0].Fields()
 	_ = golferMixinFields0
+	golferMixinFields1 := golferMixin[1].Fields()
+	_ = golferMixinFields1
 	golferFields := schema.Golfer{}.Fields()
 	_ = golferFields
 	// golferDescCreatedAt is the schema descriptor for created_at field.
-	golferDescCreatedAt := golferMixinFields0[0].Descriptor()
+	golferDescCreatedAt := golferMixinFields1[0].Descriptor()
 	// golfer.DefaultCreatedAt holds the default value on creation for the created_at field.
 	golfer.DefaultCreatedAt = golferDescCreatedAt.Default.(func() time.Time)
 	// golferDescUpdatedAt is the schema descriptor for updated_at field.
-	golferDescUpdatedAt := golferMixinFields0[1].Descriptor()
+	golferDescUpdatedAt := golferMixinFields1[1].Descriptor()
 	// golfer.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	golfer.DefaultUpdatedAt = golferDescUpdatedAt.Default.(func() time.Time)
 	// golfer.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	golfer.UpdateDefaultUpdatedAt = golferDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// golferDescExternalID is the schema descriptor for external_id field.
-	golferDescExternalID := golferFields[1].Descriptor()
-	// golfer.ExternalIDValidator is a validator for the "external_id" field. It is called by the builders before save.
-	golfer.ExternalIDValidator = golferDescExternalID.Validators[0].(func(string) error)
 	// golferDescName is the schema descriptor for name field.
-	golferDescName := golferFields[2].Descriptor()
+	golferDescName := golferFields[4].Descriptor()
 	// golfer.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	golfer.NameValidator = golferDescName.Validators[0].(func(string) error)
-	// golferDescCountry is the schema descriptor for country field.
-	golferDescCountry := golferFields[3].Descriptor()
-	// golfer.CountryValidator is a validator for the "country" field. It is called by the builders before save.
-	golfer.CountryValidator = golferDescCountry.Validators[0].(func(string) error)
+	// golferDescCountryCode is the schema descriptor for country_code field.
+	golferDescCountryCode := golferFields[6].Descriptor()
+	// golfer.DefaultCountryCode holds the default value on creation for the country_code field.
+	golfer.DefaultCountryCode = golferDescCountryCode.Default.(string)
+	// golferDescActive is the schema descriptor for active field.
+	golferDescActive := golferFields[8].Descriptor()
+	// golfer.DefaultActive holds the default value on creation for the active field.
+	golfer.DefaultActive = golferDescActive.Default.(bool)
 	// golferDescID is the schema descriptor for id field.
-	golferDescID := golferFields[0].Descriptor()
+	golferDescID := golferMixinFields0[0].Descriptor()
 	// golfer.DefaultID holds the default value on creation for the id field.
 	golfer.DefaultID = golferDescID.Default.(func() uuid.UUID)
 	leagueMixin := schema.League{}.Mixin()
 	leagueMixinFields0 := leagueMixin[0].Fields()
 	_ = leagueMixinFields0
+	leagueMixinFields1 := leagueMixin[1].Fields()
+	_ = leagueMixinFields1
 	leagueFields := schema.League{}.Fields()
 	_ = leagueFields
 	// leagueDescCreatedAt is the schema descriptor for created_at field.
-	leagueDescCreatedAt := leagueMixinFields0[0].Descriptor()
+	leagueDescCreatedAt := leagueMixinFields1[0].Descriptor()
 	// league.DefaultCreatedAt holds the default value on creation for the created_at field.
 	league.DefaultCreatedAt = leagueDescCreatedAt.Default.(func() time.Time)
 	// leagueDescUpdatedAt is the schema descriptor for updated_at field.
-	leagueDescUpdatedAt := leagueMixinFields0[1].Descriptor()
+	leagueDescUpdatedAt := leagueMixinFields1[1].Descriptor()
 	// league.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	league.DefaultUpdatedAt = leagueDescUpdatedAt.Default.(func() time.Time)
 	// league.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	league.UpdateDefaultUpdatedAt = leagueDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// leagueDescName is the schema descriptor for name field.
-	leagueDescName := leagueFields[1].Descriptor()
+	leagueDescName := leagueFields[0].Descriptor()
 	// league.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	league.NameValidator = leagueDescName.Validators[0].(func(string) error)
 	// leagueDescCode is the schema descriptor for code field.
-	leagueDescCode := leagueFields[2].Descriptor()
+	leagueDescCode := leagueFields[1].Descriptor()
 	// league.CodeValidator is a validator for the "code" field. It is called by the builders before save.
 	league.CodeValidator = leagueDescCode.Validators[0].(func(string) error)
 	// leagueDescID is the schema descriptor for id field.
-	leagueDescID := leagueFields[0].Descriptor()
+	leagueDescID := leagueMixinFields0[0].Descriptor()
 	// league.DefaultID holds the default value on creation for the id field.
 	league.DefaultID = leagueDescID.Default.(func() uuid.UUID)
 	leaguemembershipMixin := schema.LeagueMembership{}.Mixin()
 	leaguemembershipMixinFields0 := leaguemembershipMixin[0].Fields()
 	_ = leaguemembershipMixinFields0
+	leaguemembershipMixinFields1 := leaguemembershipMixin[1].Fields()
+	_ = leaguemembershipMixinFields1
 	leaguemembershipFields := schema.LeagueMembership{}.Fields()
 	_ = leaguemembershipFields
 	// leaguemembershipDescCreatedAt is the schema descriptor for created_at field.
-	leaguemembershipDescCreatedAt := leaguemembershipMixinFields0[0].Descriptor()
+	leaguemembershipDescCreatedAt := leaguemembershipMixinFields1[0].Descriptor()
 	// leaguemembership.DefaultCreatedAt holds the default value on creation for the created_at field.
 	leaguemembership.DefaultCreatedAt = leaguemembershipDescCreatedAt.Default.(func() time.Time)
 	// leaguemembershipDescUpdatedAt is the schema descriptor for updated_at field.
-	leaguemembershipDescUpdatedAt := leaguemembershipMixinFields0[1].Descriptor()
+	leaguemembershipDescUpdatedAt := leaguemembershipMixinFields1[1].Descriptor()
 	// leaguemembership.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	leaguemembership.DefaultUpdatedAt = leaguemembershipDescUpdatedAt.Default.(func() time.Time)
 	// leaguemembership.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	leaguemembership.UpdateDefaultUpdatedAt = leaguemembershipDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// leaguemembershipDescJoinedAt is the schema descriptor for joined_at field.
-	leaguemembershipDescJoinedAt := leaguemembershipFields[2].Descriptor()
+	leaguemembershipDescJoinedAt := leaguemembershipFields[1].Descriptor()
 	// leaguemembership.DefaultJoinedAt holds the default value on creation for the joined_at field.
 	leaguemembership.DefaultJoinedAt = leaguemembershipDescJoinedAt.Default.(func() time.Time)
 	// leaguemembershipDescID is the schema descriptor for id field.
-	leaguemembershipDescID := leaguemembershipFields[0].Descriptor()
+	leaguemembershipDescID := leaguemembershipMixinFields0[0].Descriptor()
 	// leaguemembership.DefaultID holds the default value on creation for the id field.
 	leaguemembership.DefaultID = leaguemembershipDescID.Default.(func() uuid.UUID)
+	pickMixin := schema.Pick{}.Mixin()
+	pickMixinFields0 := pickMixin[0].Fields()
+	_ = pickMixinFields0
 	pickFields := schema.Pick{}.Fields()
 	_ = pickFields
 	// pickDescCreatedAt is the schema descriptor for created_at field.
-	pickDescCreatedAt := pickFields[2].Descriptor()
+	pickDescCreatedAt := pickFields[1].Descriptor()
 	// pick.DefaultCreatedAt holds the default value on creation for the created_at field.
 	pick.DefaultCreatedAt = pickDescCreatedAt.Default.(func() time.Time)
 	// pickDescID is the schema descriptor for id field.
-	pickDescID := pickFields[0].Descriptor()
+	pickDescID := pickMixinFields0[0].Descriptor()
 	// pick.DefaultID holds the default value on creation for the id field.
 	pick.DefaultID = pickDescID.Default.(func() uuid.UUID)
 	tournamentMixin := schema.Tournament{}.Mixin()
 	tournamentMixinFields0 := tournamentMixin[0].Fields()
 	_ = tournamentMixinFields0
+	tournamentMixinFields1 := tournamentMixin[1].Fields()
+	_ = tournamentMixinFields1
 	tournamentFields := schema.Tournament{}.Fields()
 	_ = tournamentFields
 	// tournamentDescCreatedAt is the schema descriptor for created_at field.
-	tournamentDescCreatedAt := tournamentMixinFields0[0].Descriptor()
+	tournamentDescCreatedAt := tournamentMixinFields1[0].Descriptor()
 	// tournament.DefaultCreatedAt holds the default value on creation for the created_at field.
 	tournament.DefaultCreatedAt = tournamentDescCreatedAt.Default.(func() time.Time)
 	// tournamentDescUpdatedAt is the schema descriptor for updated_at field.
-	tournamentDescUpdatedAt := tournamentMixinFields0[1].Descriptor()
+	tournamentDescUpdatedAt := tournamentMixinFields1[1].Descriptor()
 	// tournament.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	tournament.DefaultUpdatedAt = tournamentDescUpdatedAt.Default.(func() time.Time)
 	// tournament.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	tournament.UpdateDefaultUpdatedAt = tournamentDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// tournamentDescExternalID is the schema descriptor for external_id field.
-	tournamentDescExternalID := tournamentFields[1].Descriptor()
-	// tournament.ExternalIDValidator is a validator for the "external_id" field. It is called by the builders before save.
-	tournament.ExternalIDValidator = tournamentDescExternalID.Validators[0].(func(string) error)
 	// tournamentDescName is the schema descriptor for name field.
 	tournamentDescName := tournamentFields[2].Descriptor()
 	// tournament.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	tournament.NameValidator = tournamentDescName.Validators[0].(func(string) error)
 	// tournamentDescID is the schema descriptor for id field.
-	tournamentDescID := tournamentFields[0].Descriptor()
+	tournamentDescID := tournamentMixinFields0[0].Descriptor()
 	// tournament.DefaultID holds the default value on creation for the id field.
 	tournament.DefaultID = tournamentDescID.Default.(func() uuid.UUID)
+	tournamententryMixin := schema.TournamentEntry{}.Mixin()
+	tournamententryMixinFields0 := tournamententryMixin[0].Fields()
+	_ = tournamententryMixinFields0
+	tournamententryMixinFields1 := tournamententryMixin[1].Fields()
+	_ = tournamententryMixinFields1
+	tournamententryFields := schema.TournamentEntry{}.Fields()
+	_ = tournamententryFields
+	// tournamententryDescCreatedAt is the schema descriptor for created_at field.
+	tournamententryDescCreatedAt := tournamententryMixinFields1[0].Descriptor()
+	// tournamententry.DefaultCreatedAt holds the default value on creation for the created_at field.
+	tournamententry.DefaultCreatedAt = tournamententryDescCreatedAt.Default.(func() time.Time)
+	// tournamententryDescUpdatedAt is the schema descriptor for updated_at field.
+	tournamententryDescUpdatedAt := tournamententryMixinFields1[1].Descriptor()
+	// tournamententry.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	tournamententry.DefaultUpdatedAt = tournamententryDescUpdatedAt.Default.(func() time.Time)
+	// tournamententry.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	tournamententry.UpdateDefaultUpdatedAt = tournamententryDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tournamententryDescPosition is the schema descriptor for position field.
+	tournamententryDescPosition := tournamententryFields[2].Descriptor()
+	// tournamententry.DefaultPosition holds the default value on creation for the position field.
+	tournamententry.DefaultPosition = tournamententryDescPosition.Default.(int)
+	// tournamententryDescScore is the schema descriptor for score field.
+	tournamententryDescScore := tournamententryFields[3].Descriptor()
+	// tournamententry.DefaultScore holds the default value on creation for the score field.
+	tournamententry.DefaultScore = tournamententryDescScore.Default.(int)
+	// tournamententryDescTotalStrokes is the schema descriptor for total_strokes field.
+	tournamententryDescTotalStrokes := tournamententryFields[4].Descriptor()
+	// tournamententry.DefaultTotalStrokes holds the default value on creation for the total_strokes field.
+	tournamententry.DefaultTotalStrokes = tournamententryDescTotalStrokes.Default.(int)
+	// tournamententryDescEarnings is the schema descriptor for earnings field.
+	tournamententryDescEarnings := tournamententryFields[5].Descriptor()
+	// tournamententry.DefaultEarnings holds the default value on creation for the earnings field.
+	tournamententry.DefaultEarnings = tournamententryDescEarnings.Default.(int)
+	// tournamententryDescCurrentRound is the schema descriptor for current_round field.
+	tournamententryDescCurrentRound := tournamententryFields[7].Descriptor()
+	// tournamententry.DefaultCurrentRound holds the default value on creation for the current_round field.
+	tournamententry.DefaultCurrentRound = tournamententryDescCurrentRound.Default.(int)
+	// tournamententryDescThru is the schema descriptor for thru field.
+	tournamententryDescThru := tournamententryFields[8].Descriptor()
+	// tournamententry.DefaultThru holds the default value on creation for the thru field.
+	tournamententry.DefaultThru = tournamententryDescThru.Default.(int)
+	// tournamententryDescID is the schema descriptor for id field.
+	tournamententryDescID := tournamententryMixinFields0[0].Descriptor()
+	// tournamententry.DefaultID holds the default value on creation for the id field.
+	tournamententry.DefaultID = tournamententryDescID.Default.(func() uuid.UUID)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0
+	userMixinFields1 := userMixin[1].Fields()
+	_ = userMixinFields1
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescCreatedAt is the schema descriptor for created_at field.
-	userDescCreatedAt := userMixinFields0[0].Descriptor()
+	userDescCreatedAt := userMixinFields1[0].Descriptor()
 	// user.DefaultCreatedAt holds the default value on creation for the created_at field.
 	user.DefaultCreatedAt = userDescCreatedAt.Default.(func() time.Time)
 	// userDescUpdatedAt is the schema descriptor for updated_at field.
-	userDescUpdatedAt := userMixinFields0[1].Descriptor()
+	userDescUpdatedAt := userMixinFields1[1].Descriptor()
 	// user.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// userDescWorkosID is the schema descriptor for workos_id field.
-	userDescWorkosID := userFields[1].Descriptor()
+	userDescWorkosID := userFields[0].Descriptor()
 	// user.WorkosIDValidator is a validator for the "workos_id" field. It is called by the builders before save.
 	user.WorkosIDValidator = userDescWorkosID.Validators[0].(func(string) error)
 	// userDescEmail is the schema descriptor for email field.
-	userDescEmail := userFields[2].Descriptor()
+	userDescEmail := userFields[1].Descriptor()
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
 	// userDescDisplayName is the schema descriptor for display_name field.
-	userDescDisplayName := userFields[3].Descriptor()
+	userDescDisplayName := userFields[2].Descriptor()
 	// user.DisplayNameValidator is a validator for the "display_name" field. It is called by the builders before save.
 	user.DisplayNameValidator = userDescDisplayName.Validators[0].(func(string) error)
 	// userDescID is the schema descriptor for id field.
-	userDescID := userFields[0].Descriptor()
+	userDescID := userMixinFields0[0].Descriptor()
 	// user.DefaultID holds the default value on creation for the id field.
 	user.DefaultID = userDescID.Default.(func() uuid.UUID)
 }

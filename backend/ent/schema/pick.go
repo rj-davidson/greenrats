@@ -7,7 +7,6 @@ import (
 	"entgo.io/ent/schema/edge"
 	"entgo.io/ent/schema/field"
 	"entgo.io/ent/schema/index"
-	"github.com/google/uuid"
 )
 
 // Pick holds the schema definition for the Pick entity.
@@ -15,12 +14,16 @@ type Pick struct {
 	ent.Schema
 }
 
+// Mixin of the Pick.
+func (Pick) Mixin() []ent.Mixin {
+	return []ent.Mixin{
+		IDMixin{},
+	}
+}
+
 // Fields of the Pick.
 func (Pick) Fields() []ent.Field {
 	return []ent.Field{
-		field.UUID("id", uuid.UUID{}).
-			Default(uuid.New).
-			Immutable(),
 		field.Int("season_year"),
 		field.Time("created_at").
 			Default(time.Now).

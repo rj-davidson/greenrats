@@ -10,10 +10,11 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 // TournamentCreate is the builder for creating a Tournament entity.
@@ -51,9 +52,31 @@ func (_c *TournamentCreate) SetNillableUpdatedAt(v *time.Time) *TournamentCreate
 	return _c
 }
 
-// SetExternalID sets the "external_id" field.
-func (_c *TournamentCreate) SetExternalID(v string) *TournamentCreate {
-	_c.mutation.SetExternalID(v)
+// SetScratchgolfID sets the "scratchgolf_id" field.
+func (_c *TournamentCreate) SetScratchgolfID(v string) *TournamentCreate {
+	_c.mutation.SetScratchgolfID(v)
+	return _c
+}
+
+// SetNillableScratchgolfID sets the "scratchgolf_id" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillableScratchgolfID(v *string) *TournamentCreate {
+	if v != nil {
+		_c.SetScratchgolfID(*v)
+	}
+	return _c
+}
+
+// SetBdlID sets the "bdl_id" field.
+func (_c *TournamentCreate) SetBdlID(v int) *TournamentCreate {
+	_c.mutation.SetBdlID(v)
+	return _c
+}
+
+// SetNillableBdlID sets the "bdl_id" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillableBdlID(v *int) *TournamentCreate {
+	if v != nil {
+		_c.SetBdlID(*v)
+	}
 	return _c
 }
 
@@ -92,6 +115,48 @@ func (_c *TournamentCreate) SetNillableStatus(v *tournament.Status) *TournamentC
 // SetSeasonYear sets the "season_year" field.
 func (_c *TournamentCreate) SetSeasonYear(v int) *TournamentCreate {
 	_c.mutation.SetSeasonYear(v)
+	return _c
+}
+
+// SetCourse sets the "course" field.
+func (_c *TournamentCreate) SetCourse(v string) *TournamentCreate {
+	_c.mutation.SetCourse(v)
+	return _c
+}
+
+// SetNillableCourse sets the "course" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillableCourse(v *string) *TournamentCreate {
+	if v != nil {
+		_c.SetCourse(*v)
+	}
+	return _c
+}
+
+// SetLocation sets the "location" field.
+func (_c *TournamentCreate) SetLocation(v string) *TournamentCreate {
+	_c.mutation.SetLocation(v)
+	return _c
+}
+
+// SetNillableLocation sets the "location" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillableLocation(v *string) *TournamentCreate {
+	if v != nil {
+		_c.SetLocation(*v)
+	}
+	return _c
+}
+
+// SetPurse sets the "purse" field.
+func (_c *TournamentCreate) SetPurse(v int) *TournamentCreate {
+	_c.mutation.SetPurse(v)
+	return _c
+}
+
+// SetNillablePurse sets the "purse" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillablePurse(v *int) *TournamentCreate {
+	if v != nil {
+		_c.SetPurse(*v)
+	}
 	return _c
 }
 
@@ -137,6 +202,21 @@ func (_c *TournamentCreate) AddGolfers(v ...*Golfer) *TournamentCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddGolferIDs(ids...)
+}
+
+// AddEntryIDs adds the "entries" edge to the TournamentEntry entity by IDs.
+func (_c *TournamentCreate) AddEntryIDs(ids ...uuid.UUID) *TournamentCreate {
+	_c.mutation.AddEntryIDs(ids...)
+	return _c
+}
+
+// AddEntries adds the "entries" edges to the TournamentEntry entity.
+func (_c *TournamentCreate) AddEntries(v ...*TournamentEntry) *TournamentCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddEntryIDs(ids...)
 }
 
 // Mutation returns the TournamentMutation object of the builder.
@@ -199,14 +279,6 @@ func (_c *TournamentCreate) check() error {
 	}
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Tournament.updated_at"`)}
-	}
-	if _, ok := _c.mutation.ExternalID(); !ok {
-		return &ValidationError{Name: "external_id", err: errors.New(`ent: missing required field "Tournament.external_id"`)}
-	}
-	if v, ok := _c.mutation.ExternalID(); ok {
-		if err := tournament.ExternalIDValidator(v); err != nil {
-			return &ValidationError{Name: "external_id", err: fmt.Errorf(`ent: validator failed for field "Tournament.external_id": %w`, err)}
-		}
 	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Tournament.name"`)}
@@ -276,9 +348,13 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 		_spec.SetField(tournament.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if value, ok := _c.mutation.ExternalID(); ok {
-		_spec.SetField(tournament.FieldExternalID, field.TypeString, value)
-		_node.ExternalID = value
+	if value, ok := _c.mutation.ScratchgolfID(); ok {
+		_spec.SetField(tournament.FieldScratchgolfID, field.TypeString, value)
+		_node.ScratchgolfID = &value
+	}
+	if value, ok := _c.mutation.BdlID(); ok {
+		_spec.SetField(tournament.FieldBdlID, field.TypeInt, value)
+		_node.BdlID = &value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(tournament.FieldName, field.TypeString, value)
@@ -299,6 +375,18 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SeasonYear(); ok {
 		_spec.SetField(tournament.FieldSeasonYear, field.TypeInt, value)
 		_node.SeasonYear = value
+	}
+	if value, ok := _c.mutation.Course(); ok {
+		_spec.SetField(tournament.FieldCourse, field.TypeString, value)
+		_node.Course = &value
+	}
+	if value, ok := _c.mutation.Location(); ok {
+		_spec.SetField(tournament.FieldLocation, field.TypeString, value)
+		_node.Location = &value
+	}
+	if value, ok := _c.mutation.Purse(); ok {
+		_spec.SetField(tournament.FieldPurse, field.TypeInt, value)
+		_node.Purse = &value
 	}
 	if nodes := _c.mutation.PicksIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -325,6 +413,22 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.EntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournament.EntriesTable,
+			Columns: []string{tournament.EntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -7,7 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 )
 
 const (
@@ -19,18 +19,30 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldExternalID holds the string denoting the external_id field in the database.
-	FieldExternalID = "external_id"
+	// FieldScratchgolfID holds the string denoting the scratchgolf_id field in the database.
+	FieldScratchgolfID = "scratchgolf_id"
+	// FieldBdlID holds the string denoting the bdl_id field in the database.
+	FieldBdlID = "bdl_id"
+	// FieldFirstName holds the string denoting the first_name field in the database.
+	FieldFirstName = "first_name"
+	// FieldLastName holds the string denoting the last_name field in the database.
+	FieldLastName = "last_name"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldCountry holds the string denoting the country field in the database.
 	FieldCountry = "country"
-	// FieldWorldRanking holds the string denoting the world_ranking field in the database.
-	FieldWorldRanking = "world_ranking"
+	// FieldCountryCode holds the string denoting the country_code field in the database.
+	FieldCountryCode = "country_code"
+	// FieldOwgr holds the string denoting the owgr field in the database.
+	FieldOwgr = "owgr"
+	// FieldActive holds the string denoting the active field in the database.
+	FieldActive = "active"
 	// FieldImageURL holds the string denoting the image_url field in the database.
 	FieldImageURL = "image_url"
 	// EdgePicks holds the string denoting the picks edge name in mutations.
 	EdgePicks = "picks"
+	// EdgeEntries holds the string denoting the entries edge name in mutations.
+	EdgeEntries = "entries"
 	// EdgeTournaments holds the string denoting the tournaments edge name in mutations.
 	EdgeTournaments = "tournaments"
 	// Table holds the table name of the golfer in the database.
@@ -42,6 +54,13 @@ const (
 	PicksInverseTable = "picks"
 	// PicksColumn is the table column denoting the picks relation/edge.
 	PicksColumn = "golfer_picks"
+	// EntriesTable is the table that holds the entries relation/edge.
+	EntriesTable = "tournament_entries"
+	// EntriesInverseTable is the table name for the TournamentEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "tournamententry" package.
+	EntriesInverseTable = "tournament_entries"
+	// EntriesColumn is the table column denoting the entries relation/edge.
+	EntriesColumn = "golfer_entries"
 	// TournamentsTable is the table that holds the tournaments relation/edge. The primary key declared below.
 	TournamentsTable = "tournament_golfers"
 	// TournamentsInverseTable is the table name for the Tournament entity.
@@ -54,10 +73,15 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-	FieldExternalID,
+	FieldScratchgolfID,
+	FieldBdlID,
+	FieldFirstName,
+	FieldLastName,
 	FieldName,
 	FieldCountry,
-	FieldWorldRanking,
+	FieldCountryCode,
+	FieldOwgr,
+	FieldActive,
 	FieldImageURL,
 }
 
@@ -84,12 +108,12 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
-	// ExternalIDValidator is a validator for the "external_id" field. It is called by the builders before save.
-	ExternalIDValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
-	// CountryValidator is a validator for the "country" field. It is called by the builders before save.
-	CountryValidator func(string) error
+	// DefaultCountryCode holds the default value on creation for the "country_code" field.
+	DefaultCountryCode string
+	// DefaultActive holds the default value on creation for the "active" field.
+	DefaultActive bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -112,9 +136,24 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByExternalID orders the results by the external_id field.
-func ByExternalID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldExternalID, opts...).ToFunc()
+// ByScratchgolfID orders the results by the scratchgolf_id field.
+func ByScratchgolfID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldScratchgolfID, opts...).ToFunc()
+}
+
+// ByBdlID orders the results by the bdl_id field.
+func ByBdlID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBdlID, opts...).ToFunc()
+}
+
+// ByFirstName orders the results by the first_name field.
+func ByFirstName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFirstName, opts...).ToFunc()
+}
+
+// ByLastName orders the results by the last_name field.
+func ByLastName(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLastName, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
@@ -127,9 +166,19 @@ func ByCountry(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCountry, opts...).ToFunc()
 }
 
-// ByWorldRanking orders the results by the world_ranking field.
-func ByWorldRanking(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldWorldRanking, opts...).ToFunc()
+// ByCountryCode orders the results by the country_code field.
+func ByCountryCode(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCountryCode, opts...).ToFunc()
+}
+
+// ByOwgr orders the results by the owgr field.
+func ByOwgr(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOwgr, opts...).ToFunc()
+}
+
+// ByActive orders the results by the active field.
+func ByActive(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldActive, opts...).ToFunc()
 }
 
 // ByImageURL orders the results by the image_url field.
@@ -151,6 +200,20 @@ func ByPicks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByEntriesCount orders the results by entries count.
+func ByEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEntriesStep(), opts...)
+	}
+}
+
+// ByEntries orders the results by entries terms.
+func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByTournamentsCount orders the results by tournaments count.
 func ByTournamentsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -169,6 +232,13 @@ func newPicksStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PicksInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, PicksTable, PicksColumn),
+	)
+}
+func newEntriesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
 	)
 }
 func newTournamentsStep() *sqlgraph.Step {

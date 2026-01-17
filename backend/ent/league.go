@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
@@ -25,7 +25,7 @@ type League struct {
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
-	// Code holds the value of the "code" field.
+	// Shareable join code
 	Code string `json:"code,omitempty"`
 	// SeasonYear holds the value of the "season_year" field.
 	SeasonYear int `json:"season_year,omitempty"`

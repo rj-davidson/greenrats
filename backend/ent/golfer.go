@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 )
 
@@ -22,14 +22,24 @@ type Golfer struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// ExternalID holds the value of the "external_id" field.
-	ExternalID string `json:"external_id,omitempty"`
-	// Name holds the value of the "name" field.
+	// ScratchGolf API ID (string)
+	ScratchgolfID *string `json:"scratchgolf_id,omitempty"`
+	// BallDontLie API ID (int)
+	BdlID *int `json:"bdl_id,omitempty"`
+	// FirstName holds the value of the "first_name" field.
+	FirstName *string `json:"first_name,omitempty"`
+	// LastName holds the value of the "last_name" field.
+	LastName *string `json:"last_name,omitempty"`
+	// Display name
 	Name string `json:"name,omitempty"`
-	// Country holds the value of the "country" field.
-	Country string `json:"country,omitempty"`
-	// WorldRanking holds the value of the "world_ranking" field.
-	WorldRanking *int `json:"world_ranking,omitempty"`
+	// Full country name
+	Country *string `json:"country,omitempty"`
+	// 3-letter ISO country code
+	CountryCode string `json:"country_code,omitempty"`
+	// Official World Golf Ranking
+	Owgr *int `json:"owgr,omitempty"`
+	// Whether the player is currently active
+	Active bool `json:"active,omitempty"`
 	// ImageURL holds the value of the "image_url" field.
 	ImageURL *string `json:"image_url,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -42,11 +52,13 @@ type Golfer struct {
 type GolferEdges struct {
 	// Picks holds the value of the picks edge.
 	Picks []*Pick `json:"picks,omitempty"`
+	// Entries holds the value of the entries edge.
+	Entries []*TournamentEntry `json:"entries,omitempty"`
 	// Tournaments holds the value of the tournaments edge.
 	Tournaments []*Tournament `json:"tournaments,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -58,10 +70,19 @@ func (e GolferEdges) PicksOrErr() ([]*Pick, error) {
 	return nil, &NotLoadedError{edge: "picks"}
 }
 
+// EntriesOrErr returns the Entries value or an error if the edge
+// was not loaded in eager-loading.
+func (e GolferEdges) EntriesOrErr() ([]*TournamentEntry, error) {
+	if e.loadedTypes[1] {
+		return e.Entries, nil
+	}
+	return nil, &NotLoadedError{edge: "entries"}
+}
+
 // TournamentsOrErr returns the Tournaments value or an error if the edge
 // was not loaded in eager-loading.
 func (e GolferEdges) TournamentsOrErr() ([]*Tournament, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.Tournaments, nil
 	}
 	return nil, &NotLoadedError{edge: "tournaments"}
@@ -72,9 +93,11 @@ func (*Golfer) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case golfer.FieldWorldRanking:
+		case golfer.FieldActive:
+			values[i] = new(sql.NullBool)
+		case golfer.FieldBdlID, golfer.FieldOwgr:
 			values[i] = new(sql.NullInt64)
-		case golfer.FieldExternalID, golfer.FieldName, golfer.FieldCountry, golfer.FieldImageURL:
+		case golfer.FieldScratchgolfID, golfer.FieldFirstName, golfer.FieldLastName, golfer.FieldName, golfer.FieldCountry, golfer.FieldCountryCode, golfer.FieldImageURL:
 			values[i] = new(sql.NullString)
 		case golfer.FieldCreatedAt, golfer.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -113,11 +136,33 @@ func (_m *Golfer) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case golfer.FieldExternalID:
+		case golfer.FieldScratchgolfID:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field external_id", values[i])
+				return fmt.Errorf("unexpected type %T for field scratchgolf_id", values[i])
 			} else if value.Valid {
-				_m.ExternalID = value.String
+				_m.ScratchgolfID = new(string)
+				*_m.ScratchgolfID = value.String
+			}
+		case golfer.FieldBdlID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field bdl_id", values[i])
+			} else if value.Valid {
+				_m.BdlID = new(int)
+				*_m.BdlID = int(value.Int64)
+			}
+		case golfer.FieldFirstName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field first_name", values[i])
+			} else if value.Valid {
+				_m.FirstName = new(string)
+				*_m.FirstName = value.String
+			}
+		case golfer.FieldLastName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field last_name", values[i])
+			} else if value.Valid {
+				_m.LastName = new(string)
+				*_m.LastName = value.String
 			}
 		case golfer.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -129,14 +174,27 @@ func (_m *Golfer) assignValues(columns []string, values []any) error {
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field country", values[i])
 			} else if value.Valid {
-				_m.Country = value.String
+				_m.Country = new(string)
+				*_m.Country = value.String
 			}
-		case golfer.FieldWorldRanking:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field world_ranking", values[i])
+		case golfer.FieldCountryCode:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field country_code", values[i])
 			} else if value.Valid {
-				_m.WorldRanking = new(int)
-				*_m.WorldRanking = int(value.Int64)
+				_m.CountryCode = value.String
+			}
+		case golfer.FieldOwgr:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field owgr", values[i])
+			} else if value.Valid {
+				_m.Owgr = new(int)
+				*_m.Owgr = int(value.Int64)
+			}
+		case golfer.FieldActive:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field active", values[i])
+			} else if value.Valid {
+				_m.Active = value.Bool
 			}
 		case golfer.FieldImageURL:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -161,6 +219,11 @@ func (_m *Golfer) Value(name string) (ent.Value, error) {
 // QueryPicks queries the "picks" edge of the Golfer entity.
 func (_m *Golfer) QueryPicks() *PickQuery {
 	return NewGolferClient(_m.config).QueryPicks(_m)
+}
+
+// QueryEntries queries the "entries" edge of the Golfer entity.
+func (_m *Golfer) QueryEntries() *TournamentEntryQuery {
+	return NewGolferClient(_m.config).QueryEntries(_m)
 }
 
 // QueryTournaments queries the "tournaments" edge of the Golfer entity.
@@ -197,19 +260,44 @@ func (_m *Golfer) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("external_id=")
-	builder.WriteString(_m.ExternalID)
+	if v := _m.ScratchgolfID; v != nil {
+		builder.WriteString("scratchgolf_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.BdlID; v != nil {
+		builder.WriteString("bdl_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.FirstName; v != nil {
+		builder.WriteString("first_name=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.LastName; v != nil {
+		builder.WriteString("last_name=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
 	builder.WriteString(", ")
-	builder.WriteString("country=")
-	builder.WriteString(_m.Country)
+	if v := _m.Country; v != nil {
+		builder.WriteString("country=")
+		builder.WriteString(*v)
+	}
 	builder.WriteString(", ")
-	if v := _m.WorldRanking; v != nil {
-		builder.WriteString("world_ranking=")
+	builder.WriteString("country_code=")
+	builder.WriteString(_m.CountryCode)
+	builder.WriteString(", ")
+	if v := _m.Owgr; v != nil {
+		builder.WriteString("owgr=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
+	builder.WriteString(", ")
+	builder.WriteString("active=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Active))
 	builder.WriteString(", ")
 	if v := _m.ImageURL; v != nil {
 		builder.WriteString("image_url=")

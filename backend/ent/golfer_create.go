@@ -10,10 +10,11 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 // GolferCreate is the builder for creating a Golfer entity.
@@ -51,9 +52,59 @@ func (_c *GolferCreate) SetNillableUpdatedAt(v *time.Time) *GolferCreate {
 	return _c
 }
 
-// SetExternalID sets the "external_id" field.
-func (_c *GolferCreate) SetExternalID(v string) *GolferCreate {
-	_c.mutation.SetExternalID(v)
+// SetScratchgolfID sets the "scratchgolf_id" field.
+func (_c *GolferCreate) SetScratchgolfID(v string) *GolferCreate {
+	_c.mutation.SetScratchgolfID(v)
+	return _c
+}
+
+// SetNillableScratchgolfID sets the "scratchgolf_id" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableScratchgolfID(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetScratchgolfID(*v)
+	}
+	return _c
+}
+
+// SetBdlID sets the "bdl_id" field.
+func (_c *GolferCreate) SetBdlID(v int) *GolferCreate {
+	_c.mutation.SetBdlID(v)
+	return _c
+}
+
+// SetNillableBdlID sets the "bdl_id" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableBdlID(v *int) *GolferCreate {
+	if v != nil {
+		_c.SetBdlID(*v)
+	}
+	return _c
+}
+
+// SetFirstName sets the "first_name" field.
+func (_c *GolferCreate) SetFirstName(v string) *GolferCreate {
+	_c.mutation.SetFirstName(v)
+	return _c
+}
+
+// SetNillableFirstName sets the "first_name" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableFirstName(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetFirstName(*v)
+	}
+	return _c
+}
+
+// SetLastName sets the "last_name" field.
+func (_c *GolferCreate) SetLastName(v string) *GolferCreate {
+	_c.mutation.SetLastName(v)
+	return _c
+}
+
+// SetNillableLastName sets the "last_name" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableLastName(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetLastName(*v)
+	}
 	return _c
 }
 
@@ -69,16 +120,52 @@ func (_c *GolferCreate) SetCountry(v string) *GolferCreate {
 	return _c
 }
 
-// SetWorldRanking sets the "world_ranking" field.
-func (_c *GolferCreate) SetWorldRanking(v int) *GolferCreate {
-	_c.mutation.SetWorldRanking(v)
+// SetNillableCountry sets the "country" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableCountry(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetCountry(*v)
+	}
 	return _c
 }
 
-// SetNillableWorldRanking sets the "world_ranking" field if the given value is not nil.
-func (_c *GolferCreate) SetNillableWorldRanking(v *int) *GolferCreate {
+// SetCountryCode sets the "country_code" field.
+func (_c *GolferCreate) SetCountryCode(v string) *GolferCreate {
+	_c.mutation.SetCountryCode(v)
+	return _c
+}
+
+// SetNillableCountryCode sets the "country_code" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableCountryCode(v *string) *GolferCreate {
 	if v != nil {
-		_c.SetWorldRanking(*v)
+		_c.SetCountryCode(*v)
+	}
+	return _c
+}
+
+// SetOwgr sets the "owgr" field.
+func (_c *GolferCreate) SetOwgr(v int) *GolferCreate {
+	_c.mutation.SetOwgr(v)
+	return _c
+}
+
+// SetNillableOwgr sets the "owgr" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableOwgr(v *int) *GolferCreate {
+	if v != nil {
+		_c.SetOwgr(*v)
+	}
+	return _c
+}
+
+// SetActive sets the "active" field.
+func (_c *GolferCreate) SetActive(v bool) *GolferCreate {
+	_c.mutation.SetActive(v)
+	return _c
+}
+
+// SetNillableActive sets the "active" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableActive(v *bool) *GolferCreate {
+	if v != nil {
+		_c.SetActive(*v)
 	}
 	return _c
 }
@@ -124,6 +211,21 @@ func (_c *GolferCreate) AddPicks(v ...*Pick) *GolferCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddPickIDs(ids...)
+}
+
+// AddEntryIDs adds the "entries" edge to the TournamentEntry entity by IDs.
+func (_c *GolferCreate) AddEntryIDs(ids ...uuid.UUID) *GolferCreate {
+	_c.mutation.AddEntryIDs(ids...)
+	return _c
+}
+
+// AddEntries adds the "entries" edges to the TournamentEntry entity.
+func (_c *GolferCreate) AddEntries(v ...*TournamentEntry) *GolferCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddEntryIDs(ids...)
 }
 
 // AddTournamentIDs adds the "tournaments" edge to the Tournament entity by IDs.
@@ -184,6 +286,14 @@ func (_c *GolferCreate) defaults() {
 		v := golfer.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.CountryCode(); !ok {
+		v := golfer.DefaultCountryCode
+		_c.mutation.SetCountryCode(v)
+	}
+	if _, ok := _c.mutation.Active(); !ok {
+		v := golfer.DefaultActive
+		_c.mutation.SetActive(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := golfer.DefaultID()
 		_c.mutation.SetID(v)
@@ -198,14 +308,6 @@ func (_c *GolferCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Golfer.updated_at"`)}
 	}
-	if _, ok := _c.mutation.ExternalID(); !ok {
-		return &ValidationError{Name: "external_id", err: errors.New(`ent: missing required field "Golfer.external_id"`)}
-	}
-	if v, ok := _c.mutation.ExternalID(); ok {
-		if err := golfer.ExternalIDValidator(v); err != nil {
-			return &ValidationError{Name: "external_id", err: fmt.Errorf(`ent: validator failed for field "Golfer.external_id": %w`, err)}
-		}
-	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "Golfer.name"`)}
 	}
@@ -214,13 +316,11 @@ func (_c *GolferCreate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Golfer.name": %w`, err)}
 		}
 	}
-	if _, ok := _c.mutation.Country(); !ok {
-		return &ValidationError{Name: "country", err: errors.New(`ent: missing required field "Golfer.country"`)}
+	if _, ok := _c.mutation.CountryCode(); !ok {
+		return &ValidationError{Name: "country_code", err: errors.New(`ent: missing required field "Golfer.country_code"`)}
 	}
-	if v, ok := _c.mutation.Country(); ok {
-		if err := golfer.CountryValidator(v); err != nil {
-			return &ValidationError{Name: "country", err: fmt.Errorf(`ent: validator failed for field "Golfer.country": %w`, err)}
-		}
+	if _, ok := _c.mutation.Active(); !ok {
+		return &ValidationError{Name: "active", err: errors.New(`ent: missing required field "Golfer.active"`)}
 	}
 	return nil
 }
@@ -265,9 +365,21 @@ func (_c *GolferCreate) createSpec() (*Golfer, *sqlgraph.CreateSpec) {
 		_spec.SetField(golfer.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if value, ok := _c.mutation.ExternalID(); ok {
-		_spec.SetField(golfer.FieldExternalID, field.TypeString, value)
-		_node.ExternalID = value
+	if value, ok := _c.mutation.ScratchgolfID(); ok {
+		_spec.SetField(golfer.FieldScratchgolfID, field.TypeString, value)
+		_node.ScratchgolfID = &value
+	}
+	if value, ok := _c.mutation.BdlID(); ok {
+		_spec.SetField(golfer.FieldBdlID, field.TypeInt, value)
+		_node.BdlID = &value
+	}
+	if value, ok := _c.mutation.FirstName(); ok {
+		_spec.SetField(golfer.FieldFirstName, field.TypeString, value)
+		_node.FirstName = &value
+	}
+	if value, ok := _c.mutation.LastName(); ok {
+		_spec.SetField(golfer.FieldLastName, field.TypeString, value)
+		_node.LastName = &value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(golfer.FieldName, field.TypeString, value)
@@ -275,11 +387,19 @@ func (_c *GolferCreate) createSpec() (*Golfer, *sqlgraph.CreateSpec) {
 	}
 	if value, ok := _c.mutation.Country(); ok {
 		_spec.SetField(golfer.FieldCountry, field.TypeString, value)
-		_node.Country = value
+		_node.Country = &value
 	}
-	if value, ok := _c.mutation.WorldRanking(); ok {
-		_spec.SetField(golfer.FieldWorldRanking, field.TypeInt, value)
-		_node.WorldRanking = &value
+	if value, ok := _c.mutation.CountryCode(); ok {
+		_spec.SetField(golfer.FieldCountryCode, field.TypeString, value)
+		_node.CountryCode = value
+	}
+	if value, ok := _c.mutation.Owgr(); ok {
+		_spec.SetField(golfer.FieldOwgr, field.TypeInt, value)
+		_node.Owgr = &value
+	}
+	if value, ok := _c.mutation.Active(); ok {
+		_spec.SetField(golfer.FieldActive, field.TypeBool, value)
+		_node.Active = value
 	}
 	if value, ok := _c.mutation.ImageURL(); ok {
 		_spec.SetField(golfer.FieldImageURL, field.TypeString, value)
@@ -294,6 +414,22 @@ func (_c *GolferCreate) createSpec() (*Golfer, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pick.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.EntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.EntriesTable,
+			Columns: []string{golfer.EntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

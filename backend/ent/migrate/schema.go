@@ -13,10 +13,15 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "external_id", Type: field.TypeString, Unique: true},
+		{Name: "scratchgolf_id", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "bdl_id", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "first_name", Type: field.TypeString, Nullable: true},
+		{Name: "last_name", Type: field.TypeString, Nullable: true},
 		{Name: "name", Type: field.TypeString},
-		{Name: "country", Type: field.TypeString},
-		{Name: "world_ranking", Type: field.TypeInt, Nullable: true},
+		{Name: "country", Type: field.TypeString, Nullable: true},
+		{Name: "country_code", Type: field.TypeString, Default: "UNK"},
+		{Name: "owgr", Type: field.TypeInt, Nullable: true},
+		{Name: "active", Type: field.TypeBool, Default: true},
 		{Name: "image_url", Type: field.TypeString, Nullable: true},
 	}
 	// GolfersTable holds the schema information for the "golfers" table.
@@ -57,7 +62,6 @@ var (
 		{Name: "role", Type: field.TypeEnum, Enums: []string{"owner", "member"}, Default: "member"},
 		{Name: "joined_at", Type: field.TypeTime},
 		{Name: "league_memberships", Type: field.TypeUUID},
-		{Name: "league_membership_created_by", Type: field.TypeUUID},
 		{Name: "user_league_memberships", Type: field.TypeUUID},
 	}
 	// LeagueMembershipsTable holds the schema information for the "league_memberships" table.
@@ -73,14 +77,8 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 			{
-				Symbol:     "league_memberships_users_created_by",
-				Columns:    []*schema.Column{LeagueMembershipsColumns[6]},
-				RefColumns: []*schema.Column{UsersColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-			{
 				Symbol:     "league_memberships_users_league_memberships",
-				Columns:    []*schema.Column{LeagueMembershipsColumns[7]},
+				Columns:    []*schema.Column{LeagueMembershipsColumns[6]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -89,7 +87,7 @@ var (
 			{
 				Name:    "leaguemembership_user_league_memberships_league_memberships",
 				Unique:  true,
-				Columns: []*schema.Column{LeagueMembershipsColumns[7], LeagueMembershipsColumns[5]},
+				Columns: []*schema.Column{LeagueMembershipsColumns[6], LeagueMembershipsColumns[5]},
 			},
 		},
 	}
@@ -152,18 +150,76 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "external_id", Type: field.TypeString, Unique: true},
+		{Name: "scratchgolf_id", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "bdl_id", Type: field.TypeInt, Unique: true, Nullable: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "start_date", Type: field.TypeTime},
 		{Name: "end_date", Type: field.TypeTime},
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"upcoming", "active", "completed"}, Default: "upcoming"},
 		{Name: "season_year", Type: field.TypeInt},
+		{Name: "course", Type: field.TypeString, Nullable: true},
+		{Name: "location", Type: field.TypeString, Nullable: true},
+		{Name: "purse", Type: field.TypeInt, Nullable: true},
 	}
 	// TournamentsTable holds the schema information for the "tournaments" table.
 	TournamentsTable = &schema.Table{
 		Name:       "tournaments",
 		Columns:    TournamentsColumns,
 		PrimaryKey: []*schema.Column{TournamentsColumns[0]},
+	}
+	// TournamentEntriesColumns holds the columns for the "tournament_entries" table.
+	TournamentEntriesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "external_tournament_id", Type: field.TypeInt},
+		{Name: "external_player_id", Type: field.TypeInt},
+		{Name: "position", Type: field.TypeInt, Default: 0},
+		{Name: "score", Type: field.TypeInt, Default: 0},
+		{Name: "total_strokes", Type: field.TypeInt, Default: 0},
+		{Name: "earnings", Type: field.TypeInt, Default: 0},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "active", "cut", "withdrawn", "finished"}, Default: "pending"},
+		{Name: "current_round", Type: field.TypeInt, Default: 0},
+		{Name: "thru", Type: field.TypeInt, Default: 0},
+		{Name: "golfer_entries", Type: field.TypeUUID},
+		{Name: "tournament_entries", Type: field.TypeUUID},
+	}
+	// TournamentEntriesTable holds the schema information for the "tournament_entries" table.
+	TournamentEntriesTable = &schema.Table{
+		Name:       "tournament_entries",
+		Columns:    TournamentEntriesColumns,
+		PrimaryKey: []*schema.Column{TournamentEntriesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tournament_entries_golfers_entries",
+				Columns:    []*schema.Column{TournamentEntriesColumns[12]},
+				RefColumns: []*schema.Column{GolfersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "tournament_entries_tournaments_entries",
+				Columns:    []*schema.Column{TournamentEntriesColumns[13]},
+				RefColumns: []*schema.Column{TournamentsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "tournamententry_tournament_entries_golfer_entries",
+				Unique:  true,
+				Columns: []*schema.Column{TournamentEntriesColumns[13], TournamentEntriesColumns[12]},
+			},
+			{
+				Name:    "tournamententry_external_tournament_id",
+				Unique:  false,
+				Columns: []*schema.Column{TournamentEntriesColumns[3]},
+			},
+			{
+				Name:    "tournamententry_external_player_id",
+				Unique:  false,
+				Columns: []*schema.Column{TournamentEntriesColumns[4]},
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
@@ -212,6 +268,7 @@ var (
 		LeagueMembershipsTable,
 		PicksTable,
 		TournamentsTable,
+		TournamentEntriesTable,
 		UsersTable,
 		TournamentGolfersTable,
 	}
@@ -221,11 +278,12 @@ func init() {
 	LeaguesTable.ForeignKeys[0].RefTable = UsersTable
 	LeagueMembershipsTable.ForeignKeys[0].RefTable = LeaguesTable
 	LeagueMembershipsTable.ForeignKeys[1].RefTable = UsersTable
-	LeagueMembershipsTable.ForeignKeys[2].RefTable = UsersTable
 	PicksTable.ForeignKeys[0].RefTable = GolfersTable
 	PicksTable.ForeignKeys[1].RefTable = LeaguesTable
 	PicksTable.ForeignKeys[2].RefTable = TournamentsTable
 	PicksTable.ForeignKeys[3].RefTable = UsersTable
+	TournamentEntriesTable.ForeignKeys[0].RefTable = GolfersTable
+	TournamentEntriesTable.ForeignKeys[1].RefTable = TournamentsTable
 	TournamentGolfersTable.ForeignKeys[0].RefTable = TournamentsTable
 	TournamentGolfersTable.ForeignKeys[1].RefTable = GolfersTable
 }

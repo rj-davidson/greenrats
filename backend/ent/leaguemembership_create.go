@@ -10,7 +10,7 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -91,17 +91,6 @@ func (_c *LeagueMembershipCreate) SetNillableID(v *uuid.UUID) *LeagueMembershipC
 		_c.SetID(*v)
 	}
 	return _c
-}
-
-// SetCreatedByID sets the "created_by" edge to the User entity by ID.
-func (_c *LeagueMembershipCreate) SetCreatedByID(id uuid.UUID) *LeagueMembershipCreate {
-	_c.mutation.SetCreatedByID(id)
-	return _c
-}
-
-// SetCreatedBy sets the "created_by" edge to the User entity.
-func (_c *LeagueMembershipCreate) SetCreatedBy(v *User) *LeagueMembershipCreate {
-	return _c.SetCreatedByID(v.ID)
 }
 
 // SetUserID sets the "user" edge to the User entity by ID.
@@ -202,9 +191,6 @@ func (_c *LeagueMembershipCreate) check() error {
 	if _, ok := _c.mutation.JoinedAt(); !ok {
 		return &ValidationError{Name: "joined_at", err: errors.New(`ent: missing required field "LeagueMembership.joined_at"`)}
 	}
-	if len(_c.mutation.CreatedByIDs()) == 0 {
-		return &ValidationError{Name: "created_by", err: errors.New(`ent: missing required edge "LeagueMembership.created_by"`)}
-	}
 	if len(_c.mutation.UserIDs()) == 0 {
 		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "LeagueMembership.user"`)}
 	}
@@ -261,23 +247,6 @@ func (_c *LeagueMembershipCreate) createSpec() (*LeagueMembership, *sqlgraph.Cre
 	if value, ok := _c.mutation.JoinedAt(); ok {
 		_spec.SetField(leaguemembership.FieldJoinedAt, field.TypeTime, value)
 		_node.JoinedAt = value
-	}
-	if nodes := _c.mutation.CreatedByIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2O,
-			Inverse: false,
-			Table:   leaguemembership.CreatedByTable,
-			Columns: []string{leaguemembership.CreatedByColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_node.league_membership_created_by = &nodes[0]
-		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

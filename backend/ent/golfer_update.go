@@ -11,11 +11,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 // GolferUpdate is the builder for updating Golfer entities.
@@ -37,17 +38,90 @@ func (_u *GolferUpdate) SetUpdatedAt(v time.Time) *GolferUpdate {
 	return _u
 }
 
-// SetExternalID sets the "external_id" field.
-func (_u *GolferUpdate) SetExternalID(v string) *GolferUpdate {
-	_u.mutation.SetExternalID(v)
+// SetScratchgolfID sets the "scratchgolf_id" field.
+func (_u *GolferUpdate) SetScratchgolfID(v string) *GolferUpdate {
+	_u.mutation.SetScratchgolfID(v)
 	return _u
 }
 
-// SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_u *GolferUpdate) SetNillableExternalID(v *string) *GolferUpdate {
+// SetNillableScratchgolfID sets the "scratchgolf_id" field if the given value is not nil.
+func (_u *GolferUpdate) SetNillableScratchgolfID(v *string) *GolferUpdate {
 	if v != nil {
-		_u.SetExternalID(*v)
+		_u.SetScratchgolfID(*v)
 	}
+	return _u
+}
+
+// ClearScratchgolfID clears the value of the "scratchgolf_id" field.
+func (_u *GolferUpdate) ClearScratchgolfID() *GolferUpdate {
+	_u.mutation.ClearScratchgolfID()
+	return _u
+}
+
+// SetBdlID sets the "bdl_id" field.
+func (_u *GolferUpdate) SetBdlID(v int) *GolferUpdate {
+	_u.mutation.ResetBdlID()
+	_u.mutation.SetBdlID(v)
+	return _u
+}
+
+// SetNillableBdlID sets the "bdl_id" field if the given value is not nil.
+func (_u *GolferUpdate) SetNillableBdlID(v *int) *GolferUpdate {
+	if v != nil {
+		_u.SetBdlID(*v)
+	}
+	return _u
+}
+
+// AddBdlID adds value to the "bdl_id" field.
+func (_u *GolferUpdate) AddBdlID(v int) *GolferUpdate {
+	_u.mutation.AddBdlID(v)
+	return _u
+}
+
+// ClearBdlID clears the value of the "bdl_id" field.
+func (_u *GolferUpdate) ClearBdlID() *GolferUpdate {
+	_u.mutation.ClearBdlID()
+	return _u
+}
+
+// SetFirstName sets the "first_name" field.
+func (_u *GolferUpdate) SetFirstName(v string) *GolferUpdate {
+	_u.mutation.SetFirstName(v)
+	return _u
+}
+
+// SetNillableFirstName sets the "first_name" field if the given value is not nil.
+func (_u *GolferUpdate) SetNillableFirstName(v *string) *GolferUpdate {
+	if v != nil {
+		_u.SetFirstName(*v)
+	}
+	return _u
+}
+
+// ClearFirstName clears the value of the "first_name" field.
+func (_u *GolferUpdate) ClearFirstName() *GolferUpdate {
+	_u.mutation.ClearFirstName()
+	return _u
+}
+
+// SetLastName sets the "last_name" field.
+func (_u *GolferUpdate) SetLastName(v string) *GolferUpdate {
+	_u.mutation.SetLastName(v)
+	return _u
+}
+
+// SetNillableLastName sets the "last_name" field if the given value is not nil.
+func (_u *GolferUpdate) SetNillableLastName(v *string) *GolferUpdate {
+	if v != nil {
+		_u.SetLastName(*v)
+	}
+	return _u
+}
+
+// ClearLastName clears the value of the "last_name" field.
+func (_u *GolferUpdate) ClearLastName() *GolferUpdate {
+	_u.mutation.ClearLastName()
 	return _u
 }
 
@@ -79,30 +153,64 @@ func (_u *GolferUpdate) SetNillableCountry(v *string) *GolferUpdate {
 	return _u
 }
 
-// SetWorldRanking sets the "world_ranking" field.
-func (_u *GolferUpdate) SetWorldRanking(v int) *GolferUpdate {
-	_u.mutation.ResetWorldRanking()
-	_u.mutation.SetWorldRanking(v)
+// ClearCountry clears the value of the "country" field.
+func (_u *GolferUpdate) ClearCountry() *GolferUpdate {
+	_u.mutation.ClearCountry()
 	return _u
 }
 
-// SetNillableWorldRanking sets the "world_ranking" field if the given value is not nil.
-func (_u *GolferUpdate) SetNillableWorldRanking(v *int) *GolferUpdate {
+// SetCountryCode sets the "country_code" field.
+func (_u *GolferUpdate) SetCountryCode(v string) *GolferUpdate {
+	_u.mutation.SetCountryCode(v)
+	return _u
+}
+
+// SetNillableCountryCode sets the "country_code" field if the given value is not nil.
+func (_u *GolferUpdate) SetNillableCountryCode(v *string) *GolferUpdate {
 	if v != nil {
-		_u.SetWorldRanking(*v)
+		_u.SetCountryCode(*v)
 	}
 	return _u
 }
 
-// AddWorldRanking adds value to the "world_ranking" field.
-func (_u *GolferUpdate) AddWorldRanking(v int) *GolferUpdate {
-	_u.mutation.AddWorldRanking(v)
+// SetOwgr sets the "owgr" field.
+func (_u *GolferUpdate) SetOwgr(v int) *GolferUpdate {
+	_u.mutation.ResetOwgr()
+	_u.mutation.SetOwgr(v)
 	return _u
 }
 
-// ClearWorldRanking clears the value of the "world_ranking" field.
-func (_u *GolferUpdate) ClearWorldRanking() *GolferUpdate {
-	_u.mutation.ClearWorldRanking()
+// SetNillableOwgr sets the "owgr" field if the given value is not nil.
+func (_u *GolferUpdate) SetNillableOwgr(v *int) *GolferUpdate {
+	if v != nil {
+		_u.SetOwgr(*v)
+	}
+	return _u
+}
+
+// AddOwgr adds value to the "owgr" field.
+func (_u *GolferUpdate) AddOwgr(v int) *GolferUpdate {
+	_u.mutation.AddOwgr(v)
+	return _u
+}
+
+// ClearOwgr clears the value of the "owgr" field.
+func (_u *GolferUpdate) ClearOwgr() *GolferUpdate {
+	_u.mutation.ClearOwgr()
+	return _u
+}
+
+// SetActive sets the "active" field.
+func (_u *GolferUpdate) SetActive(v bool) *GolferUpdate {
+	_u.mutation.SetActive(v)
+	return _u
+}
+
+// SetNillableActive sets the "active" field if the given value is not nil.
+func (_u *GolferUpdate) SetNillableActive(v *bool) *GolferUpdate {
+	if v != nil {
+		_u.SetActive(*v)
+	}
 	return _u
 }
 
@@ -139,6 +247,21 @@ func (_u *GolferUpdate) AddPicks(v ...*Pick) *GolferUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.AddPickIDs(ids...)
+}
+
+// AddEntryIDs adds the "entries" edge to the TournamentEntry entity by IDs.
+func (_u *GolferUpdate) AddEntryIDs(ids ...uuid.UUID) *GolferUpdate {
+	_u.mutation.AddEntryIDs(ids...)
+	return _u
+}
+
+// AddEntries adds the "entries" edges to the TournamentEntry entity.
+func (_u *GolferUpdate) AddEntries(v ...*TournamentEntry) *GolferUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEntryIDs(ids...)
 }
 
 // AddTournamentIDs adds the "tournaments" edge to the Tournament entity by IDs.
@@ -180,6 +303,27 @@ func (_u *GolferUpdate) RemovePicks(v ...*Pick) *GolferUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemovePickIDs(ids...)
+}
+
+// ClearEntries clears all "entries" edges to the TournamentEntry entity.
+func (_u *GolferUpdate) ClearEntries() *GolferUpdate {
+	_u.mutation.ClearEntries()
+	return _u
+}
+
+// RemoveEntryIDs removes the "entries" edge to TournamentEntry entities by IDs.
+func (_u *GolferUpdate) RemoveEntryIDs(ids ...uuid.UUID) *GolferUpdate {
+	_u.mutation.RemoveEntryIDs(ids...)
+	return _u
+}
+
+// RemoveEntries removes "entries" edges to TournamentEntry entities.
+func (_u *GolferUpdate) RemoveEntries(v ...*TournamentEntry) *GolferUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEntryIDs(ids...)
 }
 
 // ClearTournaments clears all "tournaments" edges to the Tournament entity.
@@ -241,19 +385,9 @@ func (_u *GolferUpdate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *GolferUpdate) check() error {
-	if v, ok := _u.mutation.ExternalID(); ok {
-		if err := golfer.ExternalIDValidator(v); err != nil {
-			return &ValidationError{Name: "external_id", err: fmt.Errorf(`ent: validator failed for field "Golfer.external_id": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Name(); ok {
 		if err := golfer.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Golfer.name": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.Country(); ok {
-		if err := golfer.CountryValidator(v); err != nil {
-			return &ValidationError{Name: "country", err: fmt.Errorf(`ent: validator failed for field "Golfer.country": %w`, err)}
 		}
 	}
 	return nil
@@ -274,8 +408,32 @@ func (_u *GolferUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(golfer.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.ExternalID(); ok {
-		_spec.SetField(golfer.FieldExternalID, field.TypeString, value)
+	if value, ok := _u.mutation.ScratchgolfID(); ok {
+		_spec.SetField(golfer.FieldScratchgolfID, field.TypeString, value)
+	}
+	if _u.mutation.ScratchgolfIDCleared() {
+		_spec.ClearField(golfer.FieldScratchgolfID, field.TypeString)
+	}
+	if value, ok := _u.mutation.BdlID(); ok {
+		_spec.SetField(golfer.FieldBdlID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedBdlID(); ok {
+		_spec.AddField(golfer.FieldBdlID, field.TypeInt, value)
+	}
+	if _u.mutation.BdlIDCleared() {
+		_spec.ClearField(golfer.FieldBdlID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.FirstName(); ok {
+		_spec.SetField(golfer.FieldFirstName, field.TypeString, value)
+	}
+	if _u.mutation.FirstNameCleared() {
+		_spec.ClearField(golfer.FieldFirstName, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastName(); ok {
+		_spec.SetField(golfer.FieldLastName, field.TypeString, value)
+	}
+	if _u.mutation.LastNameCleared() {
+		_spec.ClearField(golfer.FieldLastName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(golfer.FieldName, field.TypeString, value)
@@ -283,14 +441,23 @@ func (_u *GolferUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if value, ok := _u.mutation.Country(); ok {
 		_spec.SetField(golfer.FieldCountry, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.WorldRanking(); ok {
-		_spec.SetField(golfer.FieldWorldRanking, field.TypeInt, value)
+	if _u.mutation.CountryCleared() {
+		_spec.ClearField(golfer.FieldCountry, field.TypeString)
 	}
-	if value, ok := _u.mutation.AddedWorldRanking(); ok {
-		_spec.AddField(golfer.FieldWorldRanking, field.TypeInt, value)
+	if value, ok := _u.mutation.CountryCode(); ok {
+		_spec.SetField(golfer.FieldCountryCode, field.TypeString, value)
 	}
-	if _u.mutation.WorldRankingCleared() {
-		_spec.ClearField(golfer.FieldWorldRanking, field.TypeInt)
+	if value, ok := _u.mutation.Owgr(); ok {
+		_spec.SetField(golfer.FieldOwgr, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedOwgr(); ok {
+		_spec.AddField(golfer.FieldOwgr, field.TypeInt, value)
+	}
+	if _u.mutation.OwgrCleared() {
+		_spec.ClearField(golfer.FieldOwgr, field.TypeInt)
+	}
+	if value, ok := _u.mutation.Active(); ok {
+		_spec.SetField(golfer.FieldActive, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.ImageURL(); ok {
 		_spec.SetField(golfer.FieldImageURL, field.TypeString, value)
@@ -336,6 +503,51 @@ func (_u *GolferUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pick.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.EntriesTable,
+			Columns: []string{golfer.EntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEntriesIDs(); len(nodes) > 0 && !_u.mutation.EntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.EntriesTable,
+			Columns: []string{golfer.EntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.EntriesTable,
+			Columns: []string{golfer.EntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -414,17 +626,90 @@ func (_u *GolferUpdateOne) SetUpdatedAt(v time.Time) *GolferUpdateOne {
 	return _u
 }
 
-// SetExternalID sets the "external_id" field.
-func (_u *GolferUpdateOne) SetExternalID(v string) *GolferUpdateOne {
-	_u.mutation.SetExternalID(v)
+// SetScratchgolfID sets the "scratchgolf_id" field.
+func (_u *GolferUpdateOne) SetScratchgolfID(v string) *GolferUpdateOne {
+	_u.mutation.SetScratchgolfID(v)
 	return _u
 }
 
-// SetNillableExternalID sets the "external_id" field if the given value is not nil.
-func (_u *GolferUpdateOne) SetNillableExternalID(v *string) *GolferUpdateOne {
+// SetNillableScratchgolfID sets the "scratchgolf_id" field if the given value is not nil.
+func (_u *GolferUpdateOne) SetNillableScratchgolfID(v *string) *GolferUpdateOne {
 	if v != nil {
-		_u.SetExternalID(*v)
+		_u.SetScratchgolfID(*v)
 	}
+	return _u
+}
+
+// ClearScratchgolfID clears the value of the "scratchgolf_id" field.
+func (_u *GolferUpdateOne) ClearScratchgolfID() *GolferUpdateOne {
+	_u.mutation.ClearScratchgolfID()
+	return _u
+}
+
+// SetBdlID sets the "bdl_id" field.
+func (_u *GolferUpdateOne) SetBdlID(v int) *GolferUpdateOne {
+	_u.mutation.ResetBdlID()
+	_u.mutation.SetBdlID(v)
+	return _u
+}
+
+// SetNillableBdlID sets the "bdl_id" field if the given value is not nil.
+func (_u *GolferUpdateOne) SetNillableBdlID(v *int) *GolferUpdateOne {
+	if v != nil {
+		_u.SetBdlID(*v)
+	}
+	return _u
+}
+
+// AddBdlID adds value to the "bdl_id" field.
+func (_u *GolferUpdateOne) AddBdlID(v int) *GolferUpdateOne {
+	_u.mutation.AddBdlID(v)
+	return _u
+}
+
+// ClearBdlID clears the value of the "bdl_id" field.
+func (_u *GolferUpdateOne) ClearBdlID() *GolferUpdateOne {
+	_u.mutation.ClearBdlID()
+	return _u
+}
+
+// SetFirstName sets the "first_name" field.
+func (_u *GolferUpdateOne) SetFirstName(v string) *GolferUpdateOne {
+	_u.mutation.SetFirstName(v)
+	return _u
+}
+
+// SetNillableFirstName sets the "first_name" field if the given value is not nil.
+func (_u *GolferUpdateOne) SetNillableFirstName(v *string) *GolferUpdateOne {
+	if v != nil {
+		_u.SetFirstName(*v)
+	}
+	return _u
+}
+
+// ClearFirstName clears the value of the "first_name" field.
+func (_u *GolferUpdateOne) ClearFirstName() *GolferUpdateOne {
+	_u.mutation.ClearFirstName()
+	return _u
+}
+
+// SetLastName sets the "last_name" field.
+func (_u *GolferUpdateOne) SetLastName(v string) *GolferUpdateOne {
+	_u.mutation.SetLastName(v)
+	return _u
+}
+
+// SetNillableLastName sets the "last_name" field if the given value is not nil.
+func (_u *GolferUpdateOne) SetNillableLastName(v *string) *GolferUpdateOne {
+	if v != nil {
+		_u.SetLastName(*v)
+	}
+	return _u
+}
+
+// ClearLastName clears the value of the "last_name" field.
+func (_u *GolferUpdateOne) ClearLastName() *GolferUpdateOne {
+	_u.mutation.ClearLastName()
 	return _u
 }
 
@@ -456,30 +741,64 @@ func (_u *GolferUpdateOne) SetNillableCountry(v *string) *GolferUpdateOne {
 	return _u
 }
 
-// SetWorldRanking sets the "world_ranking" field.
-func (_u *GolferUpdateOne) SetWorldRanking(v int) *GolferUpdateOne {
-	_u.mutation.ResetWorldRanking()
-	_u.mutation.SetWorldRanking(v)
+// ClearCountry clears the value of the "country" field.
+func (_u *GolferUpdateOne) ClearCountry() *GolferUpdateOne {
+	_u.mutation.ClearCountry()
 	return _u
 }
 
-// SetNillableWorldRanking sets the "world_ranking" field if the given value is not nil.
-func (_u *GolferUpdateOne) SetNillableWorldRanking(v *int) *GolferUpdateOne {
+// SetCountryCode sets the "country_code" field.
+func (_u *GolferUpdateOne) SetCountryCode(v string) *GolferUpdateOne {
+	_u.mutation.SetCountryCode(v)
+	return _u
+}
+
+// SetNillableCountryCode sets the "country_code" field if the given value is not nil.
+func (_u *GolferUpdateOne) SetNillableCountryCode(v *string) *GolferUpdateOne {
 	if v != nil {
-		_u.SetWorldRanking(*v)
+		_u.SetCountryCode(*v)
 	}
 	return _u
 }
 
-// AddWorldRanking adds value to the "world_ranking" field.
-func (_u *GolferUpdateOne) AddWorldRanking(v int) *GolferUpdateOne {
-	_u.mutation.AddWorldRanking(v)
+// SetOwgr sets the "owgr" field.
+func (_u *GolferUpdateOne) SetOwgr(v int) *GolferUpdateOne {
+	_u.mutation.ResetOwgr()
+	_u.mutation.SetOwgr(v)
 	return _u
 }
 
-// ClearWorldRanking clears the value of the "world_ranking" field.
-func (_u *GolferUpdateOne) ClearWorldRanking() *GolferUpdateOne {
-	_u.mutation.ClearWorldRanking()
+// SetNillableOwgr sets the "owgr" field if the given value is not nil.
+func (_u *GolferUpdateOne) SetNillableOwgr(v *int) *GolferUpdateOne {
+	if v != nil {
+		_u.SetOwgr(*v)
+	}
+	return _u
+}
+
+// AddOwgr adds value to the "owgr" field.
+func (_u *GolferUpdateOne) AddOwgr(v int) *GolferUpdateOne {
+	_u.mutation.AddOwgr(v)
+	return _u
+}
+
+// ClearOwgr clears the value of the "owgr" field.
+func (_u *GolferUpdateOne) ClearOwgr() *GolferUpdateOne {
+	_u.mutation.ClearOwgr()
+	return _u
+}
+
+// SetActive sets the "active" field.
+func (_u *GolferUpdateOne) SetActive(v bool) *GolferUpdateOne {
+	_u.mutation.SetActive(v)
+	return _u
+}
+
+// SetNillableActive sets the "active" field if the given value is not nil.
+func (_u *GolferUpdateOne) SetNillableActive(v *bool) *GolferUpdateOne {
+	if v != nil {
+		_u.SetActive(*v)
+	}
 	return _u
 }
 
@@ -516,6 +835,21 @@ func (_u *GolferUpdateOne) AddPicks(v ...*Pick) *GolferUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.AddPickIDs(ids...)
+}
+
+// AddEntryIDs adds the "entries" edge to the TournamentEntry entity by IDs.
+func (_u *GolferUpdateOne) AddEntryIDs(ids ...uuid.UUID) *GolferUpdateOne {
+	_u.mutation.AddEntryIDs(ids...)
+	return _u
+}
+
+// AddEntries adds the "entries" edges to the TournamentEntry entity.
+func (_u *GolferUpdateOne) AddEntries(v ...*TournamentEntry) *GolferUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEntryIDs(ids...)
 }
 
 // AddTournamentIDs adds the "tournaments" edge to the Tournament entity by IDs.
@@ -557,6 +891,27 @@ func (_u *GolferUpdateOne) RemovePicks(v ...*Pick) *GolferUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemovePickIDs(ids...)
+}
+
+// ClearEntries clears all "entries" edges to the TournamentEntry entity.
+func (_u *GolferUpdateOne) ClearEntries() *GolferUpdateOne {
+	_u.mutation.ClearEntries()
+	return _u
+}
+
+// RemoveEntryIDs removes the "entries" edge to TournamentEntry entities by IDs.
+func (_u *GolferUpdateOne) RemoveEntryIDs(ids ...uuid.UUID) *GolferUpdateOne {
+	_u.mutation.RemoveEntryIDs(ids...)
+	return _u
+}
+
+// RemoveEntries removes "entries" edges to TournamentEntry entities.
+func (_u *GolferUpdateOne) RemoveEntries(v ...*TournamentEntry) *GolferUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEntryIDs(ids...)
 }
 
 // ClearTournaments clears all "tournaments" edges to the Tournament entity.
@@ -631,19 +986,9 @@ func (_u *GolferUpdateOne) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_u *GolferUpdateOne) check() error {
-	if v, ok := _u.mutation.ExternalID(); ok {
-		if err := golfer.ExternalIDValidator(v); err != nil {
-			return &ValidationError{Name: "external_id", err: fmt.Errorf(`ent: validator failed for field "Golfer.external_id": %w`, err)}
-		}
-	}
 	if v, ok := _u.mutation.Name(); ok {
 		if err := golfer.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Golfer.name": %w`, err)}
-		}
-	}
-	if v, ok := _u.mutation.Country(); ok {
-		if err := golfer.CountryValidator(v); err != nil {
-			return &ValidationError{Name: "country", err: fmt.Errorf(`ent: validator failed for field "Golfer.country": %w`, err)}
 		}
 	}
 	return nil
@@ -681,8 +1026,32 @@ func (_u *GolferUpdateOne) sqlSave(ctx context.Context) (_node *Golfer, err erro
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(golfer.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.ExternalID(); ok {
-		_spec.SetField(golfer.FieldExternalID, field.TypeString, value)
+	if value, ok := _u.mutation.ScratchgolfID(); ok {
+		_spec.SetField(golfer.FieldScratchgolfID, field.TypeString, value)
+	}
+	if _u.mutation.ScratchgolfIDCleared() {
+		_spec.ClearField(golfer.FieldScratchgolfID, field.TypeString)
+	}
+	if value, ok := _u.mutation.BdlID(); ok {
+		_spec.SetField(golfer.FieldBdlID, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedBdlID(); ok {
+		_spec.AddField(golfer.FieldBdlID, field.TypeInt, value)
+	}
+	if _u.mutation.BdlIDCleared() {
+		_spec.ClearField(golfer.FieldBdlID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.FirstName(); ok {
+		_spec.SetField(golfer.FieldFirstName, field.TypeString, value)
+	}
+	if _u.mutation.FirstNameCleared() {
+		_spec.ClearField(golfer.FieldFirstName, field.TypeString)
+	}
+	if value, ok := _u.mutation.LastName(); ok {
+		_spec.SetField(golfer.FieldLastName, field.TypeString, value)
+	}
+	if _u.mutation.LastNameCleared() {
+		_spec.ClearField(golfer.FieldLastName, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(golfer.FieldName, field.TypeString, value)
@@ -690,14 +1059,23 @@ func (_u *GolferUpdateOne) sqlSave(ctx context.Context) (_node *Golfer, err erro
 	if value, ok := _u.mutation.Country(); ok {
 		_spec.SetField(golfer.FieldCountry, field.TypeString, value)
 	}
-	if value, ok := _u.mutation.WorldRanking(); ok {
-		_spec.SetField(golfer.FieldWorldRanking, field.TypeInt, value)
+	if _u.mutation.CountryCleared() {
+		_spec.ClearField(golfer.FieldCountry, field.TypeString)
 	}
-	if value, ok := _u.mutation.AddedWorldRanking(); ok {
-		_spec.AddField(golfer.FieldWorldRanking, field.TypeInt, value)
+	if value, ok := _u.mutation.CountryCode(); ok {
+		_spec.SetField(golfer.FieldCountryCode, field.TypeString, value)
 	}
-	if _u.mutation.WorldRankingCleared() {
-		_spec.ClearField(golfer.FieldWorldRanking, field.TypeInt)
+	if value, ok := _u.mutation.Owgr(); ok {
+		_spec.SetField(golfer.FieldOwgr, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedOwgr(); ok {
+		_spec.AddField(golfer.FieldOwgr, field.TypeInt, value)
+	}
+	if _u.mutation.OwgrCleared() {
+		_spec.ClearField(golfer.FieldOwgr, field.TypeInt)
+	}
+	if value, ok := _u.mutation.Active(); ok {
+		_spec.SetField(golfer.FieldActive, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.ImageURL(); ok {
 		_spec.SetField(golfer.FieldImageURL, field.TypeString, value)
@@ -743,6 +1121,51 @@ func (_u *GolferUpdateOne) sqlSave(ctx context.Context) (_node *Golfer, err erro
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pick.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.EntriesTable,
+			Columns: []string{golfer.EntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEntriesIDs(); len(nodes) > 0 && !_u.mutation.EntriesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.EntriesTable,
+			Columns: []string{golfer.EntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.EntriesTable,
+			Columns: []string{golfer.EntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

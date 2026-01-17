@@ -12,11 +12,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 // TournamentQuery is the builder for querying Tournament entities.
@@ -28,6 +29,7 @@ type TournamentQuery struct {
 	predicates  []predicate.Tournament
 	withPicks   *PickQuery
 	withGolfers *GolferQuery
+	withEntries *TournamentEntryQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -101,6 +103,28 @@ func (_q *TournamentQuery) QueryGolfers() *GolferQuery {
 			sqlgraph.From(tournament.Table, tournament.FieldID, selector),
 			sqlgraph.To(golfer.Table, golfer.FieldID),
 			sqlgraph.Edge(sqlgraph.M2M, false, tournament.GolfersTable, tournament.GolfersPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEntries chains the current query on the "entries" edge.
+func (_q *TournamentQuery) QueryEntries() *TournamentEntryQuery {
+	query := (&TournamentEntryClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournament.Table, tournament.FieldID, selector),
+			sqlgraph.To(tournamententry.Table, tournamententry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tournament.EntriesTable, tournament.EntriesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -302,6 +326,7 @@ func (_q *TournamentQuery) Clone() *TournamentQuery {
 		predicates:  append([]predicate.Tournament{}, _q.predicates...),
 		withPicks:   _q.withPicks.Clone(),
 		withGolfers: _q.withGolfers.Clone(),
+		withEntries: _q.withEntries.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -327,6 +352,17 @@ func (_q *TournamentQuery) WithGolfers(opts ...func(*GolferQuery)) *TournamentQu
 		opt(query)
 	}
 	_q.withGolfers = query
+	return _q
+}
+
+// WithEntries tells the query-builder to eager-load the nodes that are connected to
+// the "entries" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TournamentQuery) WithEntries(opts ...func(*TournamentEntryQuery)) *TournamentQuery {
+	query := (&TournamentEntryClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEntries = query
 	return _q
 }
 
@@ -408,9 +444,10 @@ func (_q *TournamentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 	var (
 		nodes       = []*Tournament{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			_q.withPicks != nil,
 			_q.withGolfers != nil,
+			_q.withEntries != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,6 +479,13 @@ func (_q *TournamentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 		if err := _q.loadGolfers(ctx, query, nodes,
 			func(n *Tournament) { n.Edges.Golfers = []*Golfer{} },
 			func(n *Tournament, e *Golfer) { n.Edges.Golfers = append(n.Edges.Golfers, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEntries; query != nil {
+		if err := _q.loadEntries(ctx, query, nodes,
+			func(n *Tournament) { n.Edges.Entries = []*TournamentEntry{} },
+			func(n *Tournament, e *TournamentEntry) { n.Edges.Entries = append(n.Edges.Entries, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -537,6 +581,37 @@ func (_q *TournamentQuery) loadGolfers(ctx context.Context, query *GolferQuery, 
 		for kn := range nodes {
 			assign(kn, n)
 		}
+	}
+	return nil
+}
+func (_q *TournamentQuery) loadEntries(ctx context.Context, query *TournamentEntryQuery, nodes []*Tournament, init func(*Tournament), assign func(*Tournament, *TournamentEntry)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Tournament)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.TournamentEntry(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(tournament.EntriesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.tournament_entries
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "tournament_entries" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "tournament_entries" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
 	}
 	return nil
 }

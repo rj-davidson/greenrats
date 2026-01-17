@@ -11,7 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/predicate"
@@ -21,14 +21,13 @@ import (
 // LeagueMembershipQuery is the builder for querying LeagueMembership entities.
 type LeagueMembershipQuery struct {
 	config
-	ctx           *QueryContext
-	order         []leaguemembership.OrderOption
-	inters        []Interceptor
-	predicates    []predicate.LeagueMembership
-	withCreatedBy *UserQuery
-	withUser      *UserQuery
-	withLeague    *LeagueQuery
-	withFKs       bool
+	ctx        *QueryContext
+	order      []leaguemembership.OrderOption
+	inters     []Interceptor
+	predicates []predicate.LeagueMembership
+	withUser   *UserQuery
+	withLeague *LeagueQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -63,28 +62,6 @@ func (_q *LeagueMembershipQuery) Unique(unique bool) *LeagueMembershipQuery {
 func (_q *LeagueMembershipQuery) Order(o ...leaguemembership.OrderOption) *LeagueMembershipQuery {
 	_q.order = append(_q.order, o...)
 	return _q
-}
-
-// QueryCreatedBy chains the current query on the "created_by" edge.
-func (_q *LeagueMembershipQuery) QueryCreatedBy() *UserQuery {
-	query := (&UserClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(leaguemembership.Table, leaguemembership.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, false, leaguemembership.CreatedByTable, leaguemembership.CreatedByColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
 }
 
 // QueryUser chains the current query on the "user" edge.
@@ -318,29 +295,17 @@ func (_q *LeagueMembershipQuery) Clone() *LeagueMembershipQuery {
 		return nil
 	}
 	return &LeagueMembershipQuery{
-		config:        _q.config,
-		ctx:           _q.ctx.Clone(),
-		order:         append([]leaguemembership.OrderOption{}, _q.order...),
-		inters:        append([]Interceptor{}, _q.inters...),
-		predicates:    append([]predicate.LeagueMembership{}, _q.predicates...),
-		withCreatedBy: _q.withCreatedBy.Clone(),
-		withUser:      _q.withUser.Clone(),
-		withLeague:    _q.withLeague.Clone(),
+		config:     _q.config,
+		ctx:        _q.ctx.Clone(),
+		order:      append([]leaguemembership.OrderOption{}, _q.order...),
+		inters:     append([]Interceptor{}, _q.inters...),
+		predicates: append([]predicate.LeagueMembership{}, _q.predicates...),
+		withUser:   _q.withUser.Clone(),
+		withLeague: _q.withLeague.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
-}
-
-// WithCreatedBy tells the query-builder to eager-load the nodes that are connected to
-// the "created_by" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *LeagueMembershipQuery) WithCreatedBy(opts ...func(*UserQuery)) *LeagueMembershipQuery {
-	query := (&UserClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withCreatedBy = query
-	return _q
 }
 
 // WithUser tells the query-builder to eager-load the nodes that are connected to
@@ -444,13 +409,12 @@ func (_q *LeagueMembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 		nodes       = []*LeagueMembership{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
-			_q.withCreatedBy != nil,
+		loadedTypes = [2]bool{
 			_q.withUser != nil,
 			_q.withLeague != nil,
 		}
 	)
-	if _q.withCreatedBy != nil || _q.withUser != nil || _q.withLeague != nil {
+	if _q.withUser != nil || _q.withLeague != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -474,12 +438,6 @@ func (_q *LeagueMembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withCreatedBy; query != nil {
-		if err := _q.loadCreatedBy(ctx, query, nodes, nil,
-			func(n *LeagueMembership, e *User) { n.Edges.CreatedBy = e }); err != nil {
-			return nil, err
-		}
-	}
 	if query := _q.withUser; query != nil {
 		if err := _q.loadUser(ctx, query, nodes, nil,
 			func(n *LeagueMembership, e *User) { n.Edges.User = e }); err != nil {
@@ -495,38 +453,6 @@ func (_q *LeagueMembershipQuery) sqlAll(ctx context.Context, hooks ...queryHook)
 	return nodes, nil
 }
 
-func (_q *LeagueMembershipQuery) loadCreatedBy(ctx context.Context, query *UserQuery, nodes []*LeagueMembership, init func(*LeagueMembership), assign func(*LeagueMembership, *User)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*LeagueMembership)
-	for i := range nodes {
-		if nodes[i].league_membership_created_by == nil {
-			continue
-		}
-		fk := *nodes[i].league_membership_created_by
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(user.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "league_membership_created_by" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
 func (_q *LeagueMembershipQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*LeagueMembership, init func(*LeagueMembership), assign func(*LeagueMembership, *User)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*LeagueMembership)

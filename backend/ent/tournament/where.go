@@ -7,7 +7,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 )
 
@@ -66,9 +66,14 @@ func UpdatedAt(v time.Time) predicate.Tournament {
 	return predicate.Tournament(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// ExternalID applies equality check predicate on the "external_id" field. It's identical to ExternalIDEQ.
-func ExternalID(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldEQ(FieldExternalID, v))
+// ScratchgolfID applies equality check predicate on the "scratchgolf_id" field. It's identical to ScratchgolfIDEQ.
+func ScratchgolfID(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldScratchgolfID, v))
+}
+
+// BdlID applies equality check predicate on the "bdl_id" field. It's identical to BdlIDEQ.
+func BdlID(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldBdlID, v))
 }
 
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
@@ -89,6 +94,21 @@ func EndDate(v time.Time) predicate.Tournament {
 // SeasonYear applies equality check predicate on the "season_year" field. It's identical to SeasonYearEQ.
 func SeasonYear(v int) predicate.Tournament {
 	return predicate.Tournament(sql.FieldEQ(FieldSeasonYear, v))
+}
+
+// Course applies equality check predicate on the "course" field. It's identical to CourseEQ.
+func Course(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldCourse, v))
+}
+
+// Location applies equality check predicate on the "location" field. It's identical to LocationEQ.
+func Location(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldLocation, v))
+}
+
+// Purse applies equality check predicate on the "purse" field. It's identical to PurseEQ.
+func Purse(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldPurse, v))
 }
 
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
@@ -171,69 +191,129 @@ func UpdatedAtLTE(v time.Time) predicate.Tournament {
 	return predicate.Tournament(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
-// ExternalIDEQ applies the EQ predicate on the "external_id" field.
-func ExternalIDEQ(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldEQ(FieldExternalID, v))
+// ScratchgolfIDEQ applies the EQ predicate on the "scratchgolf_id" field.
+func ScratchgolfIDEQ(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldScratchgolfID, v))
 }
 
-// ExternalIDNEQ applies the NEQ predicate on the "external_id" field.
-func ExternalIDNEQ(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldNEQ(FieldExternalID, v))
+// ScratchgolfIDNEQ applies the NEQ predicate on the "scratchgolf_id" field.
+func ScratchgolfIDNEQ(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNEQ(FieldScratchgolfID, v))
 }
 
-// ExternalIDIn applies the In predicate on the "external_id" field.
-func ExternalIDIn(vs ...string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldIn(FieldExternalID, vs...))
+// ScratchgolfIDIn applies the In predicate on the "scratchgolf_id" field.
+func ScratchgolfIDIn(vs ...string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldIn(FieldScratchgolfID, vs...))
 }
 
-// ExternalIDNotIn applies the NotIn predicate on the "external_id" field.
-func ExternalIDNotIn(vs ...string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldNotIn(FieldExternalID, vs...))
+// ScratchgolfIDNotIn applies the NotIn predicate on the "scratchgolf_id" field.
+func ScratchgolfIDNotIn(vs ...string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotIn(FieldScratchgolfID, vs...))
 }
 
-// ExternalIDGT applies the GT predicate on the "external_id" field.
-func ExternalIDGT(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldGT(FieldExternalID, v))
+// ScratchgolfIDGT applies the GT predicate on the "scratchgolf_id" field.
+func ScratchgolfIDGT(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGT(FieldScratchgolfID, v))
 }
 
-// ExternalIDGTE applies the GTE predicate on the "external_id" field.
-func ExternalIDGTE(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldGTE(FieldExternalID, v))
+// ScratchgolfIDGTE applies the GTE predicate on the "scratchgolf_id" field.
+func ScratchgolfIDGTE(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGTE(FieldScratchgolfID, v))
 }
 
-// ExternalIDLT applies the LT predicate on the "external_id" field.
-func ExternalIDLT(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldLT(FieldExternalID, v))
+// ScratchgolfIDLT applies the LT predicate on the "scratchgolf_id" field.
+func ScratchgolfIDLT(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLT(FieldScratchgolfID, v))
 }
 
-// ExternalIDLTE applies the LTE predicate on the "external_id" field.
-func ExternalIDLTE(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldLTE(FieldExternalID, v))
+// ScratchgolfIDLTE applies the LTE predicate on the "scratchgolf_id" field.
+func ScratchgolfIDLTE(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLTE(FieldScratchgolfID, v))
 }
 
-// ExternalIDContains applies the Contains predicate on the "external_id" field.
-func ExternalIDContains(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldContains(FieldExternalID, v))
+// ScratchgolfIDContains applies the Contains predicate on the "scratchgolf_id" field.
+func ScratchgolfIDContains(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldContains(FieldScratchgolfID, v))
 }
 
-// ExternalIDHasPrefix applies the HasPrefix predicate on the "external_id" field.
-func ExternalIDHasPrefix(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldHasPrefix(FieldExternalID, v))
+// ScratchgolfIDHasPrefix applies the HasPrefix predicate on the "scratchgolf_id" field.
+func ScratchgolfIDHasPrefix(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldHasPrefix(FieldScratchgolfID, v))
 }
 
-// ExternalIDHasSuffix applies the HasSuffix predicate on the "external_id" field.
-func ExternalIDHasSuffix(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldHasSuffix(FieldExternalID, v))
+// ScratchgolfIDHasSuffix applies the HasSuffix predicate on the "scratchgolf_id" field.
+func ScratchgolfIDHasSuffix(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldHasSuffix(FieldScratchgolfID, v))
 }
 
-// ExternalIDEqualFold applies the EqualFold predicate on the "external_id" field.
-func ExternalIDEqualFold(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldEqualFold(FieldExternalID, v))
+// ScratchgolfIDIsNil applies the IsNil predicate on the "scratchgolf_id" field.
+func ScratchgolfIDIsNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldIsNull(FieldScratchgolfID))
 }
 
-// ExternalIDContainsFold applies the ContainsFold predicate on the "external_id" field.
-func ExternalIDContainsFold(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldContainsFold(FieldExternalID, v))
+// ScratchgolfIDNotNil applies the NotNil predicate on the "scratchgolf_id" field.
+func ScratchgolfIDNotNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotNull(FieldScratchgolfID))
+}
+
+// ScratchgolfIDEqualFold applies the EqualFold predicate on the "scratchgolf_id" field.
+func ScratchgolfIDEqualFold(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEqualFold(FieldScratchgolfID, v))
+}
+
+// ScratchgolfIDContainsFold applies the ContainsFold predicate on the "scratchgolf_id" field.
+func ScratchgolfIDContainsFold(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldContainsFold(FieldScratchgolfID, v))
+}
+
+// BdlIDEQ applies the EQ predicate on the "bdl_id" field.
+func BdlIDEQ(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldBdlID, v))
+}
+
+// BdlIDNEQ applies the NEQ predicate on the "bdl_id" field.
+func BdlIDNEQ(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNEQ(FieldBdlID, v))
+}
+
+// BdlIDIn applies the In predicate on the "bdl_id" field.
+func BdlIDIn(vs ...int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldIn(FieldBdlID, vs...))
+}
+
+// BdlIDNotIn applies the NotIn predicate on the "bdl_id" field.
+func BdlIDNotIn(vs ...int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotIn(FieldBdlID, vs...))
+}
+
+// BdlIDGT applies the GT predicate on the "bdl_id" field.
+func BdlIDGT(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGT(FieldBdlID, v))
+}
+
+// BdlIDGTE applies the GTE predicate on the "bdl_id" field.
+func BdlIDGTE(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGTE(FieldBdlID, v))
+}
+
+// BdlIDLT applies the LT predicate on the "bdl_id" field.
+func BdlIDLT(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLT(FieldBdlID, v))
+}
+
+// BdlIDLTE applies the LTE predicate on the "bdl_id" field.
+func BdlIDLTE(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLTE(FieldBdlID, v))
+}
+
+// BdlIDIsNil applies the IsNil predicate on the "bdl_id" field.
+func BdlIDIsNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldIsNull(FieldBdlID))
+}
+
+// BdlIDNotNil applies the NotNil predicate on the "bdl_id" field.
+func BdlIDNotNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotNull(FieldBdlID))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.
@@ -441,6 +521,206 @@ func SeasonYearLTE(v int) predicate.Tournament {
 	return predicate.Tournament(sql.FieldLTE(FieldSeasonYear, v))
 }
 
+// CourseEQ applies the EQ predicate on the "course" field.
+func CourseEQ(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldCourse, v))
+}
+
+// CourseNEQ applies the NEQ predicate on the "course" field.
+func CourseNEQ(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNEQ(FieldCourse, v))
+}
+
+// CourseIn applies the In predicate on the "course" field.
+func CourseIn(vs ...string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldIn(FieldCourse, vs...))
+}
+
+// CourseNotIn applies the NotIn predicate on the "course" field.
+func CourseNotIn(vs ...string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotIn(FieldCourse, vs...))
+}
+
+// CourseGT applies the GT predicate on the "course" field.
+func CourseGT(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGT(FieldCourse, v))
+}
+
+// CourseGTE applies the GTE predicate on the "course" field.
+func CourseGTE(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGTE(FieldCourse, v))
+}
+
+// CourseLT applies the LT predicate on the "course" field.
+func CourseLT(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLT(FieldCourse, v))
+}
+
+// CourseLTE applies the LTE predicate on the "course" field.
+func CourseLTE(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLTE(FieldCourse, v))
+}
+
+// CourseContains applies the Contains predicate on the "course" field.
+func CourseContains(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldContains(FieldCourse, v))
+}
+
+// CourseHasPrefix applies the HasPrefix predicate on the "course" field.
+func CourseHasPrefix(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldHasPrefix(FieldCourse, v))
+}
+
+// CourseHasSuffix applies the HasSuffix predicate on the "course" field.
+func CourseHasSuffix(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldHasSuffix(FieldCourse, v))
+}
+
+// CourseIsNil applies the IsNil predicate on the "course" field.
+func CourseIsNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldIsNull(FieldCourse))
+}
+
+// CourseNotNil applies the NotNil predicate on the "course" field.
+func CourseNotNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotNull(FieldCourse))
+}
+
+// CourseEqualFold applies the EqualFold predicate on the "course" field.
+func CourseEqualFold(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEqualFold(FieldCourse, v))
+}
+
+// CourseContainsFold applies the ContainsFold predicate on the "course" field.
+func CourseContainsFold(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldContainsFold(FieldCourse, v))
+}
+
+// LocationEQ applies the EQ predicate on the "location" field.
+func LocationEQ(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldLocation, v))
+}
+
+// LocationNEQ applies the NEQ predicate on the "location" field.
+func LocationNEQ(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNEQ(FieldLocation, v))
+}
+
+// LocationIn applies the In predicate on the "location" field.
+func LocationIn(vs ...string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldIn(FieldLocation, vs...))
+}
+
+// LocationNotIn applies the NotIn predicate on the "location" field.
+func LocationNotIn(vs ...string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotIn(FieldLocation, vs...))
+}
+
+// LocationGT applies the GT predicate on the "location" field.
+func LocationGT(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGT(FieldLocation, v))
+}
+
+// LocationGTE applies the GTE predicate on the "location" field.
+func LocationGTE(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGTE(FieldLocation, v))
+}
+
+// LocationLT applies the LT predicate on the "location" field.
+func LocationLT(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLT(FieldLocation, v))
+}
+
+// LocationLTE applies the LTE predicate on the "location" field.
+func LocationLTE(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLTE(FieldLocation, v))
+}
+
+// LocationContains applies the Contains predicate on the "location" field.
+func LocationContains(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldContains(FieldLocation, v))
+}
+
+// LocationHasPrefix applies the HasPrefix predicate on the "location" field.
+func LocationHasPrefix(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldHasPrefix(FieldLocation, v))
+}
+
+// LocationHasSuffix applies the HasSuffix predicate on the "location" field.
+func LocationHasSuffix(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldHasSuffix(FieldLocation, v))
+}
+
+// LocationIsNil applies the IsNil predicate on the "location" field.
+func LocationIsNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldIsNull(FieldLocation))
+}
+
+// LocationNotNil applies the NotNil predicate on the "location" field.
+func LocationNotNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotNull(FieldLocation))
+}
+
+// LocationEqualFold applies the EqualFold predicate on the "location" field.
+func LocationEqualFold(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEqualFold(FieldLocation, v))
+}
+
+// LocationContainsFold applies the ContainsFold predicate on the "location" field.
+func LocationContainsFold(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldContainsFold(FieldLocation, v))
+}
+
+// PurseEQ applies the EQ predicate on the "purse" field.
+func PurseEQ(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldPurse, v))
+}
+
+// PurseNEQ applies the NEQ predicate on the "purse" field.
+func PurseNEQ(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNEQ(FieldPurse, v))
+}
+
+// PurseIn applies the In predicate on the "purse" field.
+func PurseIn(vs ...int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldIn(FieldPurse, vs...))
+}
+
+// PurseNotIn applies the NotIn predicate on the "purse" field.
+func PurseNotIn(vs ...int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotIn(FieldPurse, vs...))
+}
+
+// PurseGT applies the GT predicate on the "purse" field.
+func PurseGT(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGT(FieldPurse, v))
+}
+
+// PurseGTE applies the GTE predicate on the "purse" field.
+func PurseGTE(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGTE(FieldPurse, v))
+}
+
+// PurseLT applies the LT predicate on the "purse" field.
+func PurseLT(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLT(FieldPurse, v))
+}
+
+// PurseLTE applies the LTE predicate on the "purse" field.
+func PurseLTE(v int) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLTE(FieldPurse, v))
+}
+
+// PurseIsNil applies the IsNil predicate on the "purse" field.
+func PurseIsNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldIsNull(FieldPurse))
+}
+
+// PurseNotNil applies the NotNil predicate on the "purse" field.
+func PurseNotNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotNull(FieldPurse))
+}
+
 // HasPicks applies the HasEdge predicate on the "picks" edge.
 func HasPicks() predicate.Tournament {
 	return predicate.Tournament(func(s *sql.Selector) {
@@ -479,6 +759,29 @@ func HasGolfers() predicate.Tournament {
 func HasGolfersWith(preds ...predicate.Golfer) predicate.Tournament {
 	return predicate.Tournament(func(s *sql.Selector) {
 		step := newGolfersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasEntries applies the HasEdge predicate on the "entries" edge.
+func HasEntries() predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEntriesWith applies the HasEdge predicate on the "entries" edge with a given conditions (other predicates).
+func HasEntriesWith(preds ...predicate.TournamentEntry) predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := newEntriesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

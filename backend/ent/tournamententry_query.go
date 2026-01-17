@@ -13,85 +13,59 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
-	"github.com/rj-davidson/greenrats/ent/league"
-	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/user"
+	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
-// PickQuery is the builder for querying Pick entities.
-type PickQuery struct {
+// TournamentEntryQuery is the builder for querying TournamentEntry entities.
+type TournamentEntryQuery struct {
 	config
 	ctx            *QueryContext
-	order          []pick.OrderOption
+	order          []tournamententry.OrderOption
 	inters         []Interceptor
-	predicates     []predicate.Pick
-	withUser       *UserQuery
+	predicates     []predicate.TournamentEntry
 	withTournament *TournamentQuery
 	withGolfer     *GolferQuery
-	withLeague     *LeagueQuery
 	withFKs        bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the PickQuery builder.
-func (_q *PickQuery) Where(ps ...predicate.Pick) *PickQuery {
+// Where adds a new predicate for the TournamentEntryQuery builder.
+func (_q *TournamentEntryQuery) Where(ps ...predicate.TournamentEntry) *TournamentEntryQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *PickQuery) Limit(limit int) *PickQuery {
+func (_q *TournamentEntryQuery) Limit(limit int) *TournamentEntryQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *PickQuery) Offset(offset int) *PickQuery {
+func (_q *TournamentEntryQuery) Offset(offset int) *TournamentEntryQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *PickQuery) Unique(unique bool) *PickQuery {
+func (_q *TournamentEntryQuery) Unique(unique bool) *TournamentEntryQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *PickQuery) Order(o ...pick.OrderOption) *PickQuery {
+func (_q *TournamentEntryQuery) Order(o ...tournamententry.OrderOption) *TournamentEntryQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryUser chains the current query on the "user" edge.
-func (_q *PickQuery) QueryUser() *UserQuery {
-	query := (&UserClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(pick.Table, pick.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, pick.UserTable, pick.UserColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
 // QueryTournament chains the current query on the "tournament" edge.
-func (_q *PickQuery) QueryTournament() *TournamentQuery {
+func (_q *TournamentEntryQuery) QueryTournament() *TournamentQuery {
 	query := (&TournamentClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -102,9 +76,9 @@ func (_q *PickQuery) QueryTournament() *TournamentQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(pick.Table, pick.FieldID, selector),
+			sqlgraph.From(tournamententry.Table, tournamententry.FieldID, selector),
 			sqlgraph.To(tournament.Table, tournament.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, pick.TournamentTable, pick.TournamentColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, tournamententry.TournamentTable, tournamententry.TournamentColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -113,7 +87,7 @@ func (_q *PickQuery) QueryTournament() *TournamentQuery {
 }
 
 // QueryGolfer chains the current query on the "golfer" edge.
-func (_q *PickQuery) QueryGolfer() *GolferQuery {
+func (_q *TournamentEntryQuery) QueryGolfer() *GolferQuery {
 	query := (&GolferClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -124,9 +98,9 @@ func (_q *PickQuery) QueryGolfer() *GolferQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(pick.Table, pick.FieldID, selector),
+			sqlgraph.From(tournamententry.Table, tournamententry.FieldID, selector),
 			sqlgraph.To(golfer.Table, golfer.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, pick.GolferTable, pick.GolferColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, tournamententry.GolferTable, tournamententry.GolferColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -134,43 +108,21 @@ func (_q *PickQuery) QueryGolfer() *GolferQuery {
 	return query
 }
 
-// QueryLeague chains the current query on the "league" edge.
-func (_q *PickQuery) QueryLeague() *LeagueQuery {
-	query := (&LeagueClient{config: _q.config}).Query()
-	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
-		if err := _q.prepareQuery(ctx); err != nil {
-			return nil, err
-		}
-		selector := _q.sqlQuery(ctx)
-		if err := selector.Err(); err != nil {
-			return nil, err
-		}
-		step := sqlgraph.NewStep(
-			sqlgraph.From(pick.Table, pick.FieldID, selector),
-			sqlgraph.To(league.Table, league.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, pick.LeagueTable, pick.LeagueColumn),
-		)
-		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
-		return fromU, nil
-	}
-	return query
-}
-
-// First returns the first Pick entity from the query.
-// Returns a *NotFoundError when no Pick was found.
-func (_q *PickQuery) First(ctx context.Context) (*Pick, error) {
+// First returns the first TournamentEntry entity from the query.
+// Returns a *NotFoundError when no TournamentEntry was found.
+func (_q *TournamentEntryQuery) First(ctx context.Context) (*TournamentEntry, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{pick.Label}
+		return nil, &NotFoundError{tournamententry.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *PickQuery) FirstX(ctx context.Context) *Pick {
+func (_q *TournamentEntryQuery) FirstX(ctx context.Context) *TournamentEntry {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -178,22 +130,22 @@ func (_q *PickQuery) FirstX(ctx context.Context) *Pick {
 	return node
 }
 
-// FirstID returns the first Pick ID from the query.
-// Returns a *NotFoundError when no Pick ID was found.
-func (_q *PickQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first TournamentEntry ID from the query.
+// Returns a *NotFoundError when no TournamentEntry ID was found.
+func (_q *TournamentEntryQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{pick.Label}
+		err = &NotFoundError{tournamententry.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *PickQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *TournamentEntryQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -201,10 +153,10 @@ func (_q *PickQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single Pick entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one Pick entity is found.
-// Returns a *NotFoundError when no Pick entities are found.
-func (_q *PickQuery) Only(ctx context.Context) (*Pick, error) {
+// Only returns a single TournamentEntry entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one TournamentEntry entity is found.
+// Returns a *NotFoundError when no TournamentEntry entities are found.
+func (_q *TournamentEntryQuery) Only(ctx context.Context) (*TournamentEntry, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -213,14 +165,14 @@ func (_q *PickQuery) Only(ctx context.Context) (*Pick, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{pick.Label}
+		return nil, &NotFoundError{tournamententry.Label}
 	default:
-		return nil, &NotSingularError{pick.Label}
+		return nil, &NotSingularError{tournamententry.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *PickQuery) OnlyX(ctx context.Context) *Pick {
+func (_q *TournamentEntryQuery) OnlyX(ctx context.Context) *TournamentEntry {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -228,10 +180,10 @@ func (_q *PickQuery) OnlyX(ctx context.Context) *Pick {
 	return node
 }
 
-// OnlyID is like Only, but returns the only Pick ID in the query.
-// Returns a *NotSingularError when more than one Pick ID is found.
+// OnlyID is like Only, but returns the only TournamentEntry ID in the query.
+// Returns a *NotSingularError when more than one TournamentEntry ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *PickQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *TournamentEntryQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -240,15 +192,15 @@ func (_q *PickQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{pick.Label}
+		err = &NotFoundError{tournamententry.Label}
 	default:
-		err = &NotSingularError{pick.Label}
+		err = &NotSingularError{tournamententry.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *PickQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *TournamentEntryQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -256,18 +208,18 @@ func (_q *PickQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of Picks.
-func (_q *PickQuery) All(ctx context.Context) ([]*Pick, error) {
+// All executes the query and returns a list of TournamentEntries.
+func (_q *TournamentEntryQuery) All(ctx context.Context) ([]*TournamentEntry, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*Pick, *PickQuery]()
-	return withInterceptors[[]*Pick](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*TournamentEntry, *TournamentEntryQuery]()
+	return withInterceptors[[]*TournamentEntry](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *PickQuery) AllX(ctx context.Context) []*Pick {
+func (_q *TournamentEntryQuery) AllX(ctx context.Context) []*TournamentEntry {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -275,20 +227,20 @@ func (_q *PickQuery) AllX(ctx context.Context) []*Pick {
 	return nodes
 }
 
-// IDs executes the query and returns a list of Pick IDs.
-func (_q *PickQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of TournamentEntry IDs.
+func (_q *TournamentEntryQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(pick.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(tournamententry.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *PickQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *TournamentEntryQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -297,16 +249,16 @@ func (_q *PickQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *PickQuery) Count(ctx context.Context) (int, error) {
+func (_q *TournamentEntryQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*PickQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*TournamentEntryQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *PickQuery) CountX(ctx context.Context) int {
+func (_q *TournamentEntryQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -315,7 +267,7 @@ func (_q *PickQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *PickQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *TournamentEntryQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -328,7 +280,7 @@ func (_q *PickQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *PickQuery) ExistX(ctx context.Context) bool {
+func (_q *TournamentEntryQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -336,42 +288,29 @@ func (_q *PickQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the PickQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the TournamentEntryQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *PickQuery) Clone() *PickQuery {
+func (_q *TournamentEntryQuery) Clone() *TournamentEntryQuery {
 	if _q == nil {
 		return nil
 	}
-	return &PickQuery{
+	return &TournamentEntryQuery{
 		config:         _q.config,
 		ctx:            _q.ctx.Clone(),
-		order:          append([]pick.OrderOption{}, _q.order...),
+		order:          append([]tournamententry.OrderOption{}, _q.order...),
 		inters:         append([]Interceptor{}, _q.inters...),
-		predicates:     append([]predicate.Pick{}, _q.predicates...),
-		withUser:       _q.withUser.Clone(),
+		predicates:     append([]predicate.TournamentEntry{}, _q.predicates...),
 		withTournament: _q.withTournament.Clone(),
 		withGolfer:     _q.withGolfer.Clone(),
-		withLeague:     _q.withLeague.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithUser tells the query-builder to eager-load the nodes that are connected to
-// the "user" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *PickQuery) WithUser(opts ...func(*UserQuery)) *PickQuery {
-	query := (&UserClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withUser = query
-	return _q
-}
-
 // WithTournament tells the query-builder to eager-load the nodes that are connected to
 // the "tournament" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *PickQuery) WithTournament(opts ...func(*TournamentQuery)) *PickQuery {
+func (_q *TournamentEntryQuery) WithTournament(opts ...func(*TournamentQuery)) *TournamentEntryQuery {
 	query := (&TournamentClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -382,23 +321,12 @@ func (_q *PickQuery) WithTournament(opts ...func(*TournamentQuery)) *PickQuery {
 
 // WithGolfer tells the query-builder to eager-load the nodes that are connected to
 // the "golfer" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *PickQuery) WithGolfer(opts ...func(*GolferQuery)) *PickQuery {
+func (_q *TournamentEntryQuery) WithGolfer(opts ...func(*GolferQuery)) *TournamentEntryQuery {
 	query := (&GolferClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
 	_q.withGolfer = query
-	return _q
-}
-
-// WithLeague tells the query-builder to eager-load the nodes that are connected to
-// the "league" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *PickQuery) WithLeague(opts ...func(*LeagueQuery)) *PickQuery {
-	query := (&LeagueClient{config: _q.config}).Query()
-	for _, opt := range opts {
-		opt(query)
-	}
-	_q.withLeague = query
 	return _q
 }
 
@@ -408,19 +336,19 @@ func (_q *PickQuery) WithLeague(opts ...func(*LeagueQuery)) *PickQuery {
 // Example:
 //
 //	var v []struct {
-//		SeasonYear int `json:"season_year,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.Pick.Query().
-//		GroupBy(pick.FieldSeasonYear).
+//	client.TournamentEntry.Query().
+//		GroupBy(tournamententry.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *PickQuery) GroupBy(field string, fields ...string) *PickGroupBy {
+func (_q *TournamentEntryQuery) GroupBy(field string, fields ...string) *TournamentEntryGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &PickGroupBy{build: _q}
+	grbuild := &TournamentEntryGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = pick.Label
+	grbuild.label = tournamententry.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -431,26 +359,26 @@ func (_q *PickQuery) GroupBy(field string, fields ...string) *PickGroupBy {
 // Example:
 //
 //	var v []struct {
-//		SeasonYear int `json:"season_year,omitempty"`
+//		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
-//	client.Pick.Query().
-//		Select(pick.FieldSeasonYear).
+//	client.TournamentEntry.Query().
+//		Select(tournamententry.FieldCreatedAt).
 //		Scan(ctx, &v)
-func (_q *PickQuery) Select(fields ...string) *PickSelect {
+func (_q *TournamentEntryQuery) Select(fields ...string) *TournamentEntrySelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &PickSelect{PickQuery: _q}
-	sbuild.label = pick.Label
+	sbuild := &TournamentEntrySelect{TournamentEntryQuery: _q}
+	sbuild.label = tournamententry.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a PickSelect configured with the given aggregations.
-func (_q *PickQuery) Aggregate(fns ...AggregateFunc) *PickSelect {
+// Aggregate returns a TournamentEntrySelect configured with the given aggregations.
+func (_q *TournamentEntryQuery) Aggregate(fns ...AggregateFunc) *TournamentEntrySelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *PickQuery) prepareQuery(ctx context.Context) error {
+func (_q *TournamentEntryQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -462,7 +390,7 @@ func (_q *PickQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !pick.ValidColumn(f) {
+		if !tournamententry.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -476,29 +404,27 @@ func (_q *PickQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *PickQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pick, error) {
+func (_q *TournamentEntryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*TournamentEntry, error) {
 	var (
-		nodes       = []*Pick{}
+		nodes       = []*TournamentEntry{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
-			_q.withUser != nil,
+		loadedTypes = [2]bool{
 			_q.withTournament != nil,
 			_q.withGolfer != nil,
-			_q.withLeague != nil,
 		}
 	)
-	if _q.withUser != nil || _q.withTournament != nil || _q.withGolfer != nil || _q.withLeague != nil {
+	if _q.withTournament != nil || _q.withGolfer != nil {
 		withFKs = true
 	}
 	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, pick.ForeignKeys...)
+		_spec.Node.Columns = append(_spec.Node.Columns, tournamententry.ForeignKeys...)
 	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*Pick).scanValues(nil, columns)
+		return (*TournamentEntry).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &Pick{config: _q.config}
+		node := &TournamentEntry{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -512,73 +438,29 @@ func (_q *PickQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pick, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withUser; query != nil {
-		if err := _q.loadUser(ctx, query, nodes, nil,
-			func(n *Pick, e *User) { n.Edges.User = e }); err != nil {
-			return nil, err
-		}
-	}
 	if query := _q.withTournament; query != nil {
 		if err := _q.loadTournament(ctx, query, nodes, nil,
-			func(n *Pick, e *Tournament) { n.Edges.Tournament = e }); err != nil {
+			func(n *TournamentEntry, e *Tournament) { n.Edges.Tournament = e }); err != nil {
 			return nil, err
 		}
 	}
 	if query := _q.withGolfer; query != nil {
 		if err := _q.loadGolfer(ctx, query, nodes, nil,
-			func(n *Pick, e *Golfer) { n.Edges.Golfer = e }); err != nil {
-			return nil, err
-		}
-	}
-	if query := _q.withLeague; query != nil {
-		if err := _q.loadLeague(ctx, query, nodes, nil,
-			func(n *Pick, e *League) { n.Edges.League = e }); err != nil {
+			func(n *TournamentEntry, e *Golfer) { n.Edges.Golfer = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *PickQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Pick, init func(*Pick), assign func(*Pick, *User)) error {
+func (_q *TournamentEntryQuery) loadTournament(ctx context.Context, query *TournamentQuery, nodes []*TournamentEntry, init func(*TournamentEntry), assign func(*TournamentEntry, *Tournament)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Pick)
+	nodeids := make(map[uuid.UUID][]*TournamentEntry)
 	for i := range nodes {
-		if nodes[i].user_picks == nil {
+		if nodes[i].tournament_entries == nil {
 			continue
 		}
-		fk := *nodes[i].user_picks
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(user.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_picks" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (_q *PickQuery) loadTournament(ctx context.Context, query *TournamentQuery, nodes []*Pick, init func(*Pick), assign func(*Pick, *Tournament)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Pick)
-	for i := range nodes {
-		if nodes[i].tournament_picks == nil {
-			continue
-		}
-		fk := *nodes[i].tournament_picks
+		fk := *nodes[i].tournament_entries
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -595,7 +477,7 @@ func (_q *PickQuery) loadTournament(ctx context.Context, query *TournamentQuery,
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "tournament_picks" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "tournament_entries" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -603,14 +485,14 @@ func (_q *PickQuery) loadTournament(ctx context.Context, query *TournamentQuery,
 	}
 	return nil
 }
-func (_q *PickQuery) loadGolfer(ctx context.Context, query *GolferQuery, nodes []*Pick, init func(*Pick), assign func(*Pick, *Golfer)) error {
+func (_q *TournamentEntryQuery) loadGolfer(ctx context.Context, query *GolferQuery, nodes []*TournamentEntry, init func(*TournamentEntry), assign func(*TournamentEntry, *Golfer)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Pick)
+	nodeids := make(map[uuid.UUID][]*TournamentEntry)
 	for i := range nodes {
-		if nodes[i].golfer_picks == nil {
+		if nodes[i].golfer_entries == nil {
 			continue
 		}
-		fk := *nodes[i].golfer_picks
+		fk := *nodes[i].golfer_entries
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -627,39 +509,7 @@ func (_q *PickQuery) loadGolfer(ctx context.Context, query *GolferQuery, nodes [
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "golfer_picks" returned %v`, n.ID)
-		}
-		for i := range nodes {
-			assign(nodes[i], n)
-		}
-	}
-	return nil
-}
-func (_q *PickQuery) loadLeague(ctx context.Context, query *LeagueQuery, nodes []*Pick, init func(*Pick), assign func(*Pick, *League)) error {
-	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*Pick)
-	for i := range nodes {
-		if nodes[i].league_picks == nil {
-			continue
-		}
-		fk := *nodes[i].league_picks
-		if _, ok := nodeids[fk]; !ok {
-			ids = append(ids, fk)
-		}
-		nodeids[fk] = append(nodeids[fk], nodes[i])
-	}
-	if len(ids) == 0 {
-		return nil
-	}
-	query.Where(league.IDIn(ids...))
-	neighbors, err := query.All(ctx)
-	if err != nil {
-		return err
-	}
-	for _, n := range neighbors {
-		nodes, ok := nodeids[n.ID]
-		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "league_picks" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "golfer_entries" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -668,7 +518,7 @@ func (_q *PickQuery) loadLeague(ctx context.Context, query *LeagueQuery, nodes [
 	return nil
 }
 
-func (_q *PickQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *TournamentEntryQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -677,8 +527,8 @@ func (_q *PickQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *PickQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(pick.Table, pick.Columns, sqlgraph.NewFieldSpec(pick.FieldID, field.TypeUUID))
+func (_q *TournamentEntryQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(tournamententry.Table, tournamententry.Columns, sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -687,9 +537,9 @@ func (_q *PickQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, pick.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, tournamententry.FieldID)
 		for i := range fields {
-			if fields[i] != pick.FieldID {
+			if fields[i] != tournamententry.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -717,12 +567,12 @@ func (_q *PickQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *PickQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *TournamentEntryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(pick.Table)
+	t1 := builder.Table(tournamententry.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = pick.Columns
+		columns = tournamententry.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -749,28 +599,28 @@ func (_q *PickQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// PickGroupBy is the group-by builder for Pick entities.
-type PickGroupBy struct {
+// TournamentEntryGroupBy is the group-by builder for TournamentEntry entities.
+type TournamentEntryGroupBy struct {
 	selector
-	build *PickQuery
+	build *TournamentEntryQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *PickGroupBy) Aggregate(fns ...AggregateFunc) *PickGroupBy {
+func (_g *TournamentEntryGroupBy) Aggregate(fns ...AggregateFunc) *TournamentEntryGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *PickGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *TournamentEntryGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*PickQuery, *PickGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*TournamentEntryQuery, *TournamentEntryGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *PickGroupBy) sqlScan(ctx context.Context, root *PickQuery, v any) error {
+func (_g *TournamentEntryGroupBy) sqlScan(ctx context.Context, root *TournamentEntryQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -797,28 +647,28 @@ func (_g *PickGroupBy) sqlScan(ctx context.Context, root *PickQuery, v any) erro
 	return sql.ScanSlice(rows, v)
 }
 
-// PickSelect is the builder for selecting fields of Pick entities.
-type PickSelect struct {
-	*PickQuery
+// TournamentEntrySelect is the builder for selecting fields of TournamentEntry entities.
+type TournamentEntrySelect struct {
+	*TournamentEntryQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *PickSelect) Aggregate(fns ...AggregateFunc) *PickSelect {
+func (_s *TournamentEntrySelect) Aggregate(fns ...AggregateFunc) *TournamentEntrySelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *PickSelect) Scan(ctx context.Context, v any) error {
+func (_s *TournamentEntrySelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*PickQuery, *PickSelect](ctx, _s.PickQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*TournamentEntryQuery, *TournamentEntrySelect](ctx, _s.TournamentEntryQuery, _s, _s.inters, v)
 }
 
-func (_s *PickSelect) sqlScan(ctx context.Context, root *PickQuery, v any) error {
+func (_s *TournamentEntrySelect) sqlScan(ctx context.Context, root *TournamentEntryQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

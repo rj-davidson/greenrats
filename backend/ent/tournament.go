@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
@@ -22,8 +22,10 @@ type Tournament struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// ExternalID holds the value of the "external_id" field.
-	ExternalID string `json:"external_id,omitempty"`
+	// ScratchGolf API ID (string)
+	ScratchgolfID *string `json:"scratchgolf_id,omitempty"`
+	// BallDontLie API ID (int)
+	BdlID *int `json:"bdl_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// StartDate holds the value of the "start_date" field.
@@ -34,6 +36,12 @@ type Tournament struct {
 	Status tournament.Status `json:"status,omitempty"`
 	// SeasonYear holds the value of the "season_year" field.
 	SeasonYear int `json:"season_year,omitempty"`
+	// Course holds the value of the "course" field.
+	Course *string `json:"course,omitempty"`
+	// Location holds the value of the "location" field.
+	Location *string `json:"location,omitempty"`
+	// Total prize money in dollars
+	Purse *int `json:"purse,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TournamentQuery when eager-loading is set.
 	Edges        TournamentEdges `json:"edges"`
@@ -46,9 +54,11 @@ type TournamentEdges struct {
 	Picks []*Pick `json:"picks,omitempty"`
 	// Golfers holds the value of the golfers edge.
 	Golfers []*Golfer `json:"golfers,omitempty"`
+	// Entries holds the value of the entries edge.
+	Entries []*TournamentEntry `json:"entries,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -69,14 +79,23 @@ func (e TournamentEdges) GolfersOrErr() ([]*Golfer, error) {
 	return nil, &NotLoadedError{edge: "golfers"}
 }
 
+// EntriesOrErr returns the Entries value or an error if the edge
+// was not loaded in eager-loading.
+func (e TournamentEdges) EntriesOrErr() ([]*TournamentEntry, error) {
+	if e.loadedTypes[2] {
+		return e.Entries, nil
+	}
+	return nil, &NotLoadedError{edge: "entries"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Tournament) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tournament.FieldSeasonYear:
+		case tournament.FieldBdlID, tournament.FieldSeasonYear, tournament.FieldPurse:
 			values[i] = new(sql.NullInt64)
-		case tournament.FieldExternalID, tournament.FieldName, tournament.FieldStatus:
+		case tournament.FieldScratchgolfID, tournament.FieldName, tournament.FieldStatus, tournament.FieldCourse, tournament.FieldLocation:
 			values[i] = new(sql.NullString)
 		case tournament.FieldCreatedAt, tournament.FieldUpdatedAt, tournament.FieldStartDate, tournament.FieldEndDate:
 			values[i] = new(sql.NullTime)
@@ -115,11 +134,19 @@ func (_m *Tournament) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case tournament.FieldExternalID:
+		case tournament.FieldScratchgolfID:
 			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field external_id", values[i])
+				return fmt.Errorf("unexpected type %T for field scratchgolf_id", values[i])
 			} else if value.Valid {
-				_m.ExternalID = value.String
+				_m.ScratchgolfID = new(string)
+				*_m.ScratchgolfID = value.String
+			}
+		case tournament.FieldBdlID:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field bdl_id", values[i])
+			} else if value.Valid {
+				_m.BdlID = new(int)
+				*_m.BdlID = int(value.Int64)
 			}
 		case tournament.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -151,6 +178,27 @@ func (_m *Tournament) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.SeasonYear = int(value.Int64)
 			}
+		case tournament.FieldCourse:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field course", values[i])
+			} else if value.Valid {
+				_m.Course = new(string)
+				*_m.Course = value.String
+			}
+		case tournament.FieldLocation:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field location", values[i])
+			} else if value.Valid {
+				_m.Location = new(string)
+				*_m.Location = value.String
+			}
+		case tournament.FieldPurse:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field purse", values[i])
+			} else if value.Valid {
+				_m.Purse = new(int)
+				*_m.Purse = int(value.Int64)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -172,6 +220,11 @@ func (_m *Tournament) QueryPicks() *PickQuery {
 // QueryGolfers queries the "golfers" edge of the Tournament entity.
 func (_m *Tournament) QueryGolfers() *GolferQuery {
 	return NewTournamentClient(_m.config).QueryGolfers(_m)
+}
+
+// QueryEntries queries the "entries" edge of the Tournament entity.
+func (_m *Tournament) QueryEntries() *TournamentEntryQuery {
+	return NewTournamentClient(_m.config).QueryEntries(_m)
 }
 
 // Update returns a builder for updating this Tournament.
@@ -203,8 +256,15 @@ func (_m *Tournament) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("external_id=")
-	builder.WriteString(_m.ExternalID)
+	if v := _m.ScratchgolfID; v != nil {
+		builder.WriteString("scratchgolf_id=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.BdlID; v != nil {
+		builder.WriteString("bdl_id=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(_m.Name)
@@ -220,6 +280,21 @@ func (_m *Tournament) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("season_year=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SeasonYear))
+	builder.WriteString(", ")
+	if v := _m.Course; v != nil {
+		builder.WriteString("course=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Location; v != nil {
+		builder.WriteString("location=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Purse; v != nil {
+		builder.WriteString("purse=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
 	builder.WriteByte(')')
 	return builder.String()
 }

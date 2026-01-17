@@ -8,7 +8,7 @@ import (
 
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 )
 
 const (
@@ -20,8 +20,10 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldExternalID holds the string denoting the external_id field in the database.
-	FieldExternalID = "external_id"
+	// FieldScratchgolfID holds the string denoting the scratchgolf_id field in the database.
+	FieldScratchgolfID = "scratchgolf_id"
+	// FieldBdlID holds the string denoting the bdl_id field in the database.
+	FieldBdlID = "bdl_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldStartDate holds the string denoting the start_date field in the database.
@@ -32,10 +34,18 @@ const (
 	FieldStatus = "status"
 	// FieldSeasonYear holds the string denoting the season_year field in the database.
 	FieldSeasonYear = "season_year"
+	// FieldCourse holds the string denoting the course field in the database.
+	FieldCourse = "course"
+	// FieldLocation holds the string denoting the location field in the database.
+	FieldLocation = "location"
+	// FieldPurse holds the string denoting the purse field in the database.
+	FieldPurse = "purse"
 	// EdgePicks holds the string denoting the picks edge name in mutations.
 	EdgePicks = "picks"
 	// EdgeGolfers holds the string denoting the golfers edge name in mutations.
 	EdgeGolfers = "golfers"
+	// EdgeEntries holds the string denoting the entries edge name in mutations.
+	EdgeEntries = "entries"
 	// Table holds the table name of the tournament in the database.
 	Table = "tournaments"
 	// PicksTable is the table that holds the picks relation/edge.
@@ -50,6 +60,13 @@ const (
 	// GolfersInverseTable is the table name for the Golfer entity.
 	// It exists in this package in order to avoid circular dependency with the "golfer" package.
 	GolfersInverseTable = "golfers"
+	// EntriesTable is the table that holds the entries relation/edge.
+	EntriesTable = "tournament_entries"
+	// EntriesInverseTable is the table name for the TournamentEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "tournamententry" package.
+	EntriesInverseTable = "tournament_entries"
+	// EntriesColumn is the table column denoting the entries relation/edge.
+	EntriesColumn = "tournament_entries"
 )
 
 // Columns holds all SQL columns for tournament fields.
@@ -57,12 +74,16 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-	FieldExternalID,
+	FieldScratchgolfID,
+	FieldBdlID,
 	FieldName,
 	FieldStartDate,
 	FieldEndDate,
 	FieldStatus,
 	FieldSeasonYear,
+	FieldCourse,
+	FieldLocation,
+	FieldPurse,
 }
 
 var (
@@ -88,8 +109,6 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
-	// ExternalIDValidator is a validator for the "external_id" field. It is called by the builders before save.
-	ExternalIDValidator func(string) error
 	// NameValidator is a validator for the "name" field. It is called by the builders before save.
 	NameValidator func(string) error
 	// DefaultID holds the default value on creation for the "id" field.
@@ -141,9 +160,14 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByExternalID orders the results by the external_id field.
-func ByExternalID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldExternalID, opts...).ToFunc()
+// ByScratchgolfID orders the results by the scratchgolf_id field.
+func ByScratchgolfID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldScratchgolfID, opts...).ToFunc()
+}
+
+// ByBdlID orders the results by the bdl_id field.
+func ByBdlID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBdlID, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.
@@ -169,6 +193,21 @@ func ByStatus(opts ...sql.OrderTermOption) OrderOption {
 // BySeasonYear orders the results by the season_year field.
 func BySeasonYear(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSeasonYear, opts...).ToFunc()
+}
+
+// ByCourse orders the results by the course field.
+func ByCourse(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCourse, opts...).ToFunc()
+}
+
+// ByLocation orders the results by the location field.
+func ByLocation(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldLocation, opts...).ToFunc()
+}
+
+// ByPurse orders the results by the purse field.
+func ByPurse(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPurse, opts...).ToFunc()
 }
 
 // ByPicksCount orders the results by picks count.
@@ -198,6 +237,20 @@ func ByGolfers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newGolfersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByEntriesCount orders the results by entries count.
+func ByEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEntriesStep(), opts...)
+	}
+}
+
+// ByEntries orders the results by entries terms.
+func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPicksStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -210,5 +263,12 @@ func newGolfersStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(GolfersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2M, false, GolfersTable, GolfersPrimaryKey...),
+	)
+}
+func newEntriesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
 	)
 }

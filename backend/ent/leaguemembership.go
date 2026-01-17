@@ -9,7 +9,7 @@ import (
 
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
-	"github.com/google/uuid"
+	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -30,35 +30,21 @@ type LeagueMembership struct {
 	JoinedAt time.Time `json:"joined_at,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LeagueMembershipQuery when eager-loading is set.
-	Edges                        LeagueMembershipEdges `json:"edges"`
-	league_memberships           *uuid.UUID
-	league_membership_created_by *uuid.UUID
-	user_league_memberships      *uuid.UUID
-	selectValues                 sql.SelectValues
+	Edges                   LeagueMembershipEdges `json:"edges"`
+	league_memberships      *uuid.UUID
+	user_league_memberships *uuid.UUID
+	selectValues            sql.SelectValues
 }
 
 // LeagueMembershipEdges holds the relations/edges for other nodes in the graph.
 type LeagueMembershipEdges struct {
-	// CreatedBy holds the value of the created_by edge.
-	CreatedBy *User `json:"created_by,omitempty"`
 	// User holds the value of the user edge.
 	User *User `json:"user,omitempty"`
 	// League holds the value of the league edge.
 	League *League `json:"league,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
-}
-
-// CreatedByOrErr returns the CreatedBy value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e LeagueMembershipEdges) CreatedByOrErr() (*User, error) {
-	if e.CreatedBy != nil {
-		return e.CreatedBy, nil
-	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: user.Label}
-	}
-	return nil, &NotLoadedError{edge: "created_by"}
+	loadedTypes [2]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -66,7 +52,7 @@ func (e LeagueMembershipEdges) CreatedByOrErr() (*User, error) {
 func (e LeagueMembershipEdges) UserOrErr() (*User, error) {
 	if e.User != nil {
 		return e.User, nil
-	} else if e.loadedTypes[1] {
+	} else if e.loadedTypes[0] {
 		return nil, &NotFoundError{label: user.Label}
 	}
 	return nil, &NotLoadedError{edge: "user"}
@@ -77,7 +63,7 @@ func (e LeagueMembershipEdges) UserOrErr() (*User, error) {
 func (e LeagueMembershipEdges) LeagueOrErr() (*League, error) {
 	if e.League != nil {
 		return e.League, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[1] {
 		return nil, &NotFoundError{label: league.Label}
 	}
 	return nil, &NotLoadedError{edge: "league"}
@@ -96,9 +82,7 @@ func (*LeagueMembership) scanValues(columns []string) ([]any, error) {
 			values[i] = new(uuid.UUID)
 		case leaguemembership.ForeignKeys[0]: // league_memberships
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case leaguemembership.ForeignKeys[1]: // league_membership_created_by
-			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case leaguemembership.ForeignKeys[2]: // user_league_memberships
+		case leaguemembership.ForeignKeys[1]: // user_league_memberships
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -154,13 +138,6 @@ func (_m *LeagueMembership) assignValues(columns []string, values []any) error {
 			}
 		case leaguemembership.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field league_membership_created_by", values[i])
-			} else if value.Valid {
-				_m.league_membership_created_by = new(uuid.UUID)
-				*_m.league_membership_created_by = *value.S.(*uuid.UUID)
-			}
-		case leaguemembership.ForeignKeys[2]:
-			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field user_league_memberships", values[i])
 			} else if value.Valid {
 				_m.user_league_memberships = new(uuid.UUID)
@@ -177,11 +154,6 @@ func (_m *LeagueMembership) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (_m *LeagueMembership) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
-}
-
-// QueryCreatedBy queries the "created_by" edge of the LeagueMembership entity.
-func (_m *LeagueMembership) QueryCreatedBy() *UserQuery {
-	return NewLeagueMembershipClient(_m.config).QueryCreatedBy(_m)
 }
 
 // QueryUser queries the "user" edge of the LeagueMembership entity.
