@@ -1,0 +1,102 @@
+{
+  "tab_size": 2,
+  "auto_install_extensions": {
+    "oxc": true,
+    "oxlint": true,
+    "go": true
+  },
+  "languages": {
+    "Go": {
+      "format_on_save": "on",
+      "tab_size": 4,
+      "formatter": {
+        "language_server": {
+          "name": "gopls"
+        }
+      }
+    },
+    "TSX": {
+      "code_actions_on_format": {
+        "source.fixAll.oxlint": true,
+        "source.organizeImports.oxlint": true
+      },
+      "format_on_save": "on",
+      "formatter": {
+        "language_server": {
+          "name": "oxfmt"
+        }
+      },
+      "preferred_line_length": 100
+    },
+    "TypeScript": {
+      "code_actions_on_format": {
+        "source.fixAll.oxlint": true,
+        "source.organizeImports.oxlint": true
+      },
+      "format_on_save": "on",
+      "formatter": {
+        "language_server": {
+          "name": "oxfmt"
+        }
+      },
+      "preferred_line_length": 100
+    },
+    "CSS": {
+      "format_on_save": "on"
+    },
+    "JSON": {
+      "format_on_save": "on"
+    }
+  },
+  "lsp": {
+    "gopls": {
+      "initialization_options": {
+        "hints": {
+          "assignVariableTypes": false,
+          "compositeLiteralFields": false,
+          "compositeLiteralTypes": false,
+          "constantValues": false,
+          "functionTypeParameters": false,
+          "parameterNames": false,
+          "rangeVariableTypes": false
+        }
+      }
+    },
+    "oxlint": {
+      "binary": {
+        "path": "frontend/node_modules/.bin/oxlint",
+        "arguments": ["--lsp"]
+      },
+      "initialization_options": {
+        "settings": {
+          "configPath": "frontend/.oxlintrc.json",
+          "tsConfigPath": "frontend/tsconfig.json",
+          "typeAware": true,
+          "run": "onType",
+          "fixKind": "safe_fix",
+          "unusedDisableDirectives": "deny",
+          "disableNestedConfig": false
+        }
+      }
+    },
+    "oxfmt": {
+      "binary": {
+        "path": "frontend/node_modules/.bin/oxfmt",
+        "arguments": ["--lsp"]
+      },
+      "settings": {
+        "fmt.configPath": "frontend/.oxfmtrc.json"
+      }
+    },
+    "eslint": {},
+    "vtsls": {
+      "settings": {
+        "typescript": {
+          "preferences": {
+            "importModuleSpecifier": "non-relative"
+          }
+        }
+      }
+    }
+  }
+}
