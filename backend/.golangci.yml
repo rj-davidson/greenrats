@@ -1,0 +1,50 @@
+run:
+  timeout: 5m
+  go: "1.23"
+
+linters:
+  enable:
+    - errcheck        # Check for unchecked errors
+    - gosimple        # Simplify code
+    - govet           # Suspicious constructs
+    - ineffassign     # Unused assignments
+    - staticcheck     # Static analysis
+    - unused          # Unused code
+    - gofmt           # Formatting
+    - goimports       # Import organization
+    - misspell        # Spelling mistakes
+    - gocritic        # Opinionated linter
+    - errname         # Error naming conventions
+    - errorlint       # Error wrapping
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+  goimports:
+    local-prefixes: github.com/rj-davidson/greenrats
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gocritic
+    # Exclude generated Ent files
+    - path: ent/
+      linters:
+        - errcheck
+        - gocritic
+        - govet
+    # Exclude tools.go
+    - path: tools\.go
+      linters:
+        - unused
+
+  max-issues-per-linter: 0
+  max-same-issues: 0

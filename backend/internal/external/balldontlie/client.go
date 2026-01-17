@@ -30,13 +30,13 @@ func New(apiKey, baseURL string) *Client {
 
 // GolferStats represents golfer statistics from the API.
 type GolferStats struct {
-	GolferID     string  `json:"golfer_id"`
-	Earnings     float64 `json:"earnings"`
-	Wins         int     `json:"wins"`
-	TopTens      int     `json:"top_tens"`
-	CutsMade     int     `json:"cuts_made"`
-	StrokesAvg   float64 `json:"strokes_avg"`
-	Season       int     `json:"season"`
+	GolferID   string  `json:"golfer_id"`
+	Earnings   float64 `json:"earnings"`
+	Wins       int     `json:"wins"`
+	TopTens    int     `json:"top_tens"`
+	CutsMade   int     `json:"cuts_made"`
+	StrokesAvg float64 `json:"strokes_avg"`
+	Season     int     `json:"season"`
 }
 
 // TournamentResult represents a golfer's result in a tournament.

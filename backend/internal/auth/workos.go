@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -26,14 +24,6 @@ type Claims struct {
 	Role          string `json:"role,omitempty"`
 }
 
-// JWKS cache for WorkOS public keys
-var (
-	jwksCache     *jwt.VerificationKeySet
-	jwksCacheMu   sync.RWMutex
-	jwksCacheTime time.Time
-	jwksCacheTTL  = 1 * time.Hour
-)
-
 // Middleware creates a Fiber middleware for WorkOS JWT verification.
 func Middleware(cfg Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -47,7 +37,7 @@ func Middleware(cfg Config) fiber.Handler {
 
 		// Extract token from "Bearer <token>"
 		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "invalid authorization header format",
 			})
@@ -74,7 +64,7 @@ func Middleware(cfg Config) fiber.Handler {
 }
 
 // verifyToken validates the JWT and returns claims.
-func verifyToken(ctx context.Context, tokenString, clientID string) (*Claims, error) {
+func verifyToken(_ context.Context, tokenString, clientID string) (*Claims, error) {
 	claims := &Claims{}
 
 	// Parse token with claims
@@ -133,7 +123,7 @@ func OptionalMiddleware(cfg Config) fiber.Handler {
 		}
 
 		parts := strings.Split(authHeader, " ")
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
 			return c.Next()
 		}
 

@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/sse"
@@ -12,10 +14,10 @@ import (
 
 // Server holds the HTTP server and its dependencies.
 type Server struct {
-	app       *fiber.App
-	config    *config.Config
-	db        *ent.Client
-	sseBroker *sse.Broker
+	app        *fiber.App
+	config     *config.Config
+	db         *ent.Client
+	sseBroker  *sse.Broker
 	sseHandler *sse.Handler
 }
 
@@ -69,7 +71,8 @@ func (s *Server) SSEBroker() *sse.Broker {
 func errorHandler(c *fiber.Ctx, err error) error {
 	code := fiber.StatusInternalServerError
 
-	if e, ok := err.(*fiber.Error); ok {
+	var e *fiber.Error
+	if errors.As(err, &e) {
 		code = e.Code
 	}
 

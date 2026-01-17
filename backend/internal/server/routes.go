@@ -38,8 +38,8 @@ func (s *Server) setupRoutes() {
 // healthCheck returns the health status of the API.
 func (s *Server) healthCheck(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{
-		"status":  "healthy",
-		"service": "greenrats-api",
+		"status":      "healthy",
+		"service":     "greenrats-api",
 		"sse_clients": s.sseBroker.ClientCount(),
 	})
 }

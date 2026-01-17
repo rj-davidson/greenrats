@@ -13,10 +13,10 @@ type Event struct {
 
 // Client represents a connected SSE client.
 type Client struct {
-	ID       string
-	Channel  chan []byte
-	Topics   map[string]bool
-	mu       sync.RWMutex
+	ID      string
+	Channel chan []byte
+	Topics  map[string]bool
+	mu      sync.RWMutex
 }
 
 // Broker manages SSE client connections and message broadcasting.
