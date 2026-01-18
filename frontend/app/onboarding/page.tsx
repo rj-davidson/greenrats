@@ -14,9 +14,8 @@ export default async function OnboardingPage() {
     redirect("/login");
   }
 
-  // If user already has a display name, redirect to dashboard
   if (user.display_name) {
-    redirect("/dashboard");
+    redirect("/");
   }
 
   return (

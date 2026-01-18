@@ -156,20 +156,62 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	log.Println("Tournament sync completed")
 }
 
+// parseEndDate attempts to parse the tournament end date from various formats.
+// Returns the end date with a buffer (06:00 UTC the next day) to account for
+// late finishes and timezone differences (e.g., Hawaii is UTC-10).
+func parseEndDate(endDateStr string, startDate time.Time) time.Time {
+	const iso8601Millis = "2006-01-02T15:04:05.000Z"
+
+	// Try ISO 8601 format first
+	if endDate, err := time.Parse(iso8601Millis, endDateStr); err == nil {
+		return endDate.AddDate(0, 0, 1).Add(6 * time.Hour)
+	}
+
+	// Try parsing display format like "Jan 15 - 18" or "Jan 15 - Feb 2"
+	endDateStr = strings.TrimSpace(endDateStr)
+	if idx := strings.LastIndex(endDateStr, " - "); idx != -1 {
+		endPart := strings.TrimSpace(endDateStr[idx+3:])
+
+		// Check if endPart is just a day number (e.g., "18")
+		if day, err := strconv.Atoi(endPart); err == nil && day >= 1 && day <= 31 {
+			endDate := time.Date(startDate.Year(), startDate.Month(), day, 0, 0, 0, 0, time.UTC)
+			// Handle month rollover (e.g., start Jan 30, end day 2 means Feb 2)
+			if endDate.Before(startDate) {
+				endDate = endDate.AddDate(0, 1, 0)
+			}
+			return endDate.AddDate(0, 0, 1).Add(6 * time.Hour)
+		}
+
+		// Try parsing "Feb 2" format
+		formats := []string{"Jan 2", "January 2"}
+		for _, format := range formats {
+			if parsed, err := time.Parse(format, endPart); err == nil {
+				endDate := time.Date(startDate.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, time.UTC)
+				// Handle year rollover (e.g., start Dec 30, end Jan 2)
+				if endDate.Before(startDate) {
+					endDate = endDate.AddDate(1, 0, 0)
+				}
+				return endDate.AddDate(0, 0, 1).Add(6 * time.Hour)
+			}
+		}
+	}
+
+	// Fallback: standard 4-day tournament (start + 4 days at 06:00 UTC)
+	return startDate.AddDate(0, 0, 4).Add(6 * time.Hour)
+}
+
 // upsertTournament creates or updates a tournament from BallDontLie data.
 func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tournament) error {
-	// Parse start date (API returns ISO 8601 format: 2026-01-15T00:00:00.000Z)
 	const iso8601Millis = "2006-01-02T15:04:05.000Z"
 	startDate, err := time.Parse(iso8601Millis, t.StartDate)
 	if err != nil {
 		return fmt.Errorf("failed to parse start date: %w", err)
 	}
-	// End date from API is a display string like "Jan 15 - 18", not parseable
-	// Golf tournaments are typically 4 days, so calculate end date
-	endDate := startDate.AddDate(0, 0, 3)
+
+	endDate := parseEndDate(t.EndDate, startDate)
 
 	// Determine status based on dates
-	now := time.Now()
+	now := time.Now().UTC()
 	status := tournament.StatusUpcoming
 	if now.After(endDate) {
 		status = tournament.StatusCompleted

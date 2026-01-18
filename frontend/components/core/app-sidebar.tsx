@@ -18,9 +18,9 @@ import { usePathname } from "next/navigation";
 import { SidebarUser } from "./sidebar-user";
 
 const navItems = [
-  { title: "Dashboard", href: "/dashboard", icon: HomeIcon },
-  { title: "Leagues", href: "/dashboard/leagues", icon: UsersIcon },
-  { title: "Tournaments", href: "/dashboard/tournaments", icon: TrophyIcon },
+  { title: "Dashboard", href: "/", icon: HomeIcon },
+  { title: "Leagues", href: "/leagues", icon: UsersIcon },
+  { title: "Tournaments", href: "/tournaments", icon: TrophyIcon },
 ];
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -32,7 +32,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/dashboard">
+              <Link href="/">
                 <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
                   <TrophyIcon className="size-4" />
                 </div>
