@@ -43,36 +43,33 @@ const (
 // GolferMutation represents an operation that mutates the Golfer nodes in the graph.
 type GolferMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *uuid.UUID
-	created_at         *time.Time
-	updated_at         *time.Time
-	scratchgolf_id     *string
-	bdl_id             *int
-	addbdl_id          *int
-	first_name         *string
-	last_name          *string
-	name               *string
-	country            *string
-	country_code       *string
-	owgr               *int
-	addowgr            *int
-	active             *bool
-	image_url          *string
-	clearedFields      map[string]struct{}
-	picks              map[uuid.UUID]struct{}
-	removedpicks       map[uuid.UUID]struct{}
-	clearedpicks       bool
-	entries            map[uuid.UUID]struct{}
-	removedentries     map[uuid.UUID]struct{}
-	clearedentries     bool
-	tournaments        map[uuid.UUID]struct{}
-	removedtournaments map[uuid.UUID]struct{}
-	clearedtournaments bool
-	done               bool
-	oldValue           func(context.Context) (*Golfer, error)
-	predicates         []predicate.Golfer
+	op             Op
+	typ            string
+	id             *uuid.UUID
+	created_at     *time.Time
+	updated_at     *time.Time
+	scratchgolf_id *string
+	bdl_id         *int
+	addbdl_id      *int
+	first_name     *string
+	last_name      *string
+	name           *string
+	country        *string
+	country_code   *string
+	owgr           *int
+	addowgr        *int
+	active         *bool
+	image_url      *string
+	clearedFields  map[string]struct{}
+	picks          map[uuid.UUID]struct{}
+	removedpicks   map[uuid.UUID]struct{}
+	clearedpicks   bool
+	entries        map[uuid.UUID]struct{}
+	removedentries map[uuid.UUID]struct{}
+	clearedentries bool
+	done           bool
+	oldValue       func(context.Context) (*Golfer, error)
+	predicates     []predicate.Golfer
 }
 
 var _ ent.Mutation = (*GolferMutation)(nil)
@@ -852,60 +849,6 @@ func (m *GolferMutation) ResetEntries() {
 	m.removedentries = nil
 }
 
-// AddTournamentIDs adds the "tournaments" edge to the Tournament entity by ids.
-func (m *GolferMutation) AddTournamentIDs(ids ...uuid.UUID) {
-	if m.tournaments == nil {
-		m.tournaments = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.tournaments[ids[i]] = struct{}{}
-	}
-}
-
-// ClearTournaments clears the "tournaments" edge to the Tournament entity.
-func (m *GolferMutation) ClearTournaments() {
-	m.clearedtournaments = true
-}
-
-// TournamentsCleared reports if the "tournaments" edge to the Tournament entity was cleared.
-func (m *GolferMutation) TournamentsCleared() bool {
-	return m.clearedtournaments
-}
-
-// RemoveTournamentIDs removes the "tournaments" edge to the Tournament entity by IDs.
-func (m *GolferMutation) RemoveTournamentIDs(ids ...uuid.UUID) {
-	if m.removedtournaments == nil {
-		m.removedtournaments = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.tournaments, ids[i])
-		m.removedtournaments[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedTournaments returns the removed IDs of the "tournaments" edge to the Tournament entity.
-func (m *GolferMutation) RemovedTournamentsIDs() (ids []uuid.UUID) {
-	for id := range m.removedtournaments {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// TournamentsIDs returns the "tournaments" edge IDs in the mutation.
-func (m *GolferMutation) TournamentsIDs() (ids []uuid.UUID) {
-	for id := range m.tournaments {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetTournaments resets all changes to the "tournaments" edge.
-func (m *GolferMutation) ResetTournaments() {
-	m.tournaments = nil
-	m.clearedtournaments = false
-	m.removedtournaments = nil
-}
-
 // Where appends a list predicates to the GolferMutation builder.
 func (m *GolferMutation) Where(ps ...predicate.Golfer) {
 	m.predicates = append(m.predicates, ps...)
@@ -1298,15 +1241,12 @@ func (m *GolferMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *GolferMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.picks != nil {
 		edges = append(edges, golfer.EdgePicks)
 	}
 	if m.entries != nil {
 		edges = append(edges, golfer.EdgeEntries)
-	}
-	if m.tournaments != nil {
-		edges = append(edges, golfer.EdgeTournaments)
 	}
 	return edges
 }
@@ -1327,27 +1267,18 @@ func (m *GolferMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case golfer.EdgeTournaments:
-		ids := make([]ent.Value, 0, len(m.tournaments))
-		for id := range m.tournaments {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *GolferMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.removedpicks != nil {
 		edges = append(edges, golfer.EdgePicks)
 	}
 	if m.removedentries != nil {
 		edges = append(edges, golfer.EdgeEntries)
-	}
-	if m.removedtournaments != nil {
-		edges = append(edges, golfer.EdgeTournaments)
 	}
 	return edges
 }
@@ -1368,27 +1299,18 @@ func (m *GolferMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case golfer.EdgeTournaments:
-		ids := make([]ent.Value, 0, len(m.removedtournaments))
-		for id := range m.removedtournaments {
-			ids = append(ids, id)
-		}
-		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *GolferMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.clearedpicks {
 		edges = append(edges, golfer.EdgePicks)
 	}
 	if m.clearedentries {
 		edges = append(edges, golfer.EdgeEntries)
-	}
-	if m.clearedtournaments {
-		edges = append(edges, golfer.EdgeTournaments)
 	}
 	return edges
 }
@@ -1401,8 +1323,6 @@ func (m *GolferMutation) EdgeCleared(name string) bool {
 		return m.clearedpicks
 	case golfer.EdgeEntries:
 		return m.clearedentries
-	case golfer.EdgeTournaments:
-		return m.clearedtournaments
 	}
 	return false
 }
@@ -1424,9 +1344,6 @@ func (m *GolferMutation) ResetEdge(name string) error {
 		return nil
 	case golfer.EdgeEntries:
 		m.ResetEntries()
-		return nil
-	case golfer.EdgeTournaments:
-		m.ResetTournaments()
 		return nil
 	}
 	return fmt.Errorf("unknown Golfer edge %s", name)
@@ -3562,9 +3479,6 @@ type TournamentMutation struct {
 	picks          map[uuid.UUID]struct{}
 	removedpicks   map[uuid.UUID]struct{}
 	clearedpicks   bool
-	golfers        map[uuid.UUID]struct{}
-	removedgolfers map[uuid.UUID]struct{}
-	clearedgolfers bool
 	entries        map[uuid.UUID]struct{}
 	removedentries map[uuid.UUID]struct{}
 	clearedentries bool
@@ -4290,60 +4204,6 @@ func (m *TournamentMutation) ResetPicks() {
 	m.removedpicks = nil
 }
 
-// AddGolferIDs adds the "golfers" edge to the Golfer entity by ids.
-func (m *TournamentMutation) AddGolferIDs(ids ...uuid.UUID) {
-	if m.golfers == nil {
-		m.golfers = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		m.golfers[ids[i]] = struct{}{}
-	}
-}
-
-// ClearGolfers clears the "golfers" edge to the Golfer entity.
-func (m *TournamentMutation) ClearGolfers() {
-	m.clearedgolfers = true
-}
-
-// GolfersCleared reports if the "golfers" edge to the Golfer entity was cleared.
-func (m *TournamentMutation) GolfersCleared() bool {
-	return m.clearedgolfers
-}
-
-// RemoveGolferIDs removes the "golfers" edge to the Golfer entity by IDs.
-func (m *TournamentMutation) RemoveGolferIDs(ids ...uuid.UUID) {
-	if m.removedgolfers == nil {
-		m.removedgolfers = make(map[uuid.UUID]struct{})
-	}
-	for i := range ids {
-		delete(m.golfers, ids[i])
-		m.removedgolfers[ids[i]] = struct{}{}
-	}
-}
-
-// RemovedGolfers returns the removed IDs of the "golfers" edge to the Golfer entity.
-func (m *TournamentMutation) RemovedGolfersIDs() (ids []uuid.UUID) {
-	for id := range m.removedgolfers {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// GolfersIDs returns the "golfers" edge IDs in the mutation.
-func (m *TournamentMutation) GolfersIDs() (ids []uuid.UUID) {
-	for id := range m.golfers {
-		ids = append(ids, id)
-	}
-	return
-}
-
-// ResetGolfers resets all changes to the "golfers" edge.
-func (m *TournamentMutation) ResetGolfers() {
-	m.golfers = nil
-	m.clearedgolfers = false
-	m.removedgolfers = nil
-}
-
 // AddEntryIDs adds the "entries" edge to the TournamentEntry entity by ids.
 func (m *TournamentMutation) AddEntryIDs(ids ...uuid.UUID) {
 	if m.entries == nil {
@@ -4790,12 +4650,9 @@ func (m *TournamentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TournamentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.picks != nil {
 		edges = append(edges, tournament.EdgePicks)
-	}
-	if m.golfers != nil {
-		edges = append(edges, tournament.EdgeGolfers)
 	}
 	if m.entries != nil {
 		edges = append(edges, tournament.EdgeEntries)
@@ -4813,12 +4670,6 @@ func (m *TournamentMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case tournament.EdgeGolfers:
-		ids := make([]ent.Value, 0, len(m.golfers))
-		for id := range m.golfers {
-			ids = append(ids, id)
-		}
-		return ids
 	case tournament.EdgeEntries:
 		ids := make([]ent.Value, 0, len(m.entries))
 		for id := range m.entries {
@@ -4831,12 +4682,9 @@ func (m *TournamentMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TournamentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.removedpicks != nil {
 		edges = append(edges, tournament.EdgePicks)
-	}
-	if m.removedgolfers != nil {
-		edges = append(edges, tournament.EdgeGolfers)
 	}
 	if m.removedentries != nil {
 		edges = append(edges, tournament.EdgeEntries)
@@ -4854,12 +4702,6 @@ func (m *TournamentMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
-	case tournament.EdgeGolfers:
-		ids := make([]ent.Value, 0, len(m.removedgolfers))
-		for id := range m.removedgolfers {
-			ids = append(ids, id)
-		}
-		return ids
 	case tournament.EdgeEntries:
 		ids := make([]ent.Value, 0, len(m.removedentries))
 		for id := range m.removedentries {
@@ -4872,12 +4714,9 @@ func (m *TournamentMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TournamentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 2)
 	if m.clearedpicks {
 		edges = append(edges, tournament.EdgePicks)
-	}
-	if m.clearedgolfers {
-		edges = append(edges, tournament.EdgeGolfers)
 	}
 	if m.clearedentries {
 		edges = append(edges, tournament.EdgeEntries)
@@ -4891,8 +4730,6 @@ func (m *TournamentMutation) EdgeCleared(name string) bool {
 	switch name {
 	case tournament.EdgePicks:
 		return m.clearedpicks
-	case tournament.EdgeGolfers:
-		return m.clearedgolfers
 	case tournament.EdgeEntries:
 		return m.clearedentries
 	}
@@ -4914,9 +4751,6 @@ func (m *TournamentMutation) ResetEdge(name string) error {
 	case tournament.EdgePicks:
 		m.ResetPicks()
 		return nil
-	case tournament.EdgeGolfers:
-		m.ResetGolfers()
-		return nil
 	case tournament.EdgeEntries:
 		m.ResetEntries()
 		return nil
@@ -4927,36 +4761,33 @@ func (m *TournamentMutation) ResetEdge(name string) error {
 // TournamentEntryMutation represents an operation that mutates the TournamentEntry nodes in the graph.
 type TournamentEntryMutation struct {
 	config
-	op                        Op
-	typ                       string
-	id                        *uuid.UUID
-	created_at                *time.Time
-	updated_at                *time.Time
-	external_tournament_id    *int
-	addexternal_tournament_id *int
-	external_player_id        *int
-	addexternal_player_id     *int
-	position                  *int
-	addposition               *int
-	score                     *int
-	addscore                  *int
-	total_strokes             *int
-	addtotal_strokes          *int
-	earnings                  *int
-	addearnings               *int
-	status                    *tournamententry.Status
-	current_round             *int
-	addcurrent_round          *int
-	thru                      *int
-	addthru                   *int
-	clearedFields             map[string]struct{}
-	tournament                *uuid.UUID
-	clearedtournament         bool
-	golfer                    *uuid.UUID
-	clearedgolfer             bool
-	done                      bool
-	oldValue                  func(context.Context) (*TournamentEntry, error)
-	predicates                []predicate.TournamentEntry
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	created_at        *time.Time
+	updated_at        *time.Time
+	position          *int
+	addposition       *int
+	cut               *bool
+	score             *int
+	addscore          *int
+	total_strokes     *int
+	addtotal_strokes  *int
+	earnings          *int
+	addearnings       *int
+	status            *tournamententry.Status
+	current_round     *int
+	addcurrent_round  *int
+	thru              *int
+	addthru           *int
+	clearedFields     map[string]struct{}
+	tournament        *uuid.UUID
+	clearedtournament bool
+	golfer            *uuid.UUID
+	clearedgolfer     bool
+	done              bool
+	oldValue          func(context.Context) (*TournamentEntry, error)
+	predicates        []predicate.TournamentEntry
 }
 
 var _ ent.Mutation = (*TournamentEntryMutation)(nil)
@@ -5135,118 +4966,6 @@ func (m *TournamentEntryMutation) ResetUpdatedAt() {
 	m.updated_at = nil
 }
 
-// SetExternalTournamentID sets the "external_tournament_id" field.
-func (m *TournamentEntryMutation) SetExternalTournamentID(i int) {
-	m.external_tournament_id = &i
-	m.addexternal_tournament_id = nil
-}
-
-// ExternalTournamentID returns the value of the "external_tournament_id" field in the mutation.
-func (m *TournamentEntryMutation) ExternalTournamentID() (r int, exists bool) {
-	v := m.external_tournament_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldExternalTournamentID returns the old "external_tournament_id" field's value of the TournamentEntry entity.
-// If the TournamentEntry object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TournamentEntryMutation) OldExternalTournamentID(ctx context.Context) (v int, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldExternalTournamentID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldExternalTournamentID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldExternalTournamentID: %w", err)
-	}
-	return oldValue.ExternalTournamentID, nil
-}
-
-// AddExternalTournamentID adds i to the "external_tournament_id" field.
-func (m *TournamentEntryMutation) AddExternalTournamentID(i int) {
-	if m.addexternal_tournament_id != nil {
-		*m.addexternal_tournament_id += i
-	} else {
-		m.addexternal_tournament_id = &i
-	}
-}
-
-// AddedExternalTournamentID returns the value that was added to the "external_tournament_id" field in this mutation.
-func (m *TournamentEntryMutation) AddedExternalTournamentID() (r int, exists bool) {
-	v := m.addexternal_tournament_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetExternalTournamentID resets all changes to the "external_tournament_id" field.
-func (m *TournamentEntryMutation) ResetExternalTournamentID() {
-	m.external_tournament_id = nil
-	m.addexternal_tournament_id = nil
-}
-
-// SetExternalPlayerID sets the "external_player_id" field.
-func (m *TournamentEntryMutation) SetExternalPlayerID(i int) {
-	m.external_player_id = &i
-	m.addexternal_player_id = nil
-}
-
-// ExternalPlayerID returns the value of the "external_player_id" field in the mutation.
-func (m *TournamentEntryMutation) ExternalPlayerID() (r int, exists bool) {
-	v := m.external_player_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldExternalPlayerID returns the old "external_player_id" field's value of the TournamentEntry entity.
-// If the TournamentEntry object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TournamentEntryMutation) OldExternalPlayerID(ctx context.Context) (v int, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldExternalPlayerID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldExternalPlayerID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldExternalPlayerID: %w", err)
-	}
-	return oldValue.ExternalPlayerID, nil
-}
-
-// AddExternalPlayerID adds i to the "external_player_id" field.
-func (m *TournamentEntryMutation) AddExternalPlayerID(i int) {
-	if m.addexternal_player_id != nil {
-		*m.addexternal_player_id += i
-	} else {
-		m.addexternal_player_id = &i
-	}
-}
-
-// AddedExternalPlayerID returns the value that was added to the "external_player_id" field in this mutation.
-func (m *TournamentEntryMutation) AddedExternalPlayerID() (r int, exists bool) {
-	v := m.addexternal_player_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// ResetExternalPlayerID resets all changes to the "external_player_id" field.
-func (m *TournamentEntryMutation) ResetExternalPlayerID() {
-	m.external_player_id = nil
-	m.addexternal_player_id = nil
-}
-
 // SetPosition sets the "position" field.
 func (m *TournamentEntryMutation) SetPosition(i int) {
 	m.position = &i
@@ -5301,6 +5020,42 @@ func (m *TournamentEntryMutation) AddedPosition() (r int, exists bool) {
 func (m *TournamentEntryMutation) ResetPosition() {
 	m.position = nil
 	m.addposition = nil
+}
+
+// SetCut sets the "cut" field.
+func (m *TournamentEntryMutation) SetCut(b bool) {
+	m.cut = &b
+}
+
+// Cut returns the value of the "cut" field in the mutation.
+func (m *TournamentEntryMutation) Cut() (r bool, exists bool) {
+	v := m.cut
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCut returns the old "cut" field's value of the TournamentEntry entity.
+// If the TournamentEntry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentEntryMutation) OldCut(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCut is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCut requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCut: %w", err)
+	}
+	return oldValue.Cut, nil
+}
+
+// ResetCut resets all changes to the "cut" field.
+func (m *TournamentEntryMutation) ResetCut() {
+	m.cut = nil
 }
 
 // SetScore sets the "score" field.
@@ -5731,21 +5486,18 @@ func (m *TournamentEntryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TournamentEntryMutation) Fields() []string {
-	fields := make([]string, 0, 11)
+	fields := make([]string, 0, 10)
 	if m.created_at != nil {
 		fields = append(fields, tournamententry.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, tournamententry.FieldUpdatedAt)
 	}
-	if m.external_tournament_id != nil {
-		fields = append(fields, tournamententry.FieldExternalTournamentID)
-	}
-	if m.external_player_id != nil {
-		fields = append(fields, tournamententry.FieldExternalPlayerID)
-	}
 	if m.position != nil {
 		fields = append(fields, tournamententry.FieldPosition)
+	}
+	if m.cut != nil {
+		fields = append(fields, tournamententry.FieldCut)
 	}
 	if m.score != nil {
 		fields = append(fields, tournamententry.FieldScore)
@@ -5777,12 +5529,10 @@ func (m *TournamentEntryMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case tournamententry.FieldUpdatedAt:
 		return m.UpdatedAt()
-	case tournamententry.FieldExternalTournamentID:
-		return m.ExternalTournamentID()
-	case tournamententry.FieldExternalPlayerID:
-		return m.ExternalPlayerID()
 	case tournamententry.FieldPosition:
 		return m.Position()
+	case tournamententry.FieldCut:
+		return m.Cut()
 	case tournamententry.FieldScore:
 		return m.Score()
 	case tournamententry.FieldTotalStrokes:
@@ -5808,12 +5558,10 @@ func (m *TournamentEntryMutation) OldField(ctx context.Context, name string) (en
 		return m.OldCreatedAt(ctx)
 	case tournamententry.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
-	case tournamententry.FieldExternalTournamentID:
-		return m.OldExternalTournamentID(ctx)
-	case tournamententry.FieldExternalPlayerID:
-		return m.OldExternalPlayerID(ctx)
 	case tournamententry.FieldPosition:
 		return m.OldPosition(ctx)
+	case tournamententry.FieldCut:
+		return m.OldCut(ctx)
 	case tournamententry.FieldScore:
 		return m.OldScore(ctx)
 	case tournamententry.FieldTotalStrokes:
@@ -5849,26 +5597,19 @@ func (m *TournamentEntryMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetUpdatedAt(v)
 		return nil
-	case tournamententry.FieldExternalTournamentID:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetExternalTournamentID(v)
-		return nil
-	case tournamententry.FieldExternalPlayerID:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetExternalPlayerID(v)
-		return nil
 	case tournamententry.FieldPosition:
 		v, ok := value.(int)
 		if !ok {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetPosition(v)
+		return nil
+	case tournamententry.FieldCut:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCut(v)
 		return nil
 	case tournamententry.FieldScore:
 		v, ok := value.(int)
@@ -5920,12 +5661,6 @@ func (m *TournamentEntryMutation) SetField(name string, value ent.Value) error {
 // this mutation.
 func (m *TournamentEntryMutation) AddedFields() []string {
 	var fields []string
-	if m.addexternal_tournament_id != nil {
-		fields = append(fields, tournamententry.FieldExternalTournamentID)
-	}
-	if m.addexternal_player_id != nil {
-		fields = append(fields, tournamententry.FieldExternalPlayerID)
-	}
 	if m.addposition != nil {
 		fields = append(fields, tournamententry.FieldPosition)
 	}
@@ -5952,10 +5687,6 @@ func (m *TournamentEntryMutation) AddedFields() []string {
 // was not set, or was not defined in the schema.
 func (m *TournamentEntryMutation) AddedField(name string) (ent.Value, bool) {
 	switch name {
-	case tournamententry.FieldExternalTournamentID:
-		return m.AddedExternalTournamentID()
-	case tournamententry.FieldExternalPlayerID:
-		return m.AddedExternalPlayerID()
 	case tournamententry.FieldPosition:
 		return m.AddedPosition()
 	case tournamententry.FieldScore:
@@ -5977,20 +5708,6 @@ func (m *TournamentEntryMutation) AddedField(name string) (ent.Value, bool) {
 // type.
 func (m *TournamentEntryMutation) AddField(name string, value ent.Value) error {
 	switch name {
-	case tournamententry.FieldExternalTournamentID:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddExternalTournamentID(v)
-		return nil
-	case tournamententry.FieldExternalPlayerID:
-		v, ok := value.(int)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.AddExternalPlayerID(v)
-		return nil
 	case tournamententry.FieldPosition:
 		v, ok := value.(int)
 		if !ok {
@@ -6066,14 +5783,11 @@ func (m *TournamentEntryMutation) ResetField(name string) error {
 	case tournamententry.FieldUpdatedAt:
 		m.ResetUpdatedAt()
 		return nil
-	case tournamententry.FieldExternalTournamentID:
-		m.ResetExternalTournamentID()
-		return nil
-	case tournamententry.FieldExternalPlayerID:
-		m.ResetExternalPlayerID()
-		return nil
 	case tournamententry.FieldPosition:
 		m.ResetPosition()
+		return nil
+	case tournamententry.FieldCut:
+		m.ResetCut()
 		return nil
 	case tournamententry.FieldScore:
 		m.ResetScore()

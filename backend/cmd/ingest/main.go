@@ -7,10 +7,10 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
-	"github.com/gofrs/uuid/v5"
 	_ "github.com/lib/pq"
 
 	"github.com/rj-davidson/greenrats/ent"
@@ -364,19 +364,17 @@ func (i *Ingester) syncUpcomingTournamentFields(ctx context.Context) {
 	}
 
 	for _, t := range tournaments {
-		// Check if tournament already has golfers (field already synced)
-		count, err := t.QueryGolfers().Count(ctx)
+		count, err := t.QueryEntries().Count(ctx)
 		if err != nil {
-			log.Printf("failed to count golfers for tournament %s: %v", t.Name, err)
+			log.Printf("failed to count entries for tournament %s: %v", t.Name, err)
 			continue
 		}
 
 		if count > 0 {
-			log.Printf("Tournament %s already has %d golfers in field", t.Name, count)
+			log.Printf("Tournament %s already has %d entries in field", t.Name, count)
 			continue
 		}
 
-		// Sync field from SlashGolf
 		if err := i.syncTournamentField(ctx, t); err != nil {
 			log.Printf("failed to sync field for tournament %s: %v", t.Name, err)
 		}
@@ -385,9 +383,6 @@ func (i *Ingester) syncUpcomingTournamentFields(ctx context.Context) {
 	log.Println("Field sync check completed")
 }
 
-// syncTournamentField fetches the tournament field from SlashGolf and creates golfer associations.
-// This is the critical endpoint for getting player fields BEFORE tournaments start.
-// Note: Uses 1 request from SlashGolf's 250/month quota.
 func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) error {
 	if t.ScratchgolfID == nil {
 		log.Printf("Tournament %s has no ScratchGolf ID, skipping field sync", t.Name)
@@ -403,25 +398,27 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 
 	log.Printf("Fetched %d golfers for tournament %s", len(golfers), t.Name)
 
-	var golferIDs []uuid.UUID
+	var entryCount int
 	for idx := range golfers {
 		golferEnt, err := i.upsertGolferFromSlashGolf(ctx, &golfers[idx])
 		if err != nil {
 			log.Printf("failed to upsert golfer %s: %v", golfers[idx].Name, err)
 			continue
 		}
-		golferIDs = append(golferIDs, golferEnt.ID)
-	}
 
-	// Associate golfers with tournament
-	if len(golferIDs) > 0 {
-		err = t.Update().AddGolferIDs(golferIDs...).Exec(ctx)
+		_, err = i.db.TournamentEntry.Create().
+			SetTournament(t).
+			SetGolfer(golferEnt).
+			SetStatus(tournamententry.StatusPending).
+			Save(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to associate golfers with tournament: %w", err)
+			log.Printf("failed to create entry for golfer %s: %v", golfers[idx].Name, err)
+			continue
 		}
-		log.Printf("Associated %d golfers with tournament %s", len(golferIDs), t.Name)
+		entryCount++
 	}
 
+	log.Printf("Created %d entries for tournament %s", entryCount, t.Name)
 	return nil
 }
 
@@ -545,39 +542,37 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 	return nil
 }
 
-// upsertTournamentEntry creates or updates a tournament result.
 func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament, r *balldontlie.TournamentResult) error {
-	// Find the golfer by BallDontLie ID
 	g, err := i.db.Golfer.Query().
 		Where(golfer.BdlID(r.PlayerID)).
 		Only(ctx)
 
 	if ent.IsNotFound(err) {
-		// Golfer not in our database yet, skip this result
-		// They'll be added when we sync players or tournament fields
 		return nil
 	} else if err != nil {
 		return fmt.Errorf("failed to query golfer: %w", err)
 	}
 
-	// Parse status
 	status := tournamententry.StatusActive
+	cut := false
 	switch r.Status {
 	case "cut":
-		status = tournamententry.StatusCut
+		status = tournamententry.StatusFinished
+		cut = true
 	case "withdrawn":
 		status = tournamententry.StatusWithdrawn
 	case "finished":
 		status = tournamententry.StatusFinished
 	}
 
-	// Parse numeric fields (API returns strings)
-	position, _ := strconv.Atoi(r.Position)
+	position := parsePosition(r.Position)
+	if r.Position == "CUT" {
+		cut = true
+	}
 	score, _ := strconv.Atoi(r.Score)
 	totalStrokes, _ := strconv.Atoi(r.TotalStrokes)
 	earnings, _ := strconv.Atoi(r.Earnings)
 
-	// Try to find existing result
 	existing, err := i.db.TournamentEntry.Query().
 		Where(
 			tournamententry.HasTournamentWith(tournament.ID(t.ID)),
@@ -586,13 +581,11 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 		Only(ctx)
 
 	if ent.IsNotFound(err) {
-		// Create new result
 		_, err = i.db.TournamentEntry.Create().
 			SetTournament(t).
 			SetGolfer(g).
-			SetExternalTournamentID(r.TournamentID).
-			SetExternalPlayerID(r.PlayerID).
 			SetPosition(position).
+			SetCut(cut).
 			SetScore(score).
 			SetTotalStrokes(totalStrokes).
 			SetEarnings(earnings).
@@ -600,14 +593,14 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 			Save(ctx)
 
 		if err != nil {
-			return fmt.Errorf("failed to create tournament result: %w", err)
+			return fmt.Errorf("failed to create tournament entry: %w", err)
 		}
 	} else if err != nil {
-		return fmt.Errorf("failed to query tournament result: %w", err)
+		return fmt.Errorf("failed to query tournament entry: %w", err)
 	} else {
-		// Update existing result
 		_, err = existing.Update().
 			SetPosition(position).
+			SetCut(cut).
 			SetScore(score).
 			SetTotalStrokes(totalStrokes).
 			SetEarnings(earnings).
@@ -615,9 +608,18 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 			Save(ctx)
 
 		if err != nil {
-			return fmt.Errorf("failed to update tournament result: %w", err)
+			return fmt.Errorf("failed to update tournament entry: %w", err)
 		}
 	}
 
 	return nil
+}
+
+func parsePosition(pos string) int {
+	if pos == "" || pos == "CUT" {
+		return 0
+	}
+	pos = strings.TrimPrefix(pos, "T")
+	position, _ := strconv.Atoi(pos)
+	return position
 }

@@ -52,13 +52,11 @@ type Tournament struct {
 type TournamentEdges struct {
 	// Picks holds the value of the picks edge.
 	Picks []*Pick `json:"picks,omitempty"`
-	// Golfers holds the value of the golfers edge.
-	Golfers []*Golfer `json:"golfers,omitempty"`
 	// Entries holds the value of the entries edge.
 	Entries []*TournamentEntry `json:"entries,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [2]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -70,19 +68,10 @@ func (e TournamentEdges) PicksOrErr() ([]*Pick, error) {
 	return nil, &NotLoadedError{edge: "picks"}
 }
 
-// GolfersOrErr returns the Golfers value or an error if the edge
-// was not loaded in eager-loading.
-func (e TournamentEdges) GolfersOrErr() ([]*Golfer, error) {
-	if e.loadedTypes[1] {
-		return e.Golfers, nil
-	}
-	return nil, &NotLoadedError{edge: "golfers"}
-}
-
 // EntriesOrErr returns the Entries value or an error if the edge
 // was not loaded in eager-loading.
 func (e TournamentEdges) EntriesOrErr() ([]*TournamentEntry, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[1] {
 		return e.Entries, nil
 	}
 	return nil, &NotLoadedError{edge: "entries"}
@@ -215,11 +204,6 @@ func (_m *Tournament) Value(name string) (ent.Value, error) {
 // QueryPicks queries the "picks" edge of the Tournament entity.
 func (_m *Tournament) QueryPicks() *PickQuery {
 	return NewTournamentClient(_m.config).QueryPicks(_m)
-}
-
-// QueryGolfers queries the "golfers" edge of the Tournament entity.
-func (_m *Tournament) QueryGolfers() *GolferQuery {
-	return NewTournamentClient(_m.config).QueryGolfers(_m)
 }
 
 // QueryEntries queries the "entries" edge of the Tournament entity.

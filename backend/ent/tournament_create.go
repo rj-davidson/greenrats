@@ -11,7 +11,6 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
-	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
@@ -187,21 +186,6 @@ func (_c *TournamentCreate) AddPicks(v ...*Pick) *TournamentCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddPickIDs(ids...)
-}
-
-// AddGolferIDs adds the "golfers" edge to the Golfer entity by IDs.
-func (_c *TournamentCreate) AddGolferIDs(ids ...uuid.UUID) *TournamentCreate {
-	_c.mutation.AddGolferIDs(ids...)
-	return _c
-}
-
-// AddGolfers adds the "golfers" edges to the Golfer entity.
-func (_c *TournamentCreate) AddGolfers(v ...*Golfer) *TournamentCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddGolferIDs(ids...)
 }
 
 // AddEntryIDs adds the "entries" edge to the TournamentEntry entity by IDs.
@@ -397,22 +381,6 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pick.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.GolfersIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   tournament.GolfersTable,
-			Columns: tournament.GolfersPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

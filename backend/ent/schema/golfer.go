@@ -66,7 +66,5 @@ func (Golfer) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("picks", Pick.Type),
 		edge.To("entries", TournamentEntry.Type),
-		edge.From("tournaments", Tournament.Type).
-			Ref("golfers"),
 	}
 }

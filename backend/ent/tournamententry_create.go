@@ -51,18 +51,6 @@ func (_c *TournamentEntryCreate) SetNillableUpdatedAt(v *time.Time) *TournamentE
 	return _c
 }
 
-// SetExternalTournamentID sets the "external_tournament_id" field.
-func (_c *TournamentEntryCreate) SetExternalTournamentID(v int) *TournamentEntryCreate {
-	_c.mutation.SetExternalTournamentID(v)
-	return _c
-}
-
-// SetExternalPlayerID sets the "external_player_id" field.
-func (_c *TournamentEntryCreate) SetExternalPlayerID(v int) *TournamentEntryCreate {
-	_c.mutation.SetExternalPlayerID(v)
-	return _c
-}
-
 // SetPosition sets the "position" field.
 func (_c *TournamentEntryCreate) SetPosition(v int) *TournamentEntryCreate {
 	_c.mutation.SetPosition(v)
@@ -73,6 +61,20 @@ func (_c *TournamentEntryCreate) SetPosition(v int) *TournamentEntryCreate {
 func (_c *TournamentEntryCreate) SetNillablePosition(v *int) *TournamentEntryCreate {
 	if v != nil {
 		_c.SetPosition(*v)
+	}
+	return _c
+}
+
+// SetCut sets the "cut" field.
+func (_c *TournamentEntryCreate) SetCut(v bool) *TournamentEntryCreate {
+	_c.mutation.SetCut(v)
+	return _c
+}
+
+// SetNillableCut sets the "cut" field if the given value is not nil.
+func (_c *TournamentEntryCreate) SetNillableCut(v *bool) *TournamentEntryCreate {
+	if v != nil {
+		_c.SetCut(*v)
 	}
 	return _c
 }
@@ -244,6 +246,10 @@ func (_c *TournamentEntryCreate) defaults() {
 		v := tournamententry.DefaultPosition
 		_c.mutation.SetPosition(v)
 	}
+	if _, ok := _c.mutation.Cut(); !ok {
+		v := tournamententry.DefaultCut
+		_c.mutation.SetCut(v)
+	}
 	if _, ok := _c.mutation.Score(); !ok {
 		v := tournamententry.DefaultScore
 		_c.mutation.SetScore(v)
@@ -282,14 +288,11 @@ func (_c *TournamentEntryCreate) check() error {
 	if _, ok := _c.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "TournamentEntry.updated_at"`)}
 	}
-	if _, ok := _c.mutation.ExternalTournamentID(); !ok {
-		return &ValidationError{Name: "external_tournament_id", err: errors.New(`ent: missing required field "TournamentEntry.external_tournament_id"`)}
-	}
-	if _, ok := _c.mutation.ExternalPlayerID(); !ok {
-		return &ValidationError{Name: "external_player_id", err: errors.New(`ent: missing required field "TournamentEntry.external_player_id"`)}
-	}
 	if _, ok := _c.mutation.Position(); !ok {
 		return &ValidationError{Name: "position", err: errors.New(`ent: missing required field "TournamentEntry.position"`)}
+	}
+	if _, ok := _c.mutation.Cut(); !ok {
+		return &ValidationError{Name: "cut", err: errors.New(`ent: missing required field "TournamentEntry.cut"`)}
 	}
 	if _, ok := _c.mutation.Score(); !ok {
 		return &ValidationError{Name: "score", err: errors.New(`ent: missing required field "TournamentEntry.score"`)}
@@ -363,17 +366,13 @@ func (_c *TournamentEntryCreate) createSpec() (*TournamentEntry, *sqlgraph.Creat
 		_spec.SetField(tournamententry.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
 	}
-	if value, ok := _c.mutation.ExternalTournamentID(); ok {
-		_spec.SetField(tournamententry.FieldExternalTournamentID, field.TypeInt, value)
-		_node.ExternalTournamentID = value
-	}
-	if value, ok := _c.mutation.ExternalPlayerID(); ok {
-		_spec.SetField(tournamententry.FieldExternalPlayerID, field.TypeInt, value)
-		_node.ExternalPlayerID = value
-	}
 	if value, ok := _c.mutation.Position(); ok {
 		_spec.SetField(tournamententry.FieldPosition, field.TypeInt, value)
 		_node.Position = value
+	}
+	if value, ok := _c.mutation.Cut(); ok {
+		_spec.SetField(tournamententry.FieldCut, field.TypeBool, value)
+		_node.Cut = value
 	}
 	if value, ok := _c.mutation.Score(); ok {
 		_spec.SetField(tournamententry.FieldScore, field.TypeInt, value)

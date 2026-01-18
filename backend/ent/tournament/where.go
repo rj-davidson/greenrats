@@ -744,29 +744,6 @@ func HasPicksWith(preds ...predicate.Pick) predicate.Tournament {
 	})
 }
 
-// HasGolfers applies the HasEdge predicate on the "golfers" edge.
-func HasGolfers() predicate.Tournament {
-	return predicate.Tournament(func(s *sql.Selector) {
-		step := sqlgraph.NewStep(
-			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, GolfersTable, GolfersPrimaryKey...),
-		)
-		sqlgraph.HasNeighbors(s, step)
-	})
-}
-
-// HasGolfersWith applies the HasEdge predicate on the "golfers" edge with a given conditions (other predicates).
-func HasGolfersWith(preds ...predicate.Golfer) predicate.Tournament {
-	return predicate.Tournament(func(s *sql.Selector) {
-		step := newGolfersStep()
-		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
-			for _, p := range preds {
-				p(s)
-			}
-		})
-	})
-}
-
 // HasEntries applies the HasEdge predicate on the "entries" edge.
 func HasEntries() predicate.Tournament {
 	return predicate.Tournament(func(s *sql.Selector) {

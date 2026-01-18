@@ -42,8 +42,6 @@ const (
 	FieldPurse = "purse"
 	// EdgePicks holds the string denoting the picks edge name in mutations.
 	EdgePicks = "picks"
-	// EdgeGolfers holds the string denoting the golfers edge name in mutations.
-	EdgeGolfers = "golfers"
 	// EdgeEntries holds the string denoting the entries edge name in mutations.
 	EdgeEntries = "entries"
 	// Table holds the table name of the tournament in the database.
@@ -55,11 +53,6 @@ const (
 	PicksInverseTable = "picks"
 	// PicksColumn is the table column denoting the picks relation/edge.
 	PicksColumn = "tournament_picks"
-	// GolfersTable is the table that holds the golfers relation/edge. The primary key declared below.
-	GolfersTable = "tournament_golfers"
-	// GolfersInverseTable is the table name for the Golfer entity.
-	// It exists in this package in order to avoid circular dependency with the "golfer" package.
-	GolfersInverseTable = "golfers"
 	// EntriesTable is the table that holds the entries relation/edge.
 	EntriesTable = "tournament_entries"
 	// EntriesInverseTable is the table name for the TournamentEntry entity.
@@ -85,12 +78,6 @@ var Columns = []string{
 	FieldLocation,
 	FieldPurse,
 }
-
-var (
-	// GolfersPrimaryKey and GolfersColumn2 are the table columns denoting the
-	// primary key for the golfers relation (M2M).
-	GolfersPrimaryKey = []string{"tournament_id", "golfer_id"}
-)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -224,20 +211,6 @@ func ByPicks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByGolfersCount orders the results by golfers count.
-func ByGolfersCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newGolfersStep(), opts...)
-	}
-}
-
-// ByGolfers orders the results by golfers terms.
-func ByGolfers(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newGolfersStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
-
 // ByEntriesCount orders the results by entries count.
 func ByEntriesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -256,13 +229,6 @@ func newPicksStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PicksInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, PicksTable, PicksColumn),
-	)
-}
-func newGolfersStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(GolfersInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, false, GolfersTable, GolfersPrimaryKey...),
 	)
 }
 func newEntriesStep() *sqlgraph.Step {

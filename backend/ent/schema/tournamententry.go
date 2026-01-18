@@ -25,15 +25,12 @@ func (TournamentEntry) Mixin() []ent.Mixin {
 // Fields of the TournamentEntry.
 func (TournamentEntry) Fields() []ent.Field {
 	return []ent.Field{
-		// External API IDs for cross-referencing
-		field.Int("external_tournament_id").
-			Comment("BallDontLie tournament ID"),
-		field.Int("external_player_id").
-			Comment("BallDontLie player ID"),
-		// Result data
 		field.Int("position").
 			Default(0).
-			Comment("Current position on leaderboard (0 if not yet determined)"),
+			Comment("Leaderboard position (parsed from 'T5' -> 5, 0 = not determined)"),
+		field.Bool("cut").
+			Default(false).
+			Comment("True if golfer missed the cut"),
 		field.Int("score").
 			Default(0).
 			Comment("Score relative to par (negative is under par)"),
@@ -44,7 +41,7 @@ func (TournamentEntry) Fields() []ent.Field {
 			Default(0).
 			Comment("Prize money in dollars"),
 		field.Enum("status").
-			Values("pending", "active", "cut", "withdrawn", "finished").
+			Values("pending", "active", "withdrawn", "finished").
 			Default("pending").
 			Comment("Golfer's status in the tournament"),
 		field.Int("current_round").
@@ -73,11 +70,7 @@ func (TournamentEntry) Edges() []ent.Edge {
 // Indexes of the TournamentEntry.
 func (TournamentEntry) Indexes() []ent.Index {
 	return []ent.Index{
-		// Unique constraint: one entry per golfer per tournament
 		index.Edges("tournament", "golfer").
 			Unique(),
-		// Index for querying by external IDs
-		index.Fields("external_tournament_id"),
-		index.Fields("external_player_id"),
 	}
 }

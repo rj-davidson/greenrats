@@ -107,9 +107,8 @@ CREATE TABLE "tournament_entries" (
   "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL,
   "updated_at" timestamptz NOT NULL,
-  "external_tournament_id" bigint NOT NULL,
-  "external_player_id" bigint NOT NULL,
   "position" bigint NOT NULL DEFAULT 0,
+  "cut" boolean NOT NULL DEFAULT false,
   "score" bigint NOT NULL DEFAULT 0,
   "total_strokes" bigint NOT NULL DEFAULT 0,
   "earnings" bigint NOT NULL DEFAULT 0,
@@ -122,17 +121,5 @@ CREATE TABLE "tournament_entries" (
   CONSTRAINT "tournament_entries_golfers_entries" FOREIGN KEY ("golfer_entries") REFERENCES "golfers" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT "tournament_entries_tournaments_entries" FOREIGN KEY ("tournament_entries") REFERENCES "tournaments" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 );
--- Create index "tournamententry_external_player_id" to table: "tournament_entries"
-CREATE INDEX "tournamententry_external_player_id" ON "tournament_entries" ("external_player_id");
--- Create index "tournamententry_external_tournament_id" to table: "tournament_entries"
-CREATE INDEX "tournamententry_external_tournament_id" ON "tournament_entries" ("external_tournament_id");
 -- Create index "tournamententry_tournament_entries_golfer_entries" to table: "tournament_entries"
 CREATE UNIQUE INDEX "tournamententry_tournament_entries_golfer_entries" ON "tournament_entries" ("tournament_entries", "golfer_entries");
--- Create "tournament_golfers" table
-CREATE TABLE "tournament_golfers" (
-  "tournament_id" uuid NOT NULL,
-  "golfer_id" uuid NOT NULL,
-  PRIMARY KEY ("tournament_id", "golfer_id"),
-  CONSTRAINT "tournament_golfers_golfer_id" FOREIGN KEY ("golfer_id") REFERENCES "golfers" ("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-  CONSTRAINT "tournament_golfers_tournament_id" FOREIGN KEY ("tournament_id") REFERENCES "tournaments" ("id") ON UPDATE NO ACTION ON DELETE CASCADE
-);

@@ -396,22 +396,6 @@ func (c *GolferClient) QueryEntries(_m *Golfer) *TournamentEntryQuery {
 	return query
 }
 
-// QueryTournaments queries the tournaments edge of a Golfer.
-func (c *GolferClient) QueryTournaments(_m *Golfer) *TournamentQuery {
-	query := (&TournamentClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(golfer.Table, golfer.FieldID, id),
-			sqlgraph.To(tournament.Table, tournament.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, true, golfer.TournamentsTable, golfer.TournamentsPrimaryKey...),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
 // Hooks returns the client hooks.
 func (c *GolferClient) Hooks() []Hook {
 	return c.hooks.Golfer
@@ -1097,22 +1081,6 @@ func (c *TournamentClient) QueryPicks(_m *Tournament) *PickQuery {
 			sqlgraph.From(tournament.Table, tournament.FieldID, id),
 			sqlgraph.To(pick.Table, pick.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, tournament.PicksTable, tournament.PicksColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryGolfers queries the golfers edge of a Tournament.
-func (c *TournamentClient) QueryGolfers(_m *Tournament) *GolferQuery {
-	query := (&GolferClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(tournament.Table, tournament.FieldID, id),
-			sqlgraph.To(golfer.Table, golfer.FieldID),
-			sqlgraph.Edge(sqlgraph.M2M, false, tournament.GolfersTable, tournament.GolfersPrimaryKey...),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

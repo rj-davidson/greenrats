@@ -57,7 +57,6 @@ func (Tournament) Fields() []ent.Field {
 func (Tournament) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("picks", Pick.Type),
-		edge.To("golfers", Golfer.Type),
 		edge.To("entries", TournamentEntry.Type),
 	}
 }

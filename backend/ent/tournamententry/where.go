@@ -66,19 +66,14 @@ func UpdatedAt(v time.Time) predicate.TournamentEntry {
 	return predicate.TournamentEntry(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// ExternalTournamentID applies equality check predicate on the "external_tournament_id" field. It's identical to ExternalTournamentIDEQ.
-func ExternalTournamentID(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldEQ(FieldExternalTournamentID, v))
-}
-
-// ExternalPlayerID applies equality check predicate on the "external_player_id" field. It's identical to ExternalPlayerIDEQ.
-func ExternalPlayerID(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldEQ(FieldExternalPlayerID, v))
-}
-
 // Position applies equality check predicate on the "position" field. It's identical to PositionEQ.
 func Position(v int) predicate.TournamentEntry {
 	return predicate.TournamentEntry(sql.FieldEQ(FieldPosition, v))
+}
+
+// Cut applies equality check predicate on the "cut" field. It's identical to CutEQ.
+func Cut(v bool) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEQ(FieldCut, v))
 }
 
 // Score applies equality check predicate on the "score" field. It's identical to ScoreEQ.
@@ -186,86 +181,6 @@ func UpdatedAtLTE(v time.Time) predicate.TournamentEntry {
 	return predicate.TournamentEntry(sql.FieldLTE(FieldUpdatedAt, v))
 }
 
-// ExternalTournamentIDEQ applies the EQ predicate on the "external_tournament_id" field.
-func ExternalTournamentIDEQ(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldEQ(FieldExternalTournamentID, v))
-}
-
-// ExternalTournamentIDNEQ applies the NEQ predicate on the "external_tournament_id" field.
-func ExternalTournamentIDNEQ(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldNEQ(FieldExternalTournamentID, v))
-}
-
-// ExternalTournamentIDIn applies the In predicate on the "external_tournament_id" field.
-func ExternalTournamentIDIn(vs ...int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldIn(FieldExternalTournamentID, vs...))
-}
-
-// ExternalTournamentIDNotIn applies the NotIn predicate on the "external_tournament_id" field.
-func ExternalTournamentIDNotIn(vs ...int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldNotIn(FieldExternalTournamentID, vs...))
-}
-
-// ExternalTournamentIDGT applies the GT predicate on the "external_tournament_id" field.
-func ExternalTournamentIDGT(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldGT(FieldExternalTournamentID, v))
-}
-
-// ExternalTournamentIDGTE applies the GTE predicate on the "external_tournament_id" field.
-func ExternalTournamentIDGTE(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldGTE(FieldExternalTournamentID, v))
-}
-
-// ExternalTournamentIDLT applies the LT predicate on the "external_tournament_id" field.
-func ExternalTournamentIDLT(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldLT(FieldExternalTournamentID, v))
-}
-
-// ExternalTournamentIDLTE applies the LTE predicate on the "external_tournament_id" field.
-func ExternalTournamentIDLTE(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldLTE(FieldExternalTournamentID, v))
-}
-
-// ExternalPlayerIDEQ applies the EQ predicate on the "external_player_id" field.
-func ExternalPlayerIDEQ(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldEQ(FieldExternalPlayerID, v))
-}
-
-// ExternalPlayerIDNEQ applies the NEQ predicate on the "external_player_id" field.
-func ExternalPlayerIDNEQ(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldNEQ(FieldExternalPlayerID, v))
-}
-
-// ExternalPlayerIDIn applies the In predicate on the "external_player_id" field.
-func ExternalPlayerIDIn(vs ...int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldIn(FieldExternalPlayerID, vs...))
-}
-
-// ExternalPlayerIDNotIn applies the NotIn predicate on the "external_player_id" field.
-func ExternalPlayerIDNotIn(vs ...int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldNotIn(FieldExternalPlayerID, vs...))
-}
-
-// ExternalPlayerIDGT applies the GT predicate on the "external_player_id" field.
-func ExternalPlayerIDGT(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldGT(FieldExternalPlayerID, v))
-}
-
-// ExternalPlayerIDGTE applies the GTE predicate on the "external_player_id" field.
-func ExternalPlayerIDGTE(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldGTE(FieldExternalPlayerID, v))
-}
-
-// ExternalPlayerIDLT applies the LT predicate on the "external_player_id" field.
-func ExternalPlayerIDLT(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldLT(FieldExternalPlayerID, v))
-}
-
-// ExternalPlayerIDLTE applies the LTE predicate on the "external_player_id" field.
-func ExternalPlayerIDLTE(v int) predicate.TournamentEntry {
-	return predicate.TournamentEntry(sql.FieldLTE(FieldExternalPlayerID, v))
-}
-
 // PositionEQ applies the EQ predicate on the "position" field.
 func PositionEQ(v int) predicate.TournamentEntry {
 	return predicate.TournamentEntry(sql.FieldEQ(FieldPosition, v))
@@ -304,6 +219,16 @@ func PositionLT(v int) predicate.TournamentEntry {
 // PositionLTE applies the LTE predicate on the "position" field.
 func PositionLTE(v int) predicate.TournamentEntry {
 	return predicate.TournamentEntry(sql.FieldLTE(FieldPosition, v))
+}
+
+// CutEQ applies the EQ predicate on the "cut" field.
+func CutEQ(v bool) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEQ(FieldCut, v))
+}
+
+// CutNEQ applies the NEQ predicate on the "cut" field.
+func CutNEQ(v bool) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNEQ(FieldCut, v))
 }
 
 // ScoreEQ applies the EQ predicate on the "score" field.

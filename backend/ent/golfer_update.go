@@ -15,7 +15,6 @@ import (
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
-	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
@@ -264,21 +263,6 @@ func (_u *GolferUpdate) AddEntries(v ...*TournamentEntry) *GolferUpdate {
 	return _u.AddEntryIDs(ids...)
 }
 
-// AddTournamentIDs adds the "tournaments" edge to the Tournament entity by IDs.
-func (_u *GolferUpdate) AddTournamentIDs(ids ...uuid.UUID) *GolferUpdate {
-	_u.mutation.AddTournamentIDs(ids...)
-	return _u
-}
-
-// AddTournaments adds the "tournaments" edges to the Tournament entity.
-func (_u *GolferUpdate) AddTournaments(v ...*Tournament) *GolferUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddTournamentIDs(ids...)
-}
-
 // Mutation returns the GolferMutation object of the builder.
 func (_u *GolferUpdate) Mutation() *GolferMutation {
 	return _u.mutation
@@ -324,27 +308,6 @@ func (_u *GolferUpdate) RemoveEntries(v ...*TournamentEntry) *GolferUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEntryIDs(ids...)
-}
-
-// ClearTournaments clears all "tournaments" edges to the Tournament entity.
-func (_u *GolferUpdate) ClearTournaments() *GolferUpdate {
-	_u.mutation.ClearTournaments()
-	return _u
-}
-
-// RemoveTournamentIDs removes the "tournaments" edge to Tournament entities by IDs.
-func (_u *GolferUpdate) RemoveTournamentIDs(ids ...uuid.UUID) *GolferUpdate {
-	_u.mutation.RemoveTournamentIDs(ids...)
-	return _u
-}
-
-// RemoveTournaments removes "tournaments" edges to Tournament entities.
-func (_u *GolferUpdate) RemoveTournaments(v ...*Tournament) *GolferUpdate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveTournamentIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -548,51 +511,6 @@ func (_u *GolferUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.TournamentsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   golfer.TournamentsTable,
-			Columns: golfer.TournamentsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedTournamentsIDs(); len(nodes) > 0 && !_u.mutation.TournamentsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   golfer.TournamentsTable,
-			Columns: golfer.TournamentsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TournamentsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   golfer.TournamentsTable,
-			Columns: golfer.TournamentsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -852,21 +770,6 @@ func (_u *GolferUpdateOne) AddEntries(v ...*TournamentEntry) *GolferUpdateOne {
 	return _u.AddEntryIDs(ids...)
 }
 
-// AddTournamentIDs adds the "tournaments" edge to the Tournament entity by IDs.
-func (_u *GolferUpdateOne) AddTournamentIDs(ids ...uuid.UUID) *GolferUpdateOne {
-	_u.mutation.AddTournamentIDs(ids...)
-	return _u
-}
-
-// AddTournaments adds the "tournaments" edges to the Tournament entity.
-func (_u *GolferUpdateOne) AddTournaments(v ...*Tournament) *GolferUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.AddTournamentIDs(ids...)
-}
-
 // Mutation returns the GolferMutation object of the builder.
 func (_u *GolferUpdateOne) Mutation() *GolferMutation {
 	return _u.mutation
@@ -912,27 +815,6 @@ func (_u *GolferUpdateOne) RemoveEntries(v ...*TournamentEntry) *GolferUpdateOne
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEntryIDs(ids...)
-}
-
-// ClearTournaments clears all "tournaments" edges to the Tournament entity.
-func (_u *GolferUpdateOne) ClearTournaments() *GolferUpdateOne {
-	_u.mutation.ClearTournaments()
-	return _u
-}
-
-// RemoveTournamentIDs removes the "tournaments" edge to Tournament entities by IDs.
-func (_u *GolferUpdateOne) RemoveTournamentIDs(ids ...uuid.UUID) *GolferUpdateOne {
-	_u.mutation.RemoveTournamentIDs(ids...)
-	return _u
-}
-
-// RemoveTournaments removes "tournaments" edges to Tournament entities.
-func (_u *GolferUpdateOne) RemoveTournaments(v ...*Tournament) *GolferUpdateOne {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _u.RemoveTournamentIDs(ids...)
 }
 
 // Where appends a list predicates to the GolferUpdate builder.
@@ -1166,51 +1048,6 @@ func (_u *GolferUpdateOne) sqlSave(ctx context.Context) (_node *Golfer, err erro
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if _u.mutation.TournamentsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   golfer.TournamentsTable,
-			Columns: golfer.TournamentsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
-			},
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.RemovedTournamentsIDs(); len(nodes) > 0 && !_u.mutation.TournamentsCleared() {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   golfer.TournamentsTable,
-			Columns: golfer.TournamentsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
-	}
-	if nodes := _u.mutation.TournamentsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   golfer.TournamentsTable,
-			Columns: golfer.TournamentsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

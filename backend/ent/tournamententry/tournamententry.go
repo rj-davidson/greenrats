@@ -20,12 +20,10 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldExternalTournamentID holds the string denoting the external_tournament_id field in the database.
-	FieldExternalTournamentID = "external_tournament_id"
-	// FieldExternalPlayerID holds the string denoting the external_player_id field in the database.
-	FieldExternalPlayerID = "external_player_id"
 	// FieldPosition holds the string denoting the position field in the database.
 	FieldPosition = "position"
+	// FieldCut holds the string denoting the cut field in the database.
+	FieldCut = "cut"
 	// FieldScore holds the string denoting the score field in the database.
 	FieldScore = "score"
 	// FieldTotalStrokes holds the string denoting the total_strokes field in the database.
@@ -65,9 +63,8 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-	FieldExternalTournamentID,
-	FieldExternalPlayerID,
 	FieldPosition,
+	FieldCut,
 	FieldScore,
 	FieldTotalStrokes,
 	FieldEarnings,
@@ -107,6 +104,8 @@ var (
 	UpdateDefaultUpdatedAt func() time.Time
 	// DefaultPosition holds the default value on creation for the "position" field.
 	DefaultPosition int
+	// DefaultCut holds the default value on creation for the "cut" field.
+	DefaultCut bool
 	// DefaultScore holds the default value on creation for the "score" field.
 	DefaultScore int
 	// DefaultTotalStrokes holds the default value on creation for the "total_strokes" field.
@@ -131,7 +130,6 @@ const DefaultStatus = StatusPending
 const (
 	StatusPending   Status = "pending"
 	StatusActive    Status = "active"
-	StatusCut       Status = "cut"
 	StatusWithdrawn Status = "withdrawn"
 	StatusFinished  Status = "finished"
 )
@@ -143,7 +141,7 @@ func (s Status) String() string {
 // StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
 func StatusValidator(s Status) error {
 	switch s {
-	case StatusPending, StatusActive, StatusCut, StatusWithdrawn, StatusFinished:
+	case StatusPending, StatusActive, StatusWithdrawn, StatusFinished:
 		return nil
 	default:
 		return fmt.Errorf("tournamententry: invalid enum value for status field: %q", s)
@@ -168,19 +166,14 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByExternalTournamentID orders the results by the external_tournament_id field.
-func ByExternalTournamentID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldExternalTournamentID, opts...).ToFunc()
-}
-
-// ByExternalPlayerID orders the results by the external_player_id field.
-func ByExternalPlayerID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldExternalPlayerID, opts...).ToFunc()
-}
-
 // ByPosition orders the results by the position field.
 func ByPosition(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPosition, opts...).ToFunc()
+}
+
+// ByCut orders the results by the cut field.
+func ByCut(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCut, opts...).ToFunc()
 }
 
 // ByScore orders the results by the score field.

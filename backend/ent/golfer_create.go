@@ -13,7 +13,6 @@ import (
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
-	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
@@ -228,21 +227,6 @@ func (_c *GolferCreate) AddEntries(v ...*TournamentEntry) *GolferCreate {
 	return _c.AddEntryIDs(ids...)
 }
 
-// AddTournamentIDs adds the "tournaments" edge to the Tournament entity by IDs.
-func (_c *GolferCreate) AddTournamentIDs(ids ...uuid.UUID) *GolferCreate {
-	_c.mutation.AddTournamentIDs(ids...)
-	return _c
-}
-
-// AddTournaments adds the "tournaments" edges to the Tournament entity.
-func (_c *GolferCreate) AddTournaments(v ...*Tournament) *GolferCreate {
-	ids := make([]uuid.UUID, len(v))
-	for i := range v {
-		ids[i] = v[i].ID
-	}
-	return _c.AddTournamentIDs(ids...)
-}
-
 // Mutation returns the GolferMutation object of the builder.
 func (_c *GolferCreate) Mutation() *GolferMutation {
 	return _c.mutation
@@ -430,22 +414,6 @@ func (_c *GolferCreate) createSpec() (*Golfer, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
-			},
-		}
-		for _, k := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges = append(_spec.Edges, edge)
-	}
-	if nodes := _c.mutation.TournamentsIDs(); len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: true,
-			Table:   golfer.TournamentsTable,
-			Columns: golfer.TournamentsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -37,48 +37,6 @@ func (_u *TournamentEntryUpdate) SetUpdatedAt(v time.Time) *TournamentEntryUpdat
 	return _u
 }
 
-// SetExternalTournamentID sets the "external_tournament_id" field.
-func (_u *TournamentEntryUpdate) SetExternalTournamentID(v int) *TournamentEntryUpdate {
-	_u.mutation.ResetExternalTournamentID()
-	_u.mutation.SetExternalTournamentID(v)
-	return _u
-}
-
-// SetNillableExternalTournamentID sets the "external_tournament_id" field if the given value is not nil.
-func (_u *TournamentEntryUpdate) SetNillableExternalTournamentID(v *int) *TournamentEntryUpdate {
-	if v != nil {
-		_u.SetExternalTournamentID(*v)
-	}
-	return _u
-}
-
-// AddExternalTournamentID adds value to the "external_tournament_id" field.
-func (_u *TournamentEntryUpdate) AddExternalTournamentID(v int) *TournamentEntryUpdate {
-	_u.mutation.AddExternalTournamentID(v)
-	return _u
-}
-
-// SetExternalPlayerID sets the "external_player_id" field.
-func (_u *TournamentEntryUpdate) SetExternalPlayerID(v int) *TournamentEntryUpdate {
-	_u.mutation.ResetExternalPlayerID()
-	_u.mutation.SetExternalPlayerID(v)
-	return _u
-}
-
-// SetNillableExternalPlayerID sets the "external_player_id" field if the given value is not nil.
-func (_u *TournamentEntryUpdate) SetNillableExternalPlayerID(v *int) *TournamentEntryUpdate {
-	if v != nil {
-		_u.SetExternalPlayerID(*v)
-	}
-	return _u
-}
-
-// AddExternalPlayerID adds value to the "external_player_id" field.
-func (_u *TournamentEntryUpdate) AddExternalPlayerID(v int) *TournamentEntryUpdate {
-	_u.mutation.AddExternalPlayerID(v)
-	return _u
-}
-
 // SetPosition sets the "position" field.
 func (_u *TournamentEntryUpdate) SetPosition(v int) *TournamentEntryUpdate {
 	_u.mutation.ResetPosition()
@@ -97,6 +55,20 @@ func (_u *TournamentEntryUpdate) SetNillablePosition(v *int) *TournamentEntryUpd
 // AddPosition adds value to the "position" field.
 func (_u *TournamentEntryUpdate) AddPosition(v int) *TournamentEntryUpdate {
 	_u.mutation.AddPosition(v)
+	return _u
+}
+
+// SetCut sets the "cut" field.
+func (_u *TournamentEntryUpdate) SetCut(v bool) *TournamentEntryUpdate {
+	_u.mutation.SetCut(v)
+	return _u
+}
+
+// SetNillableCut sets the "cut" field if the given value is not nil.
+func (_u *TournamentEntryUpdate) SetNillableCut(v *bool) *TournamentEntryUpdate {
+	if v != nil {
+		_u.SetCut(*v)
+	}
 	return _u
 }
 
@@ -325,23 +297,14 @@ func (_u *TournamentEntryUpdate) sqlSave(ctx context.Context) (_node int, err er
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(tournamententry.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.ExternalTournamentID(); ok {
-		_spec.SetField(tournamententry.FieldExternalTournamentID, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedExternalTournamentID(); ok {
-		_spec.AddField(tournamententry.FieldExternalTournamentID, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.ExternalPlayerID(); ok {
-		_spec.SetField(tournamententry.FieldExternalPlayerID, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedExternalPlayerID(); ok {
-		_spec.AddField(tournamententry.FieldExternalPlayerID, field.TypeInt, value)
-	}
 	if value, ok := _u.mutation.Position(); ok {
 		_spec.SetField(tournamententry.FieldPosition, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedPosition(); ok {
 		_spec.AddField(tournamententry.FieldPosition, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Cut(); ok {
+		_spec.SetField(tournamententry.FieldCut, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Score(); ok {
 		_spec.SetField(tournamententry.FieldScore, field.TypeInt, value)
@@ -460,48 +423,6 @@ func (_u *TournamentEntryUpdateOne) SetUpdatedAt(v time.Time) *TournamentEntryUp
 	return _u
 }
 
-// SetExternalTournamentID sets the "external_tournament_id" field.
-func (_u *TournamentEntryUpdateOne) SetExternalTournamentID(v int) *TournamentEntryUpdateOne {
-	_u.mutation.ResetExternalTournamentID()
-	_u.mutation.SetExternalTournamentID(v)
-	return _u
-}
-
-// SetNillableExternalTournamentID sets the "external_tournament_id" field if the given value is not nil.
-func (_u *TournamentEntryUpdateOne) SetNillableExternalTournamentID(v *int) *TournamentEntryUpdateOne {
-	if v != nil {
-		_u.SetExternalTournamentID(*v)
-	}
-	return _u
-}
-
-// AddExternalTournamentID adds value to the "external_tournament_id" field.
-func (_u *TournamentEntryUpdateOne) AddExternalTournamentID(v int) *TournamentEntryUpdateOne {
-	_u.mutation.AddExternalTournamentID(v)
-	return _u
-}
-
-// SetExternalPlayerID sets the "external_player_id" field.
-func (_u *TournamentEntryUpdateOne) SetExternalPlayerID(v int) *TournamentEntryUpdateOne {
-	_u.mutation.ResetExternalPlayerID()
-	_u.mutation.SetExternalPlayerID(v)
-	return _u
-}
-
-// SetNillableExternalPlayerID sets the "external_player_id" field if the given value is not nil.
-func (_u *TournamentEntryUpdateOne) SetNillableExternalPlayerID(v *int) *TournamentEntryUpdateOne {
-	if v != nil {
-		_u.SetExternalPlayerID(*v)
-	}
-	return _u
-}
-
-// AddExternalPlayerID adds value to the "external_player_id" field.
-func (_u *TournamentEntryUpdateOne) AddExternalPlayerID(v int) *TournamentEntryUpdateOne {
-	_u.mutation.AddExternalPlayerID(v)
-	return _u
-}
-
 // SetPosition sets the "position" field.
 func (_u *TournamentEntryUpdateOne) SetPosition(v int) *TournamentEntryUpdateOne {
 	_u.mutation.ResetPosition()
@@ -520,6 +441,20 @@ func (_u *TournamentEntryUpdateOne) SetNillablePosition(v *int) *TournamentEntry
 // AddPosition adds value to the "position" field.
 func (_u *TournamentEntryUpdateOne) AddPosition(v int) *TournamentEntryUpdateOne {
 	_u.mutation.AddPosition(v)
+	return _u
+}
+
+// SetCut sets the "cut" field.
+func (_u *TournamentEntryUpdateOne) SetCut(v bool) *TournamentEntryUpdateOne {
+	_u.mutation.SetCut(v)
+	return _u
+}
+
+// SetNillableCut sets the "cut" field if the given value is not nil.
+func (_u *TournamentEntryUpdateOne) SetNillableCut(v *bool) *TournamentEntryUpdateOne {
+	if v != nil {
+		_u.SetCut(*v)
+	}
 	return _u
 }
 
@@ -778,23 +713,14 @@ func (_u *TournamentEntryUpdateOne) sqlSave(ctx context.Context) (_node *Tournam
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(tournamententry.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.ExternalTournamentID(); ok {
-		_spec.SetField(tournamententry.FieldExternalTournamentID, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedExternalTournamentID(); ok {
-		_spec.AddField(tournamententry.FieldExternalTournamentID, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.ExternalPlayerID(); ok {
-		_spec.SetField(tournamententry.FieldExternalPlayerID, field.TypeInt, value)
-	}
-	if value, ok := _u.mutation.AddedExternalPlayerID(); ok {
-		_spec.AddField(tournamententry.FieldExternalPlayerID, field.TypeInt, value)
-	}
 	if value, ok := _u.mutation.Position(); ok {
 		_spec.SetField(tournamententry.FieldPosition, field.TypeInt, value)
 	}
 	if value, ok := _u.mutation.AddedPosition(); ok {
 		_spec.AddField(tournamententry.FieldPosition, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.Cut(); ok {
+		_spec.SetField(tournamententry.FieldCut, field.TypeBool, value)
 	}
 	if value, ok := _u.mutation.Score(); ok {
 		_spec.SetField(tournamententry.FieldScore, field.TypeInt, value)

@@ -43,8 +43,6 @@ const (
 	EdgePicks = "picks"
 	// EdgeEntries holds the string denoting the entries edge name in mutations.
 	EdgeEntries = "entries"
-	// EdgeTournaments holds the string denoting the tournaments edge name in mutations.
-	EdgeTournaments = "tournaments"
 	// Table holds the table name of the golfer in the database.
 	Table = "golfers"
 	// PicksTable is the table that holds the picks relation/edge.
@@ -61,11 +59,6 @@ const (
 	EntriesInverseTable = "tournament_entries"
 	// EntriesColumn is the table column denoting the entries relation/edge.
 	EntriesColumn = "golfer_entries"
-	// TournamentsTable is the table that holds the tournaments relation/edge. The primary key declared below.
-	TournamentsTable = "tournament_golfers"
-	// TournamentsInverseTable is the table name for the Tournament entity.
-	// It exists in this package in order to avoid circular dependency with the "tournament" package.
-	TournamentsInverseTable = "tournaments"
 )
 
 // Columns holds all SQL columns for golfer fields.
@@ -84,12 +77,6 @@ var Columns = []string{
 	FieldActive,
 	FieldImageURL,
 }
-
-var (
-	// TournamentsPrimaryKey and TournamentsColumn2 are the table columns denoting the
-	// primary key for the tournaments relation (M2M).
-	TournamentsPrimaryKey = []string{"tournament_id", "golfer_id"}
-)
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
@@ -213,20 +200,6 @@ func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
-
-// ByTournamentsCount orders the results by tournaments count.
-func ByTournamentsCount(opts ...sql.OrderTermOption) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newTournamentsStep(), opts...)
-	}
-}
-
-// ByTournaments orders the results by tournaments terms.
-func ByTournaments(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
-	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newTournamentsStep(), append([]sql.OrderTerm{term}, terms...)...)
-	}
-}
 func newPicksStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -239,12 +212,5 @@ func newEntriesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EntriesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
-	)
-}
-func newTournamentsStep() *sqlgraph.Step {
-	return sqlgraph.NewStep(
-		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(TournamentsInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, true, TournamentsTable, TournamentsPrimaryKey...),
 	)
 }

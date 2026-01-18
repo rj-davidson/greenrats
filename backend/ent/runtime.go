@@ -163,27 +163,31 @@ func init() {
 	// tournamententry.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	tournamententry.UpdateDefaultUpdatedAt = tournamententryDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// tournamententryDescPosition is the schema descriptor for position field.
-	tournamententryDescPosition := tournamententryFields[2].Descriptor()
+	tournamententryDescPosition := tournamententryFields[0].Descriptor()
 	// tournamententry.DefaultPosition holds the default value on creation for the position field.
 	tournamententry.DefaultPosition = tournamententryDescPosition.Default.(int)
+	// tournamententryDescCut is the schema descriptor for cut field.
+	tournamententryDescCut := tournamententryFields[1].Descriptor()
+	// tournamententry.DefaultCut holds the default value on creation for the cut field.
+	tournamententry.DefaultCut = tournamententryDescCut.Default.(bool)
 	// tournamententryDescScore is the schema descriptor for score field.
-	tournamententryDescScore := tournamententryFields[3].Descriptor()
+	tournamententryDescScore := tournamententryFields[2].Descriptor()
 	// tournamententry.DefaultScore holds the default value on creation for the score field.
 	tournamententry.DefaultScore = tournamententryDescScore.Default.(int)
 	// tournamententryDescTotalStrokes is the schema descriptor for total_strokes field.
-	tournamententryDescTotalStrokes := tournamententryFields[4].Descriptor()
+	tournamententryDescTotalStrokes := tournamententryFields[3].Descriptor()
 	// tournamententry.DefaultTotalStrokes holds the default value on creation for the total_strokes field.
 	tournamententry.DefaultTotalStrokes = tournamententryDescTotalStrokes.Default.(int)
 	// tournamententryDescEarnings is the schema descriptor for earnings field.
-	tournamententryDescEarnings := tournamententryFields[5].Descriptor()
+	tournamententryDescEarnings := tournamententryFields[4].Descriptor()
 	// tournamententry.DefaultEarnings holds the default value on creation for the earnings field.
 	tournamententry.DefaultEarnings = tournamententryDescEarnings.Default.(int)
 	// tournamententryDescCurrentRound is the schema descriptor for current_round field.
-	tournamententryDescCurrentRound := tournamententryFields[7].Descriptor()
+	tournamententryDescCurrentRound := tournamententryFields[6].Descriptor()
 	// tournamententry.DefaultCurrentRound holds the default value on creation for the current_round field.
 	tournamententry.DefaultCurrentRound = tournamententryDescCurrentRound.Default.(int)
 	// tournamententryDescThru is the schema descriptor for thru field.
-	tournamententryDescThru := tournamententryFields[8].Descriptor()
+	tournamententryDescThru := tournamententryFields[7].Descriptor()
 	// tournamententry.DefaultThru holds the default value on creation for the thru field.
 	tournamententry.DefaultThru = tournamententryDescThru.Default.(int)
 	// tournamententryDescID is the schema descriptor for id field.

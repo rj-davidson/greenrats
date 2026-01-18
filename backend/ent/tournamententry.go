@@ -24,12 +24,10 @@ type TournamentEntry struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// BallDontLie tournament ID
-	ExternalTournamentID int `json:"external_tournament_id,omitempty"`
-	// BallDontLie player ID
-	ExternalPlayerID int `json:"external_player_id,omitempty"`
-	// Current position on leaderboard (0 if not yet determined)
+	// Leaderboard position (parsed from 'T5' -> 5, 0 = not determined)
 	Position int `json:"position,omitempty"`
+	// True if golfer missed the cut
+	Cut bool `json:"cut,omitempty"`
 	// Score relative to par (negative is under par)
 	Score int `json:"score,omitempty"`
 	// Total strokes taken
@@ -88,7 +86,9 @@ func (*TournamentEntry) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tournamententry.FieldExternalTournamentID, tournamententry.FieldExternalPlayerID, tournamententry.FieldPosition, tournamententry.FieldScore, tournamententry.FieldTotalStrokes, tournamententry.FieldEarnings, tournamententry.FieldCurrentRound, tournamententry.FieldThru:
+		case tournamententry.FieldCut:
+			values[i] = new(sql.NullBool)
+		case tournamententry.FieldPosition, tournamententry.FieldScore, tournamententry.FieldTotalStrokes, tournamententry.FieldEarnings, tournamententry.FieldCurrentRound, tournamententry.FieldThru:
 			values[i] = new(sql.NullInt64)
 		case tournamententry.FieldStatus:
 			values[i] = new(sql.NullString)
@@ -133,23 +133,17 @@ func (_m *TournamentEntry) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case tournamententry.FieldExternalTournamentID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field external_tournament_id", values[i])
-			} else if value.Valid {
-				_m.ExternalTournamentID = int(value.Int64)
-			}
-		case tournamententry.FieldExternalPlayerID:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field external_player_id", values[i])
-			} else if value.Valid {
-				_m.ExternalPlayerID = int(value.Int64)
-			}
 		case tournamententry.FieldPosition:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field position", values[i])
 			} else if value.Valid {
 				_m.Position = int(value.Int64)
+			}
+		case tournamententry.FieldCut:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field cut", values[i])
+			} else if value.Valid {
+				_m.Cut = value.Bool
 			}
 		case tournamententry.FieldScore:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -253,14 +247,11 @@ func (_m *TournamentEntry) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("external_tournament_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ExternalTournamentID))
-	builder.WriteString(", ")
-	builder.WriteString("external_player_id=")
-	builder.WriteString(fmt.Sprintf("%v", _m.ExternalPlayerID))
-	builder.WriteString(", ")
 	builder.WriteString("position=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Position))
+	builder.WriteString(", ")
+	builder.WriteString("cut=")
+	builder.WriteString(fmt.Sprintf("%v", _m.Cut))
 	builder.WriteString(", ")
 	builder.WriteString("score=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Score))
