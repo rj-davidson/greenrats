@@ -32,7 +32,7 @@ const (
 	leaderboardSyncInterval = 1 * time.Hour
 	playerSyncInterval      = 7 * 24 * time.Hour // Weekly
 	fieldCheckInterval      = 6 * time.Hour      // Check for upcoming tournaments needing field sync
-	daysBeforeFieldSync     = 3                  // Sync field 3 days before tournament starts
+	daysBeforeFieldSync     = 5                  // Sync field 5 days before tournament starts
 )
 
 type Ingester struct {
