@@ -79,6 +79,12 @@ func (_u *UserUpdate) SetNillableDisplayName(v *string) *UserUpdate {
 	return _u
 }
 
+// ClearDisplayName clears the value of the "display_name" field.
+func (_u *UserUpdate) ClearDisplayName() *UserUpdate {
+	_u.mutation.ClearDisplayName()
+	return _u
+}
+
 // AddPickIDs adds the "picks" edge to the Pick entity by IDs.
 func (_u *UserUpdate) AddPickIDs(ids ...uuid.UUID) *UserUpdate {
 	_u.mutation.AddPickIDs(ids...)
@@ -204,11 +210,6 @@ func (_u *UserUpdate) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.DisplayName(); ok {
-		if err := user.DisplayNameValidator(v); err != nil {
-			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "User.display_name": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -235,6 +236,9 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(user.FieldDisplayName, field.TypeString, value)
+	}
+	if _u.mutation.DisplayNameCleared() {
+		_spec.ClearField(user.FieldDisplayName, field.TypeString)
 	}
 	if _u.mutation.PicksCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -394,6 +398,12 @@ func (_u *UserUpdateOne) SetNillableDisplayName(v *string) *UserUpdateOne {
 	return _u
 }
 
+// ClearDisplayName clears the value of the "display_name" field.
+func (_u *UserUpdateOne) ClearDisplayName() *UserUpdateOne {
+	_u.mutation.ClearDisplayName()
+	return _u
+}
+
 // AddPickIDs adds the "picks" edge to the Pick entity by IDs.
 func (_u *UserUpdateOne) AddPickIDs(ids ...uuid.UUID) *UserUpdateOne {
 	_u.mutation.AddPickIDs(ids...)
@@ -532,11 +542,6 @@ func (_u *UserUpdateOne) check() error {
 			return &ValidationError{Name: "email", err: fmt.Errorf(`ent: validator failed for field "User.email": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.DisplayName(); ok {
-		if err := user.DisplayNameValidator(v); err != nil {
-			return &ValidationError{Name: "display_name", err: fmt.Errorf(`ent: validator failed for field "User.display_name": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -580,6 +585,9 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if value, ok := _u.mutation.DisplayName(); ok {
 		_spec.SetField(user.FieldDisplayName, field.TypeString, value)
+	}
+	if _u.mutation.DisplayNameCleared() {
+		_spec.ClearField(user.FieldDisplayName, field.TypeString)
 	}
 	if _u.mutation.PicksCleared() {
 		edge := &sqlgraph.EdgeSpec{

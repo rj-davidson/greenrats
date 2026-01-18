@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/gofrs/uuid/v5"
+
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
@@ -21,9 +23,8 @@ func NewService(db *ent.Client) *Service {
 
 // GetOrCreateParams contains the parameters for GetOrCreate.
 type GetOrCreateParams struct {
-	WorkOSID    string
-	Email       string
-	DisplayName string
+	WorkOSID string
+	Email    string
 }
 
 // GetOrCreateResult contains the result of GetOrCreate.
@@ -50,12 +51,11 @@ func (s *Service) GetOrCreate(ctx context.Context, params GetOrCreateParams) (*G
 		return nil, fmt.Errorf("failed to query user: %w", err)
 	}
 
-	// User not found, create a new one
+	// User not found, create a new one (display_name will be null until set during onboarding)
 	newUser, err := s.db.User.
 		Create().
 		SetWorkosID(params.WorkOSID).
 		SetEmail(params.Email).
-		SetDisplayName(params.DisplayName).
 		Save(ctx)
 
 	if err == nil {
@@ -93,4 +93,49 @@ func (s *Service) GetByWorkOSID(ctx context.Context, workosID string) (*ent.User
 		Query().
 		Where(user.WorkosID(workosID)).
 		Only(ctx)
+}
+
+// SetDisplayName sets the display name for a user.
+// Returns an error if the user already has a display name set.
+func (s *Service) SetDisplayName(ctx context.Context, userID, displayName string) (*ent.User, error) {
+	// Parse the user ID
+	id, err := uuid.FromString(userID)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID: %w", err)
+	}
+
+	// Get the user first to check if display_name is already set
+	u, err := s.db.User.Get(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// Check if display name is already set
+	if u.DisplayName != nil {
+		return nil, fmt.Errorf("display name is already set and cannot be changed")
+	}
+
+	// Update the display name
+	updated, err := u.Update().
+		SetDisplayName(displayName).
+		Save(ctx)
+	if err != nil {
+		if ent.IsConstraintError(err) {
+			return nil, fmt.Errorf("display name is already taken")
+		}
+		return nil, fmt.Errorf("failed to set display name: %w", err)
+	}
+
+	return updated, nil
+}
+
+func (s *Service) IsDisplayNameAvailable(ctx context.Context, displayName string) (bool, error) {
+	exists, err := s.db.User.
+		Query().
+		Where(user.DisplayNameEqualFold(displayName)).
+		Exist(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to check display name: %w", err)
+	}
+	return !exists, nil
 }

@@ -81,6 +81,14 @@ bun add <package-name>                     # Add dependency
 bun remove <package-name>                  # Remove dependency
 ```
 
+## Code Style
+
+**Comments Policy**:
+- All code should be idiomatic and self-documenting
+- Do NOT add code comments unless the code is non-idiomatic (which should be avoided)
+- If code requires a comment to be understood, refactor it to be clearer instead
+- The only acceptable comments are for truly unavoidable non-idiomatic code (e.g., workarounds for external bugs, performance optimizations that sacrifice clarity)
+
 ## Architecture Overview
 
 ### Monorepo Structure

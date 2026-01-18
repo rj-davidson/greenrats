@@ -1,8 +1,6 @@
 package auth
 
 import (
-	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -37,9 +35,6 @@ type Claims struct {
 // Returns 401 if authentication is missing or invalid.
 func Middleware(cfg Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		log.Printf("[AUTH] Processing request: %s %s", c.Method(), c.Path())
-
-		// Get Authorization header
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
 			log.Printf("[AUTH] Missing authorization header for %s %s", c.Method(), c.Path())
@@ -48,33 +43,16 @@ func Middleware(cfg Config) fiber.Handler {
 			})
 		}
 
-		log.Printf("[AUTH] Got auth header (length=%d)", len(authHeader))
-
-		// Extract token from "Bearer <token>"
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
-			log.Printf("[AUTH] Invalid auth header format: parts=%d", len(parts))
+			log.Printf("[AUTH] Invalid auth header format")
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "invalid authorization header format",
 			})
 		}
 
 		tokenString := parts[1]
-		log.Printf("[AUTH] Token extracted (length=%d)", len(tokenString))
 
-		// Debug: decode raw JWT payload to see all claims
-		jwtParts := strings.Split(tokenString, ".")
-		if len(jwtParts) == 3 {
-			payload, err := base64.RawURLEncoding.DecodeString(jwtParts[1])
-			if err == nil {
-				var rawClaims map[string]interface{}
-				if json.Unmarshal(payload, &rawClaims) == nil {
-					log.Printf("[AUTH] Raw JWT claims: %v", rawClaims)
-				}
-			}
-		}
-
-		// Parse and validate token
 		claims, err := verifyToken(tokenString, cfg)
 		if err != nil {
 			log.Printf("[AUTH] Token verification failed: %v", err)
@@ -83,10 +61,6 @@ func Middleware(cfg Config) fiber.Handler {
 			})
 		}
 
-		log.Printf("[AUTH] Token verified - subject=%s, email=%s, name=%s, emailVerified=%v, orgID=%s, role=%s",
-			claims.Subject, claims.Email, claims.Name, claims.EmailVerified, claims.OrgID, claims.Role)
-
-		// Get email/name from headers if not in token (WorkOS access tokens don't include these)
 		email := claims.Email
 		name := claims.Name
 		if email == "" {
@@ -95,9 +69,7 @@ func Middleware(cfg Config) fiber.Handler {
 		if name == "" {
 			name = c.Get("X-User-Name")
 		}
-		log.Printf("[AUTH] Final user info: subject=%s, email=%s, name=%s", claims.Subject, email, name)
 
-		// Store user info in context
 		c.Locals(UserIDKey, claims.Subject)
 		c.Locals(UserEmailKey, email)
 		c.Locals(UserNameKey, name)
@@ -159,13 +131,6 @@ func verifyToken(tokenString string, cfg Config) (*Claims, error) {
 
 	// Build expected issuer: https://api.workos.com/user_management/{client_id}
 	expectedIssuer := workOSIssuerBase + cfg.ClientID
-
-	// First, parse without validation to inspect the issuer
-	_, _, err := new(jwt.Parser).ParseUnverified(tokenString, claims)
-	if err == nil {
-		iss, _ := claims.GetIssuer()
-		log.Printf("[AUTH] Token issuer: %q (expected: %q)", iss, expectedIssuer)
-	}
 
 	// Parse and verify token signature using JWKS
 	token, err := jwt.ParseWithClaims(tokenString, claims, cfg.JWKSProvider.Keyfunc,

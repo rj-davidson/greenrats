@@ -5,9 +5,11 @@ CREATE TABLE "users" (
   "updated_at" timestamptz NOT NULL,
   "workos_id" character varying NOT NULL,
   "email" character varying NOT NULL,
-  "display_name" character varying NOT NULL,
+  "display_name" character varying NULL,
   PRIMARY KEY ("id")
 );
+-- Create index "users_display_name_key" to table: "users"
+CREATE UNIQUE INDEX "users_display_name_key" ON "users" ("display_name");
 -- Create index "users_workos_id_key" to table: "users"
 CREATE UNIQUE INDEX "users_workos_id_key" ON "users" ("workos_id");
 -- Create "leagues" table

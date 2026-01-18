@@ -28,7 +28,9 @@ func (User) Fields() []ent.Field {
 		field.String("email").
 			NotEmpty(),
 		field.String("display_name").
-			NotEmpty(),
+			Unique().
+			Optional().
+			Nillable(),
 	}
 }
 

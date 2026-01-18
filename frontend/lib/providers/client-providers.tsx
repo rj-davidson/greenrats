@@ -7,6 +7,7 @@ import { getQueryClient } from "@/lib/query/get-query-client";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { useAuth, useAccessToken } from "@workos-inc/authkit-nextjs/components";
+import { ThemeProvider } from "next-themes";
 import { useEffect } from "react";
 
 /**
@@ -54,16 +55,18 @@ function QueryProvider({ children }: { children: React.ReactNode }) {
 
 /**
  * Combines all client-side providers into a single wrapper.
- * Order: AuthProvider -> QueryProvider -> TooltipProvider -> Toaster
+ * Order: AuthProvider -> QueryProvider -> ThemeProvider -> TooltipProvider -> Toaster
  */
 export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <QueryProvider>
-        <TooltipProvider>
-          {children}
-          <Toaster />
-        </TooltipProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <TooltipProvider>
+            {children}
+            <Toaster />
+          </TooltipProvider>
+        </ThemeProvider>
       </QueryProvider>
     </AuthProvider>
   );

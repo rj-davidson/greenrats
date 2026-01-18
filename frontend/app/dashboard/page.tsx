@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -17,6 +19,11 @@ export default async function DashboardPage() {
     user = await makeServerRequest.get<User>("/api/v1/users/me");
   } catch (error) {
     console.error("Failed to fetch user:", error);
+  }
+
+  // Redirect to onboarding if user doesn't have a display name
+  if (user && !user.display_name) {
+    redirect("/onboarding");
   }
 
   const displayName = user?.display_name || user?.email || "User";

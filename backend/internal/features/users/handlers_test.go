@@ -22,10 +22,11 @@ func TestHandler_GetMe(t *testing.T) {
 
 		// Create a mock user
 		userID := uuid.Must(uuid.NewV4())
+		displayName := "Test User"
 		mockUser := &ent.User{
 			ID:          userID,
 			Email:       "test@example.com",
-			DisplayName: "Test User",
+			DisplayName: &displayName,
 			CreatedAt:   time.Now(),
 			UpdatedAt:   time.Now(),
 		}
@@ -51,7 +52,8 @@ func TestHandler_GetMe(t *testing.T) {
 
 		assert.Equal(t, userID, userResp.ID)
 		assert.Equal(t, "test@example.com", userResp.Email)
-		assert.Equal(t, "Test User", userResp.DisplayName)
+		require.NotNil(t, userResp.DisplayName)
+		assert.Equal(t, "Test User", *userResp.DisplayName)
 	})
 
 	t.Run("returns 401 when not authenticated", func(t *testing.T) {
