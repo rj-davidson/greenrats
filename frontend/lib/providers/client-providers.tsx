@@ -1,24 +1,21 @@
 "use client";
 
-import {
-  setAccessToken,
-  setAuthLoaded,
-} from "@/lib/query/client-requestor";
-import { getQueryClient } from "@/lib/query/get-query-client";
-import { useAccessToken } from "@workos-inc/authkit-nextjs/components";
-import { QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { useEffect } from "react";
-
 import { Toaster } from "@/components/shadcn/sonner";
 import { TooltipProvider } from "@/components/shadcn/tooltip";
+import { setAccessToken, setAuthLoaded, setUserInfo } from "@/lib/query/client-requestor";
+import { getQueryClient } from "@/lib/query/get-query-client";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { useAuth, useAccessToken } from "@workos-inc/authkit-nextjs/components";
+import { useEffect } from "react";
 
 /**
- * Captures the WorkOS access token and makes it available globally
+ * Captures the WorkOS access token and user info and makes them available globally
  * for the client-side requestor.
  */
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const { accessToken, loading } = useAccessToken();
+  const { user } = useAuth();
 
   useEffect(() => {
     setAccessToken(accessToken);
@@ -26,6 +23,17 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
       setAuthLoaded();
     }
   }, [accessToken, loading]);
+
+  useEffect(() => {
+    if (user) {
+      setUserInfo({
+        email: user.email,
+        name: user.firstName && user.lastName
+          ? `${user.firstName} ${user.lastName}`
+          : user.firstName || user.lastName || "",
+      });
+    }
+  }, [user]);
 
   return <>{children}</>;
 }

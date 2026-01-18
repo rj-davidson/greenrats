@@ -4,7 +4,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/rj-davidson/greenrats/internal/auth"
+	"github.com/rj-davidson/greenrats/internal/features/leagues"
 	"github.com/rj-davidson/greenrats/internal/features/tournaments"
+	"github.com/rj-davidson/greenrats/internal/features/users"
 )
 
 // setupRoutes configures all routes for the server.
@@ -38,10 +40,13 @@ func (s *Server) setupRoutes() {
 	// golferGroup := v1.Group("/golfers")
 
 	// League routes - requires auth and user provisioning
-	// leagueGroup := v1.Group("/leagues",
-	//     auth.Middleware(*s.authConfig),
-	//     auth.EnsureUserMiddleware(ensureUserCfg),
-	// )
+	leagueGroup := v1.Group("/leagues",
+		auth.Middleware(*s.authConfig),
+		auth.EnsureUserMiddleware(ensureUserCfg),
+	)
+	leagueService := leagues.NewService(s.db)
+	leagueHandler := leagues.NewHandler(leagueService)
+	leagueHandler.RegisterRoutesWithGroup(leagueGroup)
 
 	// Pick routes - requires auth and user provisioning
 	// pickGroup := v1.Group("/picks",
@@ -50,10 +55,12 @@ func (s *Server) setupRoutes() {
 	// )
 
 	// User routes - requires auth and user provisioning
-	// userGroup := v1.Group("/users",
-	//     auth.Middleware(*s.authConfig),
-	//     auth.EnsureUserMiddleware(ensureUserCfg),
-	// )
+	userGroup := v1.Group("/users",
+		auth.Middleware(*s.authConfig),
+		auth.EnsureUserMiddleware(ensureUserCfg),
+	)
+	userHandler := users.NewHandler(s.userService)
+	userHandler.RegisterRoutesWithGroup(userGroup)
 }
 
 // healthCheck returns the health status of the API.

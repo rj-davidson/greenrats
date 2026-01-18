@@ -6,24 +6,26 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card";
-import { withAuth } from "@workos-inc/authkit-nextjs";
+import { LeaguesSection } from "@/features/leagues/components";
+import type { User } from "@/features/users/types";
 import { makeServerRequest } from "@/lib/query/server-requestor";
 
 export default async function DashboardPage() {
-  const { user } = await withAuth({ ensureSignedIn: true });
-
-  // Fetch tournaments from backend (this triggers user auto-creation)
+  // Fetch DB user (auto-creates if new WorkOS user)
+  let user: User | null = null;
   try {
-    await makeServerRequest.get("/api/v1/tournaments");
+    user = await makeServerRequest.get<User>("/api/v1/users/me");
   } catch (error) {
-    console.error("Failed to fetch tournaments:", error);
+    console.error("Failed to fetch user:", error);
   }
+
+  const displayName = user?.display_name || user?.email || "User";
 
   return (
     <main className="container mx-auto p-8">
       <div className="mb-8">
         <h1 className="mb-2 text-3xl font-bold">Dashboard</h1>
-        <p className="text-muted-foreground">Welcome back, {user.firstName || user.email}</p>
+        <p className="text-muted-foreground">Welcome back, {displayName}</p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -60,6 +62,10 @@ export default async function DashboardPage() {
             </Button>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mt-8">
+        <LeaguesSection />
       </div>
     </main>
   );

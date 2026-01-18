@@ -3,7 +3,7 @@ package users
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/gofrs/uuid/v5"
 )
 
 // UserResponse represents a user in API responses.

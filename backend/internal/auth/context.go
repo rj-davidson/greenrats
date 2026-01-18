@@ -2,6 +2,9 @@ package auth
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofrs/uuid/v5"
+
+	"github.com/rj-davidson/greenrats/ent"
 )
 
 // Context keys for storing user information.
@@ -10,6 +13,8 @@ const (
 	UserEmailKey = "user_email"
 	UserNameKey  = "user_name"
 	ClaimsKey    = "claims"
+	DBUserKey    = "db_user"
+	DBUserIDKey  = "db_user_id"
 )
 
 // GetUserID retrieves the user ID from the request context.
@@ -47,4 +52,20 @@ func GetClaims(c *fiber.Ctx) *Claims {
 // IsAuthenticated returns true if the request has valid authentication.
 func IsAuthenticated(c *fiber.Ctx) bool {
 	return GetUserID(c) != ""
+}
+
+// GetDBUser retrieves the database user from the request context.
+func GetDBUser(c *fiber.Ctx) *ent.User {
+	if user, ok := c.Locals(DBUserKey).(*ent.User); ok {
+		return user
+	}
+	return nil
+}
+
+// GetDBUserID retrieves the database user ID from the request context.
+func GetDBUserID(c *fiber.Ctx) uuid.UUID {
+	if id, ok := c.Locals(DBUserIDKey).(uuid.UUID); ok {
+		return id
+	}
+	return uuid.Nil
 }

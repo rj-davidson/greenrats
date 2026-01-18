@@ -7,6 +7,8 @@ export interface RequestConfig {
   token?: string;
   baseUrl?: string;
   params?: Record<string, string>;
+  /** User info to pass as headers (WorkOS access tokens don't include email/name) */
+  userInfo?: { email: string; name: string };
 }
 
 /**
@@ -34,7 +36,7 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestInit & RequestConfig = {},
 ): Promise<T> {
-  const { token, baseUrl = PUBLIC_BACKEND_URL, params, ...init } = options;
+  const { token, baseUrl = PUBLIC_BACKEND_URL, params, userInfo, ...init } = options;
 
   let url = `${baseUrl}${endpoint}`;
   if (params) {
@@ -49,6 +51,14 @@ export async function apiClient<T>(
 
   if (token) {
     (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  }
+
+  // Pass user info as headers (WorkOS access tokens don't include email/name)
+  if (userInfo?.email) {
+    (headers as Record<string, string>)["X-User-Email"] = userInfo.email;
+  }
+  if (userInfo?.name) {
+    (headers as Record<string, string>)["X-User-Name"] = userInfo.name;
   }
 
   const response = await fetch(url, {

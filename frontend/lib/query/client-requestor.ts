@@ -11,11 +11,24 @@ let authLoadPromise: Promise<void> | null = null;
 let authLoadResolve: (() => void) | null = null;
 
 /**
+ * User info from WorkOS (email, name) - passed as headers to backend.
+ */
+let userInfo: { email: string; name: string } | undefined;
+
+/**
  * Set the access token for client-side requests.
  * Called by AuthProvider when the token changes.
  */
 export function setAccessToken(token: string | undefined): void {
   accessToken = token;
+}
+
+/**
+ * Set user info for client-side requests.
+ * Called by AuthProvider when user data is available.
+ */
+export function setUserInfo(info: { email: string; name: string }): void {
+  userInfo = info;
 }
 
 /**
@@ -89,16 +102,13 @@ export const makeClientRequest: Requestor = {
     return apiClient<T>(endpoint, {
       method: "GET",
       token,
+      userInfo,
       params: config?.params,
       signal: config?.signal,
     });
   },
 
-  async post<T>(
-    endpoint: string,
-    body?: unknown,
-    config?: RequestorConfig,
-  ): Promise<T> {
+  async post<T>(endpoint: string, body?: unknown, config?: RequestorConfig): Promise<T> {
     if (typeof window === "undefined") {
       throw new Error("makeClientRequest cannot be used during SSR");
     }
@@ -107,16 +117,13 @@ export const makeClientRequest: Requestor = {
       method: "POST",
       body: body ? JSON.stringify(body) : undefined,
       token,
+      userInfo,
       params: config?.params,
       signal: config?.signal,
     });
   },
 
-  async put<T>(
-    endpoint: string,
-    body?: unknown,
-    config?: RequestorConfig,
-  ): Promise<T> {
+  async put<T>(endpoint: string, body?: unknown, config?: RequestorConfig): Promise<T> {
     if (typeof window === "undefined") {
       throw new Error("makeClientRequest cannot be used during SSR");
     }
@@ -125,16 +132,13 @@ export const makeClientRequest: Requestor = {
       method: "PUT",
       body: body ? JSON.stringify(body) : undefined,
       token,
+      userInfo,
       params: config?.params,
       signal: config?.signal,
     });
   },
 
-  async patch<T>(
-    endpoint: string,
-    body?: unknown,
-    config?: RequestorConfig,
-  ): Promise<T> {
+  async patch<T>(endpoint: string, body?: unknown, config?: RequestorConfig): Promise<T> {
     if (typeof window === "undefined") {
       throw new Error("makeClientRequest cannot be used during SSR");
     }
@@ -143,6 +147,7 @@ export const makeClientRequest: Requestor = {
       method: "PATCH",
       body: body ? JSON.stringify(body) : undefined,
       token,
+      userInfo,
       params: config?.params,
       signal: config?.signal,
     });
@@ -156,6 +161,7 @@ export const makeClientRequest: Requestor = {
     return apiClient<T>(endpoint, {
       method: "DELETE",
       token,
+      userInfo,
       params: config?.params,
       signal: config?.signal,
     });
