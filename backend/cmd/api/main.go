@@ -8,6 +8,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	_ "github.com/lib/pq"
 
 	"github.com/rj-davidson/greenrats/ent"
@@ -22,13 +23,25 @@ func main() {
 }
 
 func run() error {
-	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
 		return err
 	}
 
-	// Connect to database
+	if cfg.SentryDSN != "" {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:              cfg.SentryDSN,
+			Environment:      cfg.Env,
+			EnableTracing:    true,
+			TracesSampleRate: 0.1,
+		}); err != nil {
+			log.Printf("Sentry initialization failed: %v", err)
+		} else {
+			defer sentry.Flush(2 * time.Second)
+			log.Println("Sentry initialized")
+		}
+	}
+
 	db, err := ent.Open("postgres", cfg.DatabaseURL)
 	if err != nil {
 		return err

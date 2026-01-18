@@ -5,6 +5,7 @@ go 1.25.6
 require (
 	entgo.io/ent v0.14.5
 	github.com/MicahParks/keyfunc/v3 v3.7.0
+	github.com/getsentry/sentry-go v0.41.0
 	github.com/go-resty/resty/v2 v2.17.1
 	github.com/gofiber/fiber/v2 v2.52.10
 	github.com/gofrs/uuid/v5 v5.4.0

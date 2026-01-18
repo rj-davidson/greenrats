@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/getsentry/sentry-go"
 	_ "github.com/lib/pq"
 
 	"github.com/rj-davidson/greenrats/ent"
@@ -43,20 +44,37 @@ type Ingester struct {
 }
 
 func main() {
-	// Load configuration
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	// Connect to database
+	if cfg.SentryDSN != "" {
+		if err := sentry.Init(sentry.ClientOptions{
+			Dsn:              cfg.SentryDSN,
+			Environment:      cfg.Env,
+			EnableTracing:    true,
+			TracesSampleRate: 0.1,
+		}); err != nil {
+			log.Printf("Sentry initialization failed: %v", err)
+		} else {
+			defer sentry.Flush(2 * time.Second)
+			log.Println("Sentry initialized")
+		}
+	}
+
 	db, err := ent.Open("postgres", cfg.DatabaseURL)
 	if err != nil {
-		log.Fatalf("failed to connect to database: %v", err)
+		return fmt.Errorf("failed to connect to database: %w", err)
 	}
 	defer db.Close()
 
-	// Initialize external API clients
 	sgClient := scratchgolf.New(cfg.ScratchGolfAPIKey, cfg.ScratchGolfBaseURL)
 	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL)
 
@@ -67,18 +85,15 @@ func main() {
 		ballDontLie: bdlClient,
 	}
 
-	// Create context that cancels on shutdown signal
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Start scheduled jobs
 	go ingester.runScheduledJobs(ctx)
 
 	log.Println("GreenRats Ingest Service started")
 	log.Printf("Sync intervals: tournaments=%v, leaderboards=%v, players=%v",
 		tournamentSyncInterval, leaderboardSyncInterval, playerSyncInterval)
 
-	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -86,9 +101,9 @@ func main() {
 	log.Println("Shutting down ingest service...")
 	cancel()
 
-	// Give jobs time to complete
 	time.Sleep(2 * time.Second)
 	log.Println("Ingest service exited gracefully")
+	return nil
 }
 
 // runScheduledJobs runs periodic data ingestion tasks.

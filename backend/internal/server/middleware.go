@@ -1,25 +1,25 @@
 package server
 
 import (
+	"github.com/getsentry/sentry-go"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	"github.com/gofiber/fiber/v2/middleware/recover"
+	fiberrecover "github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
 
-// setupMiddleware configures all middleware for the server.
 func (s *Server) setupMiddleware() {
-	// Request ID middleware
 	s.app.Use(requestid.New())
 
-	// Logger middleware
 	s.app.Use(logger.New(logger.Config{
 		Format:     "${time} | ${status} | ${latency} | ${ip} | ${method} | ${path} | ${error}\n",
 		TimeFormat: "2006-01-02 15:04:05",
 	}))
 
-	// Recover middleware - recovers from panics
-	s.app.Use(recover.New(recover.Config{
+	s.app.Use(sentryMiddleware())
+
+	s.app.Use(fiberrecover.New(fiberrecover.Config{
 		EnableStackTrace: s.config.IsDevelopment(),
 	}))
 
@@ -33,11 +33,31 @@ func (s *Server) setupMiddleware() {
 	}))
 }
 
-// corsOrigins returns allowed origins based on environment.
 func (s *Server) corsOrigins() string {
 	if s.config.IsDevelopment() {
 		return "http://localhost:3000,http://127.0.0.1:3000"
 	}
-	// In production, this should be configured via environment variable
 	return "https://greenrats.com"
+}
+
+func sentryMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		hub := sentry.CurrentHub().Clone()
+		hub.Scope().SetTag("method", c.Method())
+		hub.Scope().SetTag("path", c.Path())
+		hub.Scope().SetExtra("request_id", c.Locals("requestid"))
+
+		defer func() {
+			if r := recover(); r != nil {
+				hub.RecoverWithContext(c.Context(), r)
+				panic(r)
+			}
+		}()
+
+		err := c.Next()
+		if err != nil {
+			hub.CaptureException(err)
+		}
+		return err
+	}
 }

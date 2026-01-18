@@ -25,6 +25,9 @@ type Config struct {
 	ScratchGolfBaseURL string `mapstructure:"SCRATCH_GOLF_BASE_URL"`
 	BallDontLieAPIKey  string `mapstructure:"BALL_DONT_LIE_API_KEY"`
 	BallDontLieBaseURL string `mapstructure:"BALL_DONT_LIE_BASE_URL"`
+
+	// Monitoring
+	SentryDSN string `mapstructure:"SENTRY_DSN"`
 }
 
 // Load reads configuration from environment variables and .env file.
@@ -41,6 +44,7 @@ func Load() (*Config, error) {
 	v.SetDefault("SCRATCH_GOLF_BASE_URL", "https://api.scratchgolf.com")
 	v.SetDefault("BALL_DONT_LIE_API_KEY", "")
 	v.SetDefault("BALL_DONT_LIE_BASE_URL", "https://api.balldontlie.io")
+	v.SetDefault("SENTRY_DSN", "")
 
 	// Read from .env file if it exists
 	v.SetConfigName(".env")
@@ -65,6 +69,7 @@ func Load() (*Config, error) {
 	_ = v.BindEnv("SCRATCH_GOLF_BASE_URL")
 	_ = v.BindEnv("BALL_DONT_LIE_API_KEY")
 	_ = v.BindEnv("BALL_DONT_LIE_BASE_URL")
+	_ = v.BindEnv("SENTRY_DSN")
 
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
