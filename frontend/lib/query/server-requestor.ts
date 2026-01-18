@@ -1,7 +1,6 @@
-import { withAuth } from "@workos-inc/authkit-nextjs";
-
 import { serverApiClient } from "./api-client";
 import type { Requestor, RequestorConfig } from "./requestor";
+import { withAuth } from "@workos-inc/authkit-nextjs";
 
 /**
  * Get the access token from WorkOS for server-side requests.
@@ -27,11 +26,7 @@ export const makeServerRequest: Requestor = {
     });
   },
 
-  async post<T>(
-    endpoint: string,
-    body?: unknown,
-    config?: RequestorConfig,
-  ): Promise<T> {
+  async post<T>(endpoint: string, body?: unknown, config?: RequestorConfig): Promise<T> {
     const token = await getServerToken();
     return serverApiClient<T>(endpoint, {
       method: "POST",
@@ -42,11 +37,7 @@ export const makeServerRequest: Requestor = {
     });
   },
 
-  async put<T>(
-    endpoint: string,
-    body?: unknown,
-    config?: RequestorConfig,
-  ): Promise<T> {
+  async put<T>(endpoint: string, body?: unknown, config?: RequestorConfig): Promise<T> {
     const token = await getServerToken();
     return serverApiClient<T>(endpoint, {
       method: "PUT",
@@ -57,11 +48,7 @@ export const makeServerRequest: Requestor = {
     });
   },
 
-  async patch<T>(
-    endpoint: string,
-    body?: unknown,
-    config?: RequestorConfig,
-  ): Promise<T> {
+  async patch<T>(endpoint: string, body?: unknown, config?: RequestorConfig): Promise<T> {
     const token = await getServerToken();
     return serverApiClient<T>(endpoint, {
       method: "PATCH",
@@ -96,11 +83,7 @@ export const makePublicServerRequest: Requestor = {
     });
   },
 
-  async post<T>(
-    endpoint: string,
-    body?: unknown,
-    config?: RequestorConfig,
-  ): Promise<T> {
+  async post<T>(endpoint: string, body?: unknown, config?: RequestorConfig): Promise<T> {
     return serverApiClient<T>(endpoint, {
       method: "POST",
       body: body ? JSON.stringify(body) : undefined,
@@ -109,11 +92,7 @@ export const makePublicServerRequest: Requestor = {
     });
   },
 
-  async put<T>(
-    endpoint: string,
-    body?: unknown,
-    config?: RequestorConfig,
-  ): Promise<T> {
+  async put<T>(endpoint: string, body?: unknown, config?: RequestorConfig): Promise<T> {
     return serverApiClient<T>(endpoint, {
       method: "PUT",
       body: body ? JSON.stringify(body) : undefined,
@@ -122,11 +101,7 @@ export const makePublicServerRequest: Requestor = {
     });
   },
 
-  async patch<T>(
-    endpoint: string,
-    body?: unknown,
-    config?: RequestorConfig,
-  ): Promise<T> {
+  async patch<T>(endpoint: string, body?: unknown, config?: RequestorConfig): Promise<T> {
     return serverApiClient<T>(endpoint, {
       method: "PATCH",
       body: body ? JSON.stringify(body) : undefined,

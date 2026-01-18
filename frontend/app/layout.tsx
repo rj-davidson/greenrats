@@ -1,9 +1,7 @@
+import { ClientProviders } from "@/lib/providers/client-providers";
 import { AuthKitProvider } from "@workos-inc/authkit-nextjs/components";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-
-import { ClientProviders } from "@/lib/providers/client-providers";
-
 import "./globals.css";
 
 const geistSans = Geist({

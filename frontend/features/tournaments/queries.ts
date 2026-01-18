@@ -1,13 +1,8 @@
+import type { GetTournamentResponse, ListTournamentsResponse, TournamentStatus } from "./types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
 import { queryOptions, useQuery } from "@tanstack/react-query";
-
-import type {
-  GetTournamentResponse,
-  ListTournamentsResponse,
-  TournamentStatus,
-} from "./types";
 
 interface ListTournamentsParams {
   season?: number;
@@ -23,8 +18,7 @@ export const buildTournamentListKey = (params: ListTournamentsParams = {}) =>
 export const buildTournamentDetailKey = (id: string) =>
   [QueryKey.TOURNAMENTS, "detail", id] as const;
 
-export const buildTournamentActiveKey = () =>
-  [QueryKey.TOURNAMENTS, "active"] as const;
+export const buildTournamentActiveKey = () => [QueryKey.TOURNAMENTS, "active"] as const;
 
 // Query options builders
 export function buildGetTournamentsQueryOptions(
@@ -52,19 +46,15 @@ export function buildGetTournamentQueryOptions(
 ) {
   return queryOptions<GetTournamentResponse>({
     queryKey: buildTournamentDetailKey(id),
-    queryFn: () =>
-      requestor.get<GetTournamentResponse>(`/api/v1/tournaments/${id}`),
+    queryFn: () => requestor.get<GetTournamentResponse>(`/api/v1/tournaments/${id}`),
     enabled: !!id,
   });
 }
 
-export function buildGetActiveTournamentQueryOptions(
-  requestor: Requestor = makeClientRequest,
-) {
+export function buildGetActiveTournamentQueryOptions(requestor: Requestor = makeClientRequest) {
   return queryOptions<GetTournamentResponse>({
     queryKey: buildTournamentActiveKey(),
-    queryFn: () =>
-      requestor.get<GetTournamentResponse>("/api/v1/tournaments/active"),
+    queryFn: () => requestor.get<GetTournamentResponse>("/api/v1/tournaments/active"),
   });
 }
 

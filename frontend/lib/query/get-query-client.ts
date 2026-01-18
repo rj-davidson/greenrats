@@ -12,8 +12,7 @@ function makeQueryClient() {
       dehydrate: {
         // Include pending queries in dehydration for SSR streaming
         shouldDehydrateQuery: (query) =>
-          query.state.status === "pending" ||
-          query.state.status === "success",
+          query.state.status === "pending" || query.state.status === "success",
       },
     },
   });

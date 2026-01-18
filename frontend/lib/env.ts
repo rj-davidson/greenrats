@@ -5,8 +5,6 @@
  * PRIVATE_BACKEND_URL: Used by server components (can be internal Docker network address)
  */
 
-export const PUBLIC_BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export const PUBLIC_BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-export const PRIVATE_BACKEND_URL =
-  process.env.PRIVATE_API_URL || PUBLIC_BACKEND_URL;
+export const PRIVATE_BACKEND_URL = process.env.PRIVATE_API_URL || PUBLIC_BACKEND_URL;
