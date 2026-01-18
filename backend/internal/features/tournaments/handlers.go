@@ -25,6 +25,7 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Get("/", h.List)
 	group.Get("/active", h.GetActive)
 	group.Get("/:id", h.GetByID)
+	group.Get("/:id/leaderboard", h.GetLeaderboard)
 }
 
 // List handles GET /tournaments
@@ -87,4 +88,29 @@ func (h *Handler) GetActive(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(GetTournamentResponse{Tournament: *tournament})
+}
+
+// GetLeaderboard handles GET /tournaments/:id/leaderboard
+func (h *Handler) GetLeaderboard(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "tournament id is required",
+		})
+	}
+
+	resp, err := h.service.GetLeaderboard(c.Context(), id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get leaderboard",
+		})
+	}
+
+	if resp == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "tournament not found",
+		})
+	}
+
+	return c.JSON(resp)
 }

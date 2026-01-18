@@ -399,7 +399,6 @@ func (i *Ingester) syncUpcomingTournamentFields(ctx context.Context) {
 			tournament.StartDateGTE(now),
 		).
 		All(ctx)
-
 	if err != nil {
 		log.Printf("failed to query upcoming tournaments: %v", err)
 		return
@@ -538,7 +537,6 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) {
 	tournaments, err := i.db.Tournament.Query().
 		Where(tournament.StatusEQ(tournament.StatusActive)).
 		All(ctx)
-
 	if err != nil {
 		log.Printf("failed to query active tournaments: %v", err)
 		return
@@ -576,7 +574,7 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 
 	for idx := range results {
 		if err := i.upsertTournamentEntry(ctx, t, &results[idx]); err != nil {
-			log.Printf("failed to upsert result for player %d: %v", results[idx].PlayerID, err)
+			log.Printf("failed to upsert result for player %s: %v", results[idx].Player.DisplayName, err)
 			continue
 		}
 	}
@@ -586,7 +584,7 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 
 func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament, r *balldontlie.TournamentResult) error {
 	g, err := i.db.Golfer.Query().
-		Where(golfer.BdlID(r.PlayerID)).
+		Where(golfer.BdlID(r.Player.ID)).
 		Only(ctx)
 
 	if ent.IsNotFound(err) {
@@ -597,23 +595,21 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 
 	status := tournamententry.StatusActive
 	cut := false
-	switch r.Status {
-	case "cut":
+	switch r.Tournament.Status {
+	case "COMPLETED":
 		status = tournamententry.StatusFinished
+	case "IN_PROGRESS":
+		status = tournamententry.StatusActive
+	}
+
+	position := r.PositionNumeric
+	if r.Position == "CUT" {
 		cut = true
-	case "withdrawn":
-		status = tournamententry.StatusWithdrawn
-	case "finished":
 		status = tournamententry.StatusFinished
 	}
 
-	position := parsePosition(r.Position)
-	if r.Position == "CUT" {
-		cut = true
-	}
-	score, _ := strconv.Atoi(r.Score)
-	totalStrokes, _ := strconv.Atoi(r.TotalStrokes)
-	earnings, _ := strconv.Atoi(r.Earnings)
+	score := r.TotalScore // API's total_score is actually score relative to par
+	totalStrokes := 0     // API doesn't provide actual total strokes
 
 	existing, err := i.db.TournamentEntry.Query().
 		Where(
@@ -630,10 +626,8 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 			SetCut(cut).
 			SetScore(score).
 			SetTotalStrokes(totalStrokes).
-			SetEarnings(earnings).
 			SetStatus(status).
 			Save(ctx)
-
 		if err != nil {
 			return fmt.Errorf("failed to create tournament entry: %w", err)
 		}
@@ -645,10 +639,8 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 			SetCut(cut).
 			SetScore(score).
 			SetTotalStrokes(totalStrokes).
-			SetEarnings(earnings).
 			SetStatus(status).
 			Save(ctx)
-
 		if err != nil {
 			return fmt.Errorf("failed to update tournament entry: %w", err)
 		}

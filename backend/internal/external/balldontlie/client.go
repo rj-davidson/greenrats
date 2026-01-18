@@ -55,17 +55,22 @@ type Tournament struct {
 
 // TournamentResult represents a golfer's result in a tournament.
 // Available from the ALL-STAR tier endpoint.
-// Note: API returns many numeric fields as strings, so we use string types and parse in ingest.
+// The API returns nested tournament and player objects.
 type TournamentResult struct {
-	ID           int     `json:"id"`
-	TournamentID int     `json:"tournament_id"`
-	PlayerID     int     `json:"player_id"`
-	Player       *Player `json:"player,omitempty"`
-	Position     string  `json:"position"`
-	Score        string  `json:"score"` // Score relative to par
-	TotalStrokes string  `json:"total_strokes"`
-	Earnings     string  `json:"earnings"` // Prize money in dollars
-	Status       string  `json:"status"`   // "active", "cut", "withdrawn", "finished"
+	Tournament       TournamentInfo `json:"tournament"`
+	Player           Player         `json:"player"`
+	Position         string         `json:"position"`
+	PositionNumeric  int            `json:"position_numeric"`
+	TotalScore       int            `json:"total_score"`
+	ParRelativeScore *int           `json:"par_relative_score"`
+}
+
+// TournamentInfo is the nested tournament object in tournament results.
+type TournamentInfo struct {
+	ID     int    `json:"id"`
+	Season int    `json:"season"`
+	Name   string `json:"name"`
+	Status string `json:"status"`
 }
 
 // Meta contains pagination metadata from the API.
@@ -172,6 +177,7 @@ func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, 
 // GetTournamentResults fetches results/leaderboard for a tournament.
 // ALL-STAR tier endpoint ($9.99/mo): GET /pga/v1/tournament_results
 // Returns positions, scores, and earnings for all players in the tournament.
+// Note: The API uses "tournament_ids[]" as the filter parameter name.
 func (c *Client) GetTournamentResults(ctx context.Context, tournamentID int) ([]TournamentResult, error) {
 	var allResults []TournamentResult
 	cursor := 0
@@ -182,7 +188,7 @@ func (c *Client) GetTournamentResults(ctx context.Context, tournamentID int) ([]
 		req := c.client.R().
 			SetContext(ctx).
 			SetResult(&response).
-			SetQueryParam("tournament_id", fmt.Sprintf("%d", tournamentID)).
+			SetQueryParam("tournament_ids[]", fmt.Sprintf("%d", tournamentID)).
 			SetQueryParam("per_page", "100")
 
 		if cursor > 0 {

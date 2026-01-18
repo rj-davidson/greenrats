@@ -1,4 +1,9 @@
-import type { GetTournamentResponse, ListTournamentsResponse, TournamentStatus } from "./types";
+import type {
+  GetLeaderboardResponse,
+  GetTournamentResponse,
+  ListTournamentsResponse,
+  TournamentStatus,
+} from "./types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
@@ -19,6 +24,9 @@ export const buildTournamentDetailKey = (id: string) =>
   [QueryKey.TOURNAMENTS, "detail", id] as const;
 
 export const buildTournamentActiveKey = () => [QueryKey.TOURNAMENTS, "active"] as const;
+
+export const buildLeaderboardKey = (id: string) =>
+  [QueryKey.TOURNAMENTS, "leaderboard", id] as const;
 
 // Query options builders
 export function buildGetTournamentsQueryOptions(
@@ -58,6 +66,17 @@ export function buildGetActiveTournamentQueryOptions(requestor: Requestor = make
   });
 }
 
+export function buildGetLeaderboardQueryOptions(
+  id: string,
+  requestor: Requestor = makeClientRequest,
+) {
+  return queryOptions<GetLeaderboardResponse>({
+    queryKey: buildLeaderboardKey(id),
+    queryFn: () => requestor.get<GetLeaderboardResponse>(`/api/v1/tournaments/${id}/leaderboard`),
+    enabled: !!id,
+  });
+}
+
 // React hooks (convenience wrappers)
 export function useTournaments(params: ListTournamentsParams = {}) {
   return useQuery(buildGetTournamentsQueryOptions(params));
@@ -69,4 +88,8 @@ export function useTournament(id: string) {
 
 export function useActiveTournament() {
   return useQuery(buildGetActiveTournamentQueryOptions());
+}
+
+export function useLeaderboard(id: string) {
+  return useQuery(buildGetLeaderboardQueryOptions(id));
 }

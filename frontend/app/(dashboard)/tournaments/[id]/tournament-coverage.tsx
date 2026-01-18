@@ -1,6 +1,7 @@
 "use client";
 
 import { Badge } from "@/components/shadcn/badge";
+import { LeaderboardTable } from "@/features/tournaments/components";
 import { useTournament } from "@/features/tournaments/queries";
 
 interface TournamentCoverageProps {
@@ -42,8 +43,9 @@ export function TournamentCoverage({ id }: TournamentCoverageProps) {
           {tournament.venue || tournament.course || "Tournament coverage coming soon"}
         </p>
       </div>
-      <div className="rounded-lg border border-dashed p-12 text-center">
-        <p className="text-muted-foreground">Tournament coverage coming soon</p>
+      <div>
+        <h2 className="mb-4 text-xl font-semibold">Leaderboard</h2>
+        <LeaderboardTable tournamentId={id} />
       </div>
     </div>
   );

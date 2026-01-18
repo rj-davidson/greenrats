@@ -32,3 +32,24 @@ type ListTournamentsResponse struct {
 type GetTournamentResponse struct {
 	Tournament Tournament `json:"tournament"`
 }
+
+// LeaderboardEntry represents a golfer's position on the tournament leaderboard.
+type LeaderboardEntry struct {
+	Position        int    `json:"position"`
+	PositionDisplay string `json:"position_display"`
+	GolferID        string `json:"golfer_id"`
+	GolferName      string `json:"golfer_name"`
+	CountryCode     string `json:"country_code"`
+	Score           int    `json:"score"`
+	TotalStrokes    int    `json:"total_strokes"`
+	Thru            int    `json:"thru"`
+	CurrentRound    int    `json:"current_round"`
+	Cut             bool   `json:"cut"`
+	Status          string `json:"status"`
+}
+
+// GetLeaderboardResponse represents the response for getting a tournament leaderboard.
+type GetLeaderboardResponse struct {
+	Entries []LeaderboardEntry `json:"entries"`
+	Total   int                `json:"total"`
+}

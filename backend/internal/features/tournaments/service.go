@@ -3,6 +3,7 @@ package tournaments
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -100,6 +101,111 @@ func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 
 	result := toTournament(t)
 	return &result, nil
+}
+
+// GetLeaderboard returns the leaderboard entries for a tournament.
+func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboardResponse, error) {
+	uid, err := uuid.FromString(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid tournament ID: %w", err)
+	}
+
+	t, err := s.db.Tournament.Get(ctx, uid)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get tournament: %w", err)
+	}
+
+	entries, err := t.QueryEntries().
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get leaderboard entries: %w", err)
+	}
+
+	// Sort: players with position first, then cut players, then position 0 last
+	// Within each group, sort by position/score then alphabetically by name
+	sort.Slice(entries, func(i, j int) bool {
+		iCut, jCut := entries[i].Cut, entries[j].Cut
+		iPos, jPos := entries[i].Position, entries[j].Position
+
+		// Determine sorting group: 0 = has position, 1 = cut, 2 = no position (0)
+		getGroup := func(cut bool, pos int) int {
+			if !cut && pos > 0 {
+				return 0 // has position
+			}
+			if cut {
+				return 1 // cut
+			}
+			return 2 // no position
+		}
+
+		iGroup, jGroup := getGroup(iCut, iPos), getGroup(jCut, jPos)
+		if iGroup != jGroup {
+			return iGroup < jGroup
+		}
+
+		// Within same group
+		if iGroup == 0 {
+			// Both have positions: sort by position, then by name for ties
+			if iPos != jPos {
+				return iPos < jPos
+			}
+		} else if iGroup == 1 {
+			// Both cut: sort by score (ascending), then by name
+			if entries[i].Score != entries[j].Score {
+				return entries[i].Score < entries[j].Score
+			}
+		}
+		// Sort alphabetically by name
+		return entries[i].Edges.Golfer.Name < entries[j].Edges.Golfer.Name
+	})
+
+	// Count occurrences of each position to determine ties
+	positionCounts := make(map[int]int)
+	for _, e := range entries {
+		if !e.Cut && e.Position > 0 {
+			positionCounts[e.Position]++
+		}
+	}
+
+	result := make([]LeaderboardEntry, len(entries))
+	for i, e := range entries {
+		golfer := e.Edges.Golfer
+
+		// Format position display
+		posDisplay := "-"
+		if e.Cut {
+			posDisplay = "CUT"
+		} else if e.Position > 0 {
+			if positionCounts[e.Position] > 1 {
+				posDisplay = fmt.Sprintf("T%d", e.Position)
+			} else {
+				posDisplay = fmt.Sprintf("%d", e.Position)
+			}
+		}
+
+		result[i] = LeaderboardEntry{
+			Position:        e.Position,
+			PositionDisplay: posDisplay,
+			GolferID:        golfer.ID.String(),
+			GolferName:      golfer.Name,
+			CountryCode:     golfer.CountryCode,
+			Score:           e.Score,
+			TotalStrokes:    e.TotalStrokes,
+			Thru:            e.Thru,
+			CurrentRound:    e.CurrentRound,
+			Cut:             e.Cut,
+			Status:          string(e.Status),
+		}
+	}
+
+	return &GetLeaderboardResponse{
+		Entries: result,
+		Total:   len(result),
+	}, nil
 }
 
 func toTournament(t *ent.Tournament) Tournament {
