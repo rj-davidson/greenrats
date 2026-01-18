@@ -9,17 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card";
+import { Badge } from "@/components/shadcn/badge";
 
 function RoleBadge({ role }: { role: string }) {
-  const isOwner = role === "owner";
+  const isOwner = role === "Owner";
   return (
-    <span
-      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-        isOwner ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-      }`}
-    >
+    <Badge variant={isOwner ? "default" : "secondary"}>
       {role}
-    </span>
+    </Badge>
   );
 }
 
