@@ -123,7 +123,7 @@ export function TournamentSchedule() {
     );
   }
 
-  if (!data.tournaments.length) {
+  if (!data || !data.tournaments.length) {
     return (
       <Card>
         <CardContent className="py-8 text-center">

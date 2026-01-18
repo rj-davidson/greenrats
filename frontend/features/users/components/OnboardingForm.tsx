@@ -61,7 +61,7 @@ export function OnboardingForm() {
   async function onSubmit(data: SetDisplayNameRequest) {
     try {
       await setDisplayName.mutateAsync(data);
-      router.push("/dashboard");
+      router.push("/");
     } catch {
       form.setError("display_name", {
         type: "manual",

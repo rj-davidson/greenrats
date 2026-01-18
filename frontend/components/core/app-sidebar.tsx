@@ -12,19 +12,76 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/shadcn/sidebar";
-import { HomeIcon, TrophyIcon, UsersIcon } from "lucide-react";
+import { LeagueMonogram } from "@/features/leagues/components";
+import { useUserLeagues } from "@/features/leagues/queries";
+import { useActiveTournament, useTournaments } from "@/features/tournaments/queries";
+import type { Tournament } from "@/features/tournaments/types";
+import { CalendarIcon, ChevronRightIcon, HomeIcon, TrophyIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo } from "react";
 import { SidebarUser } from "./sidebar-user";
 
-const navItems = [
-  { title: "Dashboard", href: "/", icon: HomeIcon },
-  { title: "Leagues", href: "/leagues", icon: UsersIcon },
-  { title: "Tournaments", href: "/tournaments", icon: TrophyIcon },
-];
+const MAX_SIDEBAR_LEAGUES = 6;
+
+function LiveDot() {
+  return (
+    <span className="relative flex h-2 w-2 items-center justify-center">
+      <span className="animate-pulse-subtle absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+    </span>
+  );
+}
+
+function TournamentIcon({ status }: { status: Tournament["status"] }) {
+  switch (status) {
+    case "active":
+      return <LiveDot />;
+    case "upcoming":
+      return <CalendarIcon className="size-4" />;
+    case "completed":
+      return <TrophyIcon className="size-4" />;
+  }
+}
+
+function useSidebarTournaments() {
+  const { data: activeData, isLoading: activeLoading } = useActiveTournament();
+  const { data: upcomingData, isLoading: upcomingLoading } = useTournaments({
+    status: "upcoming",
+    limit: 1,
+  });
+  const { data: completedData, isLoading: completedLoading } = useTournaments({
+    status: "completed",
+    limit: 1,
+  });
+
+  const isLoading = activeLoading || upcomingLoading || completedLoading;
+
+  const currentTournament =
+    activeData?.tournament ?? upcomingData?.tournaments?.[0] ?? null;
+  const recentCompleted = completedData?.tournaments?.[0] ?? null;
+
+  return { currentTournament, recentCompleted, isLoading };
+}
+
+function useSidebarLeagues() {
+  const { data, isLoading } = useUserLeagues();
+
+  const sortedLeagues = useMemo(() => {
+    if (!data?.leagues) return [];
+    return [...data.leagues].sort((a, b) => a.name.localeCompare(b.name));
+  }, [data]);
+
+  const displayedLeagues = sortedLeagues.slice(0, MAX_SIDEBAR_LEAGUES);
+  const hasMore = sortedLeagues.length > MAX_SIDEBAR_LEAGUES;
+
+  return { leagues: displayedLeagues, hasMore, isLoading };
+}
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
+  const { currentTournament, recentCompleted } = useSidebarTournaments();
+  const { leagues, hasMore } = useSidebarLeagues();
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -47,22 +104,89 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.href} tooltip={item.title}>
-                    <Link href={item.href}>
-                      <item.icon />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={pathname === "/"} tooltip="Dashboard">
+                  <Link href="/">
+                    <HomeIcon />
+                    <span>Dashboard</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {(currentTournament || recentCompleted) && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Tournaments</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {currentTournament && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === `/tournaments/${currentTournament.id}`}
+                      tooltip={currentTournament.name}
+                    >
+                      <Link href={`/tournaments/${currentTournament.id}`}>
+                        <TournamentIcon status={currentTournament.status} />
+                        <span className="truncate">{currentTournament.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {recentCompleted && recentCompleted.id !== currentTournament?.id && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === `/tournaments/${recentCompleted.id}`}
+                      tooltip={recentCompleted.name}
+                    >
+                      <Link href={`/tournaments/${recentCompleted.id}`}>
+                        <TournamentIcon status={recentCompleted.status} />
+                        <span className="truncate">{recentCompleted.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+        {leagues.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Leagues</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {leagues.map((league) => (
+                  <SidebarMenuItem key={league.id}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={pathname === `/leagues/${league.id}`}
+                      tooltip={league.name}
+                    >
+                      <Link href={`/leagues/${league.id}`}>
+                        <LeagueMonogram league={league} size={16} />
+                        <span className="truncate">{league.name}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+                {hasMore && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild tooltip="View all leagues">
+                      <Link href="/">
+                        <ChevronRightIcon />
+                        <span>View more</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       <SidebarFooter>
         <SidebarUser />
