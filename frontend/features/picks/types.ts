@@ -66,3 +66,15 @@ export const availableGolfersResponseSchema = z.object({
 });
 
 export type AvailableGolfersResponse = z.infer<typeof availableGolfersResponseSchema>;
+
+export const overridePickRequestSchema = z.object({
+  golfer_id: z.string().min(1, "Golfer is required"),
+});
+
+export type OverridePickRequest = z.infer<typeof overridePickRequestSchema>;
+
+export const overridePickResponseSchema = z.object({
+  pick: pickSchema,
+});
+
+export type OverridePickResponse = z.infer<typeof overridePickResponseSchema>;

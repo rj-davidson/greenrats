@@ -3,6 +3,7 @@ import type {
   CreatePickRequest,
   CreatePickResponse,
   ListPicksResponse,
+  OverridePickResponse,
   PickWindowStatus,
 } from "./types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
@@ -116,6 +117,30 @@ export function useCreatePick() {
       queryClient.invalidateQueries({
         queryKey: buildAvailableGolfersKey(variables.league_id, variables.tournament_id),
       });
+    },
+  });
+}
+
+export function useOverridePick() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      leagueId,
+      pickId,
+      golferId,
+    }: {
+      leagueId: string;
+      pickId: string;
+      golferId: string;
+    }) => {
+      return makeClientRequest.put<OverridePickResponse>(
+        `/api/v1/leagues/${leagueId}/picks/${pickId}`,
+        { golfer_id: golferId }
+      );
+    },
+    onSuccess: (_data, { leagueId }) => {
+      queryClient.invalidateQueries({ queryKey: [QueryKey.PICKS, "league", leagueId] });
     },
   });
 }

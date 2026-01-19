@@ -1,20 +1,27 @@
 import type {
+  CommissionerActionsResponse,
   CreateLeagueRequest,
   CreateLeagueResponse,
   GetLeagueResponse,
+  JoinLeagueRequest,
+  JoinLeagueResponse,
   ListUserLeaguesResponse,
+  RegenerateCodeResponse,
+  SetJoiningEnabledRequest,
+  SetJoiningEnabledResponse,
 } from "./types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-// Query key builders
 export const buildUserLeaguesKey = () => [QueryKey.LEAGUES, "user-leagues"] as const;
 
 export const buildLeagueDetailKey = (id: string) => [QueryKey.LEAGUES, "detail", id] as const;
 
-// Query options builders
+export const buildCommissionerActionsKey = (leagueId: string) =>
+  [QueryKey.LEAGUES, "commissioner-actions", leagueId] as const;
+
 export function buildGetUserLeaguesQueryOptions(requestor: Requestor = makeClientRequest) {
   return queryOptions<ListUserLeaguesResponse>({
     queryKey: buildUserLeaguesKey(),
@@ -30,7 +37,18 @@ export function buildGetLeagueQueryOptions(id: string, requestor: Requestor = ma
   });
 }
 
-// React hooks (convenience wrappers)
+export function buildGetCommissionerActionsQueryOptions(
+  leagueId: string,
+  requestor: Requestor = makeClientRequest
+) {
+  return queryOptions<CommissionerActionsResponse>({
+    queryKey: buildCommissionerActionsKey(leagueId),
+    queryFn: () =>
+      requestor.get<CommissionerActionsResponse>(`/api/v1/leagues/${leagueId}/commissioner-actions`),
+    enabled: !!leagueId,
+  });
+}
+
 export function useUserLeagues() {
   return useQuery(buildGetUserLeaguesQueryOptions());
 }
@@ -39,7 +57,10 @@ export function useLeague(id: string) {
   return useQuery(buildGetLeagueQueryOptions(id));
 }
 
-// Mutations
+export function useCommissionerActions(leagueId: string) {
+  return useQuery(buildGetCommissionerActionsQueryOptions(leagueId));
+}
+
 export function useCreateLeague() {
   const queryClient = useQueryClient();
 
@@ -49,6 +70,52 @@ export function useCreateLeague() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: buildUserLeaguesKey() });
+    },
+  });
+}
+
+export function useJoinLeague() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: JoinLeagueRequest) => {
+      return makeClientRequest.post<JoinLeagueResponse>("/api/v1/leagues/join", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: buildUserLeaguesKey() });
+    },
+  });
+}
+
+export function useRegenerateJoinCode() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (leagueId: string) => {
+      return makeClientRequest.post<RegenerateCodeResponse>(
+        `/api/v1/leagues/${leagueId}/regenerate-code`
+      );
+    },
+    onSuccess: (_data, leagueId) => {
+      queryClient.invalidateQueries({ queryKey: buildLeagueDetailKey(leagueId) });
+      queryClient.invalidateQueries({ queryKey: buildCommissionerActionsKey(leagueId) });
+    },
+  });
+}
+
+export function useSetJoiningEnabled() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ leagueId, enabled }: { leagueId: string; enabled: boolean }) => {
+      return makeClientRequest.patch<SetJoiningEnabledResponse>(
+        `/api/v1/leagues/${leagueId}/joining`,
+        { enabled } as SetJoiningEnabledRequest
+      );
+    },
+    onSuccess: (_data, { leagueId }) => {
+      queryClient.invalidateQueries({ queryKey: buildLeagueDetailKey(leagueId) });
+      queryClient.invalidateQueries({ queryKey: buildCommissionerActionsKey(leagueId) });
     },
   });
 }
