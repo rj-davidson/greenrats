@@ -6,5 +6,7 @@ export { JoinLeagueForm } from "./JoinLeagueForm";
 export { LeagueMonogram } from "./LeagueMonogram";
 export { LeaguesList } from "./LeaguesList";
 export { LeaguesSection } from "./LeaguesSection";
+export { LeaguePicksTable } from "./LeaguePicksTable";
 export { LeagueTournamentCard } from "./LeagueTournamentCard";
 export { LeagueTournamentList } from "./LeagueTournamentList";
+export { LeagueTournamentView } from "./LeagueTournamentView";
