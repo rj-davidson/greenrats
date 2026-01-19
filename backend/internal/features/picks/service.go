@@ -9,6 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
@@ -30,6 +31,9 @@ var (
 	ErrGolferAlreadyUsed     = errors.New("golfer already used this season")
 	ErrPickAlreadyExists     = errors.New("pick already exists for this tournament")
 	ErrTournamentNotUpcoming = errors.New("tournament is not upcoming")
+	ErrPickNotFound          = errors.New("pick not found")
+	ErrNotCommissioner       = errors.New("only the commissioner can perform this action")
+	ErrTournamentCompleted   = errors.New("tournament has already completed")
 )
 
 type Service struct {
@@ -391,4 +395,156 @@ func (s *Service) GetAvailableGolfers(ctx context.Context, userID, leagueID, tou
 		Golfers: golfers,
 		Total:   len(golfers),
 	}, nil
+}
+
+type OverridePickParams struct {
+	LeagueID       uuid.UUID
+	PickID         uuid.UUID
+	NewGolferID    uuid.UUID
+	CommissionerID uuid.UUID
+}
+
+func (s *Service) OverridePick(ctx context.Context, params OverridePickParams) (*Pick, error) {
+	isOwner, err := s.isLeagueOwner(ctx, params.LeagueID, params.CommissionerID)
+	if err != nil {
+		return nil, err
+	}
+	if !isOwner {
+		return nil, ErrNotCommissioner
+	}
+
+	pickEnt, err := s.db.Pick.Query().
+		Where(
+			pick.IDEQ(params.PickID),
+			pick.HasLeagueWith(league.IDEQ(params.LeagueID)),
+		).
+		WithTournament().
+		WithGolfer().
+		WithUser().
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrPickNotFound
+		}
+		return nil, fmt.Errorf("failed to get pick: %w", err)
+	}
+
+	if pickEnt.Edges.Tournament == nil {
+		return nil, ErrTournamentNotFound
+	}
+	tournamentEnt := pickEnt.Edges.Tournament
+
+	if tournamentEnt.Status == tournament.StatusCompleted {
+		return nil, ErrTournamentCompleted
+	}
+
+	newGolferEnt, err := s.db.Golfer.Query().
+		Where(golfer.IDEQ(params.NewGolferID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrGolferNotFound
+		}
+		return nil, fmt.Errorf("failed to get golfer: %w", err)
+	}
+
+	inField, err := s.db.TournamentEntry.Query().
+		Where(
+			tournamententry.HasTournamentWith(tournament.IDEQ(tournamentEnt.ID)),
+			tournamententry.HasGolferWith(golfer.IDEQ(params.NewGolferID)),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check tournament field: %w", err)
+	}
+	if !inField {
+		return nil, ErrGolferNotInField
+	}
+
+	if pickEnt.Edges.User == nil {
+		return nil, fmt.Errorf("pick has no associated user")
+	}
+	pickUserID := pickEnt.Edges.User.ID
+
+	golferUsed, err := s.db.Pick.Query().
+		Where(
+			pick.HasUserWith(user.IDEQ(pickUserID)),
+			pick.HasGolferWith(golfer.IDEQ(params.NewGolferID)),
+			pick.HasLeagueWith(league.IDEQ(params.LeagueID)),
+			pick.IDNEQ(params.PickID),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check golfer usage: %w", err)
+	}
+	if golferUsed {
+		return nil, ErrGolferAlreadyUsed
+	}
+
+	oldGolferName := ""
+	if pickEnt.Edges.Golfer != nil {
+		oldGolferName = pickEnt.Edges.Golfer.Name
+	}
+
+	updatedPick, err := s.db.Pick.
+		UpdateOneID(params.PickID).
+		SetGolferID(params.NewGolferID).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update pick: %w", err)
+	}
+
+	metadata := map[string]any{
+		"old_golfer_id":   pickEnt.Edges.Golfer.ID.String(),
+		"old_golfer_name": oldGolferName,
+		"new_golfer_id":   params.NewGolferID.String(),
+		"new_golfer_name": newGolferEnt.Name,
+		"pick_user_id":    pickUserID.String(),
+	}
+
+	_, err = s.db.CommissionerAction.
+		Create().
+		SetActionType(commissioneraction.ActionTypePickChange).
+		SetDescription(fmt.Sprintf("Changed pick from %s to %s", oldGolferName, newGolferEnt.Name)).
+		SetMetadata(metadata).
+		SetLeagueID(params.LeagueID).
+		SetCommissionerID(params.CommissionerID).
+		SetAffectedUserID(pickUserID).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to log action: %w", err)
+	}
+
+	userName := ""
+	if pickEnt.Edges.User.DisplayName != nil {
+		userName = *pickEnt.Edges.User.DisplayName
+	}
+
+	return &Pick{
+		ID:             updatedPick.ID,
+		UserID:         pickUserID,
+		TournamentID:   tournamentEnt.ID,
+		GolferID:       params.NewGolferID,
+		LeagueID:       params.LeagueID,
+		SeasonYear:     updatedPick.SeasonYear,
+		CreatedAt:      updatedPick.CreatedAt,
+		UserName:       userName,
+		TournamentName: tournamentEnt.Name,
+		GolferName:     newGolferEnt.Name,
+	}, nil
+}
+
+func (s *Service) isLeagueOwner(ctx context.Context, leagueID, userID uuid.UUID) (bool, error) {
+	exists, err := s.db.LeagueMembership.
+		Query().
+		Where(
+			leaguemembership.HasLeagueWith(league.IDEQ(leagueID)),
+			leaguemembership.HasUserWith(user.IDEQ(userID)),
+			leaguemembership.RoleEQ(leaguemembership.RoleOwner),
+		).
+		Exist(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to check ownership: %w", err)
+	}
+	return exists, nil
 }

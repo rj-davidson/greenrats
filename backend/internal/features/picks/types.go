@@ -58,3 +58,11 @@ type AvailableGolfersResponse struct {
 	Golfers []AvailableGolfer `json:"golfers"`
 	Total   int               `json:"total"`
 }
+
+type OverridePickRequest struct {
+	GolferID uuid.UUID `json:"golfer_id"`
+}
+
+type OverridePickResponse struct {
+	Pick Pick `json:"pick"`
+}

@@ -27,6 +27,7 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 func (h *Handler) RegisterLeagueRoutes(group fiber.Router) {
 	group.Get("/:id/picks", h.GetLeaguePicks)
 	group.Get("/:id/available-golfers", h.GetAvailableGolfers)
+	group.Put("/:id/picks/:pickId", h.OverridePick)
 }
 
 func (h *Handler) RegisterTournamentRoutes(group fiber.Router) {
@@ -209,6 +210,54 @@ func (h *Handler) GetPickWindow(c *fiber.Ctx) error {
 	return c.JSON(status)
 }
 
+func (h *Handler) OverridePick(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	leagueID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid league id",
+		})
+	}
+
+	pickID, err := uuid.FromString(c.Params("pickId"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid pick id",
+		})
+	}
+
+	var req OverridePickRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	if req.GolferID == uuid.Nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "golfer_id is required",
+		})
+	}
+
+	pick, err := h.service.OverridePick(c.Context(), OverridePickParams{
+		LeagueID:       leagueID,
+		PickID:         pickID,
+		NewGolferID:    req.GolferID,
+		CommissionerID: userID,
+	})
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.JSON(OverridePickResponse{Pick: *pick})
+}
+
 func (h *Handler) handleServiceError(c *fiber.Ctx, err error) error {
 	switch {
 	case errors.Is(err, ErrTournamentNotFound):
@@ -237,15 +286,27 @@ func (h *Handler) handleServiceError(c *fiber.Ctx, err error) error {
 		})
 	case errors.Is(err, ErrGolferAlreadyUsed):
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"error": "you have already used this golfer this season",
+			"error": "golfer has already been used this season",
 		})
 	case errors.Is(err, ErrPickAlreadyExists):
 		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
-			"error": "you have already made a pick for this tournament",
+			"error": "a pick already exists for this tournament",
 		})
 	case errors.Is(err, ErrTournamentNotUpcoming):
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "tournament is not upcoming",
+		})
+	case errors.Is(err, ErrPickNotFound):
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "pick not found",
+		})
+	case errors.Is(err, ErrNotCommissioner):
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "only the commissioner can perform this action",
+		})
+	case errors.Is(err, ErrTournamentCompleted):
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "tournament has already completed",
 		})
 	default:
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
