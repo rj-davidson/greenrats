@@ -56,10 +56,8 @@ func run() error {
 		}
 	}
 
-	if cfg.IsDevelopment() {
-		if err := demo.EnsureDemoLeague(context.Background(), db); err != nil {
-			return err
-		}
+	if err := demo.EnsureDemoLeague(context.Background(), db); err != nil {
+		return err
 	}
 
 	// Create and start server
