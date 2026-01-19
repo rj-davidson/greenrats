@@ -1,20 +1,7 @@
 [build]
-builder = "nixpacks"
-
-[build.nixpacksPlan]
-providers = ["node"]
-
-[build.nixpacksPlan.phases.setup]
-nixPkgs = ["bun"]
-
-[build.nixpacksPlan.phases.install]
-cmds = ["bun install --frozen-lockfile"]
-
-[build.nixpacksPlan.phases.build]
-cmds = ["bun run build"]
+builder = "dockerfile"
 
 [deploy]
-startCommand = "bun run start"
 healthcheckPath = "/"
 healthcheckTimeout = 30
 restartPolicyType = "on_failure"
