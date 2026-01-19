@@ -44,6 +44,7 @@ const (
 	playerSyncInterval      = 7 * 24 * time.Hour // Weekly
 	fieldCheckInterval      = 6 * time.Hour      // Check for upcoming tournaments needing field sync
 	reminderCheckInterval   = 1 * time.Hour      // Check for pick reminders
+	earningsCheckInterval   = 6 * time.Hour      // Check for earnings to sync
 	daysBeforeFieldSync     = 5                  // Sync field 5 days before tournament starts
 	pickWindowDays          = 3                  // Pick window opens this many days before tournament
 )
@@ -146,12 +147,17 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 	reminderTicker := time.NewTicker(reminderCheckInterval)
 	defer reminderTicker.Stop()
 
+	// Earnings check - every 6 hours to sync earnings for recently completed tournaments
+	earningsTicker := time.NewTicker(earningsCheckInterval)
+	defer earningsTicker.Stop()
+
 	// Run initial syncs on startup
 	log.Println("Running initial data syncs...")
 	i.syncTournaments(ctx)
 	i.syncPlayers(ctx)
 	i.syncUpcomingTournamentFields(ctx)
 	i.syncLeaderboards(ctx)
+	i.syncEarnings(ctx)
 	i.sendPickReminders(ctx)
 
 	for {
@@ -166,6 +172,8 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 			i.syncPlayers(ctx)
 		case <-fieldCheckTicker.C:
 			i.syncUpcomingTournamentFields(ctx)
+		case <-earningsTicker.C:
+			i.syncEarnings(ctx)
 		case <-reminderTicker.C:
 			i.sendPickReminders(ctx)
 		}
@@ -1038,6 +1046,171 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 	}
 
 	return nil
+}
+
+// syncEarnings fetches earnings data for recently completed tournaments.
+// Runs at 1 day, 2 days, and 7 days after tournament end to ensure data is captured.
+func (i *Ingester) syncEarnings(ctx context.Context) {
+	log.Println("Checking for tournaments needing earnings sync...")
+
+	now := time.Now().UTC()
+
+	tournaments, err := i.db.Tournament.Query().
+		Where(
+			tournament.StatusEQ(tournament.StatusCompleted),
+			tournament.EndDateGTE(now.AddDate(0, 0, -8)),
+		).
+		All(ctx)
+	if err != nil {
+		log.Printf("failed to query completed tournaments: %v", err)
+		return
+	}
+
+	if len(tournaments) == 0 {
+		log.Println("No recently completed tournaments found")
+		return
+	}
+
+	for _, t := range tournaments {
+		daysSinceEnd := int(now.Sub(t.EndDate).Hours() / 24)
+		shouldSync := daysSinceEnd == 1 || daysSinceEnd == 2 || daysSinceEnd == 7
+
+		hasEarnings, err := i.tournamentHasEarnings(ctx, t)
+		if err != nil {
+			log.Printf("failed to check earnings for tournament %s: %v", t.Name, err)
+			continue
+		}
+
+		if !shouldSync && hasEarnings {
+			continue
+		}
+
+		if err := i.syncTournamentEarnings(ctx, t); err != nil {
+			log.Printf("failed to sync earnings for tournament %s: %v", t.Name, err)
+		}
+	}
+
+	log.Println("Earnings sync completed")
+}
+
+func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament) (bool, error) {
+	return i.db.TournamentEntry.Query().
+		Where(
+			tournamententry.HasTournamentWith(tournament.IDEQ(t.ID)),
+			tournamententry.EarningsGT(0),
+		).
+		Exist(ctx)
+}
+
+func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament) error {
+	log.Printf("Syncing earnings for tournament: %s", t.Name)
+
+	lgdTournamentID, err := i.findLiveGolfDataTournamentID(ctx, t)
+	if err != nil {
+		return fmt.Errorf("failed to find Live Golf Data tournament ID: %w", err)
+	}
+
+	year := t.SeasonYear
+	if year == 0 {
+		year = t.EndDate.Year()
+	}
+
+	earnings, err := i.liveGolfData.GetEarnings(ctx, lgdTournamentID, year)
+	if err != nil {
+		return fmt.Errorf("failed to fetch earnings: %w", err)
+	}
+
+	if earnings == nil {
+		log.Printf("Earnings not yet available for tournament %s", t.Name)
+		return nil
+	}
+
+	log.Printf("Fetched %d earnings entries for tournament %s", len(earnings), t.Name)
+
+	var updated int
+	for _, e := range earnings {
+		golferName := fmt.Sprintf("%s %s", e.FirstName, e.LastName)
+		g, err := i.findMatchingGolfer(ctx, golferName, e.FirstName, e.LastName)
+		if errors.Is(err, errNoMatch) {
+			continue
+		}
+		if err != nil {
+			log.Printf("failed to find golfer %s: %v", golferName, err)
+			continue
+		}
+
+		entry, err := i.db.TournamentEntry.Query().
+			Where(
+				tournamententry.HasTournamentWith(tournament.IDEQ(t.ID)),
+				tournamententry.HasGolferWith(golfer.IDEQ(g.ID)),
+			).
+			Only(ctx)
+		if ent.IsNotFound(err) {
+			continue
+		}
+		if err != nil {
+			log.Printf("failed to query tournament entry for %s: %v", golferName, err)
+			continue
+		}
+
+		if entry.Earnings != e.Earnings {
+			_, err = entry.Update().SetEarnings(e.Earnings).Save(ctx)
+			if err != nil {
+				log.Printf("failed to update earnings for %s: %v", golferName, err)
+				continue
+			}
+			updated++
+		}
+	}
+
+	log.Printf("Updated earnings for %d golfers in tournament %s", updated, t.Name)
+	return nil
+}
+
+func (i *Ingester) findLiveGolfDataTournamentID(ctx context.Context, t *ent.Tournament) (string, error) {
+	if t.ScratchgolfID != nil && *t.ScratchgolfID != "" {
+		return *t.ScratchgolfID, nil
+	}
+
+	year := t.SeasonYear
+	if year == 0 {
+		year = t.EndDate.Year()
+	}
+
+	schedule, err := i.liveGolfData.GetSchedule(ctx, year)
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch Live Golf Data schedule: %w", err)
+	}
+
+	target := normalizeTournamentName(t.Name)
+	var fallback string
+	for idx := range schedule {
+		s := &schedule[idx]
+		name := normalizeTournamentName(s.Name)
+		if name == target {
+			if err := i.saveLiveGolfDataTournamentID(ctx, t, s.ID); err != nil {
+				log.Printf("failed to save Live Golf Data tournament ID: %v", err)
+			}
+			return s.ID, nil
+		}
+		if fallback == "" && (strings.Contains(name, target) || strings.Contains(target, name)) {
+			fallback = s.ID
+		}
+	}
+
+	if fallback != "" {
+		if err := i.saveLiveGolfDataTournamentID(ctx, t, fallback); err != nil {
+			log.Printf("failed to save Live Golf Data tournament ID: %v", err)
+		}
+		return fallback, nil
+	}
+
+	return "", fmt.Errorf("no Live Golf Data schedule match for tournament %s", t.Name)
+}
+
+func (i *Ingester) saveLiveGolfDataTournamentID(ctx context.Context, t *ent.Tournament, lgdID string) error {
+	_, err := t.Update().SetScratchgolfID(lgdID).Save(ctx)
+	return err
 }
 
 func (i *Ingester) sendPickReminders(ctx context.Context) {

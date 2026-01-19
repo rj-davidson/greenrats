@@ -2,6 +2,7 @@ package livegolfdata
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
@@ -64,6 +65,14 @@ type LeaderboardEntry struct {
 	Thru         int    `json:"thru"`          // Holes completed in current round
 	Round        int    `json:"round"`         // Current round (1-4)
 	Status       string `json:"status"`        // "active", "cut", "withdrawn"
+}
+
+// EarningsEntry represents a golfer's earnings from a completed tournament.
+type EarningsEntry struct {
+	PlayerID  string `json:"playerId"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	Earnings  int    `json:"earnings"` // Prize money in dollars
 }
 
 // GetTournaments fetches tournaments for a given season.
@@ -158,4 +167,118 @@ func (c *Client) GetGolfer(ctx context.Context, golferID string) (*Golfer, error
 	}
 
 	return &golfer, nil
+}
+
+// GetEarnings fetches earnings data for a completed tournament.
+// Endpoint: GET /earnings?tournId={tournament_id}&year={year}
+// Returns nil if earnings are not yet available (tournament not completed).
+func (c *Client) GetEarnings(ctx context.Context, tournamentID string, year int) ([]EarningsEntry, error) {
+	var result struct {
+		Leaderboard []EarningsEntry `json:"leaderboard"`
+	}
+
+	resp, err := c.client.R().
+		SetContext(ctx).
+		SetQueryParam("tournId", tournamentID).
+		SetQueryParam("year", fmt.Sprintf("%d", year)).
+		SetResult(&result).
+		Get("/earnings")
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch earnings: %w", err)
+	}
+
+	if resp.IsError() {
+		if resp.StatusCode() == 400 {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("API error fetching earnings: %s", resp.Status())
+	}
+
+	return result.Leaderboard, nil
+}
+
+// GetSchedule fetches the tournament schedule for a given year.
+// Endpoint: GET /schedule?orgId=1&year={year}
+func (c *Client) GetSchedule(ctx context.Context, year int) ([]Tournament, error) {
+	resp, err := c.client.R().
+		SetContext(ctx).
+		SetQueryParam("orgId", "1").
+		SetQueryParam("year", fmt.Sprintf("%d", year)).
+		Get("/schedule")
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch schedule: %w", err)
+	}
+
+	if resp.IsError() {
+		return nil, fmt.Errorf("API error fetching schedule: %s", resp.Status())
+	}
+
+	var tournaments []Tournament
+	if err := parseScheduleResponse(resp.Body(), &tournaments); err != nil {
+		return nil, err
+	}
+
+	return tournaments, nil
+}
+
+func parseScheduleResponse(data []byte, tournaments *[]Tournament) error {
+	var payload any
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return fmt.Errorf("failed to parse schedule: %w", err)
+	}
+
+	collectTournamentsFromPayload(payload, tournaments)
+	return nil
+}
+
+func collectTournamentsFromPayload(value any, tournaments *[]Tournament) {
+	switch v := value.(type) {
+	case map[string]any:
+		if t, ok := extractTournamentFromMap(v); ok {
+			*tournaments = append(*tournaments, t)
+		}
+		for _, child := range v {
+			collectTournamentsFromPayload(child, tournaments)
+		}
+	case []any:
+		for _, child := range v {
+			collectTournamentsFromPayload(child, tournaments)
+		}
+	}
+}
+
+func extractTournamentFromMap(m map[string]any) (Tournament, bool) {
+	name := stringFromMap(m, "name", "tournamentName", "tournament_name")
+	if name == "" {
+		return Tournament{}, false
+	}
+
+	id := stringFromMap(m, "tournId", "tourn_id", "tournamentId", "tournament_id", "id")
+	if id == "" {
+		return Tournament{}, false
+	}
+
+	return Tournament{
+		ID:   id,
+		Name: name,
+	}, true
+}
+
+func stringFromMap(m map[string]any, keys ...string) string {
+	for _, key := range keys {
+		if val, ok := m[key]; ok {
+			switch v := val.(type) {
+			case string:
+				return v
+			case float64:
+				if v == float64(int64(v)) {
+					return fmt.Sprintf("%d", int64(v))
+				}
+				return fmt.Sprintf("%v", v)
+			}
+		}
+	}
+	return ""
 }
