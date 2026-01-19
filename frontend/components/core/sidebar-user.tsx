@@ -20,7 +20,16 @@ import {
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { useCurrentUser } from "@/features/users/queries";
 import { signOut } from "@workos-inc/authkit-nextjs";
-import { ChevronsUpDownIcon, LogOutIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  ChevronsUpDownIcon,
+  LogOutIcon,
+  MailIcon,
+  MonitorIcon,
+  MoonIcon,
+  SunIcon,
+} from "lucide-react";
+import Link from "next/link";
 import { useTheme } from "next-themes";
 
 export function SidebarUser() {
@@ -34,9 +43,7 @@ export function SidebarUser() {
         <SidebarMenuItem>
           <div className="flex items-center gap-2 px-2 py-1.5">
             <Skeleton className="size-8 rounded-lg" />
-            <div className="flex-1">
-              <Skeleton className="h-4 w-24" />
-            </div>
+            <Skeleton className="h-4 w-24" />
           </div>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -60,9 +67,6 @@ export function SidebarUser() {
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{displayName}</span>
-                {user?.email && user.display_name && (
-                  <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-                )}
               </div>
               <ChevronsUpDownIcon className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -99,6 +103,18 @@ export function SidebarUser() {
                 </DropdownMenuItem>
               </DropdownMenuSubContent>
             </DropdownMenuSub>
+            <DropdownMenuItem asChild>
+              <a href="mailto:dev@greenrats.com">
+                <MailIcon />
+                Contact Support
+              </a>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/rules">
+                <BookOpenIcon />
+                Rules
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={async () => {

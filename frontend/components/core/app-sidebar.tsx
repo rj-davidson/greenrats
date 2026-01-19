@@ -17,7 +17,7 @@ import { LeagueMonogram } from "@/features/leagues/components";
 import { useUserLeagues } from "@/features/leagues/queries";
 import { useActiveTournament, useTournaments } from "@/features/tournaments/queries";
 import type { Tournament } from "@/features/tournaments/types";
-import { CalendarIcon, ChevronRightIcon, HomeIcon, TrophyIcon } from "lucide-react";
+import { CalendarIcon, ChevronRightIcon, TrophyIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
@@ -93,7 +93,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <TrophyIcon className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">GreenRats</span>
+                  <span className="truncate font-semibold">
+                    GreenRats <span className="text-muted-foreground font-normal">Beta</span>
+                  </span>
                   <span className="truncate text-xs">Golf Pick&apos;em</span>
                 </div>
               </Link>
@@ -102,20 +104,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild isActive={pathname === "/"} tooltip="Dashboard">
-                  <Link href="/">
-                    <HomeIcon />
-                    <span>Dashboard</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
         {(currentTournament || recentCompleted) && (
           <SidebarGroup>
             <SidebarGroupLabel>Tournaments</SidebarGroupLabel>

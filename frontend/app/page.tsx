@@ -28,6 +28,11 @@ function LandingPage() {
           <Link href="/login">
             <Button size="lg">Get Started</Button>
           </Link>
+          <Link href="/rules">
+            <Button variant="outline" size="lg">
+              How to Play
+            </Button>
+          </Link>
         </div>
       </div>
     </main>
