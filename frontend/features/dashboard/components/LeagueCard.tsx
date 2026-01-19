@@ -3,7 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/card";
 import { LeagueMonogram } from "@/features/leagues/components";
 import type { League } from "@/features/leagues/types";
-import { CrownIcon, UsersIcon } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { CalendarIcon, CrownIcon, UserIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 
 interface LeagueCardProps {
@@ -32,6 +33,31 @@ export function LeagueCard({ league }: LeagueCardProps) {
             </div>
           </div>
         </CardHeader>
+        {(league.recent_pick || league.next_deadline) && (
+          <CardContent className="border-t pt-3">
+            <div className="text-muted-foreground space-y-1 text-xs">
+              {league.recent_pick && (
+                <div className="flex items-center gap-2">
+                  <UserIcon className="size-3" />
+                  <span className="truncate">
+                    {league.recent_pick.golfer_name} ({league.recent_pick.tournament_name})
+                  </span>
+                </div>
+              )}
+              {league.next_deadline && (
+                <div className="flex items-center gap-2">
+                  <CalendarIcon className="size-3" />
+                  <span>
+                    {league.next_deadline.tournament_name} -{" "}
+                    {formatDistanceToNow(new Date(league.next_deadline.deadline), {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        )}
       </Card>
     </Link>
   );

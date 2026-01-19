@@ -29,8 +29,8 @@ import {
   MoonIcon,
   SunIcon,
 } from "lucide-react";
-import Link from "next/link";
 import { useTheme } from "next-themes";
+import Link from "next/link";
 
 export function SidebarUser() {
   const { data: user, isLoading } = useCurrentUser();

@@ -4,6 +4,21 @@ export const leagueRoleSchema = z.enum(["owner", "member"]);
 
 export type LeagueRole = z.infer<typeof leagueRoleSchema>;
 
+export const recentPickSchema = z.object({
+  golfer_name: z.string(),
+  tournament_name: z.string(),
+});
+
+export type RecentPick = z.infer<typeof recentPickSchema>;
+
+export const nextDeadlineSchema = z.object({
+  tournament_id: z.string(),
+  tournament_name: z.string(),
+  deadline: z.string(),
+});
+
+export type NextDeadline = z.infer<typeof nextDeadlineSchema>;
+
 export const leagueSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -13,6 +28,8 @@ export const leagueSchema = z.object({
   created_at: z.string(),
   role: leagueRoleSchema.optional(),
   member_count: z.number().optional(),
+  recent_pick: recentPickSchema.optional(),
+  next_deadline: nextDeadlineSchema.optional(),
 });
 
 export type League = z.infer<typeof leagueSchema>;

@@ -2,29 +2,25 @@
 
 import { LeagueCard } from "./LeagueCard";
 import { PendingActions } from "./PendingActions";
-import { UpcomingTournaments } from "./UpcomingTournamentAlert";
+import { QuickJoinInput } from "./QuickJoinInput";
+import { TournamentCalendarRow } from "./TournamentCalendarRow";
 import { Button } from "@/components/shadcn/button";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { useUserLeagues } from "@/features/leagues/queries";
-import { PlusIcon, UsersIcon } from "lucide-react";
+import { UsersIcon } from "lucide-react";
 import Link from "next/link";
 
 export function DashboardView() {
   const { data: leaguesData, isLoading: leaguesLoading } = useUserLeagues();
 
   return (
-    <div className="container mx-auto space-y-8 p-8">
-      <div className="flex items-center justify-between">
+    <div className="w-full max-w-full space-y-8 overflow-hidden p-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/leagues/join">
-              <UsersIcon className="mr-2 size-4" />
-              Join League
-            </Link>
-          </Button>
-        </div>
+        <QuickJoinInput />
       </div>
+
+      <TournamentCalendarRow />
 
       <PendingActions />
 
@@ -34,9 +30,9 @@ export function DashboardView() {
         </div>
         {leaguesLoading ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
-            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
           </div>
         ) : leaguesData?.leagues.length ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -56,8 +52,6 @@ export function DashboardView() {
           </div>
         )}
       </section>
-
-      <UpcomingTournaments />
     </div>
   );
 }

@@ -1,9 +1,4 @@
-import type {
-  CheckDisplayNameResponse,
-  PendingActionsResponse,
-  SetDisplayNameRequest,
-  User,
-} from "./types";
+import type { CheckDisplayNameResponse, PendingActionsResponse, SetDisplayNameRequest, User } from "./types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import type { Requestor } from "@/lib/query/requestor";
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";

@@ -199,6 +199,25 @@ Each environment runs three services:
 
 Plus a **PostgreSQL** database addon.
 
+### Railway Config Paths
+
+Configure each Railway service to use the matching config file:
+
+**API**
+```
+backend/railway/api.json
+```
+
+**Ingest**
+```
+backend/railway/ingest.json
+```
+
+**Frontend**
+```
+frontend/railway/web.json
+```
+
 ### Deployment Workflow
 
 1. **Push to main** triggers automatic deployment to Development

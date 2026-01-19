@@ -1,16 +1,16 @@
 import { AppSidebar } from "@/components/core/app-sidebar";
 import { Button } from "@/components/shadcn/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/shadcn/card";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/shadcn/sidebar";
-import { LeaguesSection } from "@/features/leagues/components";
+import { DashboardView } from "@/features/dashboard/components";
+import { buildGetUserLeaguesQueryOptions } from "@/features/leagues/queries";
+import {
+  buildGetActiveTournamentQueryOptions,
+  buildGetTournamentsQueryOptions,
+} from "@/features/tournaments/queries";
+import { buildGetPendingActionsQueryOptions } from "@/features/users/queries";
 import type { User } from "@/features/users/types";
 import { makeServerRequest } from "@/lib/query/server-requestor";
+import { DehydratedState, HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { withAuth } from "@workos-inc/authkit-nextjs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -40,10 +40,10 @@ function LandingPage() {
 }
 
 interface DashboardHomeProps {
-  displayName: string;
+  dehydratedState: DehydratedState;
 }
 
-function DashboardHome({ displayName }: DashboardHomeProps) {
+function DashboardHome({ dehydratedState }: DashboardHomeProps) {
   return (
     <SidebarProvider>
       <AppSidebar />
@@ -51,53 +51,10 @@ function DashboardHome({ displayName }: DashboardHomeProps) {
         <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
           <SidebarTrigger className="-ml-1" />
         </header>
-        <main className="flex-1 p-4">
-          <div className="container mx-auto p-8">
-            <div className="mb-8">
-              <h1 className="mb-2 text-3xl font-bold">Dashboard</h1>
-              <p className="text-muted-foreground">Welcome back, {displayName}</p>
-            </div>
-
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Active Tournament</CardTitle>
-                  <CardDescription>Make your pick for this week</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button className="w-full">View Tournament</Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Picks</CardTitle>
-                  <CardDescription>Season picks history</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="outline" className="w-full">
-                    View Picks
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Leaderboard</CardTitle>
-                  <CardDescription>League standings</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Button variant="outline" className="w-full">
-                    View Standings
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="mt-8">
-              <LeaguesSection />
-            </div>
-          </div>
+        <main className="min-w-0 flex-1 overflow-x-hidden p-4">
+          <HydrationBoundary state={dehydratedState}>
+            <DashboardView />
+          </HydrationBoundary>
         </main>
       </SidebarInset>
     </SidebarProvider>
@@ -122,7 +79,15 @@ export default async function Home() {
     redirect("/onboarding");
   }
 
-  const displayName = user?.display_name || user?.email || "User";
+  const queryClient = new QueryClient();
+  await Promise.all([
+    queryClient.prefetchQuery(buildGetUserLeaguesQueryOptions(makeServerRequest)),
+    queryClient.prefetchQuery(buildGetPendingActionsQueryOptions(makeServerRequest)),
+    queryClient.prefetchQuery(buildGetActiveTournamentQueryOptions(makeServerRequest)),
+    queryClient.prefetchQuery(
+      buildGetTournamentsQueryOptions({ status: "upcoming", limit: 6 }, makeServerRequest),
+    ),
+  ]);
 
-  return <DashboardHome displayName={displayName} />;
+  return <DashboardHome dehydratedState={dehydrate(queryClient)} />;
 }

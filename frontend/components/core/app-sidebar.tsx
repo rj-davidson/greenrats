@@ -25,12 +25,7 @@ import { useMemo } from "react";
 const MAX_SIDEBAR_LEAGUES = 6;
 
 function LiveDot() {
-  return (
-    <span className="relative flex h-2 w-2 items-center justify-center">
-      <span className="animate-pulse-subtle absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
-      <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
-    </span>
-  );
+  return <span className="bg-primary size-2 animate-pulse rounded-full" />;
 }
 
 function TournamentIcon({ status }: { status: Tournament["status"] }) {

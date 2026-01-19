@@ -24,24 +24,19 @@ export default function RulesPage() {
           <Card>
             <CardHeader>
               <CardTitle>Pick Uniqueness</CardTitle>
-              <CardDescription>
-                Strategic allocation across the season
-              </CardDescription>
+              <CardDescription>Strategic allocation across the season</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <p>
-                Each tournament, you pick <strong>one golfer</strong> to
-                represent you.
+                Each tournament, you pick <strong>one golfer</strong> to represent you.
               </p>
               <p>
-                Once you pick a golfer, you{" "}
-                <strong>cannot use them again</strong> for the rest of the
-                season within your league.
+                Once you pick a golfer, you <strong>cannot use them again</strong> for the rest of
+                the season within your league.
               </p>
               <p>
-                With 40+ tournaments in a PGA Tour season, you&apos;ll need to
-                think strategically about when to use your top picks on major
-                events versus saving them for later.
+                With 40+ tournaments in a PGA Tour season, you&apos;ll need to think strategically
+                about when to use your top picks on major events versus saving them for later.
               </p>
             </CardContent>
           </Card>
@@ -49,24 +44,19 @@ export default function RulesPage() {
           <Card>
             <CardHeader>
               <CardTitle>Leaderboard Scoring</CardTitle>
-              <CardDescription>
-                Combined prize money earnings
-              </CardDescription>
+              <CardDescription>Combined prize money earnings</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               <p>
-                Your score is the <strong>total prize money</strong> earned by
-                all your picks throughout the season.
+                Your score is the <strong>total prize money</strong> earned by all your picks
+                throughout the season.
               </p>
               <p>
-                For example: if your pick wins $2,000,000 at the Masters and
-                your next pick earns $500,000 at the Open Championship, your
-                total score would be <strong>$2,500,000</strong>.
+                For example: if your pick wins $2,000,000 at the Masters and your next pick earns
+                $500,000 at the Open Championship, your total score would be{" "}
+                <strong>$2,500,000</strong>.
               </p>
-              <p>
-                The player with the highest cumulative earnings at the end of
-                the season wins.
-              </p>
+              <p>The player with the highest cumulative earnings at the end of the season wins.</p>
             </CardContent>
           </Card>
 
@@ -77,16 +67,15 @@ export default function RulesPage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <p>
-                The pick window <strong>opens 3 days</strong> before each
-                tournament begins.
+                The pick window <strong>opens 3 days</strong> before each tournament begins.
               </p>
               <p>
-                The window <strong>closes</strong> when the tournament starts
-                (first tee time on Thursday).
+                The window <strong>closes</strong> when the tournament starts (first tee time on
+                Thursday).
               </p>
               <p>
-                While the window is open, you can change your pick as many times
-                as you want. Once the tournament starts, your pick is locked in.
+                While the window is open, you can change your pick as many times as you want. Once
+                the tournament starts, your pick is locked in.
               </p>
             </CardContent>
           </Card>

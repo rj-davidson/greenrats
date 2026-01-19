@@ -113,13 +113,15 @@ func (s *Service) ListUserLeagues(ctx context.Context, userID uuid.UUID) (*ListU
 		return nil, fmt.Errorf("failed to query leagues: %w", err)
 	}
 
+	now := time.Now().UTC()
+
 	leagues := make([]League, 0, len(memberships))
 	for _, m := range memberships {
 		if m.Edges.League == nil {
 			continue
 		}
 		l := m.Edges.League
-		leagues = append(leagues, League{
+		leagueResp := League{
 			ID:             l.ID,
 			Name:           l.Name,
 			Code:           l.Code,
@@ -127,7 +129,44 @@ func (s *Service) ListUserLeagues(ctx context.Context, userID uuid.UUID) (*ListU
 			JoiningEnabled: l.JoiningEnabled,
 			CreatedAt:      l.CreatedAt,
 			Role:           string(m.Role),
-		})
+		}
+
+		recentPick, err := s.db.Pick.
+			Query().
+			Where(
+				pick.HasUserWith(user.IDEQ(userID)),
+				pick.HasLeagueWith(league.IDEQ(l.ID)),
+				pick.HasTournamentWith(tournament.StatusEQ(tournament.StatusCompleted)),
+			).
+			WithGolfer().
+			WithTournament().
+			Order(ent.Desc(pick.FieldCreatedAt)).
+			First(ctx)
+		if err == nil && recentPick.Edges.Golfer != nil && recentPick.Edges.Tournament != nil {
+			leagueResp.RecentPick = &RecentPick{
+				GolferName:     recentPick.Edges.Golfer.Name,
+				TournamentName: recentPick.Edges.Tournament.Name,
+			}
+		}
+
+		nextTournament, err := s.db.Tournament.
+			Query().
+			Where(
+				tournament.SeasonYearEQ(l.SeasonYear),
+				tournament.StatusEQ(tournament.StatusUpcoming),
+				tournament.StartDateGT(now),
+			).
+			Order(tournament.ByStartDate()).
+			First(ctx)
+		if err == nil {
+			leagueResp.NextDeadline = &NextDeadline{
+				TournamentID:   nextTournament.ID,
+				TournamentName: nextTournament.Name,
+				Deadline:       nextTournament.StartDate,
+			}
+		}
+
+		leagues = append(leagues, leagueResp)
 	}
 
 	return &ListUserLeaguesResponse{
