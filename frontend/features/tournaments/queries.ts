@@ -3,7 +3,7 @@ import type {
   GetTournamentResponse,
   ListTournamentsResponse,
   TournamentStatus,
-} from "./types";
+} from "@/features/tournaments/types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";

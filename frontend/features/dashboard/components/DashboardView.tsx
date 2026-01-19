@@ -1,9 +1,9 @@
 "use client";
 
-import { LeagueCard } from "./LeagueCard";
-import { PendingActions } from "./PendingActions";
-import { QuickJoinInput } from "./QuickJoinInput";
-import { TournamentCalendarRow } from "./TournamentCalendarRow";
+import { LeagueCard } from "@/features/dashboard/components/LeagueCard";
+import { PendingActions } from "@/features/dashboard/components/PendingActions";
+import { QuickJoinInput } from "@/features/dashboard/components/QuickJoinInput";
+import { TournamentCalendarRow } from "@/features/dashboard/components/TournamentCalendarRow";
 import { Button } from "@/components/shadcn/button";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { CreateLeagueDialog } from "@/features/leagues/components/CreateLeagueDialog";
@@ -43,7 +43,7 @@ export function DashboardView() {
             ))}
           </div>
         ) : (
-          <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center">
+          <div className="rounded-lg border border-dashed p-8 text-center text-muted-foreground">
             <p className="mb-4">You haven&apos;t joined any leagues yet.</p>
             <div className="flex justify-center gap-2">
               <CreateLeagueDialog />

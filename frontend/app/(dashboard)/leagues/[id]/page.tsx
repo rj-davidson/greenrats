@@ -1,4 +1,4 @@
-import { LeagueDetail } from "./league-detail";
+import { LeagueDetail } from "@/app/(dashboard)/leagues/[id]/league-detail";
 import { buildGetLeagueQueryOptions } from "@/features/leagues/queries";
 import { makeServerRequest } from "@/lib/query/server-requestor";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";

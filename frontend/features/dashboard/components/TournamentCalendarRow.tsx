@@ -31,7 +31,7 @@ export function TournamentCalendarRow() {
     ? upcomingTournaments.filter((t) => t.id !== activeTournament.id)
     : upcomingTournaments;
 
-  const primaryTournament = activeTournament ?? filteredUpcoming[0];
+  const primaryTournament = activeTournament ?? filteredUpcoming.at(0);
   const remainingTournaments = activeTournament ? filteredUpcoming : filteredUpcoming.slice(1);
 
   if (!primaryTournament) {
@@ -43,7 +43,7 @@ export function TournamentCalendarRow() {
   const endDate = new Date(primaryTournament.end_date);
 
   return (
-    <div className="border-border bg-card w-full rounded-lg border">
+    <div className="w-full rounded-lg border border-border bg-card">
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
@@ -54,12 +54,12 @@ export function TournamentCalendarRow() {
         disabled={remainingTournaments.length === 0}
       >
         <div className="flex items-center gap-3">
-          {isActive && <span className="bg-primary size-2 animate-pulse rounded-full" />}
+          {isActive && <span className="size-2 animate-pulse rounded-full bg-primary" />}
           <span className="font-medium">{primaryTournament.name}</span>
-          <span className="text-muted-foreground text-sm">{formatDateRange(startDate, endDate)}</span>
+          <span className="text-sm text-muted-foreground">{formatDateRange(startDate, endDate)}</span>
         </div>
         {remainingTournaments.length > 0 && (
-          <div className="text-muted-foreground flex items-center gap-1 text-sm">
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <span>{remainingTournaments.length} more</span>
             {isExpanded ? <ChevronUpIcon className="size-4" /> : <ChevronDownIcon className="size-4" />}
           </div>
@@ -67,12 +67,12 @@ export function TournamentCalendarRow() {
       </button>
 
       {isExpanded && remainingTournaments.length > 0 && (
-        <div className="border-border border-t px-4 py-2">
+        <div className="border-t border-border px-4 py-2">
           {remainingTournaments.map((tournament) => {
             const tStart = new Date(tournament.start_date);
             const tEnd = new Date(tournament.end_date);
             return (
-              <div key={tournament.id} className="text-muted-foreground flex items-center justify-between py-2 text-sm">
+              <div key={tournament.id} className="flex items-center justify-between py-2 text-sm text-muted-foreground">
                 <span>{tournament.name}</span>
                 <span>{formatDateRange(tStart, tEnd)}</span>
               </div>

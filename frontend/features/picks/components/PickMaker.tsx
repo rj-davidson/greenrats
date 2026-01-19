@@ -1,9 +1,9 @@
 "use client";
 
-import { useAvailableGolfers, useCreatePick, usePickWindow } from "../queries";
-import type { AvailableGolfer } from "../types";
-import { GolferSelector } from "./GolferSelector";
-import { PickConfirmDialog } from "./PickConfirmDialog";
+import { useAvailableGolfers, useCreatePick, usePickWindow } from "@/features/picks/queries";
+import type { AvailableGolfer } from "@/features/picks/types";
+import { GolferSelector } from "@/features/picks/components/GolferSelector";
+import { PickConfirmDialog } from "@/features/picks/components/PickConfirmDialog";
 import { Badge } from "@/components/shadcn/badge";
 import {
   Card,
@@ -108,7 +108,7 @@ export function PickMaker({ leagueId, tournamentId, onPickSuccess }: PickMakerPr
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="text-muted-foreground flex flex-wrap gap-4 text-sm">
+          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <CalendarIcon className="size-4" />
               <span>Opens: {formatDate(pickWindow.opens_at)}</span>
@@ -120,9 +120,9 @@ export function PickMaker({ leagueId, tournamentId, onPickSuccess }: PickMakerPr
           </div>
 
           {!isWindowOpen ? (
-            <div className="bg-muted/50 flex flex-col items-center justify-center rounded-lg py-12">
-              <LockIcon className="text-muted-foreground mb-3 size-10" />
-              <p className="text-muted-foreground text-center">
+            <div className="flex flex-col items-center justify-center rounded-lg bg-muted/50 py-12">
+              <LockIcon className="mb-3 size-10 text-muted-foreground" />
+              <p className="text-center text-muted-foreground">
                 {pickWindow.reason || "Pick window is closed"}
               </p>
             </div>

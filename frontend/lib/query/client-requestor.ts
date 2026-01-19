@@ -1,5 +1,5 @@
-import { apiClient } from "./api-client";
-import type { Requestor, RequestorConfig } from "./requestor";
+import { apiClient } from "@/lib/query/api-client";
+import type { Requestor, RequestorConfig } from "@/lib/query/requestor";
 
 /**
  * Global state for client-side authentication.

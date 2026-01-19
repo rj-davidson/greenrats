@@ -1,6 +1,6 @@
 "use client";
 
-import type { LeagueTournament } from "../types";
+import type { LeagueTournament } from "@/features/leagues/types";
 import { Badge } from "@/components/shadcn/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/card";
 import { CalendarIcon, CheckCircle2Icon, UsersIcon } from "lucide-react";
@@ -42,18 +42,18 @@ function getStatusBadge(status: string) {
 export function LeagueTournamentCard({ tournament, leagueId }: LeagueTournamentCardProps) {
   return (
     <Link href={`/leagues/${leagueId}/tournaments/${tournament.id}`}>
-      <Card className="hover:bg-muted/50 transition-colors">
+      <Card className="transition-colors hover:bg-muted/50">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base font-medium">{tournament.name}</CardTitle>
           {getStatusBadge(tournament.status)}
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="text-muted-foreground flex items-center gap-2 text-sm">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <CalendarIcon className="size-4" />
             {formatDateRange(tournament.start_date, tournament.end_date)}
           </div>
           <div className="flex items-center justify-between">
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <UsersIcon className="size-4" />
               {tournament.pick_count} {tournament.pick_count === 1 ? "pick" : "picks"}
             </div>
@@ -63,7 +63,7 @@ export function LeagueTournamentCard({ tournament, leagueId }: LeagueTournamentC
                 {tournament.golfer_name || "Pick made"}
               </div>
             ) : tournament.status === "upcoming" ? (
-              <span className="text-muted-foreground text-sm">No pick yet</span>
+              <span className="text-sm text-muted-foreground">No pick yet</span>
             ) : null}
           </div>
         </CardContent>

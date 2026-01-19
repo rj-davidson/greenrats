@@ -1,7 +1,7 @@
 "use client";
 
-import type { League } from "../types";
-import { LeaguePicksTable } from "./LeaguePicksTable";
+import type { League } from "@/features/leagues/types";
+import { LeaguePicksTable } from "@/features/leagues/components/LeaguePicksTable";
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
@@ -52,8 +52,8 @@ export function LeagueTournamentView({
   const { data: picksData, isLoading: picksLoading } = useLeaguePicks(leagueId, tournamentId);
   const { setExtraCrumbs } = useBreadcrumbs();
 
-  const leagueName = league?.name?.trim();
-  const tournamentName = tournamentData?.tournament?.name?.trim();
+  const leagueName = league?.name.trim();
+  const tournamentName = tournamentData?.tournament.name.trim();
 
   useEffect(() => {
     const crumbs: { name: string; path?: string }[] = [];
@@ -101,12 +101,12 @@ export function LeagueTournamentView({
         <div>
           <Link
             href={`/leagues/${leagueId}`}
-            className="text-muted-foreground hover:text-foreground mb-1 block text-sm"
+            className="mb-1 block text-sm text-muted-foreground hover:text-foreground"
           >
             {league?.name || "Back to league"}
           </Link>
           <h1 className="text-2xl font-bold">{tournament.name}</h1>
-          <div className="text-muted-foreground mt-1 flex items-center gap-2">
+          <div className="mt-1 flex items-center gap-2 text-muted-foreground">
             <CalendarIcon className="size-4" />
             {formatDateRange(tournament.start_date, tournament.end_date)}
           </div>

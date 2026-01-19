@@ -1,7 +1,7 @@
 "use client";
 
-import { useUserLeagues } from "../queries";
-import type { League } from "../types";
+import { useUserLeagues } from "@/features/leagues/queries";
+import type { League } from "@/features/leagues/types";
 import { Badge } from "@/components/shadcn/badge";
 import {
   Card,
@@ -29,7 +29,7 @@ function LeagueCard({ league }: { league: League }) {
       <CardContent>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">Join Code:</span>
-          <code className="bg-muted rounded px-2 py-1 font-mono">{league.code}</code>
+          <code className="rounded bg-muted px-2 py-1 font-mono">{league.code}</code>
         </div>
       </CardContent>
     </Card>
@@ -45,11 +45,11 @@ export function LeaguesList() {
         {[1, 2, 3].map((i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader>
-              <div className="bg-muted h-5 w-32 rounded" />
-              <div className="bg-muted h-4 w-20 rounded" />
+              <div className="h-5 w-32 rounded bg-muted" />
+              <div className="h-4 w-20 rounded bg-muted" />
             </CardHeader>
             <CardContent>
-              <div className="bg-muted h-4 w-24 rounded" />
+              <div className="h-4 w-24 rounded bg-muted" />
             </CardContent>
           </Card>
         ))}
@@ -67,7 +67,7 @@ export function LeaguesList() {
     );
   }
 
-  if (!data?.leagues?.length) {
+  if (!data?.leagues.length) {
     return (
       <Card>
         <CardContent className="py-8 text-center">

@@ -1,7 +1,7 @@
 "use client";
 
-import type { AvailableGolfer } from "../types";
-import { GolferCard } from "./GolferCard";
+import type { AvailableGolfer } from "@/features/picks/types";
+import { GolferCard } from "@/features/picks/components/GolferCard";
 import { Input } from "@/components/shadcn/input";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { SearchIcon } from "lucide-react";
@@ -56,7 +56,7 @@ export function GolferSelector({
   return (
     <div className="space-y-3">
       <div className="relative">
-        <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
+        <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           placeholder="Search golfers..."
           value={search}
@@ -64,12 +64,12 @@ export function GolferSelector({
           className="pl-9"
         />
       </div>
-      <div className="text-muted-foreground text-sm">
+      <div className="text-sm text-muted-foreground">
         {sortedGolfers.length} golfer{sortedGolfers.length !== 1 ? "s" : ""} available
       </div>
       <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
         {sortedGolfers.length === 0 ? (
-          <div className="text-muted-foreground py-8 text-center">
+          <div className="py-8 text-center text-muted-foreground">
             {search ? "No golfers match your search" : "No golfers available"}
           </div>
         ) : (

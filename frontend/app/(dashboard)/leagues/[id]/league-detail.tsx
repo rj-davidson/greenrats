@@ -20,7 +20,7 @@ export function LeagueDetail({ id }: LeagueDetailProps) {
   const { data, isLoading, error } = useLeague(id);
   const { setExtraCrumbs } = useBreadcrumbs();
 
-  const leagueName = data?.league?.name?.trim();
+  const leagueName = data?.league.name.trim();
 
   useEffect(() => {
     setExtraCrumbs(leagueName ? [{ name: leagueName }] : []);

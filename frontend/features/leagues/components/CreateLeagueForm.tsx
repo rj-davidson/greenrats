@@ -1,7 +1,7 @@
 "use client";
 
-import { useCreateLeague } from "../queries";
-import { createLeagueRequestSchema, type CreateLeagueRequest } from "../types";
+import { useCreateLeague } from "@/features/leagues/queries";
+import { createLeagueRequestSchema, type CreateLeagueRequest } from "@/features/leagues/types";
 import { Button } from "@/components/shadcn/button";
 import {
   Form,
@@ -58,7 +58,7 @@ export function CreateLeagueForm({ onSuccess, onCancel }: CreateLeagueFormProps)
         />
 
         {createLeague.isError && (
-          <p className="text-destructive text-sm">Failed to create league. Please try again.</p>
+          <p className="text-sm text-destructive">Failed to create league. Please try again.</p>
         )}
 
         <div className="flex justify-end gap-2">

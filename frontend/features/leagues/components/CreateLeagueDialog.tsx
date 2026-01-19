@@ -1,6 +1,6 @@
 "use client";
 
-import { CreateLeagueForm } from "./CreateLeagueForm";
+import { CreateLeagueForm } from "@/features/leagues/components/CreateLeagueForm";
 import { Button } from "@/components/shadcn/button";
 import {
   Dialog,

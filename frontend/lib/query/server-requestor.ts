@@ -1,5 +1,5 @@
-import { serverApiClient } from "./api-client";
-import type { Requestor, RequestorConfig } from "./requestor";
+import { serverApiClient } from "@/lib/query/api-client";
+import type { Requestor, RequestorConfig } from "@/lib/query/requestor";
 import { withAuth } from "@workos-inc/authkit-nextjs";
 
 /**

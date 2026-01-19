@@ -1,6 +1,6 @@
 "use client";
 
-import { SidebarUser } from "./sidebar-user";
+import { SidebarUser } from "@/components/core/sidebar-user";
 import {
   Sidebar,
   SidebarContent,
@@ -25,7 +25,7 @@ import { useMemo } from "react";
 const MAX_SIDEBAR_LEAGUES = 6;
 
 function LiveDot() {
-  return <span className="bg-primary size-2 animate-pulse rounded-full" />;
+  return <span className="size-2 animate-pulse rounded-full bg-primary" />;
 }
 
 function TournamentIcon({ status }: { status: Tournament["status"] }) {
@@ -52,8 +52,8 @@ function useSidebarTournaments() {
 
   const isLoading = activeLoading || upcomingLoading || completedLoading;
 
-  const currentTournament = activeData?.tournament ?? upcomingData?.tournaments?.[0] ?? null;
-  const recentCompleted = completedData?.tournaments?.[0] ?? null;
+  const currentTournament = activeData?.tournament ?? upcomingData?.tournaments[0] ?? null;
+  const recentCompleted = completedData?.tournaments[0] ?? null;
 
   return { currentTournament, recentCompleted, isLoading };
 }
@@ -84,12 +84,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                   <TrophyIcon className="size-4" />
                 </div>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-semibold">
-                    GreenRats <span className="text-muted-foreground font-normal">Beta</span>
+                    GreenRats <span className="font-normal text-muted-foreground">Beta</span>
                   </span>
                   <span className="truncate text-xs">Golf Pick&apos;em</span>
                 </div>

@@ -14,7 +14,7 @@ export function TournamentCoverage({ id }: TournamentCoverageProps) {
   const { data, isLoading, error } = useTournament(id);
   const { setExtraCrumbs } = useBreadcrumbs();
 
-  const tournamentName = data?.tournament?.name?.trim();
+  const tournamentName = data?.tournament.name.trim();
 
   useEffect(() => {
     setExtraCrumbs(tournamentName ? [{ name: tournamentName }] : []);

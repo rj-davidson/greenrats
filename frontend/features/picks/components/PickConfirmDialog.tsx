@@ -1,6 +1,6 @@
 "use client";
 
-import type { AvailableGolfer } from "../types";
+import type { AvailableGolfer } from "@/features/picks/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/shadcn/avatar";
 import { Button } from "@/components/shadcn/button";
 import {
@@ -56,14 +56,14 @@ export function PickConfirmDialog({
           </Avatar>
           <div>
             <div className="font-medium">{golfer.name}</div>
-            <div className="text-muted-foreground text-sm">
+            <div className="text-sm text-muted-foreground">
               {golfer.country_code}
               {golfer.owgr && golfer.owgr > 0 && ` • OWGR #${golfer.owgr}`}
             </div>
           </div>
         </div>
 
-        <div className="bg-destructive/10 text-destructive flex items-start gap-3 rounded-lg p-3 text-sm">
+        <div className="flex items-start gap-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
           <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
           <div>
             <strong>This cannot be changed.</strong> Once confirmed, you cannot pick {golfer.name}{" "}

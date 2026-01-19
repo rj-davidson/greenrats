@@ -21,7 +21,7 @@
       {
         "patterns": [
           {
-            "group": ["./*", "../*"],
+            "group": ["./*.ts", "./*.tsx", "./*.js", "./*.jsx", "../*.ts", "../*.tsx", "../*.js", "../*.jsx", "./*/*.ts", "./*/*.tsx", "../*/*.ts", "../*/*.tsx"],
             "message": "Use absolute imports instead of relative imports."
           }
         ]

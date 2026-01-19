@@ -29,14 +29,14 @@ function PendingPickCard({ action }: { action: PendingPickAction }) {
             <AlertCircleIcon className="size-4 text-amber-600" />
             Pick needed for {action.tournament_name}
           </span>
-          <span className="text-muted-foreground flex items-center gap-1 text-sm font-normal">
+          <span className="flex items-center gap-1 text-sm font-normal text-muted-foreground">
             <ClockIcon className="size-3" />
             {formatDeadline(action.pick_deadline)}
           </span>
         </CardTitle>
       </CardHeader>
       <CardContent className="flex items-center justify-between">
-        <span className="text-muted-foreground text-sm">
+        <span className="text-sm text-muted-foreground">
           Make your pick for {action.league_name}
         </span>
         <Button asChild size="sm">

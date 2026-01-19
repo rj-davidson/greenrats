@@ -1,1 +1,1 @@
-export { LeagueLeaderboard } from "./LeagueLeaderboard";
+export { LeagueLeaderboard } from "@/features/leaderboards/components/LeagueLeaderboard";

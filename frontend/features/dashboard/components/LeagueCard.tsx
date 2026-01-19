@@ -14,12 +14,12 @@ interface LeagueCardProps {
 export function LeagueCard({ league }: LeagueCardProps) {
   return (
     <Link href={`/leagues/${league.id}`}>
-      <Card className="hover:bg-muted/50 transition-colors">
+      <Card className="transition-colors hover:bg-muted/50">
         <CardHeader className="flex flex-row items-center gap-3 pb-2">
           <LeagueMonogram league={league} size={40} />
           <div className="flex-1">
             <CardTitle className="text-base font-medium">{league.name}</CardTitle>
-            <div className="text-muted-foreground flex items-center gap-3 text-sm">
+            <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <UsersIcon className="size-3" />
                 {league.member_count ?? 0}
@@ -35,7 +35,7 @@ export function LeagueCard({ league }: LeagueCardProps) {
         </CardHeader>
         {(league.recent_pick || league.next_deadline) && (
           <CardContent className="border-t pt-3">
-            <div className="text-muted-foreground space-y-1 text-xs">
+            <div className="space-y-1 text-xs text-muted-foreground">
               {league.recent_pick && (
                 <div className="flex items-center gap-2">
                   <UserIcon className="size-3" />

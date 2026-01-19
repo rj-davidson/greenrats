@@ -1,7 +1,7 @@
 "use client";
 
-import { CreateLeagueDialog } from "./CreateLeagueDialog";
-import { LeaguesList } from "./LeaguesList";
+import { CreateLeagueDialog } from "@/features/leagues/components/CreateLeagueDialog";
+import { LeaguesList } from "@/features/leagues/components/LeaguesList";
 
 export function LeaguesSection() {
   return (

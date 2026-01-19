@@ -1,7 +1,7 @@
 "use client";
 
-import { useCheckDisplayName, useSetDisplayName } from "../queries";
-import { type SetDisplayNameRequest, setDisplayNameRequestSchema } from "../types";
+import { useCheckDisplayName, useSetDisplayName } from "@/features/users/queries";
+import { type SetDisplayNameRequest, setDisplayNameRequestSchema } from "@/features/users/types";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -88,7 +88,7 @@ export function OnboardingForm() {
                     <Input placeholder="Enter a unique display name" {...field} />
                   </FormControl>
                   <FormDescription>
-                    <span className="text-muted-foreground block mb-1">
+                    <span className="mb-1 block text-muted-foreground">
                       3-20 characters. Letters, numbers, and underscores only.
                     </span>
                     {showAvailability && (

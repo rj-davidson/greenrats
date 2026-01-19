@@ -24,7 +24,7 @@ function TournamentCard({ tournament }: { tournament: UpcomingTournament }) {
         <CardTitle className="text-base font-medium">{tournament.name}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-muted-foreground flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <CalendarIcon className="size-4" />
           {formatDateRange(tournament.start_date, tournament.end_date)}
         </div>

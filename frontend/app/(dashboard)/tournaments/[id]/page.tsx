@@ -1,4 +1,4 @@
-import { TournamentCoverage } from "./tournament-coverage";
+import { TournamentCoverage } from "@/app/(dashboard)/tournaments/[id]/tournament-coverage";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { buildGetTournamentQueryOptions } from "@/features/tournaments/queries";
 import { makeServerRequest } from "@/lib/query/server-requestor";

@@ -35,7 +35,7 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
 
   return (
     <TableRow className={cn(isCut && "text-muted-foreground")}>
-      <TableCell className={cn("font-medium", isTopThree && "text-primary font-bold")}>
+      <TableCell className={cn("font-medium", isTopThree && "font-bold text-primary")}>
         {entry.position_display}
       </TableCell>
       <TableCell>

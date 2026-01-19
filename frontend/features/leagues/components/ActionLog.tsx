@@ -1,7 +1,7 @@
 "use client";
 
-import { useCommissionerActions } from "../queries";
-import type { CommissionerAction } from "../types";
+import { useCommissionerActions } from "@/features/leagues/queries";
+import type { CommissionerAction } from "@/features/leagues/types";
 import {
   Card,
   CardContent,
@@ -43,10 +43,10 @@ function formatDate(dateString: string) {
 function ActionItem({ action }: { action: CommissionerAction }) {
   return (
     <div className="flex items-start gap-3 py-2">
-      <div className="bg-muted mt-0.5 rounded-full p-2">{getActionIcon(action.action_type)}</div>
+      <div className="mt-0.5 rounded-full bg-muted p-2">{getActionIcon(action.action_type)}</div>
       <div className="min-w-0 flex-1">
         <p className="text-sm">{action.description}</p>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-xs text-muted-foreground">
           {formatDate(action.created_at)}
           {action.commissioner_name && ` by ${action.commissioner_name}`}
         </p>

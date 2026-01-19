@@ -1,4 +1,4 @@
-import type { League } from "../types";
+import type { League } from "@/features/leagues/types";
 
 const MONOGRAM_COLORS = [
   "bg-red-700",
@@ -55,7 +55,7 @@ export function LeagueMonogram({ league, size = 32, className = "" }: LeagueMono
         borderRadius,
       }}
     >
-      <span className="font-serif font-semibold leading-none">{initials}</span>
+      <span className="font-serif leading-none font-semibold">{initials}</span>
     </div>
   );
 }

@@ -9,7 +9,7 @@ import {
   TableRow,
 } from "@/components/shadcn/table";
 import type { Pick } from "@/features/picks/types";
-import { CheckCircle2Icon, CircleIcon } from "lucide-react";
+import { CheckCircle2Icon } from "lucide-react";
 
 interface LeaguePicksTableProps {
   picks: Pick[];
@@ -47,7 +47,7 @@ export function LeaguePicksTable({ picks, tournamentStatus }: LeaguePicksTablePr
 
   if (picks.length === 0) {
     return (
-      <div className="text-muted-foreground py-8 text-center">
+      <div className="py-8 text-center text-muted-foreground">
         No picks have been made for this tournament yet.
       </div>
     );

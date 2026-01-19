@@ -1,7 +1,7 @@
 "use client";
 
-import { useJoinLeague } from "../queries";
-import { joinLeagueRequestSchema } from "../types";
+import { useJoinLeague } from "@/features/leagues/queries";
+import { joinLeagueRequestSchema } from "@/features/leagues/types";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -64,8 +64,8 @@ export function JoinLeagueForm() {
   return (
     <Card className="mx-auto max-w-md">
       <CardHeader className="text-center">
-        <div className="bg-primary/10 mx-auto mb-2 w-fit rounded-full p-3">
-          <UsersIcon className="text-primary size-6" />
+        <div className="mx-auto mb-2 w-fit rounded-full bg-primary/10 p-3">
+          <UsersIcon className="size-6 text-primary" />
         </div>
         <CardTitle>Join a League</CardTitle>
         <CardDescription>Enter the join code to become a member</CardDescription>
@@ -83,7 +83,7 @@ export function JoinLeagueForm() {
                     <Input
                       placeholder="ABC123"
                       {...field}
-                      className="text-center font-mono text-lg uppercase tracking-widest"
+                      className="text-center font-mono text-lg tracking-widest uppercase"
                       onChange={(e) => field.onChange(e.target.value.toUpperCase())}
                     />
                   </FormControl>

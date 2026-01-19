@@ -10,7 +10,7 @@ import type {
   RegenerateCodeResponse,
   SetJoiningEnabledRequest,
   SetJoiningEnabledResponse,
-} from "./types";
+} from "@/features/leagues/types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
@@ -91,7 +91,7 @@ export function useCreateLeague() {
       return makeClientRequest.post<CreateLeagueResponse>("/api/v1/leagues", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: buildUserLeaguesKey() });
+      void queryClient.invalidateQueries({ queryKey: buildUserLeaguesKey() });
     },
   });
 }
@@ -104,7 +104,7 @@ export function useJoinLeague() {
       return makeClientRequest.post<JoinLeagueResponse>("/api/v1/leagues/join", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: buildUserLeaguesKey() });
+      void queryClient.invalidateQueries({ queryKey: buildUserLeaguesKey() });
     },
   });
 }
@@ -119,8 +119,8 @@ export function useRegenerateJoinCode() {
       );
     },
     onSuccess: (_data, leagueId) => {
-      queryClient.invalidateQueries({ queryKey: buildLeagueDetailKey(leagueId) });
-      queryClient.invalidateQueries({ queryKey: buildCommissionerActionsKey(leagueId) });
+      void queryClient.invalidateQueries({ queryKey: buildLeagueDetailKey(leagueId) });
+      void queryClient.invalidateQueries({ queryKey: buildCommissionerActionsKey(leagueId) });
     },
   });
 }
@@ -136,8 +136,8 @@ export function useSetJoiningEnabled() {
       );
     },
     onSuccess: (_data, { leagueId }) => {
-      queryClient.invalidateQueries({ queryKey: buildLeagueDetailKey(leagueId) });
-      queryClient.invalidateQueries({ queryKey: buildCommissionerActionsKey(leagueId) });
+      void queryClient.invalidateQueries({ queryKey: buildLeagueDetailKey(leagueId) });
+      void queryClient.invalidateQueries({ queryKey: buildCommissionerActionsKey(leagueId) });
     },
   });
 }

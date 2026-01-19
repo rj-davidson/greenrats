@@ -5,7 +5,7 @@ import type {
   ListPicksResponse,
   OverridePickResponse,
   PickWindowStatus,
-} from "./types";
+} from "@/features/picks/types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
@@ -111,11 +111,11 @@ export function useCreatePick() {
       return makeClientRequest.post<CreatePickResponse>("/api/v1/picks", data);
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: [QueryKey.PICKS, "user"] });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({ queryKey: [QueryKey.PICKS, "user"] });
+      void queryClient.invalidateQueries({
         queryKey: buildLeaguePicksKey(variables.league_id, variables.tournament_id),
       });
-      queryClient.invalidateQueries({
+      void queryClient.invalidateQueries({
         queryKey: buildAvailableGolfersKey(variables.league_id, variables.tournament_id),
       });
     },
@@ -141,7 +141,7 @@ export function useOverridePick() {
       );
     },
     onSuccess: (_data, { leagueId }) => {
-      queryClient.invalidateQueries({ queryKey: [QueryKey.PICKS, "league", leagueId] });
+      void queryClient.invalidateQueries({ queryKey: [QueryKey.PICKS, "league", leagueId] });
     },
   });
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useLeagueTournaments } from "../queries";
-import { LeagueTournamentCard } from "./LeagueTournamentCard";
+import { useLeagueTournaments } from "@/features/leagues/queries";
+import { LeagueTournamentCard } from "@/features/leagues/components/LeagueTournamentCard";
 import { Skeleton } from "@/components/shadcn/skeleton";
 
 interface LeagueTournamentListProps {
@@ -26,7 +26,7 @@ export function LeagueTournamentList({ leagueId }: LeagueTournamentListProps) {
   }
 
   if (!data || data.tournaments.length === 0) {
-    return <div className="text-muted-foreground py-8 text-center">No tournaments found</div>;
+    return <div className="py-8 text-center text-muted-foreground">No tournaments found</div>;
   }
 
   const activeTournaments = data.tournaments.filter((t) => t.status === "in_progress");

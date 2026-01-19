@@ -44,21 +44,26 @@ export async function apiClient<T>(
     url += `?${searchParams.toString()}`;
   }
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...init.headers,
   };
 
-  if (token) {
-    (headers as Record<string, string>)["Authorization"] = `Bearer ${token}`;
+  if (init.headers) {
+    const existingHeaders = new Headers(init.headers);
+    existingHeaders.forEach((value, key) => {
+      headers[key] = value;
+    });
   }
 
-  // Pass user info as headers (WorkOS access tokens don't include email/name)
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
   if (userInfo?.email) {
-    (headers as Record<string, string>)["X-User-Email"] = userInfo.email;
+    headers["X-User-Email"] = userInfo.email;
   }
   if (userInfo?.name) {
-    (headers as Record<string, string>)["X-User-Name"] = userInfo.name;
+    headers["X-User-Name"] = userInfo.name;
   }
 
   const response = await fetch(url, {

@@ -1,7 +1,7 @@
 "use client";
 
-import { useRegenerateJoinCode, useSetJoiningEnabled } from "../queries";
-import type { League } from "../types";
+import { useRegenerateJoinCode, useSetJoiningEnabled } from "@/features/leagues/queries";
+import type { League } from "@/features/leagues/types";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -70,7 +70,7 @@ export function CommissionerPanel({ league }: CommissionerPanelProps) {
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
-            <ShieldIcon className="text-primary size-5" />
+            <ShieldIcon className="size-5 text-primary" />
             <CardTitle className="text-base">Commissioner Controls</CardTitle>
           </div>
           <CardDescription>Manage league settings and membership</CardDescription>
@@ -79,7 +79,7 @@ export function CommissionerPanel({ league }: CommissionerPanelProps) {
           <div className="space-y-2">
             <label className="text-sm font-medium">Join Code</label>
             <div className="flex items-center gap-2">
-              <code className="bg-muted flex-1 rounded px-3 py-2 font-mono text-lg tracking-wider">
+              <code className="flex-1 rounded bg-muted px-3 py-2 font-mono text-lg tracking-wider">
                 {league.code}
               </code>
               <Button variant="outline" size="icon" onClick={handleCopyCode}>
@@ -98,7 +98,7 @@ export function CommissionerPanel({ league }: CommissionerPanelProps) {
 
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div className="flex items-center gap-2">
-              <UsersIcon className="text-muted-foreground size-4" />
+              <UsersIcon className="size-4 text-muted-foreground" />
               <span className="text-sm">Allow new members to join</span>
             </div>
             <Button
@@ -112,7 +112,7 @@ export function CommissionerPanel({ league }: CommissionerPanelProps) {
           </div>
 
           {league.member_count !== undefined && (
-            <div className="text-muted-foreground text-sm">
+            <div className="text-sm text-muted-foreground">
               {league.member_count} member{league.member_count !== 1 ? "s" : ""} in this league
             </div>
           )}

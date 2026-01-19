@@ -1,6 +1,4 @@
 import reactHooks from "eslint-plugin-react-hooks";
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from "eslint-plugin-storybook";
 import { defineConfig } from "eslint/config";
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -9,7 +7,6 @@ import tseslint from "typescript-eslint";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig(
-  // global ignores (replacement for .eslintignore)
   {
     ignores: ["**/*.js", "**/*.cjs"],
   },

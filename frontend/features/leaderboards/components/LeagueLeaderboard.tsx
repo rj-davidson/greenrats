@@ -1,6 +1,6 @@
 "use client";
 
-import { useLeagueLeaderboard } from "../queries";
+import { useLeagueLeaderboard } from "@/features/leaderboards/queries";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import {
   Table,
@@ -64,7 +64,7 @@ export function LeagueLeaderboard({ leagueId }: LeagueLeaderboardProps) {
 
   if (!data?.entries.length) {
     return (
-      <div className="text-muted-foreground py-8 text-center">
+      <div className="py-8 text-center text-muted-foreground">
         No picks have been made yet. The leaderboard will appear once members start making picks.
       </div>
     );
@@ -91,7 +91,7 @@ export function LeagueLeaderboard({ leagueId }: LeagueLeaderboardProps) {
               <TableCell>{getRankDisplay(entry.rank)}</TableCell>
               <TableCell>
                 {entry.display_name}
-                {isCurrentUser && <span className="text-muted-foreground ml-2 text-sm">(you)</span>}
+                {isCurrentUser && <span className="ml-2 text-sm text-muted-foreground">(you)</span>}
               </TableCell>
               <TableCell className="text-right">{entry.pick_count}</TableCell>
               <TableCell className="text-right">{formatEarnings(entry.earnings)}</TableCell>

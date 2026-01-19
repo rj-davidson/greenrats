@@ -68,13 +68,13 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
       </CardHeader>
       <CardContent>
         {venue && (
-          <p className="text-muted-foreground flex items-center gap-1 text-sm">
+          <p className="flex items-center gap-1 text-sm text-muted-foreground">
             <MapPinIcon className="size-3" />
             {venue}
           </p>
         )}
         {tournament.purse && (
-          <p className="text-muted-foreground mt-1 text-sm">
+          <p className="mt-1 text-sm text-muted-foreground">
             Purse: ${tournament.purse.toLocaleString()}
           </p>
         )}

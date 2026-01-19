@@ -21,7 +21,7 @@ function LandingPage() {
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="max-w-2xl text-center">
         <h1 className="mb-4 text-5xl font-bold">GreenRats</h1>
-        <p className="text-muted-foreground mb-8 text-xl">
+        <p className="mb-8 text-xl text-muted-foreground">
           Pick one golfer per tournament. Compete with friends. Track your earnings throughout the
           PGA Tour season.
         </p>
@@ -75,8 +75,8 @@ export default async function Home() {
   let user: User | null = null;
   try {
     user = await makeServerRequest.get<User>("/api/v1/users/me");
-  } catch (error) {
-    console.error("Failed to fetch user:", error);
+  } catch {
+    // User fetch failed, will show landing page
   }
 
   if (user && !user.display_name) {
