@@ -31,6 +31,7 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 // RegisterRoutesWithGroup registers user routes on an existing group.
 func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Get("/me", h.GetMe)
+	group.Get("/me/pending-actions", h.GetPendingActions)
 	group.Post("/me/display-name", h.SetDisplayName)
 	group.Get("/check-display-name", h.CheckDisplayName)
 }
@@ -164,4 +165,23 @@ func (h *Handler) CheckDisplayName(c *fiber.Ctx) error {
 		Available: available,
 		Name:      name,
 	})
+}
+
+func (h *Handler) GetPendingActions(c *fiber.Ctx) error {
+	user, ok := c.Locals(DBUserKey).(*ent.User)
+	if !ok || user == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	resp, err := h.service.GetPendingActions(c.Context(), user.ID)
+	if err != nil {
+		log.Printf("[USERS] GetPendingActions: error: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get pending actions",
+		})
+	}
+
+	return c.JSON(resp)
 }

@@ -4,10 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/league"
+	"github.com/rj-davidson/greenrats/ent/leaguemembership"
+	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -138,4 +143,89 @@ func (s *Service) IsDisplayNameAvailable(ctx context.Context, displayName string
 		return false, fmt.Errorf("failed to check display name: %w", err)
 	}
 	return !exists, nil
+}
+
+func (s *Service) GetPendingActions(ctx context.Context, userID uuid.UUID) (*PendingActionsResponse, error) {
+	now := time.Now().UTC()
+	pickWindowDays := 3
+
+	memberships, err := s.db.LeagueMembership.
+		Query().
+		Where(leaguemembership.HasUserWith(user.IDEQ(userID))).
+		WithLeague().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get memberships: %w", err)
+	}
+
+	upcomingTournaments, err := s.db.Tournament.
+		Query().
+		Where(tournament.StatusEQ(tournament.StatusUpcoming)).
+		Order(tournament.ByStartDate()).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get upcoming tournaments: %w", err)
+	}
+
+	pendingPicks := make([]PendingPickAction, 0)
+
+	for _, m := range memberships {
+		if m.Edges.League == nil {
+			continue
+		}
+		l := m.Edges.League
+
+		for _, t := range upcomingTournaments {
+			if t.SeasonYear != l.SeasonYear {
+				continue
+			}
+
+			windowOpens := t.StartDate.AddDate(0, 0, -pickWindowDays)
+			if now.Before(windowOpens) || now.After(t.StartDate) {
+				continue
+			}
+
+			hasPick, err := s.db.Pick.
+				Query().
+				Where(
+					pick.HasUserWith(user.IDEQ(userID)),
+					pick.HasLeagueWith(league.IDEQ(l.ID)),
+					pick.HasTournamentWith(tournament.IDEQ(t.ID)),
+				).
+				Exist(ctx)
+			if err != nil {
+				continue
+			}
+			if hasPick {
+				continue
+			}
+
+			pendingPicks = append(pendingPicks, PendingPickAction{
+				LeagueID:       l.ID,
+				LeagueName:     l.Name,
+				TournamentID:   t.ID,
+				TournamentName: t.Name,
+				PickDeadline:   t.StartDate,
+			})
+		}
+	}
+
+	upcoming := make([]UpcomingTournament, 0, len(upcomingTournaments))
+	for _, t := range upcomingTournaments {
+		daysUntil := t.StartDate.Sub(now).Hours() / 24
+		if daysUntil <= 7 {
+			upcoming = append(upcoming, UpcomingTournament{
+				ID:        t.ID,
+				Name:      t.Name,
+				StartDate: t.StartDate,
+				EndDate:   t.EndDate,
+				Status:    string(t.Status),
+			})
+		}
+	}
+
+	return &PendingActionsResponse{
+		PendingPicks:        pendingPicks,
+		UpcomingTournaments: upcoming,
+	}, nil
 }

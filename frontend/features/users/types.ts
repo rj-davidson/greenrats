@@ -25,6 +25,31 @@ export const checkDisplayNameResponseSchema = z.object({
   name: z.string(),
 });
 
-export type CheckDisplayNameResponse = z.infer<
-  typeof checkDisplayNameResponseSchema
->;
+export type CheckDisplayNameResponse = z.infer<typeof checkDisplayNameResponseSchema>;
+
+export const pendingPickActionSchema = z.object({
+  league_id: z.string(),
+  league_name: z.string(),
+  tournament_id: z.string(),
+  tournament_name: z.string(),
+  pick_deadline: z.string(),
+});
+
+export type PendingPickAction = z.infer<typeof pendingPickActionSchema>;
+
+export const upcomingTournamentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  start_date: z.string(),
+  end_date: z.string(),
+  status: z.string(),
+});
+
+export type UpcomingTournament = z.infer<typeof upcomingTournamentSchema>;
+
+export const pendingActionsResponseSchema = z.object({
+  pending_picks: z.array(pendingPickActionSchema),
+  upcoming_tournaments: z.array(upcomingTournamentSchema),
+});
+
+export type PendingActionsResponse = z.infer<typeof pendingActionsResponseSchema>;

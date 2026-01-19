@@ -1,17 +1,18 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import { makeClientRequest } from "@/lib/query/client-requestor";
 import type {
   CheckDisplayNameResponse,
+  PendingActionsResponse,
   SetDisplayNameRequest,
   User,
 } from "./types";
+import { makeClientRequest } from "@/lib/query/client-requestor";
+import type { Requestor } from "@/lib/query/requestor";
+import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const userKeys = {
   all: ["users"] as const,
   me: () => [...userKeys.all, "me"] as const,
-  checkDisplayName: (name: string) =>
-    [...userKeys.all, "check-display-name", name] as const,
+  checkDisplayName: (name: string) => [...userKeys.all, "check-display-name", name] as const,
+  pendingActions: () => [...userKeys.all, "pending-actions"] as const,
 };
 
 /**
@@ -50,9 +51,21 @@ export function useCheckDisplayName(name: string) {
     queryKey: userKeys.checkDisplayName(name),
     queryFn: () =>
       makeClientRequest.get<CheckDisplayNameResponse>(
-        `/api/v1/users/check-display-name?name=${encodeURIComponent(name)}`
+        `/api/v1/users/check-display-name?name=${encodeURIComponent(name)}`,
       ),
     enabled: name.length >= 3,
     staleTime: 30 * 1000, // 30 seconds
   });
+}
+
+export function buildGetPendingActionsQueryOptions(requestor: Requestor = makeClientRequest) {
+  return queryOptions<PendingActionsResponse>({
+    queryKey: userKeys.pendingActions(),
+    queryFn: () => requestor.get<PendingActionsResponse>("/api/v1/users/me/pending-actions"),
+    staleTime: 60 * 1000, // 1 minute
+  });
+}
+
+export function usePendingActions() {
+  return useQuery(buildGetPendingActionsQueryOptions());
 }
