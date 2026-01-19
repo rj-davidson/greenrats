@@ -44,9 +44,11 @@ type UserEdges struct {
 	CommissionerActions []*CommissionerAction `json:"commissioner_actions,omitempty"`
 	// AffectedActions holds the value of the affected_actions edge.
 	AffectedActions []*CommissionerAction `json:"affected_actions,omitempty"`
+	// EmailReminders holds the value of the email_reminders edge.
+	EmailReminders []*EmailReminder `json:"email_reminders,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -83,6 +85,15 @@ func (e UserEdges) AffectedActionsOrErr() ([]*CommissionerAction, error) {
 		return e.AffectedActions, nil
 	}
 	return nil, &NotLoadedError{edge: "affected_actions"}
+}
+
+// EmailRemindersOrErr returns the EmailReminders value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) EmailRemindersOrErr() ([]*EmailReminder, error) {
+	if e.loadedTypes[4] {
+		return e.EmailReminders, nil
+	}
+	return nil, &NotLoadedError{edge: "email_reminders"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -179,6 +190,11 @@ func (_m *User) QueryCommissionerActions() *CommissionerActionQuery {
 // QueryAffectedActions queries the "affected_actions" edge of the User entity.
 func (_m *User) QueryAffectedActions() *CommissionerActionQuery {
 	return NewUserClient(_m.config).QueryAffectedActions(_m)
+}
+
+// QueryEmailReminders queries the "email_reminders" edge of the User entity.
+func (_m *User) QueryEmailReminders() *EmailReminderQuery {
+	return NewUserClient(_m.config).QueryEmailReminders(_m)
 }
 
 // Update returns a builder for updating this User.

@@ -9,6 +9,9 @@ import (
 // CommissionerAction is the predicate function for commissioneraction builders.
 type CommissionerAction func(*sql.Selector)
 
+// EmailReminder is the predicate function for emailreminder builders.
+type EmailReminder func(*sql.Selector)
+
 // Golfer is the predicate function for golfer builders.
 type Golfer func(*sql.Selector)
 

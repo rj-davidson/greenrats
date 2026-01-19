@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
@@ -33,6 +34,7 @@ const (
 
 	// Node types.
 	TypeCommissionerAction = "CommissionerAction"
+	TypeEmailReminder      = "EmailReminder"
 	TypeGolfer             = "Golfer"
 	TypeLeague             = "League"
 	TypeLeagueMembership   = "LeagueMembership"
@@ -741,6 +743,577 @@ func (m *CommissionerActionMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown CommissionerAction edge %s", name)
+}
+
+// EmailReminderMutation represents an operation that mutates the EmailReminder nodes in the graph.
+type EmailReminderMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	reminder_type     *emailreminder.ReminderType
+	sent_at           *time.Time
+	clearedFields     map[string]struct{}
+	user              *uuid.UUID
+	cleareduser       bool
+	tournament        *uuid.UUID
+	clearedtournament bool
+	league            *uuid.UUID
+	clearedleague     bool
+	done              bool
+	oldValue          func(context.Context) (*EmailReminder, error)
+	predicates        []predicate.EmailReminder
+}
+
+var _ ent.Mutation = (*EmailReminderMutation)(nil)
+
+// emailreminderOption allows management of the mutation configuration using functional options.
+type emailreminderOption func(*EmailReminderMutation)
+
+// newEmailReminderMutation creates new mutation for the EmailReminder entity.
+func newEmailReminderMutation(c config, op Op, opts ...emailreminderOption) *EmailReminderMutation {
+	m := &EmailReminderMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeEmailReminder,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withEmailReminderID sets the ID field of the mutation.
+func withEmailReminderID(id uuid.UUID) emailreminderOption {
+	return func(m *EmailReminderMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *EmailReminder
+		)
+		m.oldValue = func(ctx context.Context) (*EmailReminder, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().EmailReminder.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withEmailReminder sets the old EmailReminder of the mutation.
+func withEmailReminder(node *EmailReminder) emailreminderOption {
+	return func(m *EmailReminderMutation) {
+		m.oldValue = func(context.Context) (*EmailReminder, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m EmailReminderMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m EmailReminderMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of EmailReminder entities.
+func (m *EmailReminderMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *EmailReminderMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *EmailReminderMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().EmailReminder.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetReminderType sets the "reminder_type" field.
+func (m *EmailReminderMutation) SetReminderType(et emailreminder.ReminderType) {
+	m.reminder_type = &et
+}
+
+// ReminderType returns the value of the "reminder_type" field in the mutation.
+func (m *EmailReminderMutation) ReminderType() (r emailreminder.ReminderType, exists bool) {
+	v := m.reminder_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldReminderType returns the old "reminder_type" field's value of the EmailReminder entity.
+// If the EmailReminder object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailReminderMutation) OldReminderType(ctx context.Context) (v emailreminder.ReminderType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldReminderType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldReminderType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldReminderType: %w", err)
+	}
+	return oldValue.ReminderType, nil
+}
+
+// ResetReminderType resets all changes to the "reminder_type" field.
+func (m *EmailReminderMutation) ResetReminderType() {
+	m.reminder_type = nil
+}
+
+// SetSentAt sets the "sent_at" field.
+func (m *EmailReminderMutation) SetSentAt(t time.Time) {
+	m.sent_at = &t
+}
+
+// SentAt returns the value of the "sent_at" field in the mutation.
+func (m *EmailReminderMutation) SentAt() (r time.Time, exists bool) {
+	v := m.sent_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldSentAt returns the old "sent_at" field's value of the EmailReminder entity.
+// If the EmailReminder object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *EmailReminderMutation) OldSentAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldSentAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldSentAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldSentAt: %w", err)
+	}
+	return oldValue.SentAt, nil
+}
+
+// ResetSentAt resets all changes to the "sent_at" field.
+func (m *EmailReminderMutation) ResetSentAt() {
+	m.sent_at = nil
+}
+
+// SetUserID sets the "user" edge to the User entity by id.
+func (m *EmailReminderMutation) SetUserID(id uuid.UUID) {
+	m.user = &id
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (m *EmailReminderMutation) ClearUser() {
+	m.cleareduser = true
+}
+
+// UserCleared reports if the "user" edge to the User entity was cleared.
+func (m *EmailReminderMutation) UserCleared() bool {
+	return m.cleareduser
+}
+
+// UserID returns the "user" edge ID in the mutation.
+func (m *EmailReminderMutation) UserID() (id uuid.UUID, exists bool) {
+	if m.user != nil {
+		return *m.user, true
+	}
+	return
+}
+
+// UserIDs returns the "user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// UserID instead. It exists only for internal usage by the builders.
+func (m *EmailReminderMutation) UserIDs() (ids []uuid.UUID) {
+	if id := m.user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetUser resets all changes to the "user" edge.
+func (m *EmailReminderMutation) ResetUser() {
+	m.user = nil
+	m.cleareduser = false
+}
+
+// SetTournamentID sets the "tournament" edge to the Tournament entity by id.
+func (m *EmailReminderMutation) SetTournamentID(id uuid.UUID) {
+	m.tournament = &id
+}
+
+// ClearTournament clears the "tournament" edge to the Tournament entity.
+func (m *EmailReminderMutation) ClearTournament() {
+	m.clearedtournament = true
+}
+
+// TournamentCleared reports if the "tournament" edge to the Tournament entity was cleared.
+func (m *EmailReminderMutation) TournamentCleared() bool {
+	return m.clearedtournament
+}
+
+// TournamentID returns the "tournament" edge ID in the mutation.
+func (m *EmailReminderMutation) TournamentID() (id uuid.UUID, exists bool) {
+	if m.tournament != nil {
+		return *m.tournament, true
+	}
+	return
+}
+
+// TournamentIDs returns the "tournament" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TournamentID instead. It exists only for internal usage by the builders.
+func (m *EmailReminderMutation) TournamentIDs() (ids []uuid.UUID) {
+	if id := m.tournament; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTournament resets all changes to the "tournament" edge.
+func (m *EmailReminderMutation) ResetTournament() {
+	m.tournament = nil
+	m.clearedtournament = false
+}
+
+// SetLeagueID sets the "league" edge to the League entity by id.
+func (m *EmailReminderMutation) SetLeagueID(id uuid.UUID) {
+	m.league = &id
+}
+
+// ClearLeague clears the "league" edge to the League entity.
+func (m *EmailReminderMutation) ClearLeague() {
+	m.clearedleague = true
+}
+
+// LeagueCleared reports if the "league" edge to the League entity was cleared.
+func (m *EmailReminderMutation) LeagueCleared() bool {
+	return m.clearedleague
+}
+
+// LeagueID returns the "league" edge ID in the mutation.
+func (m *EmailReminderMutation) LeagueID() (id uuid.UUID, exists bool) {
+	if m.league != nil {
+		return *m.league, true
+	}
+	return
+}
+
+// LeagueIDs returns the "league" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LeagueID instead. It exists only for internal usage by the builders.
+func (m *EmailReminderMutation) LeagueIDs() (ids []uuid.UUID) {
+	if id := m.league; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLeague resets all changes to the "league" edge.
+func (m *EmailReminderMutation) ResetLeague() {
+	m.league = nil
+	m.clearedleague = false
+}
+
+// Where appends a list predicates to the EmailReminderMutation builder.
+func (m *EmailReminderMutation) Where(ps ...predicate.EmailReminder) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the EmailReminderMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *EmailReminderMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.EmailReminder, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *EmailReminderMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *EmailReminderMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (EmailReminder).
+func (m *EmailReminderMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *EmailReminderMutation) Fields() []string {
+	fields := make([]string, 0, 2)
+	if m.reminder_type != nil {
+		fields = append(fields, emailreminder.FieldReminderType)
+	}
+	if m.sent_at != nil {
+		fields = append(fields, emailreminder.FieldSentAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *EmailReminderMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case emailreminder.FieldReminderType:
+		return m.ReminderType()
+	case emailreminder.FieldSentAt:
+		return m.SentAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *EmailReminderMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case emailreminder.FieldReminderType:
+		return m.OldReminderType(ctx)
+	case emailreminder.FieldSentAt:
+		return m.OldSentAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown EmailReminder field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailReminderMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case emailreminder.FieldReminderType:
+		v, ok := value.(emailreminder.ReminderType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetReminderType(v)
+		return nil
+	case emailreminder.FieldSentAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetSentAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown EmailReminder field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *EmailReminderMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *EmailReminderMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *EmailReminderMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown EmailReminder numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *EmailReminderMutation) ClearedFields() []string {
+	return nil
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *EmailReminderMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *EmailReminderMutation) ClearField(name string) error {
+	return fmt.Errorf("unknown EmailReminder nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *EmailReminderMutation) ResetField(name string) error {
+	switch name {
+	case emailreminder.FieldReminderType:
+		m.ResetReminderType()
+		return nil
+	case emailreminder.FieldSentAt:
+		m.ResetSentAt()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailReminder field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *EmailReminderMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.user != nil {
+		edges = append(edges, emailreminder.EdgeUser)
+	}
+	if m.tournament != nil {
+		edges = append(edges, emailreminder.EdgeTournament)
+	}
+	if m.league != nil {
+		edges = append(edges, emailreminder.EdgeLeague)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *EmailReminderMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case emailreminder.EdgeUser:
+		if id := m.user; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailreminder.EdgeTournament:
+		if id := m.tournament; id != nil {
+			return []ent.Value{*id}
+		}
+	case emailreminder.EdgeLeague:
+		if id := m.league; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *EmailReminderMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *EmailReminderMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *EmailReminderMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.cleareduser {
+		edges = append(edges, emailreminder.EdgeUser)
+	}
+	if m.clearedtournament {
+		edges = append(edges, emailreminder.EdgeTournament)
+	}
+	if m.clearedleague {
+		edges = append(edges, emailreminder.EdgeLeague)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *EmailReminderMutation) EdgeCleared(name string) bool {
+	switch name {
+	case emailreminder.EdgeUser:
+		return m.cleareduser
+	case emailreminder.EdgeTournament:
+		return m.clearedtournament
+	case emailreminder.EdgeLeague:
+		return m.clearedleague
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *EmailReminderMutation) ClearEdge(name string) error {
+	switch name {
+	case emailreminder.EdgeUser:
+		m.ClearUser()
+		return nil
+	case emailreminder.EdgeTournament:
+		m.ClearTournament()
+		return nil
+	case emailreminder.EdgeLeague:
+		m.ClearLeague()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailReminder unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *EmailReminderMutation) ResetEdge(name string) error {
+	switch name {
+	case emailreminder.EdgeUser:
+		m.ResetUser()
+		return nil
+	case emailreminder.EdgeTournament:
+		m.ResetTournament()
+		return nil
+	case emailreminder.EdgeLeague:
+		m.ResetLeague()
+		return nil
+	}
+	return fmt.Errorf("unknown EmailReminder edge %s", name)
 }
 
 // GolferMutation represents an operation that mutates the Golfer nodes in the graph.
@@ -2077,6 +2650,9 @@ type LeagueMutation struct {
 	commissioner_actions        map[uuid.UUID]struct{}
 	removedcommissioner_actions map[uuid.UUID]struct{}
 	clearedcommissioner_actions bool
+	email_reminders             map[uuid.UUID]struct{}
+	removedemail_reminders      map[uuid.UUID]struct{}
+	clearedemail_reminders      bool
 	done                        bool
 	oldValue                    func(context.Context) (*League, error)
 	predicates                  []predicate.League
@@ -2623,6 +3199,60 @@ func (m *LeagueMutation) ResetCommissionerActions() {
 	m.removedcommissioner_actions = nil
 }
 
+// AddEmailReminderIDs adds the "email_reminders" edge to the EmailReminder entity by ids.
+func (m *LeagueMutation) AddEmailReminderIDs(ids ...uuid.UUID) {
+	if m.email_reminders == nil {
+		m.email_reminders = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.email_reminders[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEmailReminders clears the "email_reminders" edge to the EmailReminder entity.
+func (m *LeagueMutation) ClearEmailReminders() {
+	m.clearedemail_reminders = true
+}
+
+// EmailRemindersCleared reports if the "email_reminders" edge to the EmailReminder entity was cleared.
+func (m *LeagueMutation) EmailRemindersCleared() bool {
+	return m.clearedemail_reminders
+}
+
+// RemoveEmailReminderIDs removes the "email_reminders" edge to the EmailReminder entity by IDs.
+func (m *LeagueMutation) RemoveEmailReminderIDs(ids ...uuid.UUID) {
+	if m.removedemail_reminders == nil {
+		m.removedemail_reminders = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.email_reminders, ids[i])
+		m.removedemail_reminders[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEmailReminders returns the removed IDs of the "email_reminders" edge to the EmailReminder entity.
+func (m *LeagueMutation) RemovedEmailRemindersIDs() (ids []uuid.UUID) {
+	for id := range m.removedemail_reminders {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EmailRemindersIDs returns the "email_reminders" edge IDs in the mutation.
+func (m *LeagueMutation) EmailRemindersIDs() (ids []uuid.UUID) {
+	for id := range m.email_reminders {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEmailReminders resets all changes to the "email_reminders" edge.
+func (m *LeagueMutation) ResetEmailReminders() {
+	m.email_reminders = nil
+	m.clearedemail_reminders = false
+	m.removedemail_reminders = nil
+}
+
 // Where appends a list predicates to the LeagueMutation builder.
 func (m *LeagueMutation) Where(ps ...predicate.League) {
 	m.predicates = append(m.predicates, ps...)
@@ -2856,7 +3486,7 @@ func (m *LeagueMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LeagueMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.created_by != nil {
 		edges = append(edges, league.EdgeCreatedBy)
 	}
@@ -2868,6 +3498,9 @@ func (m *LeagueMutation) AddedEdges() []string {
 	}
 	if m.commissioner_actions != nil {
 		edges = append(edges, league.EdgeCommissionerActions)
+	}
+	if m.email_reminders != nil {
+		edges = append(edges, league.EdgeEmailReminders)
 	}
 	return edges
 }
@@ -2898,13 +3531,19 @@ func (m *LeagueMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case league.EdgeEmailReminders:
+		ids := make([]ent.Value, 0, len(m.email_reminders))
+		for id := range m.email_reminders {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LeagueMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedmemberships != nil {
 		edges = append(edges, league.EdgeMemberships)
 	}
@@ -2913,6 +3552,9 @@ func (m *LeagueMutation) RemovedEdges() []string {
 	}
 	if m.removedcommissioner_actions != nil {
 		edges = append(edges, league.EdgeCommissionerActions)
+	}
+	if m.removedemail_reminders != nil {
+		edges = append(edges, league.EdgeEmailReminders)
 	}
 	return edges
 }
@@ -2939,13 +3581,19 @@ func (m *LeagueMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case league.EdgeEmailReminders:
+		ids := make([]ent.Value, 0, len(m.removedemail_reminders))
+		for id := range m.removedemail_reminders {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LeagueMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedcreated_by {
 		edges = append(edges, league.EdgeCreatedBy)
 	}
@@ -2957,6 +3605,9 @@ func (m *LeagueMutation) ClearedEdges() []string {
 	}
 	if m.clearedcommissioner_actions {
 		edges = append(edges, league.EdgeCommissionerActions)
+	}
+	if m.clearedemail_reminders {
+		edges = append(edges, league.EdgeEmailReminders)
 	}
 	return edges
 }
@@ -2973,6 +3624,8 @@ func (m *LeagueMutation) EdgeCleared(name string) bool {
 		return m.clearedpicks
 	case league.EdgeCommissionerActions:
 		return m.clearedcommissioner_actions
+	case league.EdgeEmailReminders:
+		return m.clearedemail_reminders
 	}
 	return false
 }
@@ -3003,6 +3656,9 @@ func (m *LeagueMutation) ResetEdge(name string) error {
 		return nil
 	case league.EdgeCommissionerActions:
 		m.ResetCommissionerActions()
+		return nil
+	case league.EdgeEmailReminders:
+		m.ResetEmailReminders()
 		return nil
 	}
 	return fmt.Errorf("unknown League edge %s", name)
@@ -4297,34 +4953,37 @@ func (m *PickMutation) ResetEdge(name string) error {
 // TournamentMutation represents an operation that mutates the Tournament nodes in the graph.
 type TournamentMutation struct {
 	config
-	op             Op
-	typ            string
-	id             *uuid.UUID
-	created_at     *time.Time
-	updated_at     *time.Time
-	scratchgolf_id *string
-	bdl_id         *int
-	addbdl_id      *int
-	name           *string
-	start_date     *time.Time
-	end_date       *time.Time
-	status         *tournament.Status
-	season_year    *int
-	addseason_year *int
-	course         *string
-	location       *string
-	purse          *int
-	addpurse       *int
-	clearedFields  map[string]struct{}
-	picks          map[uuid.UUID]struct{}
-	removedpicks   map[uuid.UUID]struct{}
-	clearedpicks   bool
-	entries        map[uuid.UUID]struct{}
-	removedentries map[uuid.UUID]struct{}
-	clearedentries bool
-	done           bool
-	oldValue       func(context.Context) (*Tournament, error)
-	predicates     []predicate.Tournament
+	op                     Op
+	typ                    string
+	id                     *uuid.UUID
+	created_at             *time.Time
+	updated_at             *time.Time
+	scratchgolf_id         *string
+	bdl_id                 *int
+	addbdl_id              *int
+	name                   *string
+	start_date             *time.Time
+	end_date               *time.Time
+	status                 *tournament.Status
+	season_year            *int
+	addseason_year         *int
+	course                 *string
+	location               *string
+	purse                  *int
+	addpurse               *int
+	clearedFields          map[string]struct{}
+	picks                  map[uuid.UUID]struct{}
+	removedpicks           map[uuid.UUID]struct{}
+	clearedpicks           bool
+	entries                map[uuid.UUID]struct{}
+	removedentries         map[uuid.UUID]struct{}
+	clearedentries         bool
+	email_reminders        map[uuid.UUID]struct{}
+	removedemail_reminders map[uuid.UUID]struct{}
+	clearedemail_reminders bool
+	done                   bool
+	oldValue               func(context.Context) (*Tournament, error)
+	predicates             []predicate.Tournament
 }
 
 var _ ent.Mutation = (*TournamentMutation)(nil)
@@ -5098,6 +5757,60 @@ func (m *TournamentMutation) ResetEntries() {
 	m.removedentries = nil
 }
 
+// AddEmailReminderIDs adds the "email_reminders" edge to the EmailReminder entity by ids.
+func (m *TournamentMutation) AddEmailReminderIDs(ids ...uuid.UUID) {
+	if m.email_reminders == nil {
+		m.email_reminders = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.email_reminders[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEmailReminders clears the "email_reminders" edge to the EmailReminder entity.
+func (m *TournamentMutation) ClearEmailReminders() {
+	m.clearedemail_reminders = true
+}
+
+// EmailRemindersCleared reports if the "email_reminders" edge to the EmailReminder entity was cleared.
+func (m *TournamentMutation) EmailRemindersCleared() bool {
+	return m.clearedemail_reminders
+}
+
+// RemoveEmailReminderIDs removes the "email_reminders" edge to the EmailReminder entity by IDs.
+func (m *TournamentMutation) RemoveEmailReminderIDs(ids ...uuid.UUID) {
+	if m.removedemail_reminders == nil {
+		m.removedemail_reminders = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.email_reminders, ids[i])
+		m.removedemail_reminders[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEmailReminders returns the removed IDs of the "email_reminders" edge to the EmailReminder entity.
+func (m *TournamentMutation) RemovedEmailRemindersIDs() (ids []uuid.UUID) {
+	for id := range m.removedemail_reminders {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EmailRemindersIDs returns the "email_reminders" edge IDs in the mutation.
+func (m *TournamentMutation) EmailRemindersIDs() (ids []uuid.UUID) {
+	for id := range m.email_reminders {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEmailReminders resets all changes to the "email_reminders" edge.
+func (m *TournamentMutation) ResetEmailReminders() {
+	m.email_reminders = nil
+	m.clearedemail_reminders = false
+	m.removedemail_reminders = nil
+}
+
 // Where appends a list predicates to the TournamentMutation builder.
 func (m *TournamentMutation) Where(ps ...predicate.Tournament) {
 	m.predicates = append(m.predicates, ps...)
@@ -5490,12 +6203,15 @@ func (m *TournamentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TournamentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.picks != nil {
 		edges = append(edges, tournament.EdgePicks)
 	}
 	if m.entries != nil {
 		edges = append(edges, tournament.EdgeEntries)
+	}
+	if m.email_reminders != nil {
+		edges = append(edges, tournament.EdgeEmailReminders)
 	}
 	return edges
 }
@@ -5516,18 +6232,27 @@ func (m *TournamentMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case tournament.EdgeEmailReminders:
+		ids := make([]ent.Value, 0, len(m.email_reminders))
+		for id := range m.email_reminders {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TournamentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedpicks != nil {
 		edges = append(edges, tournament.EdgePicks)
 	}
 	if m.removedentries != nil {
 		edges = append(edges, tournament.EdgeEntries)
+	}
+	if m.removedemail_reminders != nil {
+		edges = append(edges, tournament.EdgeEmailReminders)
 	}
 	return edges
 }
@@ -5548,18 +6273,27 @@ func (m *TournamentMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case tournament.EdgeEmailReminders:
+		ids := make([]ent.Value, 0, len(m.removedemail_reminders))
+		for id := range m.removedemail_reminders {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TournamentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedpicks {
 		edges = append(edges, tournament.EdgePicks)
 	}
 	if m.clearedentries {
 		edges = append(edges, tournament.EdgeEntries)
+	}
+	if m.clearedemail_reminders {
+		edges = append(edges, tournament.EdgeEmailReminders)
 	}
 	return edges
 }
@@ -5572,6 +6306,8 @@ func (m *TournamentMutation) EdgeCleared(name string) bool {
 		return m.clearedpicks
 	case tournament.EdgeEntries:
 		return m.clearedentries
+	case tournament.EdgeEmailReminders:
+		return m.clearedemail_reminders
 	}
 	return false
 }
@@ -5593,6 +6329,9 @@ func (m *TournamentMutation) ResetEdge(name string) error {
 		return nil
 	case tournament.EdgeEntries:
 		m.ResetEntries()
+		return nil
+	case tournament.EdgeEmailReminders:
+		m.ResetEmailReminders()
 		return nil
 	}
 	return fmt.Errorf("unknown Tournament edge %s", name)
@@ -6767,6 +7506,9 @@ type UserMutation struct {
 	affected_actions            map[uuid.UUID]struct{}
 	removedaffected_actions     map[uuid.UUID]struct{}
 	clearedaffected_actions     bool
+	email_reminders             map[uuid.UUID]struct{}
+	removedemail_reminders      map[uuid.UUID]struct{}
+	clearedemail_reminders      bool
 	done                        bool
 	oldValue                    func(context.Context) (*User, error)
 	predicates                  []predicate.User
@@ -7285,6 +8027,60 @@ func (m *UserMutation) ResetAffectedActions() {
 	m.removedaffected_actions = nil
 }
 
+// AddEmailReminderIDs adds the "email_reminders" edge to the EmailReminder entity by ids.
+func (m *UserMutation) AddEmailReminderIDs(ids ...uuid.UUID) {
+	if m.email_reminders == nil {
+		m.email_reminders = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.email_reminders[ids[i]] = struct{}{}
+	}
+}
+
+// ClearEmailReminders clears the "email_reminders" edge to the EmailReminder entity.
+func (m *UserMutation) ClearEmailReminders() {
+	m.clearedemail_reminders = true
+}
+
+// EmailRemindersCleared reports if the "email_reminders" edge to the EmailReminder entity was cleared.
+func (m *UserMutation) EmailRemindersCleared() bool {
+	return m.clearedemail_reminders
+}
+
+// RemoveEmailReminderIDs removes the "email_reminders" edge to the EmailReminder entity by IDs.
+func (m *UserMutation) RemoveEmailReminderIDs(ids ...uuid.UUID) {
+	if m.removedemail_reminders == nil {
+		m.removedemail_reminders = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.email_reminders, ids[i])
+		m.removedemail_reminders[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedEmailReminders returns the removed IDs of the "email_reminders" edge to the EmailReminder entity.
+func (m *UserMutation) RemovedEmailRemindersIDs() (ids []uuid.UUID) {
+	for id := range m.removedemail_reminders {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// EmailRemindersIDs returns the "email_reminders" edge IDs in the mutation.
+func (m *UserMutation) EmailRemindersIDs() (ids []uuid.UUID) {
+	for id := range m.email_reminders {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetEmailReminders resets all changes to the "email_reminders" edge.
+func (m *UserMutation) ResetEmailReminders() {
+	m.email_reminders = nil
+	m.clearedemail_reminders = false
+	m.removedemail_reminders = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -7495,7 +8291,7 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.picks != nil {
 		edges = append(edges, user.EdgePicks)
 	}
@@ -7507,6 +8303,9 @@ func (m *UserMutation) AddedEdges() []string {
 	}
 	if m.affected_actions != nil {
 		edges = append(edges, user.EdgeAffectedActions)
+	}
+	if m.email_reminders != nil {
+		edges = append(edges, user.EdgeEmailReminders)
 	}
 	return edges
 }
@@ -7539,13 +8338,19 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeEmailReminders:
+		ids := make([]ent.Value, 0, len(m.email_reminders))
+		for id := range m.email_reminders {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.removedpicks != nil {
 		edges = append(edges, user.EdgePicks)
 	}
@@ -7557,6 +8362,9 @@ func (m *UserMutation) RemovedEdges() []string {
 	}
 	if m.removedaffected_actions != nil {
 		edges = append(edges, user.EdgeAffectedActions)
+	}
+	if m.removedemail_reminders != nil {
+		edges = append(edges, user.EdgeEmailReminders)
 	}
 	return edges
 }
@@ -7589,13 +8397,19 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeEmailReminders:
+		ids := make([]ent.Value, 0, len(m.removedemail_reminders))
+		for id := range m.removedemail_reminders {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 4)
+	edges := make([]string, 0, 5)
 	if m.clearedpicks {
 		edges = append(edges, user.EdgePicks)
 	}
@@ -7607,6 +8421,9 @@ func (m *UserMutation) ClearedEdges() []string {
 	}
 	if m.clearedaffected_actions {
 		edges = append(edges, user.EdgeAffectedActions)
+	}
+	if m.clearedemail_reminders {
+		edges = append(edges, user.EdgeEmailReminders)
 	}
 	return edges
 }
@@ -7623,6 +8440,8 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedcommissioner_actions
 	case user.EdgeAffectedActions:
 		return m.clearedaffected_actions
+	case user.EdgeEmailReminders:
+		return m.clearedemail_reminders
 	}
 	return false
 }
@@ -7650,6 +8469,9 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeAffectedActions:
 		m.ResetAffectedActions()
+		return nil
+	case user.EdgeEmailReminders:
+		m.ResetEmailReminders()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

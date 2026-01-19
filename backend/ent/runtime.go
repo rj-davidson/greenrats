@@ -7,6 +7,7 @@ import (
 
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
@@ -38,6 +39,19 @@ func init() {
 	commissioneractionDescID := commissioneractionMixinFields0[0].Descriptor()
 	// commissioneraction.DefaultID holds the default value on creation for the id field.
 	commissioneraction.DefaultID = commissioneractionDescID.Default.(func() uuid.UUID)
+	emailreminderMixin := schema.EmailReminder{}.Mixin()
+	emailreminderMixinFields0 := emailreminderMixin[0].Fields()
+	_ = emailreminderMixinFields0
+	emailreminderFields := schema.EmailReminder{}.Fields()
+	_ = emailreminderFields
+	// emailreminderDescSentAt is the schema descriptor for sent_at field.
+	emailreminderDescSentAt := emailreminderFields[1].Descriptor()
+	// emailreminder.DefaultSentAt holds the default value on creation for the sent_at field.
+	emailreminder.DefaultSentAt = emailreminderDescSentAt.Default.(func() time.Time)
+	// emailreminderDescID is the schema descriptor for id field.
+	emailreminderDescID := emailreminderMixinFields0[0].Descriptor()
+	// emailreminder.DefaultID holds the default value on creation for the id field.
+	emailreminder.DefaultID = emailreminderDescID.Default.(func() uuid.UUID)
 	golferMixin := schema.Golfer{}.Mixin()
 	golferMixinFields0 := golferMixin[0].Fields()
 	_ = golferMixinFields0

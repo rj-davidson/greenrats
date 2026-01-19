@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/tournament"
@@ -22,12 +23,13 @@ import (
 // TournamentQuery is the builder for querying Tournament entities.
 type TournamentQuery struct {
 	config
-	ctx         *QueryContext
-	order       []tournament.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.Tournament
-	withPicks   *PickQuery
-	withEntries *TournamentEntryQuery
+	ctx                *QueryContext
+	order              []tournament.OrderOption
+	inters             []Interceptor
+	predicates         []predicate.Tournament
+	withPicks          *PickQuery
+	withEntries        *TournamentEntryQuery
+	withEmailReminders *EmailReminderQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -101,6 +103,28 @@ func (_q *TournamentQuery) QueryEntries() *TournamentEntryQuery {
 			sqlgraph.From(tournament.Table, tournament.FieldID, selector),
 			sqlgraph.To(tournamententry.Table, tournamententry.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, tournament.EntriesTable, tournament.EntriesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEmailReminders chains the current query on the "email_reminders" edge.
+func (_q *TournamentQuery) QueryEmailReminders() *EmailReminderQuery {
+	query := (&EmailReminderClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournament.Table, tournament.FieldID, selector),
+			sqlgraph.To(emailreminder.Table, emailreminder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tournament.EmailRemindersTable, tournament.EmailRemindersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -295,13 +319,14 @@ func (_q *TournamentQuery) Clone() *TournamentQuery {
 		return nil
 	}
 	return &TournamentQuery{
-		config:      _q.config,
-		ctx:         _q.ctx.Clone(),
-		order:       append([]tournament.OrderOption{}, _q.order...),
-		inters:      append([]Interceptor{}, _q.inters...),
-		predicates:  append([]predicate.Tournament{}, _q.predicates...),
-		withPicks:   _q.withPicks.Clone(),
-		withEntries: _q.withEntries.Clone(),
+		config:             _q.config,
+		ctx:                _q.ctx.Clone(),
+		order:              append([]tournament.OrderOption{}, _q.order...),
+		inters:             append([]Interceptor{}, _q.inters...),
+		predicates:         append([]predicate.Tournament{}, _q.predicates...),
+		withPicks:          _q.withPicks.Clone(),
+		withEntries:        _q.withEntries.Clone(),
+		withEmailReminders: _q.withEmailReminders.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -327,6 +352,17 @@ func (_q *TournamentQuery) WithEntries(opts ...func(*TournamentEntryQuery)) *Tou
 		opt(query)
 	}
 	_q.withEntries = query
+	return _q
+}
+
+// WithEmailReminders tells the query-builder to eager-load the nodes that are connected to
+// the "email_reminders" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TournamentQuery) WithEmailReminders(opts ...func(*EmailReminderQuery)) *TournamentQuery {
+	query := (&EmailReminderClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEmailReminders = query
 	return _q
 }
 
@@ -408,9 +444,10 @@ func (_q *TournamentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 	var (
 		nodes       = []*Tournament{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			_q.withPicks != nil,
 			_q.withEntries != nil,
+			_q.withEmailReminders != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,6 +479,13 @@ func (_q *TournamentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 		if err := _q.loadEntries(ctx, query, nodes,
 			func(n *Tournament) { n.Edges.Entries = []*TournamentEntry{} },
 			func(n *Tournament, e *TournamentEntry) { n.Edges.Entries = append(n.Edges.Entries, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEmailReminders; query != nil {
+		if err := _q.loadEmailReminders(ctx, query, nodes,
+			func(n *Tournament) { n.Edges.EmailReminders = []*EmailReminder{} },
+			func(n *Tournament, e *EmailReminder) { n.Edges.EmailReminders = append(n.Edges.EmailReminders, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -505,6 +549,37 @@ func (_q *TournamentQuery) loadEntries(ctx context.Context, query *TournamentEnt
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "tournament_entries" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *TournamentQuery) loadEmailReminders(ctx context.Context, query *EmailReminderQuery, nodes []*Tournament, init func(*Tournament), assign func(*Tournament, *EmailReminder)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Tournament)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.EmailReminder(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(tournament.EmailRemindersColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.tournament_email_reminders
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "tournament_email_reminders" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "tournament_email_reminders" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

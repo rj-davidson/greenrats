@@ -35,6 +35,8 @@ const (
 	EdgePicks = "picks"
 	// EdgeCommissionerActions holds the string denoting the commissioner_actions edge name in mutations.
 	EdgeCommissionerActions = "commissioner_actions"
+	// EdgeEmailReminders holds the string denoting the email_reminders edge name in mutations.
+	EdgeEmailReminders = "email_reminders"
 	// Table holds the table name of the league in the database.
 	Table = "leagues"
 	// CreatedByTable is the table that holds the created_by relation/edge.
@@ -65,6 +67,13 @@ const (
 	CommissionerActionsInverseTable = "commissioner_actions"
 	// CommissionerActionsColumn is the table column denoting the commissioner_actions relation/edge.
 	CommissionerActionsColumn = "league_commissioner_actions"
+	// EmailRemindersTable is the table that holds the email_reminders relation/edge.
+	EmailRemindersTable = "email_reminders"
+	// EmailRemindersInverseTable is the table name for the EmailReminder entity.
+	// It exists in this package in order to avoid circular dependency with the "emailreminder" package.
+	EmailRemindersInverseTable = "email_reminders"
+	// EmailRemindersColumn is the table column denoting the email_reminders relation/edge.
+	EmailRemindersColumn = "league_email_reminders"
 )
 
 // Columns holds all SQL columns for league fields.
@@ -202,6 +211,20 @@ func ByCommissionerActions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOpti
 		sqlgraph.OrderByNeighborTerms(s, newCommissionerActionsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByEmailRemindersCount orders the results by email_reminders count.
+func ByEmailRemindersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEmailRemindersStep(), opts...)
+	}
+}
+
+// ByEmailReminders orders the results by email_reminders terms.
+func ByEmailReminders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEmailRemindersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newCreatedByStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -228,5 +251,12 @@ func newCommissionerActionsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(CommissionerActionsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, CommissionerActionsTable, CommissionerActionsColumn),
+	)
+}
+func newEmailRemindersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EmailRemindersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EmailRemindersTable, EmailRemindersColumn),
 	)
 }

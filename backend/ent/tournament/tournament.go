@@ -44,6 +44,8 @@ const (
 	EdgePicks = "picks"
 	// EdgeEntries holds the string denoting the entries edge name in mutations.
 	EdgeEntries = "entries"
+	// EdgeEmailReminders holds the string denoting the email_reminders edge name in mutations.
+	EdgeEmailReminders = "email_reminders"
 	// Table holds the table name of the tournament in the database.
 	Table = "tournaments"
 	// PicksTable is the table that holds the picks relation/edge.
@@ -60,6 +62,13 @@ const (
 	EntriesInverseTable = "tournament_entries"
 	// EntriesColumn is the table column denoting the entries relation/edge.
 	EntriesColumn = "tournament_entries"
+	// EmailRemindersTable is the table that holds the email_reminders relation/edge.
+	EmailRemindersTable = "email_reminders"
+	// EmailRemindersInverseTable is the table name for the EmailReminder entity.
+	// It exists in this package in order to avoid circular dependency with the "emailreminder" package.
+	EmailRemindersInverseTable = "email_reminders"
+	// EmailRemindersColumn is the table column denoting the email_reminders relation/edge.
+	EmailRemindersColumn = "tournament_email_reminders"
 )
 
 // Columns holds all SQL columns for tournament fields.
@@ -224,6 +233,20 @@ func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByEmailRemindersCount orders the results by email_reminders count.
+func ByEmailRemindersCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newEmailRemindersStep(), opts...)
+	}
+}
+
+// ByEmailReminders orders the results by email_reminders terms.
+func ByEmailReminders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newEmailRemindersStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPicksStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -236,5 +259,12 @@ func newEntriesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EntriesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
+	)
+}
+func newEmailRemindersStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(EmailRemindersInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, EmailRemindersTable, EmailRemindersColumn),
 	)
 }

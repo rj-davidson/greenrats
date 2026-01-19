@@ -12,13 +12,20 @@ import (
 	"time"
 
 	"github.com/getsentry/sentry-go"
+	"github.com/gofrs/uuid/v5"
 	_ "github.com/lib/pq"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/league"
+	"github.com/rj-davidson/greenrats/ent/leaguemembership"
+	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
+	"github.com/rj-davidson/greenrats/ent/user"
 	"github.com/rj-davidson/greenrats/internal/config"
+	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/scratchgolf"
 )
@@ -33,7 +40,9 @@ const (
 	leaderboardSyncInterval = 1 * time.Hour
 	playerSyncInterval      = 7 * 24 * time.Hour // Weekly
 	fieldCheckInterval      = 6 * time.Hour      // Check for upcoming tournaments needing field sync
+	reminderCheckInterval   = 1 * time.Hour      // Check for pick reminders
 	daysBeforeFieldSync     = 5                  // Sync field 5 days before tournament starts
+	pickWindowDays          = 3                  // Pick window opens this many days before tournament
 )
 
 type Ingester struct {
@@ -41,6 +50,7 @@ type Ingester struct {
 	config      *config.Config
 	scratchGolf *scratchgolf.Client
 	ballDontLie *balldontlie.Client
+	email       *email.Client
 }
 
 func main() {
@@ -77,12 +87,14 @@ func run() error {
 
 	sgClient := scratchgolf.New(cfg.ScratchGolfAPIKey, cfg.ScratchGolfBaseURL)
 	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL)
+	emailClient := email.New(cfg)
 
 	ingester := &Ingester{
 		db:          db,
 		config:      cfg,
 		scratchGolf: sgClient,
 		ballDontLie: bdlClient,
+		email:       emailClient,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -124,12 +136,17 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 	fieldCheckTicker := time.NewTicker(fieldCheckInterval)
 	defer fieldCheckTicker.Stop()
 
+	// Pick reminder check - hourly
+	reminderTicker := time.NewTicker(reminderCheckInterval)
+	defer reminderTicker.Stop()
+
 	// Run initial syncs on startup
 	log.Println("Running initial data syncs...")
 	i.syncTournaments(ctx)
 	i.syncPlayers(ctx)
 	i.syncUpcomingTournamentFields(ctx)
 	i.syncLeaderboards(ctx)
+	i.sendPickReminders(ctx)
 
 	for {
 		select {
@@ -143,6 +160,8 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 			i.syncPlayers(ctx)
 		case <-fieldCheckTicker.C:
 			i.syncUpcomingTournamentFields(ctx)
+		case <-reminderTicker.C:
+			i.sendPickReminders(ctx)
 		}
 	}
 }
@@ -664,11 +683,137 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 	return nil
 }
 
-func parsePosition(pos string) int {
-	if pos == "" || pos == "CUT" {
-		return 0
+func (i *Ingester) sendPickReminders(ctx context.Context) {
+	log.Println("Checking for pick reminders to send...")
+
+	now := time.Now().UTC()
+	reminderWindowStart := now.Add(24 * time.Hour)
+	reminderWindowEnd := now.Add(27 * time.Hour)
+
+	tournaments, err := i.db.Tournament.Query().
+		Where(
+			tournament.StatusEQ(tournament.StatusUpcoming),
+			tournament.StartDateGTE(reminderWindowStart),
+			tournament.StartDateLTE(reminderWindowEnd),
+		).
+		All(ctx)
+	if err != nil {
+		log.Printf("failed to query upcoming tournaments: %v", err)
+		return
 	}
-	pos = strings.TrimPrefix(pos, "T")
-	position, _ := strconv.Atoi(pos)
-	return position
+
+	if len(tournaments) == 0 {
+		log.Println("No tournaments starting within reminder window")
+		return
+	}
+
+	for _, t := range tournaments {
+		i.sendRemindersForTournament(ctx, t)
+	}
+
+	log.Println("Pick reminder check completed")
 }
+
+func (i *Ingester) sendRemindersForTournament(ctx context.Context, t *ent.Tournament) {
+	log.Printf("Sending pick reminders for tournament: %s", t.Name)
+
+	leagues, err := i.db.League.Query().
+		Where(league.SeasonYearEQ(t.SeasonYear)).
+		All(ctx)
+	if err != nil {
+		log.Printf("failed to query leagues: %v", err)
+		return
+	}
+
+	for _, l := range leagues {
+		i.sendRemindersForLeagueTournament(ctx, l, t)
+	}
+}
+
+func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.League, t *ent.Tournament) {
+	memberships, err := i.db.LeagueMembership.Query().
+		Where(leaguemembership.HasLeagueWith(league.IDEQ(l.ID))).
+		WithUser().
+		All(ctx)
+	if err != nil {
+		log.Printf("failed to query league memberships: %v", err)
+		return
+	}
+
+	for _, m := range memberships {
+		if m.Edges.User == nil {
+			continue
+		}
+		u := m.Edges.User
+
+		if u.DisplayName == nil {
+			continue
+		}
+
+		hasPick, err := i.db.Pick.Query().
+			Where(
+				pick.HasUserWith(user.IDEQ(u.ID)),
+				pick.HasTournamentWith(tournament.IDEQ(t.ID)),
+				pick.HasLeagueWith(league.IDEQ(l.ID)),
+			).
+			Exist(ctx)
+		if err != nil {
+			log.Printf("failed to check pick: %v", err)
+			continue
+		}
+		if hasPick {
+			continue
+		}
+
+		alreadySent, err := i.db.EmailReminder.Query().
+			Where(
+				emailreminder.HasUserWith(user.IDEQ(u.ID)),
+				emailreminder.HasTournamentWith(tournament.IDEQ(t.ID)),
+				emailreminder.HasLeagueWith(league.IDEQ(l.ID)),
+				emailreminder.ReminderTypeEQ(emailreminder.ReminderTypePickReminder),
+			).
+			Exist(ctx)
+		if err != nil {
+			log.Printf("failed to check reminder status: %v", err)
+			continue
+		}
+		if alreadySent {
+			continue
+		}
+
+		if err := i.sendPickReminderEmail(ctx, u, l, t); err != nil {
+			log.Printf("failed to send reminder to %s: %v", u.Email, err)
+			continue
+		}
+
+		_, err = i.db.EmailReminder.Create().
+			SetUserID(u.ID).
+			SetTournamentID(t.ID).
+			SetLeagueID(l.ID).
+			SetReminderType(emailreminder.ReminderTypePickReminder).
+			Save(ctx)
+		if err != nil {
+			log.Printf("failed to record reminder: %v", err)
+		}
+	}
+}
+
+func (i *Ingester) sendPickReminderEmail(ctx context.Context, u *ent.User, l *ent.League, t *ent.Tournament) error {
+	displayName := ""
+	if u.DisplayName != nil {
+		displayName = *u.DisplayName
+	}
+
+	deadline := t.StartDate.Format("Monday, January 2 at 3:04 PM MST")
+
+	data := email.PickReminderData{
+		DisplayName:    displayName,
+		TournamentName: t.Name,
+		LeagueName:     l.Name,
+		Deadline:       deadline,
+	}
+
+	return i.email.SendPickReminder(u.Email, data)
+}
+
+var _ = uuid.Nil

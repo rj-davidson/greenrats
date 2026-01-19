@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
@@ -201,6 +202,21 @@ func (_c *TournamentCreate) AddEntries(v ...*TournamentEntry) *TournamentCreate 
 		ids[i] = v[i].ID
 	}
 	return _c.AddEntryIDs(ids...)
+}
+
+// AddEmailReminderIDs adds the "email_reminders" edge to the EmailReminder entity by IDs.
+func (_c *TournamentCreate) AddEmailReminderIDs(ids ...uuid.UUID) *TournamentCreate {
+	_c.mutation.AddEmailReminderIDs(ids...)
+	return _c
+}
+
+// AddEmailReminders adds the "email_reminders" edges to the EmailReminder entity.
+func (_c *TournamentCreate) AddEmailReminders(v ...*EmailReminder) *TournamentCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddEmailReminderIDs(ids...)
 }
 
 // Mutation returns the TournamentMutation object of the builder.
@@ -397,6 +413,22 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.EmailRemindersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournament.EmailRemindersTable,
+			Columns: []string{tournament.EmailRemindersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

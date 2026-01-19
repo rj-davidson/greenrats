@@ -41,5 +41,6 @@ func (User) Edges() []ent.Edge {
 		edge.To("league_memberships", LeagueMembership.Type),
 		edge.To("commissioner_actions", CommissionerAction.Type),
 		edge.To("affected_actions", CommissionerAction.Type),
+		edge.To("email_reminders", EmailReminder.Type),
 	}
 }

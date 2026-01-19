@@ -21,6 +21,18 @@ func (f CommissionerActionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CommissionerActionMutation", m)
 }
 
+// The EmailReminderFunc type is an adapter to allow the use of ordinary
+// function as EmailReminder mutator.
+type EmailReminderFunc func(context.Context, *ent.EmailReminderMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f EmailReminderFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.EmailReminderMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EmailReminderMutation", m)
+}
+
 // The GolferFunc type is an adapter to allow the use of ordinary
 // function as Golfer mutator.
 type GolferFunc func(context.Context, *ent.GolferMutation) (ent.Value, error)

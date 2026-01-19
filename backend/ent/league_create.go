@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
@@ -153,6 +154,21 @@ func (_c *LeagueCreate) AddCommissionerActions(v ...*CommissionerAction) *League
 		ids[i] = v[i].ID
 	}
 	return _c.AddCommissionerActionIDs(ids...)
+}
+
+// AddEmailReminderIDs adds the "email_reminders" edge to the EmailReminder entity by IDs.
+func (_c *LeagueCreate) AddEmailReminderIDs(ids ...uuid.UUID) *LeagueCreate {
+	_c.mutation.AddEmailReminderIDs(ids...)
+	return _c
+}
+
+// AddEmailReminders adds the "email_reminders" edges to the EmailReminder entity.
+func (_c *LeagueCreate) AddEmailReminders(v ...*EmailReminder) *LeagueCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddEmailReminderIDs(ids...)
 }
 
 // Mutation returns the LeagueMutation object of the builder.
@@ -358,6 +374,22 @@ func (_c *LeagueCreate) createSpec() (*League, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.EmailRemindersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   league.EmailRemindersTable,
+			Columns: []string{league.EmailRemindersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

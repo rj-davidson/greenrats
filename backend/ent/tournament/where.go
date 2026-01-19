@@ -767,6 +767,29 @@ func HasEntriesWith(preds ...predicate.TournamentEntry) predicate.Tournament {
 	})
 }
 
+// HasEmailReminders applies the HasEdge predicate on the "email_reminders" edge.
+func HasEmailReminders() predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EmailRemindersTable, EmailRemindersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEmailRemindersWith applies the HasEdge predicate on the "email_reminders" edge with a given conditions (other predicates).
+func HasEmailRemindersWith(preds ...predicate.EmailReminder) predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := newEmailRemindersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Tournament) predicate.Tournament {
 	return predicate.Tournament(sql.AndPredicates(predicates...))

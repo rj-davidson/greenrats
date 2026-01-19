@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
@@ -31,6 +32,7 @@ type UserQuery struct {
 	withLeagueMemberships   *LeagueMembershipQuery
 	withCommissionerActions *CommissionerActionQuery
 	withAffectedActions     *CommissionerActionQuery
+	withEmailReminders      *EmailReminderQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -148,6 +150,28 @@ func (_q *UserQuery) QueryAffectedActions() *CommissionerActionQuery {
 			sqlgraph.From(user.Table, user.FieldID, selector),
 			sqlgraph.To(commissioneraction.Table, commissioneraction.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, user.AffectedActionsTable, user.AffectedActionsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryEmailReminders chains the current query on the "email_reminders" edge.
+func (_q *UserQuery) QueryEmailReminders() *EmailReminderQuery {
+	query := (&EmailReminderClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.To(emailreminder.Table, emailreminder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.EmailRemindersTable, user.EmailRemindersColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -351,6 +375,7 @@ func (_q *UserQuery) Clone() *UserQuery {
 		withLeagueMemberships:   _q.withLeagueMemberships.Clone(),
 		withCommissionerActions: _q.withCommissionerActions.Clone(),
 		withAffectedActions:     _q.withAffectedActions.Clone(),
+		withEmailReminders:      _q.withEmailReminders.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -398,6 +423,17 @@ func (_q *UserQuery) WithAffectedActions(opts ...func(*CommissionerActionQuery))
 		opt(query)
 	}
 	_q.withAffectedActions = query
+	return _q
+}
+
+// WithEmailReminders tells the query-builder to eager-load the nodes that are connected to
+// the "email_reminders" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *UserQuery) WithEmailReminders(opts ...func(*EmailReminderQuery)) *UserQuery {
+	query := (&EmailReminderClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withEmailReminders = query
 	return _q
 }
 
@@ -479,11 +515,12 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	var (
 		nodes       = []*User{}
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			_q.withPicks != nil,
 			_q.withLeagueMemberships != nil,
 			_q.withCommissionerActions != nil,
 			_q.withAffectedActions != nil,
+			_q.withEmailReminders != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -531,6 +568,13 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 		if err := _q.loadAffectedActions(ctx, query, nodes,
 			func(n *User) { n.Edges.AffectedActions = []*CommissionerAction{} },
 			func(n *User, e *CommissionerAction) { n.Edges.AffectedActions = append(n.Edges.AffectedActions, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withEmailReminders; query != nil {
+		if err := _q.loadEmailReminders(ctx, query, nodes,
+			func(n *User) { n.Edges.EmailReminders = []*EmailReminder{} },
+			func(n *User, e *EmailReminder) { n.Edges.EmailReminders = append(n.Edges.EmailReminders, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -656,6 +700,37 @@ func (_q *UserQuery) loadAffectedActions(ctx context.Context, query *Commissione
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "user_affected_actions" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *UserQuery) loadEmailReminders(ctx context.Context, query *EmailReminderQuery, nodes []*User, init func(*User), assign func(*User, *EmailReminder)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*User)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.EmailReminder(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(user.EmailRemindersColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.user_email_reminders
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "user_email_reminders" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "user_email_reminders" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

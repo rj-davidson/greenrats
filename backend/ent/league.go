@@ -48,9 +48,11 @@ type LeagueEdges struct {
 	Picks []*Pick `json:"picks,omitempty"`
 	// CommissionerActions holds the value of the commissioner_actions edge.
 	CommissionerActions []*CommissionerAction `json:"commissioner_actions,omitempty"`
+	// EmailReminders holds the value of the email_reminders edge.
+	EmailReminders []*EmailReminder `json:"email_reminders,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // CreatedByOrErr returns the CreatedBy value or an error if the edge
@@ -89,6 +91,15 @@ func (e LeagueEdges) CommissionerActionsOrErr() ([]*CommissionerAction, error) {
 		return e.CommissionerActions, nil
 	}
 	return nil, &NotLoadedError{edge: "commissioner_actions"}
+}
+
+// EmailRemindersOrErr returns the EmailReminders value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeagueEdges) EmailRemindersOrErr() ([]*EmailReminder, error) {
+	if e.loadedTypes[4] {
+		return e.EmailReminders, nil
+	}
+	return nil, &NotLoadedError{edge: "email_reminders"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -203,6 +214,11 @@ func (_m *League) QueryPicks() *PickQuery {
 // QueryCommissionerActions queries the "commissioner_actions" edge of the League entity.
 func (_m *League) QueryCommissionerActions() *CommissionerActionQuery {
 	return NewLeagueClient(_m.config).QueryCommissionerActions(_m)
+}
+
+// QueryEmailReminders queries the "email_reminders" edge of the League entity.
+func (_m *League) QueryEmailReminders() *EmailReminderQuery {
+	return NewLeagueClient(_m.config).QueryEmailReminders(_m)
 }
 
 // Update returns a builder for updating this League.

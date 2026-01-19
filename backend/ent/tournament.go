@@ -54,9 +54,11 @@ type TournamentEdges struct {
 	Picks []*Pick `json:"picks,omitempty"`
 	// Entries holds the value of the entries edge.
 	Entries []*TournamentEntry `json:"entries,omitempty"`
+	// EmailReminders holds the value of the email_reminders edge.
+	EmailReminders []*EmailReminder `json:"email_reminders,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -75,6 +77,15 @@ func (e TournamentEdges) EntriesOrErr() ([]*TournamentEntry, error) {
 		return e.Entries, nil
 	}
 	return nil, &NotLoadedError{edge: "entries"}
+}
+
+// EmailRemindersOrErr returns the EmailReminders value or an error if the edge
+// was not loaded in eager-loading.
+func (e TournamentEdges) EmailRemindersOrErr() ([]*EmailReminder, error) {
+	if e.loadedTypes[2] {
+		return e.EmailReminders, nil
+	}
+	return nil, &NotLoadedError{edge: "email_reminders"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -209,6 +220,11 @@ func (_m *Tournament) QueryPicks() *PickQuery {
 // QueryEntries queries the "entries" edge of the Tournament entity.
 func (_m *Tournament) QueryEntries() *TournamentEntryQuery {
 	return NewTournamentClient(_m.config).QueryEntries(_m)
+}
+
+// QueryEmailReminders queries the "email_reminders" edge of the Tournament entity.
+func (_m *Tournament) QueryEmailReminders() *EmailReminderQuery {
+	return NewTournamentClient(_m.config).QueryEmailReminders(_m)
 }
 
 // Update returns a builder for updating this Tournament.

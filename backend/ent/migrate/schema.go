@@ -45,6 +45,48 @@ var (
 			},
 		},
 	}
+	// EmailRemindersColumns holds the columns for the "email_reminders" table.
+	EmailRemindersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "reminder_type", Type: field.TypeEnum, Enums: []string{"pick_reminder", "tournament_results"}},
+		{Name: "sent_at", Type: field.TypeTime},
+		{Name: "league_email_reminders", Type: field.TypeUUID},
+		{Name: "tournament_email_reminders", Type: field.TypeUUID},
+		{Name: "user_email_reminders", Type: field.TypeUUID},
+	}
+	// EmailRemindersTable holds the schema information for the "email_reminders" table.
+	EmailRemindersTable = &schema.Table{
+		Name:       "email_reminders",
+		Columns:    EmailRemindersColumns,
+		PrimaryKey: []*schema.Column{EmailRemindersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "email_reminders_leagues_email_reminders",
+				Columns:    []*schema.Column{EmailRemindersColumns[3]},
+				RefColumns: []*schema.Column{LeaguesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "email_reminders_tournaments_email_reminders",
+				Columns:    []*schema.Column{EmailRemindersColumns[4]},
+				RefColumns: []*schema.Column{TournamentsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "email_reminders_users_email_reminders",
+				Columns:    []*schema.Column{EmailRemindersColumns[5]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "emailreminder_reminder_type_user_email_reminders_tournament_email_reminders_league_email_reminders",
+				Unique:  true,
+				Columns: []*schema.Column{EmailRemindersColumns[1], EmailRemindersColumns[5], EmailRemindersColumns[4], EmailRemindersColumns[3]},
+			},
+		},
+	}
 	// GolfersColumns holds the columns for the "golfers" table.
 	GolfersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -266,6 +308,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		CommissionerActionsTable,
+		EmailRemindersTable,
 		GolfersTable,
 		LeaguesTable,
 		LeagueMembershipsTable,
@@ -280,6 +323,9 @@ func init() {
 	CommissionerActionsTable.ForeignKeys[0].RefTable = LeaguesTable
 	CommissionerActionsTable.ForeignKeys[1].RefTable = UsersTable
 	CommissionerActionsTable.ForeignKeys[2].RefTable = UsersTable
+	EmailRemindersTable.ForeignKeys[0].RefTable = LeaguesTable
+	EmailRemindersTable.ForeignKeys[1].RefTable = TournamentsTable
+	EmailRemindersTable.ForeignKeys[2].RefTable = UsersTable
 	LeaguesTable.ForeignKeys[0].RefTable = UsersTable
 	LeagueMembershipsTable.ForeignKeys[0].RefTable = LeaguesTable
 	LeagueMembershipsTable.ForeignKeys[1].RefTable = UsersTable

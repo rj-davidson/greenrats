@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// CommissionerAction is the client for interacting with the CommissionerAction builders.
 	CommissionerAction *CommissionerActionClient
+	// EmailReminder is the client for interacting with the EmailReminder builders.
+	EmailReminder *EmailReminderClient
 	// Golfer is the client for interacting with the Golfer builders.
 	Golfer *GolferClient
 	// League is the client for interacting with the League builders.
@@ -160,6 +162,7 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.CommissionerAction = NewCommissionerActionClient(tx.config)
+	tx.EmailReminder = NewEmailReminderClient(tx.config)
 	tx.Golfer = NewGolferClient(tx.config)
 	tx.League = NewLeagueClient(tx.config)
 	tx.LeagueMembership = NewLeagueMembershipClient(tx.config)

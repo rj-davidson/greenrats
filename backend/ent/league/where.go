@@ -438,6 +438,29 @@ func HasCommissionerActionsWith(preds ...predicate.CommissionerAction) predicate
 	})
 }
 
+// HasEmailReminders applies the HasEdge predicate on the "email_reminders" edge.
+func HasEmailReminders() predicate.League {
+	return predicate.League(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, EmailRemindersTable, EmailRemindersColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasEmailRemindersWith applies the HasEdge predicate on the "email_reminders" edge with a given conditions (other predicates).
+func HasEmailRemindersWith(preds ...predicate.EmailReminder) predicate.League {
+	return predicate.League(func(s *sql.Selector) {
+		step := newEmailRemindersStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.League) predicate.League {
 	return predicate.League(sql.AndPredicates(predicates...))

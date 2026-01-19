@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
@@ -146,6 +147,21 @@ func (_u *UserUpdate) AddAffectedActions(v ...*CommissionerAction) *UserUpdate {
 	return _u.AddAffectedActionIDs(ids...)
 }
 
+// AddEmailReminderIDs adds the "email_reminders" edge to the EmailReminder entity by IDs.
+func (_u *UserUpdate) AddEmailReminderIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddEmailReminderIDs(ids...)
+	return _u
+}
+
+// AddEmailReminders adds the "email_reminders" edges to the EmailReminder entity.
+func (_u *UserUpdate) AddEmailReminders(v ...*EmailReminder) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailReminderIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -233,6 +249,27 @@ func (_u *UserUpdate) RemoveAffectedActions(v ...*CommissionerAction) *UserUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAffectedActionIDs(ids...)
+}
+
+// ClearEmailReminders clears all "email_reminders" edges to the EmailReminder entity.
+func (_u *UserUpdate) ClearEmailReminders() *UserUpdate {
+	_u.mutation.ClearEmailReminders()
+	return _u
+}
+
+// RemoveEmailReminderIDs removes the "email_reminders" edge to EmailReminder entities by IDs.
+func (_u *UserUpdate) RemoveEmailReminderIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveEmailReminderIDs(ids...)
+	return _u
+}
+
+// RemoveEmailReminders removes "email_reminders" edges to EmailReminder entities.
+func (_u *UserUpdate) RemoveEmailReminders(v ...*EmailReminder) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailReminderIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -493,6 +530,51 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.EmailRemindersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailRemindersTable,
+			Columns: []string{user.EmailRemindersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailRemindersIDs(); len(nodes) > 0 && !_u.mutation.EmailRemindersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailRemindersTable,
+			Columns: []string{user.EmailRemindersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailRemindersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailRemindersTable,
+			Columns: []string{user.EmailRemindersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -627,6 +709,21 @@ func (_u *UserUpdateOne) AddAffectedActions(v ...*CommissionerAction) *UserUpdat
 	return _u.AddAffectedActionIDs(ids...)
 }
 
+// AddEmailReminderIDs adds the "email_reminders" edge to the EmailReminder entity by IDs.
+func (_u *UserUpdateOne) AddEmailReminderIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddEmailReminderIDs(ids...)
+	return _u
+}
+
+// AddEmailReminders adds the "email_reminders" edges to the EmailReminder entity.
+func (_u *UserUpdateOne) AddEmailReminders(v ...*EmailReminder) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddEmailReminderIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -714,6 +811,27 @@ func (_u *UserUpdateOne) RemoveAffectedActions(v ...*CommissionerAction) *UserUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveAffectedActionIDs(ids...)
+}
+
+// ClearEmailReminders clears all "email_reminders" edges to the EmailReminder entity.
+func (_u *UserUpdateOne) ClearEmailReminders() *UserUpdateOne {
+	_u.mutation.ClearEmailReminders()
+	return _u
+}
+
+// RemoveEmailReminderIDs removes the "email_reminders" edge to EmailReminder entities by IDs.
+func (_u *UserUpdateOne) RemoveEmailReminderIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveEmailReminderIDs(ids...)
+	return _u
+}
+
+// RemoveEmailReminders removes "email_reminders" edges to EmailReminder entities.
+func (_u *UserUpdateOne) RemoveEmailReminders(v ...*EmailReminder) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveEmailReminderIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -997,6 +1115,51 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.EmailRemindersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailRemindersTable,
+			Columns: []string{user.EmailRemindersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedEmailRemindersIDs(); len(nodes) > 0 && !_u.mutation.EmailRemindersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailRemindersTable,
+			Columns: []string{user.EmailRemindersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.EmailRemindersIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EmailRemindersTable,
+			Columns: []string{user.EmailRemindersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -17,6 +17,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
@@ -33,6 +34,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// CommissionerAction is the client for interacting with the CommissionerAction builders.
 	CommissionerAction *CommissionerActionClient
+	// EmailReminder is the client for interacting with the EmailReminder builders.
+	EmailReminder *EmailReminderClient
 	// Golfer is the client for interacting with the Golfer builders.
 	Golfer *GolferClient
 	// League is the client for interacting with the League builders.
@@ -59,6 +62,7 @@ func NewClient(opts ...Option) *Client {
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
 	c.CommissionerAction = NewCommissionerActionClient(c.config)
+	c.EmailReminder = NewEmailReminderClient(c.config)
 	c.Golfer = NewGolferClient(c.config)
 	c.League = NewLeagueClient(c.config)
 	c.LeagueMembership = NewLeagueMembershipClient(c.config)
@@ -159,6 +163,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		ctx:                ctx,
 		config:             cfg,
 		CommissionerAction: NewCommissionerActionClient(cfg),
+		EmailReminder:      NewEmailReminderClient(cfg),
 		Golfer:             NewGolferClient(cfg),
 		League:             NewLeagueClient(cfg),
 		LeagueMembership:   NewLeagueMembershipClient(cfg),
@@ -186,6 +191,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		ctx:                ctx,
 		config:             cfg,
 		CommissionerAction: NewCommissionerActionClient(cfg),
+		EmailReminder:      NewEmailReminderClient(cfg),
 		Golfer:             NewGolferClient(cfg),
 		League:             NewLeagueClient(cfg),
 		LeagueMembership:   NewLeagueMembershipClient(cfg),
@@ -222,8 +228,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.CommissionerAction, c.Golfer, c.League, c.LeagueMembership, c.Pick,
-		c.Tournament, c.TournamentEntry, c.User,
+		c.CommissionerAction, c.EmailReminder, c.Golfer, c.League, c.LeagueMembership,
+		c.Pick, c.Tournament, c.TournamentEntry, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -233,8 +239,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.CommissionerAction, c.Golfer, c.League, c.LeagueMembership, c.Pick,
-		c.Tournament, c.TournamentEntry, c.User,
+		c.CommissionerAction, c.EmailReminder, c.Golfer, c.League, c.LeagueMembership,
+		c.Pick, c.Tournament, c.TournamentEntry, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -245,6 +251,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
 	case *CommissionerActionMutation:
 		return c.CommissionerAction.mutate(ctx, m)
+	case *EmailReminderMutation:
+		return c.EmailReminder.mutate(ctx, m)
 	case *GolferMutation:
 		return c.Golfer.mutate(ctx, m)
 	case *LeagueMutation:
@@ -442,6 +450,187 @@ func (c *CommissionerActionClient) mutate(ctx context.Context, m *CommissionerAc
 		return (&CommissionerActionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown CommissionerAction mutation op: %q", m.Op())
+	}
+}
+
+// EmailReminderClient is a client for the EmailReminder schema.
+type EmailReminderClient struct {
+	config
+}
+
+// NewEmailReminderClient returns a client for the EmailReminder from the given config.
+func NewEmailReminderClient(c config) *EmailReminderClient {
+	return &EmailReminderClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `emailreminder.Hooks(f(g(h())))`.
+func (c *EmailReminderClient) Use(hooks ...Hook) {
+	c.hooks.EmailReminder = append(c.hooks.EmailReminder, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `emailreminder.Intercept(f(g(h())))`.
+func (c *EmailReminderClient) Intercept(interceptors ...Interceptor) {
+	c.inters.EmailReminder = append(c.inters.EmailReminder, interceptors...)
+}
+
+// Create returns a builder for creating a EmailReminder entity.
+func (c *EmailReminderClient) Create() *EmailReminderCreate {
+	mutation := newEmailReminderMutation(c.config, OpCreate)
+	return &EmailReminderCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of EmailReminder entities.
+func (c *EmailReminderClient) CreateBulk(builders ...*EmailReminderCreate) *EmailReminderCreateBulk {
+	return &EmailReminderCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *EmailReminderClient) MapCreateBulk(slice any, setFunc func(*EmailReminderCreate, int)) *EmailReminderCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &EmailReminderCreateBulk{err: fmt.Errorf("calling to EmailReminderClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*EmailReminderCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &EmailReminderCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for EmailReminder.
+func (c *EmailReminderClient) Update() *EmailReminderUpdate {
+	mutation := newEmailReminderMutation(c.config, OpUpdate)
+	return &EmailReminderUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EmailReminderClient) UpdateOne(_m *EmailReminder) *EmailReminderUpdateOne {
+	mutation := newEmailReminderMutation(c.config, OpUpdateOne, withEmailReminder(_m))
+	return &EmailReminderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EmailReminderClient) UpdateOneID(id uuid.UUID) *EmailReminderUpdateOne {
+	mutation := newEmailReminderMutation(c.config, OpUpdateOne, withEmailReminderID(id))
+	return &EmailReminderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for EmailReminder.
+func (c *EmailReminderClient) Delete() *EmailReminderDelete {
+	mutation := newEmailReminderMutation(c.config, OpDelete)
+	return &EmailReminderDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *EmailReminderClient) DeleteOne(_m *EmailReminder) *EmailReminderDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *EmailReminderClient) DeleteOneID(id uuid.UUID) *EmailReminderDeleteOne {
+	builder := c.Delete().Where(emailreminder.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &EmailReminderDeleteOne{builder}
+}
+
+// Query returns a query builder for EmailReminder.
+func (c *EmailReminderClient) Query() *EmailReminderQuery {
+	return &EmailReminderQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeEmailReminder},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a EmailReminder entity by its id.
+func (c *EmailReminderClient) Get(ctx context.Context, id uuid.UUID) (*EmailReminder, error) {
+	return c.Query().Where(emailreminder.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EmailReminderClient) GetX(ctx context.Context, id uuid.UUID) *EmailReminder {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryUser queries the user edge of a EmailReminder.
+func (c *EmailReminderClient) QueryUser(_m *EmailReminder) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailreminder.Table, emailreminder.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailreminder.UserTable, emailreminder.UserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTournament queries the tournament edge of a EmailReminder.
+func (c *EmailReminderClient) QueryTournament(_m *EmailReminder) *TournamentQuery {
+	query := (&TournamentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailreminder.Table, emailreminder.FieldID, id),
+			sqlgraph.To(tournament.Table, tournament.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailreminder.TournamentTable, emailreminder.TournamentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLeague queries the league edge of a EmailReminder.
+func (c *EmailReminderClient) QueryLeague(_m *EmailReminder) *LeagueQuery {
+	query := (&LeagueClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(emailreminder.Table, emailreminder.FieldID, id),
+			sqlgraph.To(league.Table, league.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, emailreminder.LeagueTable, emailreminder.LeagueColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *EmailReminderClient) Hooks() []Hook {
+	return c.hooks.EmailReminder
+}
+
+// Interceptors returns the client interceptors.
+func (c *EmailReminderClient) Interceptors() []Interceptor {
+	return c.inters.EmailReminder
+}
+
+func (c *EmailReminderClient) mutate(ctx context.Context, m *EmailReminderMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&EmailReminderCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&EmailReminderUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&EmailReminderUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&EmailReminderDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown EmailReminder mutation op: %q", m.Op())
 	}
 }
 
@@ -775,6 +964,22 @@ func (c *LeagueClient) QueryCommissionerActions(_m *League) *CommissionerActionQ
 			sqlgraph.From(league.Table, league.FieldID, id),
 			sqlgraph.To(commissioneraction.Table, commissioneraction.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, league.CommissionerActionsTable, league.CommissionerActionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryEmailReminders queries the email_reminders edge of a League.
+func (c *LeagueClient) QueryEmailReminders(_m *League) *EmailReminderQuery {
+	query := (&EmailReminderClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(league.Table, league.FieldID, id),
+			sqlgraph.To(emailreminder.Table, emailreminder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, league.EmailRemindersTable, league.EmailRemindersColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1309,6 +1514,22 @@ func (c *TournamentClient) QueryEntries(_m *Tournament) *TournamentEntryQuery {
 	return query
 }
 
+// QueryEmailReminders queries the email_reminders edge of a Tournament.
+func (c *TournamentClient) QueryEmailReminders(_m *Tournament) *EmailReminderQuery {
+	query := (&EmailReminderClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournament.Table, tournament.FieldID, id),
+			sqlgraph.To(emailreminder.Table, emailreminder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tournament.EmailRemindersTable, tournament.EmailRemindersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *TournamentClient) Hooks() []Hook {
 	return c.hooks.Tournament
@@ -1671,6 +1892,22 @@ func (c *UserClient) QueryAffectedActions(_m *User) *CommissionerActionQuery {
 	return query
 }
 
+// QueryEmailReminders queries the email_reminders edge of a User.
+func (c *UserClient) QueryEmailReminders(_m *User) *EmailReminderQuery {
+	query := (&EmailReminderClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(emailreminder.Table, emailreminder.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.EmailRemindersTable, user.EmailRemindersColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -1699,11 +1936,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		CommissionerAction, Golfer, League, LeagueMembership, Pick, Tournament,
-		TournamentEntry, User []ent.Hook
+		CommissionerAction, EmailReminder, Golfer, League, LeagueMembership, Pick,
+		Tournament, TournamentEntry, User []ent.Hook
 	}
 	inters struct {
-		CommissionerAction, Golfer, League, LeagueMembership, Pick, Tournament,
-		TournamentEntry, User []ent.Interceptor
+		CommissionerAction, EmailReminder, Golfer, League, LeagueMembership, Pick,
+		Tournament, TournamentEntry, User []ent.Interceptor
 	}
 )

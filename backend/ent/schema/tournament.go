@@ -58,5 +58,6 @@ func (Tournament) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("picks", Pick.Type),
 		edge.To("entries", TournamentEntry.Type),
+		edge.To("email_reminders", EmailReminder.Type),
 	}
 }
