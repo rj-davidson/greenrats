@@ -1,8 +1,10 @@
 "use client";
 
 import { Badge } from "@/components/shadcn/badge";
+import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { LeaderboardTable } from "@/features/tournaments/components";
 import { useTournament } from "@/features/tournaments/queries";
+import { useEffect } from "react";
 
 interface TournamentCoverageProps {
   id: string;
@@ -10,6 +12,19 @@ interface TournamentCoverageProps {
 
 export function TournamentCoverage({ id }: TournamentCoverageProps) {
   const { data, isLoading, error } = useTournament(id);
+  const { setExtraCrumbs } = useBreadcrumbs();
+
+  const tournamentName = data?.tournament?.name?.trim();
+
+  useEffect(() => {
+    setExtraCrumbs(tournamentName ? [{ name: tournamentName }] : []);
+  }, [setExtraCrumbs, tournamentName]);
+
+  useEffect(() => {
+    return () => {
+      setExtraCrumbs([]);
+    };
+  }, [setExtraCrumbs]);
 
   if (isLoading) {
     return (

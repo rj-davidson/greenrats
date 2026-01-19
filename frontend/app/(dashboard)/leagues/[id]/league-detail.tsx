@@ -1,6 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
+import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { LeagueLeaderboard } from "@/features/leaderboards/components";
 import {
   ActionLog,
@@ -9,6 +10,7 @@ import {
   LeagueTournamentList,
 } from "@/features/leagues/components";
 import { useLeague } from "@/features/leagues/queries";
+import { useEffect } from "react";
 
 interface LeagueDetailProps {
   id: string;
@@ -16,6 +18,19 @@ interface LeagueDetailProps {
 
 export function LeagueDetail({ id }: LeagueDetailProps) {
   const { data, isLoading, error } = useLeague(id);
+  const { setExtraCrumbs } = useBreadcrumbs();
+
+  const leagueName = data?.league?.name?.trim();
+
+  useEffect(() => {
+    setExtraCrumbs(leagueName ? [{ name: leagueName }] : []);
+  }, [leagueName, setExtraCrumbs]);
+
+  useEffect(() => {
+    return () => {
+      setExtraCrumbs([]);
+    };
+  }, [setExtraCrumbs]);
 
   if (isLoading) {
     return (

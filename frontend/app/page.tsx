@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/core/app-sidebar";
+import { Breadcrumbs, BreadcrumbsProvider } from "@/components/core/breadcrumbs";
 import { Button } from "@/components/shadcn/button";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/shadcn/sidebar";
 import { DashboardView } from "@/features/dashboard/components";
@@ -46,17 +47,20 @@ interface DashboardHomeProps {
 function DashboardHome({ dehydratedState }: DashboardHomeProps) {
   return (
     <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-          <SidebarTrigger className="-ml-1" />
-        </header>
-        <main className="min-w-0 flex-1 overflow-x-hidden p-4">
-          <HydrationBoundary state={dehydratedState}>
-            <DashboardView />
-          </HydrationBoundary>
-        </main>
-      </SidebarInset>
+      <BreadcrumbsProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Breadcrumbs />
+          </header>
+          <main className="min-w-0 flex-1 overflow-x-hidden p-4">
+            <HydrationBoundary state={dehydratedState}>
+              <DashboardView />
+            </HydrationBoundary>
+          </main>
+        </SidebarInset>
+      </BreadcrumbsProvider>
     </SidebarProvider>
   );
 }

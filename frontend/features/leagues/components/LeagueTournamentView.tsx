@@ -2,6 +2,7 @@
 
 import type { League } from "../types";
 import { LeaguePicksTable } from "./LeaguePicksTable";
+import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
@@ -9,6 +10,7 @@ import { useLeaguePicks } from "@/features/picks/queries";
 import { useTournament } from "@/features/tournaments/queries";
 import { CalendarIcon } from "lucide-react";
 import Link from "next/link";
+import { useEffect } from "react";
 
 interface LeagueTournamentViewProps {
   leagueId: string;
@@ -48,6 +50,30 @@ export function LeagueTournamentView({
 }: LeagueTournamentViewProps) {
   const { data: tournamentData, isLoading: tournamentLoading } = useTournament(tournamentId);
   const { data: picksData, isLoading: picksLoading } = useLeaguePicks(leagueId, tournamentId);
+  const { setExtraCrumbs } = useBreadcrumbs();
+
+  const leagueName = league?.name?.trim();
+  const tournamentName = tournamentData?.tournament?.name?.trim();
+
+  useEffect(() => {
+    const crumbs: { name: string; path?: string }[] = [];
+
+    if (leagueName) {
+      crumbs.push({ name: leagueName, path: `/leagues/${leagueId}` });
+    }
+
+    if (tournamentName) {
+      crumbs.push({ name: tournamentName });
+    }
+
+    setExtraCrumbs(crumbs);
+  }, [leagueId, leagueName, setExtraCrumbs, tournamentName]);
+
+  useEffect(() => {
+    return () => {
+      setExtraCrumbs([]);
+    };
+  }, [setExtraCrumbs]);
 
   if (tournamentLoading) {
     return (
