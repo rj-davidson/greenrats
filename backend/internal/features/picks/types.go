@@ -46,12 +46,15 @@ type PickWindowStatus struct {
 }
 
 type AvailableGolfer struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	CountryCode string    `json:"country_code"`
-	Country     string    `json:"country,omitempty"`
-	OWGR        int       `json:"owgr,omitempty"`
-	ImageURL    string    `json:"image_url,omitempty"`
+	ID                  uuid.UUID  `json:"id"`
+	Name                string     `json:"name"`
+	CountryCode         string     `json:"country_code"`
+	Country             string     `json:"country,omitempty"`
+	OWGR                int        `json:"owgr,omitempty"`
+	ImageURL            string     `json:"image_url,omitempty"`
+	IsUsed              bool       `json:"is_used"`
+	UsedForTournamentID *uuid.UUID `json:"used_for_tournament_id,omitempty"`
+	UsedForTournament   string     `json:"used_for_tournament,omitempty"`
 }
 
 type AvailableGolfersResponse struct {
@@ -64,5 +67,13 @@ type OverridePickRequest struct {
 }
 
 type OverridePickResponse struct {
+	Pick Pick `json:"pick"`
+}
+
+type UpdatePickRequest struct {
+	GolferID uuid.UUID `json:"golfer_id"`
+}
+
+type UpdatePickResponse struct {
 	Pick Pick `json:"pick"`
 }

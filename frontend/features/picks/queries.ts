@@ -145,3 +145,32 @@ export function useOverridePick() {
     },
   });
 }
+
+export function useUpdatePick() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      pickId,
+      golferId,
+    }: {
+      pickId: string;
+      golferId: string;
+      leagueId: string;
+      tournamentId: string;
+    }) => {
+      return makeClientRequest.put<CreatePickResponse>(`/api/v1/picks/${pickId}`, {
+        golfer_id: golferId,
+      });
+    },
+    onSuccess: (_data, { leagueId, tournamentId }) => {
+      void queryClient.invalidateQueries({ queryKey: [QueryKey.PICKS, "user"] });
+      void queryClient.invalidateQueries({
+        queryKey: buildLeaguePicksKey(leagueId, tournamentId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: buildAvailableGolfersKey(leagueId, tournamentId),
+      });
+    },
+  });
+}

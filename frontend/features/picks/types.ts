@@ -56,6 +56,9 @@ export const availableGolferSchema = z.object({
   country: z.string().optional(),
   owgr: z.number().optional(),
   image_url: z.string().optional(),
+  is_used: z.boolean().optional(),
+  used_for_tournament_id: z.string().optional(),
+  used_for_tournament: z.string().optional(),
 });
 
 export type AvailableGolfer = z.infer<typeof availableGolferSchema>;

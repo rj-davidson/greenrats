@@ -22,6 +22,7 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 	picks := router.Group("/picks")
 	picks.Post("/", h.Create)
 	picks.Get("/", h.GetUserPicks)
+	picks.Put("/:id", h.UpdateUserPick)
 }
 
 func (h *Handler) RegisterLeagueRoutes(group fiber.Router) {
@@ -258,6 +259,46 @@ func (h *Handler) OverridePick(c *fiber.Ctx) error {
 	return c.JSON(OverridePickResponse{Pick: *pick})
 }
 
+func (h *Handler) UpdateUserPick(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	pickID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid pick id",
+		})
+	}
+
+	var req UpdatePickRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	if req.GolferID == uuid.Nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "golfer_id is required",
+		})
+	}
+
+	pick, err := h.service.UpdateUserPick(c.Context(), UpdatePickParams{
+		UserID:      userID,
+		PickID:      pickID,
+		NewGolferID: req.GolferID,
+	})
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.JSON(UpdatePickResponse{Pick: *pick})
+}
+
 func (h *Handler) handleServiceError(c *fiber.Ctx, err error) error {
 	switch {
 	case errors.Is(err, ErrTournamentNotFound):
@@ -307,6 +348,10 @@ func (h *Handler) handleServiceError(c *fiber.Ctx, err error) error {
 	case errors.Is(err, ErrTournamentCompleted):
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "tournament has already completed",
+		})
+	case errors.Is(err, ErrNotPickOwner):
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "you do not own this pick",
 		})
 	default:
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

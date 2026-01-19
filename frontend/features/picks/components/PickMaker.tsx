@@ -1,7 +1,12 @@
 "use client";
 
-import { useAvailableGolfers, useCreatePick, usePickWindow } from "@/features/picks/queries";
-import type { AvailableGolfer } from "@/features/picks/types";
+import {
+  useAvailableGolfers,
+  useCreatePick,
+  usePickWindow,
+  useUpdatePick,
+} from "@/features/picks/queries";
+import type { AvailableGolfer, Pick } from "@/features/picks/types";
 import { GolferSelector } from "@/features/picks/components/GolferSelector";
 import { PickConfirmDialog } from "@/features/picks/components/PickConfirmDialog";
 import { Badge } from "@/components/shadcn/badge";
@@ -13,13 +18,14 @@ import {
   CardTitle,
 } from "@/components/shadcn/card";
 import { Skeleton } from "@/components/shadcn/skeleton";
-import { CalendarIcon, ClockIcon, LockIcon } from "lucide-react";
+import { CalendarIcon, ClockIcon, LockIcon, UserIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 interface PickMakerProps {
   leagueId: string;
   tournamentId: string;
+  currentPick?: Pick;
   onPickSuccess?: () => void;
 }
 
@@ -33,7 +39,7 @@ function formatDate(dateString: string) {
   });
 }
 
-export function PickMaker({ leagueId, tournamentId, onPickSuccess }: PickMakerProps) {
+export function PickMaker({ leagueId, tournamentId, currentPick, onPickSuccess }: PickMakerProps) {
   const [selectedGolfer, setSelectedGolfer] = useState<AvailableGolfer | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -43,6 +49,9 @@ export function PickMaker({ leagueId, tournamentId, onPickSuccess }: PickMakerPr
     tournamentId,
   );
   const createPick = useCreatePick();
+  const updatePick = useUpdatePick();
+
+  const isChanging = !!currentPick;
 
   const handleSelectGolfer = (golfer: AvailableGolfer) => {
     setSelectedGolfer(golfer);
@@ -53,17 +62,27 @@ export function PickMaker({ leagueId, tournamentId, onPickSuccess }: PickMakerPr
     if (!selectedGolfer) return;
 
     try {
-      await createPick.mutateAsync({
-        tournament_id: tournamentId,
-        golfer_id: selectedGolfer.id,
-        league_id: leagueId,
-      });
-      toast.success(`Successfully picked ${selectedGolfer.name}!`);
+      if (isChanging) {
+        await updatePick.mutateAsync({
+          pickId: currentPick.id,
+          golferId: selectedGolfer.id,
+          leagueId,
+          tournamentId,
+        });
+        toast.success(`Successfully changed pick to ${selectedGolfer.name}!`);
+      } else {
+        await createPick.mutateAsync({
+          tournament_id: tournamentId,
+          golfer_id: selectedGolfer.id,
+          league_id: leagueId,
+        });
+        toast.success(`Successfully picked ${selectedGolfer.name}!`);
+      }
       setConfirmOpen(false);
       setSelectedGolfer(null);
       onPickSuccess?.();
     } catch {
-      toast.error("Failed to submit pick. Please try again.");
+      toast.error(`Failed to ${isChanging ? "change" : "submit"} pick. Please try again.`);
     }
   };
 
@@ -99,8 +118,12 @@ export function PickMaker({ leagueId, tournamentId, onPickSuccess }: PickMakerPr
         <CardHeader>
           <div className="flex items-start justify-between gap-2">
             <div>
-              <CardTitle>{pickWindow.tournament_name}</CardTitle>
-              <CardDescription>Select your golfer for this tournament</CardDescription>
+              <CardTitle>{isChanging ? "Change Your Pick" : "Make Your Pick"}</CardTitle>
+              <CardDescription>
+                {isChanging
+                  ? "Select a different golfer to replace your current pick"
+                  : "Select your golfer for this tournament"}
+              </CardDescription>
             </div>
             <Badge variant={isWindowOpen ? "default" : "secondary"}>
               {isWindowOpen ? "Open" : "Closed"}
@@ -108,6 +131,16 @@ export function PickMaker({ leagueId, tournamentId, onPickSuccess }: PickMakerPr
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
+          {currentPick && (
+            <div className="flex items-center gap-3 rounded-lg border bg-muted/50 p-3">
+              <UserIcon className="size-5 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Current Pick</div>
+                <div className="text-sm text-muted-foreground">{currentPick.golfer_name}</div>
+              </div>
+            </div>
+          )}
+
           <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
               <CalendarIcon className="size-4" />
@@ -143,7 +176,8 @@ export function PickMaker({ leagueId, tournamentId, onPickSuccess }: PickMakerPr
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         onConfirm={handleConfirmPick}
-        isSubmitting={createPick.isPending}
+        isSubmitting={createPick.isPending || updatePick.isPending}
+        isChanging={isChanging}
       />
     </>
   );

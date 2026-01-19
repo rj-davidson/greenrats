@@ -35,12 +35,19 @@ export function GolferSelector({
 
   const sortedGolfers = useMemo(() => {
     return [...filteredGolfers].sort((a, b) => {
+      const aUsed = a.is_used ?? false;
+      const bUsed = b.is_used ?? false;
+      if (aUsed !== bUsed) return aUsed ? 1 : -1;
       if (a.owgr && b.owgr) return a.owgr - b.owgr;
       if (a.owgr) return -1;
       if (b.owgr) return 1;
       return a.name.localeCompare(b.name);
     });
   }, [filteredGolfers]);
+
+  const availableCount = useMemo(() => {
+    return golfers.filter((g) => !g.is_used).length;
+  }, [golfers]);
 
   if (isLoading) {
     return (
@@ -52,6 +59,11 @@ export function GolferSelector({
       </div>
     );
   }
+
+  const handleSelect = (golfer: AvailableGolfer) => {
+    if (golfer.is_used) return;
+    onSelect(golfer);
+  };
 
   return (
     <div className="space-y-3">
@@ -65,7 +77,7 @@ export function GolferSelector({
         />
       </div>
       <div className="text-sm text-muted-foreground">
-        {sortedGolfers.length} golfer{sortedGolfers.length !== 1 ? "s" : ""} available
+        {availableCount} of {golfers.length} golfer{golfers.length !== 1 ? "s" : ""} available
       </div>
       <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
         {sortedGolfers.length === 0 ? (
@@ -78,7 +90,13 @@ export function GolferSelector({
               key={golfer.id}
               golfer={golfer}
               selected={golfer.id === selectedGolferId}
-              onClick={() => onSelect(golfer)}
+              onClick={() => handleSelect(golfer)}
+              disabled={golfer.is_used}
+              disabledReason={
+                golfer.is_used && golfer.used_for_tournament
+                  ? `Used for ${golfer.used_for_tournament}`
+                  : undefined
+              }
             />
           ))
         )}

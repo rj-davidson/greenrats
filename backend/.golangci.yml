@@ -28,6 +28,10 @@ linters-settings:
       - performance
   goimports:
     local-prefixes: github.com/rj-davidson/greenrats
+  stylecheck:
+    checks:
+      - "all"
+      - "-ST1000" # Package comments
 
 issues:
   exclude-rules:

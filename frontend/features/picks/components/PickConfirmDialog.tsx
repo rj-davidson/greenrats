@@ -20,6 +20,7 @@ interface PickConfirmDialogProps {
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
   isSubmitting?: boolean;
+  isChanging?: boolean;
 }
 
 export function PickConfirmDialog({
@@ -29,6 +30,7 @@ export function PickConfirmDialog({
   onOpenChange,
   onConfirm,
   isSubmitting,
+  isChanging,
 }: PickConfirmDialogProps) {
   if (!golfer) return null;
 
@@ -43,9 +45,10 @@ export function PickConfirmDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Confirm Your Pick</DialogTitle>
+          <DialogTitle>{isChanging ? "Confirm Pick Change" : "Confirm Your Pick"}</DialogTitle>
           <DialogDescription>
-            You are about to pick <strong>{golfer.name}</strong> for {tournamentName}.
+            You are about to {isChanging ? "change your pick to" : "pick"}{" "}
+            <strong>{golfer.name}</strong> for {tournamentName}.
           </DialogDescription>
         </DialogHeader>
 
@@ -66,8 +69,17 @@ export function PickConfirmDialog({
         <div className="flex items-start gap-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
           <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
           <div>
-            <strong>This cannot be changed.</strong> Once confirmed, you cannot pick {golfer.name}{" "}
-            again this season in this league.
+            {isChanging ? (
+              <>
+                <strong>You can still change this pick</strong> until the pick window closes. Once
+                confirmed, you cannot pick {golfer.name} again this season in this league.
+              </>
+            ) : (
+              <>
+                <strong>This cannot be changed.</strong> Once confirmed, you cannot pick{" "}
+                {golfer.name} again this season in this league.
+              </>
+            )}
           </div>
         </div>
 
@@ -76,7 +88,13 @@ export function PickConfirmDialog({
             Cancel
           </Button>
           <Button onClick={onConfirm} disabled={isSubmitting}>
-            {isSubmitting ? "Submitting..." : "Confirm Pick"}
+            {isSubmitting
+              ? isChanging
+                ? "Changing..."
+                : "Submitting..."
+              : isChanging
+                ? "Change Pick"
+                : "Confirm Pick"}
           </Button>
         </DialogFooter>
       </DialogContent>

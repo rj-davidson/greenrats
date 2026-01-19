@@ -9,9 +9,17 @@ interface GolferCardProps {
   golfer: AvailableGolfer;
   selected?: boolean;
   onClick?: () => void;
+  disabled?: boolean;
+  disabledReason?: string;
 }
 
-export function GolferCard({ golfer, selected, onClick }: GolferCardProps) {
+export function GolferCard({
+  golfer,
+  selected,
+  onClick,
+  disabled,
+  disabledReason,
+}: GolferCardProps) {
   const initials = golfer.name
     .split(" ")
     .map((n) => n[0])
@@ -22,11 +30,13 @@ export function GolferCard({ golfer, selected, onClick }: GolferCardProps) {
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={cn(
         "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
-        "hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        !disabled && "hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
         selected && "border-primary bg-primary/5",
+        disabled && "cursor-not-allowed opacity-50",
       )}
     >
       <Avatar className="size-10">
@@ -44,6 +54,9 @@ export function GolferCard({ golfer, selected, onClick }: GolferCardProps) {
           {golfer.owgr && golfer.owgr > 0 && <span>OWGR #{golfer.owgr}</span>}
           {golfer.country && <span className="truncate">{golfer.country}</span>}
         </div>
+        {disabled && disabledReason && (
+          <div className="mt-1 text-xs text-muted-foreground">{disabledReason}</div>
+        )}
       </div>
       {selected && (
         <Badge variant="default" className="shrink-0">

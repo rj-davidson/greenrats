@@ -7,10 +7,12 @@ import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
 import { useLeaguePicks } from "@/features/picks/queries";
+import { PickMaker } from "@/features/picks/components/PickMaker";
 import { useTournament } from "@/features/tournaments/queries";
+import { useCurrentUser } from "@/features/users/queries";
 import { CalendarIcon } from "lucide-react";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 
 interface LeagueTournamentViewProps {
   leagueId: string;
@@ -50,10 +52,16 @@ export function LeagueTournamentView({
 }: LeagueTournamentViewProps) {
   const { data: tournamentData, isLoading: tournamentLoading } = useTournament(tournamentId);
   const { data: picksData, isLoading: picksLoading } = useLeaguePicks(leagueId, tournamentId);
+  const { data: currentUser } = useCurrentUser();
   const { setExtraCrumbs } = useBreadcrumbs();
 
   const leagueName = league?.name.trim();
   const tournamentName = tournamentData?.tournament.name.trim();
+
+  const currentUserPick = useMemo(() => {
+    if (!currentUser || !picksData?.picks) return undefined;
+    return picksData.picks.find((p) => p.user_id === currentUser.id);
+  }, [currentUser, picksData]);
 
   useEffect(() => {
     const crumbs: { name: string; path?: string }[] = [];
@@ -120,7 +128,14 @@ export function LeagueTournamentView({
           <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="picks">
+        <TabsContent value="picks" className="space-y-6">
+          {tournament.status === "upcoming" && (
+            <PickMaker
+              leagueId={leagueId}
+              tournamentId={tournamentId}
+              currentPick={currentUserPick}
+            />
+          )}
           {picksLoading ? (
             <Skeleton className="h-64 w-full" />
           ) : (
