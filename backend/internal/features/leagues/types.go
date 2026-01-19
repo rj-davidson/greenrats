@@ -53,3 +53,20 @@ type SetJoiningEnabledResponse struct {
 type RegenerateCodeResponse struct {
 	League League `json:"league"`
 }
+
+type LeagueTournament struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	StartDate   time.Time `json:"start_date"`
+	EndDate     time.Time `json:"end_date"`
+	Status      string    `json:"status"`
+	HasUserPick bool      `json:"has_user_pick"`
+	UserPickID  uuid.UUID `json:"user_pick_id,omitempty"`
+	GolferName  string    `json:"golfer_name,omitempty"`
+	PickCount   int       `json:"pick_count"`
+}
+
+type ListLeagueTournamentsResponse struct {
+	Tournaments []LeagueTournament `json:"tournaments"`
+	Total       int                `json:"total"`
+}

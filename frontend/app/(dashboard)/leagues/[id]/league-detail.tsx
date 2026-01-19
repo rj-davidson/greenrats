@@ -1,6 +1,12 @@
 "use client";
 
-import { LeagueMonogram } from "@/features/leagues/components";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
+import {
+  ActionLog,
+  CommissionerPanel,
+  LeagueMonogram,
+  LeagueTournamentList,
+} from "@/features/leagues/components";
 import { useLeague } from "@/features/leagues/queries";
 
 interface LeagueDetailProps {
@@ -30,6 +36,7 @@ export function LeagueDetail({ id }: LeagueDetailProps) {
   }
 
   const league = data.league;
+  const isOwner = league.role === "owner";
 
   return (
     <div className="container mx-auto p-8">
@@ -37,12 +44,37 @@ export function LeagueDetail({ id }: LeagueDetailProps) {
         <LeagueMonogram league={league} size={48} />
         <div>
           <h1 className="text-3xl font-bold">{league.name}</h1>
-          <p className="text-muted-foreground">Season {league.season_year}</p>
+          <p className="text-muted-foreground">
+            Season {league.season_year} &middot; {league.member_count ?? 0}{" "}
+            {league.member_count === 1 ? "member" : "members"}
+          </p>
         </div>
       </div>
-      <div className="rounded-lg border border-dashed p-12 text-center">
-        <p className="text-muted-foreground">League details coming soon</p>
-      </div>
+
+      <Tabs defaultValue="tournaments" className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
+          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+          {isOwner && <TabsTrigger value="manage">Manage</TabsTrigger>}
+        </TabsList>
+
+        <TabsContent value="tournaments">
+          <LeagueTournamentList leagueId={id} />
+        </TabsContent>
+
+        <TabsContent value="leaderboard">
+          <div className="rounded-lg border border-dashed p-12 text-center">
+            <p className="text-muted-foreground">Leaderboard coming soon</p>
+          </div>
+        </TabsContent>
+
+        {isOwner && (
+          <TabsContent value="manage" className="space-y-6">
+            <CommissionerPanel league={league} />
+            <ActionLog leagueId={id} />
+          </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import type {
   GetLeagueResponse,
   JoinLeagueRequest,
   JoinLeagueResponse,
+  ListLeagueTournamentsResponse,
   ListUserLeaguesResponse,
   RegenerateCodeResponse,
   SetJoiningEnabledRequest,
@@ -21,6 +22,9 @@ export const buildLeagueDetailKey = (id: string) => [QueryKey.LEAGUES, "detail",
 
 export const buildCommissionerActionsKey = (leagueId: string) =>
   [QueryKey.LEAGUES, "commissioner-actions", leagueId] as const;
+
+export const buildLeagueTournamentsKey = (leagueId: string) =>
+  [QueryKey.LEAGUES, "tournaments", leagueId] as const;
 
 export function buildGetUserLeaguesQueryOptions(requestor: Requestor = makeClientRequest) {
   return queryOptions<ListUserLeaguesResponse>({
@@ -39,12 +43,26 @@ export function buildGetLeagueQueryOptions(id: string, requestor: Requestor = ma
 
 export function buildGetCommissionerActionsQueryOptions(
   leagueId: string,
-  requestor: Requestor = makeClientRequest
+  requestor: Requestor = makeClientRequest,
 ) {
   return queryOptions<CommissionerActionsResponse>({
     queryKey: buildCommissionerActionsKey(leagueId),
     queryFn: () =>
-      requestor.get<CommissionerActionsResponse>(`/api/v1/leagues/${leagueId}/commissioner-actions`),
+      requestor.get<CommissionerActionsResponse>(
+        `/api/v1/leagues/${leagueId}/commissioner-actions`,
+      ),
+    enabled: !!leagueId,
+  });
+}
+
+export function buildGetLeagueTournamentsQueryOptions(
+  leagueId: string,
+  requestor: Requestor = makeClientRequest,
+) {
+  return queryOptions<ListLeagueTournamentsResponse>({
+    queryKey: buildLeagueTournamentsKey(leagueId),
+    queryFn: () =>
+      requestor.get<ListLeagueTournamentsResponse>(`/api/v1/leagues/${leagueId}/tournaments`),
     enabled: !!leagueId,
   });
 }
@@ -59,6 +77,10 @@ export function useLeague(id: string) {
 
 export function useCommissionerActions(leagueId: string) {
   return useQuery(buildGetCommissionerActionsQueryOptions(leagueId));
+}
+
+export function useLeagueTournaments(leagueId: string) {
+  return useQuery(buildGetLeagueTournamentsQueryOptions(leagueId));
 }
 
 export function useCreateLeague() {
@@ -93,7 +115,7 @@ export function useRegenerateJoinCode() {
   return useMutation({
     mutationFn: async (leagueId: string) => {
       return makeClientRequest.post<RegenerateCodeResponse>(
-        `/api/v1/leagues/${leagueId}/regenerate-code`
+        `/api/v1/leagues/${leagueId}/regenerate-code`,
       );
     },
     onSuccess: (_data, leagueId) => {
@@ -110,7 +132,7 @@ export function useSetJoiningEnabled() {
     mutationFn: async ({ leagueId, enabled }: { leagueId: string; enabled: boolean }) => {
       return makeClientRequest.patch<SetJoiningEnabledResponse>(
         `/api/v1/leagues/${leagueId}/joining`,
-        { enabled } as SetJoiningEnabledRequest
+        { enabled } as SetJoiningEnabledRequest,
       );
     },
     onSuccess: (_data, { leagueId }) => {

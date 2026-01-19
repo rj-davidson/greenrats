@@ -99,3 +99,24 @@ export const commissionerActionsResponseSchema = z.object({
 });
 
 export type CommissionerActionsResponse = z.infer<typeof commissionerActionsResponseSchema>;
+
+export const leagueTournamentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  start_date: z.string(),
+  end_date: z.string(),
+  status: z.string(),
+  has_user_pick: z.boolean(),
+  user_pick_id: z.string().optional(),
+  golfer_name: z.string().optional(),
+  pick_count: z.number(),
+});
+
+export type LeagueTournament = z.infer<typeof leagueTournamentSchema>;
+
+export const listLeagueTournamentsResponseSchema = z.object({
+  tournaments: z.array(leagueTournamentSchema),
+  total: z.number(),
+});
+
+export type ListLeagueTournamentsResponse = z.infer<typeof listLeagueTournamentsResponseSchema>;

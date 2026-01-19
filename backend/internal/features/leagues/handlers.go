@@ -27,6 +27,7 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Post("/", h.Create)
 	group.Get("/", h.ListUserLeagues)
 	group.Get("/:id", h.GetByID)
+	group.Get("/:id/tournaments", h.GetLeagueTournaments)
 	group.Post("/join", h.JoinLeague)
 	group.Post("/:id/regenerate-code", h.RegenerateJoinCode)
 	group.Patch("/:id/joining", h.SetJoiningEnabled)
@@ -124,6 +125,29 @@ func (h *Handler) GetByID(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(GetLeagueResponse{League: *league})
+}
+
+func (h *Handler) GetLeagueTournaments(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	leagueID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid league id",
+		})
+	}
+
+	resp, err := h.service.GetLeagueTournaments(c.Context(), leagueID, userID)
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.JSON(resp)
 }
 
 func (h *Handler) JoinLeague(c *fiber.Ctx) error {

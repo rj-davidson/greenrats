@@ -14,6 +14,8 @@ import (
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
+	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -24,13 +26,13 @@ const (
 )
 
 var (
-	ErrLeagueNotFound   = errors.New("league not found")
-	ErrInvalidJoinCode  = errors.New("invalid join code")
-	ErrAlreadyMember    = errors.New("already a member of this league")
-	ErrJoiningDisabled  = errors.New("joining is disabled for this league")
-	ErrLeagueFull       = errors.New("league has reached maximum members")
-	ErrNotCommissioner  = errors.New("only the commissioner can perform this action")
-	ErrUserNotFound     = errors.New("user not found")
+	ErrLeagueNotFound  = errors.New("league not found")
+	ErrInvalidJoinCode = errors.New("invalid join code")
+	ErrAlreadyMember   = errors.New("already a member of this league")
+	ErrJoiningDisabled = errors.New("joining is disabled for this league")
+	ErrLeagueFull      = errors.New("league has reached maximum members")
+	ErrNotCommissioner = errors.New("only the commissioner can perform this action")
+	ErrUserNotFound    = errors.New("user not found")
 )
 
 type Service struct {
@@ -427,4 +429,70 @@ func generateJoinCode() (string, error) {
 	}
 
 	return string(code), nil
+}
+
+func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uuid.UUID) (*ListLeagueTournamentsResponse, error) {
+	entLeague, err := s.db.League.
+		Query().
+		Where(league.IDEQ(leagueID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrLeagueNotFound
+		}
+		return nil, fmt.Errorf("failed to get league: %w", err)
+	}
+
+	tournaments, err := s.db.Tournament.
+		Query().
+		Where(tournament.SeasonYearEQ(entLeague.SeasonYear)).
+		Order(tournament.ByStartDate()).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query tournaments: %w", err)
+	}
+
+	result := make([]LeagueTournament, 0, len(tournaments))
+	for _, t := range tournaments {
+		lt := LeagueTournament{
+			ID:        t.ID,
+			Name:      t.Name,
+			StartDate: t.StartDate,
+			EndDate:   t.EndDate,
+			Status:    string(t.Status),
+		}
+
+		pickCount, _ := s.db.Pick.
+			Query().
+			Where(
+				pick.HasLeagueWith(league.IDEQ(leagueID)),
+				pick.HasTournamentWith(tournament.IDEQ(t.ID)),
+			).
+			Count(ctx)
+		lt.PickCount = pickCount
+
+		userPick, err := s.db.Pick.
+			Query().
+			Where(
+				pick.HasLeagueWith(league.IDEQ(leagueID)),
+				pick.HasTournamentWith(tournament.IDEQ(t.ID)),
+				pick.HasUserWith(user.IDEQ(userID)),
+			).
+			WithGolfer().
+			Only(ctx)
+		if err == nil {
+			lt.HasUserPick = true
+			lt.UserPickID = userPick.ID
+			if userPick.Edges.Golfer != nil {
+				lt.GolferName = userPick.Edges.Golfer.Name
+			}
+		}
+
+		result = append(result, lt)
+	}
+
+	return &ListLeagueTournamentsResponse{
+		Tournaments: result,
+		Total:       len(result),
+	}, nil
 }
