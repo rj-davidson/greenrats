@@ -6,6 +6,7 @@ import { QuickJoinInput } from "./QuickJoinInput";
 import { TournamentCalendarRow } from "./TournamentCalendarRow";
 import { Button } from "@/components/shadcn/button";
 import { Skeleton } from "@/components/shadcn/skeleton";
+import { CreateLeagueDialog } from "@/features/leagues/components/CreateLeagueDialog";
 import { useUserLeagues } from "@/features/leagues/queries";
 import { UsersIcon } from "lucide-react";
 import Link from "next/link";
@@ -27,6 +28,7 @@ export function DashboardView() {
       <section className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Your Leagues</h2>
+          <CreateLeagueDialog />
         </div>
         {leaguesLoading ? (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -43,12 +45,15 @@ export function DashboardView() {
         ) : (
           <div className="text-muted-foreground rounded-lg border border-dashed p-8 text-center">
             <p className="mb-4">You haven&apos;t joined any leagues yet.</p>
-            <Button asChild>
-              <Link href="/leagues/join">
-                <UsersIcon className="mr-2 size-4" />
-                Join a League
-              </Link>
-            </Button>
+            <div className="flex justify-center gap-2">
+              <CreateLeagueDialog />
+              <Button variant="outline" asChild>
+                <Link href="/leagues/join">
+                  <UsersIcon className="mr-2 size-4" />
+                  Join a League
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
       </section>
