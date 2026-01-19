@@ -3,6 +3,7 @@ package leagues
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"math/big"
 	"time"
@@ -10,6 +11,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -17,37 +19,41 @@ import (
 
 const (
 	joinCodeLength  = 6
-	joinCodeCharset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // Excludes I, O, 0, 1 for readability
+	joinCodeCharset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+	maxMembers      = 200
 )
 
-// Service handles league business logic.
+var (
+	ErrLeagueNotFound   = errors.New("league not found")
+	ErrInvalidJoinCode  = errors.New("invalid join code")
+	ErrAlreadyMember    = errors.New("already a member of this league")
+	ErrJoiningDisabled  = errors.New("joining is disabled for this league")
+	ErrLeagueFull       = errors.New("league has reached maximum members")
+	ErrNotCommissioner  = errors.New("only the commissioner can perform this action")
+	ErrUserNotFound     = errors.New("user not found")
+)
+
 type Service struct {
 	db *ent.Client
 }
 
-// NewService creates a new league service.
 func NewService(db *ent.Client) *Service {
 	return &Service{db: db}
 }
 
-// CreateParams contains the parameters for creating a league.
 type CreateParams struct {
 	Name   string
 	UserID uuid.UUID
 }
 
-// Create creates a new league with the given name and adds the creator as owner.
 func (s *Service) Create(ctx context.Context, params CreateParams) (*League, error) {
-	// Generate a unique join code
 	code, err := s.generateUniqueJoinCode(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate join code: %w", err)
 	}
 
-	// Use current year as season year
 	seasonYear := time.Now().Year()
 
-	// Start a transaction
 	tx, err := s.db.Tx(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to start transaction: %w", err)
@@ -58,7 +64,6 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*League, err
 		}
 	}()
 
-	// Create the league
 	entLeague, err := tx.League.
 		Create().
 		SetName(params.Name).
@@ -70,7 +75,6 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*League, err
 		return nil, fmt.Errorf("failed to create league: %w", err)
 	}
 
-	// Create the membership with owner role
 	_, err = tx.LeagueMembership.
 		Create().
 		SetUserID(params.UserID).
@@ -81,24 +85,23 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*League, err
 		return nil, fmt.Errorf("failed to create membership: %w", err)
 	}
 
-	// Commit the transaction
 	if err = tx.Commit(); err != nil {
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
 	return &League{
-		ID:         entLeague.ID,
-		Name:       entLeague.Name,
-		Code:       entLeague.Code,
-		SeasonYear: entLeague.SeasonYear,
-		CreatedAt:  entLeague.CreatedAt,
-		Role:       string(leaguemembership.RoleOwner),
+		ID:             entLeague.ID,
+		Name:           entLeague.Name,
+		Code:           entLeague.Code,
+		SeasonYear:     entLeague.SeasonYear,
+		JoiningEnabled: entLeague.JoiningEnabled,
+		CreatedAt:      entLeague.CreatedAt,
+		Role:           string(leaguemembership.RoleOwner),
+		MemberCount:    1,
 	}, nil
 }
 
-// ListUserLeagues returns all leagues a user belongs to with their role.
 func (s *Service) ListUserLeagues(ctx context.Context, userID uuid.UUID) (*ListUserLeaguesResponse, error) {
-	// Get all memberships for this user with their leagues
 	memberships, err := s.db.LeagueMembership.
 		Query().
 		Where(leaguemembership.HasUserWith(user.IDEQ(userID))).
@@ -115,12 +118,13 @@ func (s *Service) ListUserLeagues(ctx context.Context, userID uuid.UUID) (*ListU
 		}
 		l := m.Edges.League
 		leagues = append(leagues, League{
-			ID:         l.ID,
-			Name:       l.Name,
-			Code:       l.Code,
-			SeasonYear: l.SeasonYear,
-			CreatedAt:  l.CreatedAt,
-			Role:       string(m.Role),
+			ID:             l.ID,
+			Name:           l.Name,
+			Code:           l.Code,
+			SeasonYear:     l.SeasonYear,
+			JoiningEnabled: l.JoiningEnabled,
+			CreatedAt:      l.CreatedAt,
+			Role:           string(m.Role),
 		})
 	}
 
@@ -130,7 +134,6 @@ func (s *Service) ListUserLeagues(ctx context.Context, userID uuid.UUID) (*ListU
 	}, nil
 }
 
-// GetByID returns a league by its ID.
 func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*League, error) {
 	entLeague, err := s.db.League.
 		Query().
@@ -143,16 +146,22 @@ func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*League, error) {
 		return nil, fmt.Errorf("failed to get league: %w", err)
 	}
 
+	memberCount, _ := s.db.LeagueMembership.
+		Query().
+		Where(leaguemembership.HasLeagueWith(league.IDEQ(id))).
+		Count(ctx)
+
 	return &League{
-		ID:         entLeague.ID,
-		Name:       entLeague.Name,
-		Code:       entLeague.Code,
-		SeasonYear: entLeague.SeasonYear,
-		CreatedAt:  entLeague.CreatedAt,
+		ID:             entLeague.ID,
+		Name:           entLeague.Name,
+		Code:           entLeague.Code,
+		SeasonYear:     entLeague.SeasonYear,
+		JoiningEnabled: entLeague.JoiningEnabled,
+		CreatedAt:      entLeague.CreatedAt,
+		MemberCount:    memberCount,
 	}, nil
 }
 
-// GetByIDWithRole returns a league by its ID with the user's role if they are a member.
 func (s *Service) GetByIDWithRole(ctx context.Context, id, userID uuid.UUID) (*League, error) {
 	entLeague, err := s.db.League.
 		Query().
@@ -165,15 +174,21 @@ func (s *Service) GetByIDWithRole(ctx context.Context, id, userID uuid.UUID) (*L
 		return nil, fmt.Errorf("failed to get league: %w", err)
 	}
 
+	memberCount, _ := s.db.LeagueMembership.
+		Query().
+		Where(leaguemembership.HasLeagueWith(league.IDEQ(id))).
+		Count(ctx)
+
 	l := &League{
-		ID:         entLeague.ID,
-		Name:       entLeague.Name,
-		Code:       entLeague.Code,
-		SeasonYear: entLeague.SeasonYear,
-		CreatedAt:  entLeague.CreatedAt,
+		ID:             entLeague.ID,
+		Name:           entLeague.Name,
+		Code:           entLeague.Code,
+		SeasonYear:     entLeague.SeasonYear,
+		JoiningEnabled: entLeague.JoiningEnabled,
+		CreatedAt:      entLeague.CreatedAt,
+		MemberCount:    memberCount,
 	}
 
-	// Get the user's membership to determine their role
 	membership, err := s.db.LeagueMembership.
 		Query().
 		Where(
@@ -188,7 +203,189 @@ func (s *Service) GetByIDWithRole(ctx context.Context, id, userID uuid.UUID) (*L
 	return l, nil
 }
 
-// generateUniqueJoinCode generates a unique 6-character join code.
+func (s *Service) JoinLeague(ctx context.Context, userID uuid.UUID, code string) (*League, error) {
+	entLeague, err := s.db.League.
+		Query().
+		Where(league.CodeEQ(code)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrInvalidJoinCode
+		}
+		return nil, fmt.Errorf("failed to find league: %w", err)
+	}
+
+	if !entLeague.JoiningEnabled {
+		return nil, ErrJoiningDisabled
+	}
+
+	alreadyMember, err := s.db.LeagueMembership.
+		Query().
+		Where(
+			leaguemembership.HasLeagueWith(league.IDEQ(entLeague.ID)),
+			leaguemembership.HasUserWith(user.IDEQ(userID)),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check membership: %w", err)
+	}
+	if alreadyMember {
+		return nil, ErrAlreadyMember
+	}
+
+	memberCount, err := s.db.LeagueMembership.
+		Query().
+		Where(leaguemembership.HasLeagueWith(league.IDEQ(entLeague.ID))).
+		Count(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count members: %w", err)
+	}
+	if memberCount >= maxMembers {
+		return nil, ErrLeagueFull
+	}
+
+	_, err = s.db.LeagueMembership.
+		Create().
+		SetUserID(userID).
+		SetLeagueID(entLeague.ID).
+		SetRole(leaguemembership.RoleMember).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create membership: %w", err)
+	}
+
+	return &League{
+		ID:             entLeague.ID,
+		Name:           entLeague.Name,
+		Code:           entLeague.Code,
+		SeasonYear:     entLeague.SeasonYear,
+		JoiningEnabled: entLeague.JoiningEnabled,
+		CreatedAt:      entLeague.CreatedAt,
+		Role:           string(leaguemembership.RoleMember),
+		MemberCount:    memberCount + 1,
+	}, nil
+}
+
+func (s *Service) RegenerateJoinCode(ctx context.Context, leagueID, commissionerID uuid.UUID) (*League, error) {
+	isOwner, err := s.isLeagueOwner(ctx, leagueID, commissionerID)
+	if err != nil {
+		return nil, err
+	}
+	if !isOwner {
+		return nil, ErrNotCommissioner
+	}
+
+	newCode, err := s.generateUniqueJoinCode(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate new code: %w", err)
+	}
+
+	entLeague, err := s.db.League.
+		UpdateOneID(leagueID).
+		SetCode(newCode).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update league: %w", err)
+	}
+
+	_, err = s.db.CommissionerAction.
+		Create().
+		SetActionType(commissioneraction.ActionTypeJoinCodeReset).
+		SetDescription("Join code regenerated").
+		SetLeagueID(leagueID).
+		SetCommissionerID(commissionerID).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to log action: %w", err)
+	}
+
+	memberCount, _ := s.db.LeagueMembership.
+		Query().
+		Where(leaguemembership.HasLeagueWith(league.IDEQ(leagueID))).
+		Count(ctx)
+
+	return &League{
+		ID:             entLeague.ID,
+		Name:           entLeague.Name,
+		Code:           entLeague.Code,
+		SeasonYear:     entLeague.SeasonYear,
+		JoiningEnabled: entLeague.JoiningEnabled,
+		CreatedAt:      entLeague.CreatedAt,
+		Role:           string(leaguemembership.RoleOwner),
+		MemberCount:    memberCount,
+	}, nil
+}
+
+func (s *Service) SetJoiningEnabled(ctx context.Context, leagueID, commissionerID uuid.UUID, enabled bool) (*League, error) {
+	isOwner, err := s.isLeagueOwner(ctx, leagueID, commissionerID)
+	if err != nil {
+		return nil, err
+	}
+	if !isOwner {
+		return nil, ErrNotCommissioner
+	}
+
+	entLeague, err := s.db.League.
+		UpdateOneID(leagueID).
+		SetJoiningEnabled(enabled).
+		Save(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrLeagueNotFound
+		}
+		return nil, fmt.Errorf("failed to update league: %w", err)
+	}
+
+	actionType := commissioneraction.ActionTypeJoiningEnabled
+	description := "Joining enabled"
+	if !enabled {
+		actionType = commissioneraction.ActionTypeJoiningDisabled
+		description = "Joining disabled"
+	}
+
+	_, err = s.db.CommissionerAction.
+		Create().
+		SetActionType(actionType).
+		SetDescription(description).
+		SetLeagueID(leagueID).
+		SetCommissionerID(commissionerID).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to log action: %w", err)
+	}
+
+	memberCount, _ := s.db.LeagueMembership.
+		Query().
+		Where(leaguemembership.HasLeagueWith(league.IDEQ(leagueID))).
+		Count(ctx)
+
+	return &League{
+		ID:             entLeague.ID,
+		Name:           entLeague.Name,
+		Code:           entLeague.Code,
+		SeasonYear:     entLeague.SeasonYear,
+		JoiningEnabled: entLeague.JoiningEnabled,
+		CreatedAt:      entLeague.CreatedAt,
+		Role:           string(leaguemembership.RoleOwner),
+		MemberCount:    memberCount,
+	}, nil
+}
+
+func (s *Service) isLeagueOwner(ctx context.Context, leagueID, userID uuid.UUID) (bool, error) {
+	membership, err := s.db.LeagueMembership.
+		Query().
+		Where(
+			leaguemembership.HasLeagueWith(league.IDEQ(leagueID)),
+			leaguemembership.HasUserWith(user.IDEQ(userID)),
+			leaguemembership.RoleEQ(leaguemembership.RoleOwner),
+		).
+		Exist(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to check ownership: %w", err)
+	}
+	return membership, nil
+}
+
 func (s *Service) generateUniqueJoinCode(ctx context.Context) (string, error) {
 	const maxAttempts = 10
 	for i := range maxAttempts {
@@ -197,7 +394,6 @@ func (s *Service) generateUniqueJoinCode(ctx context.Context) (string, error) {
 			return "", err
 		}
 
-		// Check if code already exists
 		exists, err := s.db.League.
 			Query().
 			Where(league.CodeEQ(code)).
@@ -210,7 +406,6 @@ func (s *Service) generateUniqueJoinCode(ctx context.Context) (string, error) {
 			return code, nil
 		}
 
-		// If we're on the last attempt, log a warning
 		if i == maxAttempts-1 {
 			return "", fmt.Errorf("failed to generate unique code after %d attempts", maxAttempts)
 		}
@@ -219,7 +414,6 @@ func (s *Service) generateUniqueJoinCode(ctx context.Context) (string, error) {
 	return "", fmt.Errorf("failed to generate unique code")
 }
 
-// generateJoinCode generates a random 6-character alphanumeric code.
 func generateJoinCode() (string, error) {
 	code := make([]byte, joinCodeLength)
 	charsetLen := big.NewInt(int64(len(joinCodeCharset)))

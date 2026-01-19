@@ -29,6 +29,8 @@ func (League) Fields() []ent.Field {
 			NotEmpty().
 			Comment("Shareable join code"),
 		field.Int("season_year"),
+		field.Bool("joining_enabled").
+			Default(true),
 	}
 }
 

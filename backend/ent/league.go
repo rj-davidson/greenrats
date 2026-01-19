@@ -29,6 +29,8 @@ type League struct {
 	Code string `json:"code,omitempty"`
 	// SeasonYear holds the value of the "season_year" field.
 	SeasonYear int `json:"season_year,omitempty"`
+	// JoiningEnabled holds the value of the "joining_enabled" field.
+	JoiningEnabled bool `json:"joining_enabled,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LeagueQuery when eager-loading is set.
 	Edges             LeagueEdges `json:"edges"`
@@ -94,6 +96,8 @@ func (*League) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case league.FieldJoiningEnabled:
+			values[i] = new(sql.NullBool)
 		case league.FieldSeasonYear:
 			values[i] = new(sql.NullInt64)
 		case league.FieldName, league.FieldCode:
@@ -154,6 +158,12 @@ func (_m *League) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field season_year", values[i])
 			} else if value.Valid {
 				_m.SeasonYear = int(value.Int64)
+			}
+		case league.FieldJoiningEnabled:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field joining_enabled", values[i])
+			} else if value.Valid {
+				_m.JoiningEnabled = value.Bool
 			}
 		case league.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -232,6 +242,9 @@ func (_m *League) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("season_year=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SeasonYear))
+	builder.WriteString(", ")
+	builder.WriteString("joining_enabled=")
+	builder.WriteString(fmt.Sprintf("%v", _m.JoiningEnabled))
 	builder.WriteByte(')')
 	return builder.String()
 }

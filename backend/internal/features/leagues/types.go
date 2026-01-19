@@ -6,33 +6,50 @@ import (
 	"github.com/gofrs/uuid/v5"
 )
 
-// League represents a league in the response.
 type League struct {
-	ID         uuid.UUID `json:"id"`
-	Name       string    `json:"name"`
-	Code       string    `json:"code"`
-	SeasonYear int       `json:"season_year"`
-	CreatedAt  time.Time `json:"created_at"`
-	Role       string    `json:"role,omitempty"`
+	ID             uuid.UUID `json:"id"`
+	Name           string    `json:"name"`
+	Code           string    `json:"code"`
+	SeasonYear     int       `json:"season_year"`
+	JoiningEnabled bool      `json:"joining_enabled"`
+	CreatedAt      time.Time `json:"created_at"`
+	Role           string    `json:"role,omitempty"`
+	MemberCount    int       `json:"member_count,omitempty"`
 }
 
-// CreateLeagueRequest represents the request body for creating a league.
 type CreateLeagueRequest struct {
 	Name string `json:"name"`
 }
 
-// CreateLeagueResponse represents the response for creating a league.
 type CreateLeagueResponse struct {
 	League League `json:"league"`
 }
 
-// GetLeagueResponse represents the response for getting a single league.
 type GetLeagueResponse struct {
 	League League `json:"league"`
 }
 
-// ListUserLeaguesResponse represents the response for listing user's leagues.
 type ListUserLeaguesResponse struct {
 	Leagues []League `json:"leagues"`
 	Total   int      `json:"total"`
+}
+
+type JoinLeagueRequest struct {
+	Code string `json:"code"`
+}
+
+type JoinLeagueResponse struct {
+	League League `json:"league"`
+}
+
+type SetJoiningEnabledRequest struct {
+	Enabled bool `json:"enabled"`
+}
+
+type SetJoiningEnabledResponse struct {
+	League League `json:"league"`
+}
+
+type RegenerateCodeResponse struct {
+	League League `json:"league"`
 }

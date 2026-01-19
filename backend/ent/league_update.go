@@ -88,6 +88,20 @@ func (_u *LeagueUpdate) AddSeasonYear(v int) *LeagueUpdate {
 	return _u
 }
 
+// SetJoiningEnabled sets the "joining_enabled" field.
+func (_u *LeagueUpdate) SetJoiningEnabled(v bool) *LeagueUpdate {
+	_u.mutation.SetJoiningEnabled(v)
+	return _u
+}
+
+// SetNillableJoiningEnabled sets the "joining_enabled" field if the given value is not nil.
+func (_u *LeagueUpdate) SetNillableJoiningEnabled(v *bool) *LeagueUpdate {
+	if v != nil {
+		_u.SetJoiningEnabled(*v)
+	}
+	return _u
+}
+
 // SetCreatedByID sets the "created_by" edge to the User entity by ID.
 func (_u *LeagueUpdate) SetCreatedByID(id uuid.UUID) *LeagueUpdate {
 	_u.mutation.SetCreatedByID(id)
@@ -298,6 +312,9 @@ func (_u *LeagueUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if value, ok := _u.mutation.AddedSeasonYear(); ok {
 		_spec.AddField(league.FieldSeasonYear, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.JoiningEnabled(); ok {
+		_spec.SetField(league.FieldJoiningEnabled, field.TypeBool, value)
 	}
 	if _u.mutation.CreatedByCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -535,6 +552,20 @@ func (_u *LeagueUpdateOne) SetNillableSeasonYear(v *int) *LeagueUpdateOne {
 // AddSeasonYear adds value to the "season_year" field.
 func (_u *LeagueUpdateOne) AddSeasonYear(v int) *LeagueUpdateOne {
 	_u.mutation.AddSeasonYear(v)
+	return _u
+}
+
+// SetJoiningEnabled sets the "joining_enabled" field.
+func (_u *LeagueUpdateOne) SetJoiningEnabled(v bool) *LeagueUpdateOne {
+	_u.mutation.SetJoiningEnabled(v)
+	return _u
+}
+
+// SetNillableJoiningEnabled sets the "joining_enabled" field if the given value is not nil.
+func (_u *LeagueUpdateOne) SetNillableJoiningEnabled(v *bool) *LeagueUpdateOne {
+	if v != nil {
+		_u.SetJoiningEnabled(*v)
+	}
 	return _u
 }
 
@@ -778,6 +809,9 @@ func (_u *LeagueUpdateOne) sqlSave(ctx context.Context) (_node *League, err erro
 	}
 	if value, ok := _u.mutation.AddedSeasonYear(); ok {
 		_spec.AddField(league.FieldSeasonYear, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.JoiningEnabled(); ok {
+		_spec.SetField(league.FieldJoiningEnabled, field.TypeBool, value)
 	}
 	if _u.mutation.CreatedByCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -1,6 +1,7 @@
 package leagues
 
 import (
+	"errors"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,30 +10,28 @@ import (
 	"github.com/rj-davidson/greenrats/internal/auth"
 )
 
-// Handler handles HTTP requests for leagues.
 type Handler struct {
 	service *Service
 }
 
-// NewHandler creates a new league handler.
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-// RegisterRoutes registers league routes on the given router.
 func (h *Handler) RegisterRoutes(router fiber.Router) {
 	leagues := router.Group("/leagues")
 	h.RegisterRoutesWithGroup(leagues)
 }
 
-// RegisterRoutesWithGroup registers league routes on an existing group.
 func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Post("/", h.Create)
 	group.Get("/", h.ListUserLeagues)
 	group.Get("/:id", h.GetByID)
+	group.Post("/join", h.JoinLeague)
+	group.Post("/:id/regenerate-code", h.RegenerateJoinCode)
+	group.Patch("/:id/joining", h.SetJoiningEnabled)
 }
 
-// Create handles POST /leagues
 func (h *Handler) Create(c *fiber.Ctx) error {
 	var req CreateLeagueRequest
 	if err := c.BodyParser(&req); err != nil {
@@ -41,7 +40,6 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validate name
 	name := strings.TrimSpace(req.Name)
 	if name == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -49,7 +47,6 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	// Get the authenticated user's ID
 	userID := auth.GetDBUserID(c)
 	if userID == uuid.Nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -72,9 +69,7 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 	})
 }
 
-// ListUserLeagues handles GET /leagues
 func (h *Handler) ListUserLeagues(c *fiber.Ctx) error {
-	// Get the authenticated user's ID
 	userID := auth.GetDBUserID(c)
 	if userID == uuid.Nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -92,7 +87,6 @@ func (h *Handler) ListUserLeagues(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-// GetByID handles GET /leagues/:id
 func (h *Handler) GetByID(c *fiber.Ctx) error {
 	idStr := c.Params("id")
 	if idStr == "" {
@@ -108,7 +102,6 @@ func (h *Handler) GetByID(c *fiber.Ctx) error {
 		})
 	}
 
-	// Get the authenticated user's ID for role info
 	userID := auth.GetDBUserID(c)
 
 	var league *League
@@ -131,4 +124,122 @@ func (h *Handler) GetByID(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(GetLeagueResponse{League: *league})
+}
+
+func (h *Handler) JoinLeague(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	var req JoinLeagueRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	code := strings.TrimSpace(strings.ToUpper(req.Code))
+	if code == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "join code is required",
+		})
+	}
+
+	league, err := h.service.JoinLeague(c.Context(), userID, code)
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(JoinLeagueResponse{
+		League: *league,
+	})
+}
+
+func (h *Handler) RegenerateJoinCode(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	leagueID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid league id",
+		})
+	}
+
+	league, err := h.service.RegenerateJoinCode(c.Context(), leagueID, userID)
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.JSON(RegenerateCodeResponse{League: *league})
+}
+
+func (h *Handler) SetJoiningEnabled(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	leagueID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid league id",
+		})
+	}
+
+	var req SetJoiningEnabledRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	league, err := h.service.SetJoiningEnabled(c.Context(), leagueID, userID, req.Enabled)
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.JSON(SetJoiningEnabledResponse{League: *league})
+}
+
+func (h *Handler) handleServiceError(c *fiber.Ctx, err error) error {
+	switch {
+	case errors.Is(err, ErrLeagueNotFound):
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "league not found",
+		})
+	case errors.Is(err, ErrInvalidJoinCode):
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid join code",
+		})
+	case errors.Is(err, ErrAlreadyMember):
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "you are already a member of this league",
+		})
+	case errors.Is(err, ErrJoiningDisabled):
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "joining is disabled for this league",
+		})
+	case errors.Is(err, ErrLeagueFull):
+		return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error": "league has reached maximum members",
+		})
+	case errors.Is(err, ErrNotCommissioner):
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "only the commissioner can perform this action",
+		})
+	default:
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "internal server error",
+		})
+	}
 }

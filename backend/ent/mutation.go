@@ -2064,6 +2064,7 @@ type LeagueMutation struct {
 	code                        *string
 	season_year                 *int
 	addseason_year              *int
+	joining_enabled             *bool
 	clearedFields               map[string]struct{}
 	created_by                  *uuid.UUID
 	clearedcreated_by           bool
@@ -2385,6 +2386,42 @@ func (m *LeagueMutation) ResetSeasonYear() {
 	m.addseason_year = nil
 }
 
+// SetJoiningEnabled sets the "joining_enabled" field.
+func (m *LeagueMutation) SetJoiningEnabled(b bool) {
+	m.joining_enabled = &b
+}
+
+// JoiningEnabled returns the value of the "joining_enabled" field in the mutation.
+func (m *LeagueMutation) JoiningEnabled() (r bool, exists bool) {
+	v := m.joining_enabled
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldJoiningEnabled returns the old "joining_enabled" field's value of the League entity.
+// If the League object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *LeagueMutation) OldJoiningEnabled(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldJoiningEnabled is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldJoiningEnabled requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldJoiningEnabled: %w", err)
+	}
+	return oldValue.JoiningEnabled, nil
+}
+
+// ResetJoiningEnabled resets all changes to the "joining_enabled" field.
+func (m *LeagueMutation) ResetJoiningEnabled() {
+	m.joining_enabled = nil
+}
+
 // SetCreatedByID sets the "created_by" edge to the User entity by id.
 func (m *LeagueMutation) SetCreatedByID(id uuid.UUID) {
 	m.created_by = &id
@@ -2620,7 +2657,7 @@ func (m *LeagueMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *LeagueMutation) Fields() []string {
-	fields := make([]string, 0, 5)
+	fields := make([]string, 0, 6)
 	if m.created_at != nil {
 		fields = append(fields, league.FieldCreatedAt)
 	}
@@ -2635,6 +2672,9 @@ func (m *LeagueMutation) Fields() []string {
 	}
 	if m.season_year != nil {
 		fields = append(fields, league.FieldSeasonYear)
+	}
+	if m.joining_enabled != nil {
+		fields = append(fields, league.FieldJoiningEnabled)
 	}
 	return fields
 }
@@ -2654,6 +2694,8 @@ func (m *LeagueMutation) Field(name string) (ent.Value, bool) {
 		return m.Code()
 	case league.FieldSeasonYear:
 		return m.SeasonYear()
+	case league.FieldJoiningEnabled:
+		return m.JoiningEnabled()
 	}
 	return nil, false
 }
@@ -2673,6 +2715,8 @@ func (m *LeagueMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldCode(ctx)
 	case league.FieldSeasonYear:
 		return m.OldSeasonYear(ctx)
+	case league.FieldJoiningEnabled:
+		return m.OldJoiningEnabled(ctx)
 	}
 	return nil, fmt.Errorf("unknown League field %s", name)
 }
@@ -2716,6 +2760,13 @@ func (m *LeagueMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetSeasonYear(v)
+		return nil
+	case league.FieldJoiningEnabled:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetJoiningEnabled(v)
 		return nil
 	}
 	return fmt.Errorf("unknown League field %s", name)
@@ -2795,6 +2846,9 @@ func (m *LeagueMutation) ResetField(name string) error {
 		return nil
 	case league.FieldSeasonYear:
 		m.ResetSeasonYear()
+		return nil
+	case league.FieldJoiningEnabled:
+		m.ResetJoiningEnabled()
 		return nil
 	}
 	return fmt.Errorf("unknown League field %s", name)

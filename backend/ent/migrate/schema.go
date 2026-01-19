@@ -75,6 +75,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "code", Type: field.TypeString, Unique: true},
 		{Name: "season_year", Type: field.TypeInt},
+		{Name: "joining_enabled", Type: field.TypeBool, Default: true},
 		{Name: "league_created_by", Type: field.TypeUUID},
 	}
 	// LeaguesTable holds the schema information for the "leagues" table.
@@ -85,7 +86,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "leagues_users_created_by",
-				Columns:    []*schema.Column{LeaguesColumns[6]},
+				Columns:    []*schema.Column{LeaguesColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},

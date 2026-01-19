@@ -71,6 +71,20 @@ func (_c *LeagueCreate) SetSeasonYear(v int) *LeagueCreate {
 	return _c
 }
 
+// SetJoiningEnabled sets the "joining_enabled" field.
+func (_c *LeagueCreate) SetJoiningEnabled(v bool) *LeagueCreate {
+	_c.mutation.SetJoiningEnabled(v)
+	return _c
+}
+
+// SetNillableJoiningEnabled sets the "joining_enabled" field if the given value is not nil.
+func (_c *LeagueCreate) SetNillableJoiningEnabled(v *bool) *LeagueCreate {
+	if v != nil {
+		_c.SetJoiningEnabled(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *LeagueCreate) SetID(v uuid.UUID) *LeagueCreate {
 	_c.mutation.SetID(v)
@@ -184,6 +198,10 @@ func (_c *LeagueCreate) defaults() {
 		v := league.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := _c.mutation.JoiningEnabled(); !ok {
+		v := league.DefaultJoiningEnabled
+		_c.mutation.SetJoiningEnabled(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := league.DefaultID()
 		_c.mutation.SetID(v)
@@ -216,6 +234,9 @@ func (_c *LeagueCreate) check() error {
 	}
 	if _, ok := _c.mutation.SeasonYear(); !ok {
 		return &ValidationError{Name: "season_year", err: errors.New(`ent: missing required field "League.season_year"`)}
+	}
+	if _, ok := _c.mutation.JoiningEnabled(); !ok {
+		return &ValidationError{Name: "joining_enabled", err: errors.New(`ent: missing required field "League.joining_enabled"`)}
 	}
 	if len(_c.mutation.CreatedByIDs()) == 0 {
 		return &ValidationError{Name: "created_by", err: errors.New(`ent: missing required edge "League.created_by"`)}
@@ -274,6 +295,10 @@ func (_c *LeagueCreate) createSpec() (*League, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.SeasonYear(); ok {
 		_spec.SetField(league.FieldSeasonYear, field.TypeInt, value)
 		_node.SeasonYear = value
+	}
+	if value, ok := _c.mutation.JoiningEnabled(); ok {
+		_spec.SetField(league.FieldJoiningEnabled, field.TypeBool, value)
+		_node.JoiningEnabled = value
 	}
 	if nodes := _c.mutation.CreatedByIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

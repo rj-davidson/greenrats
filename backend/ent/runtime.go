@@ -96,6 +96,10 @@ func init() {
 	leagueDescCode := leagueFields[1].Descriptor()
 	// league.CodeValidator is a validator for the "code" field. It is called by the builders before save.
 	league.CodeValidator = leagueDescCode.Validators[0].(func(string) error)
+	// leagueDescJoiningEnabled is the schema descriptor for joining_enabled field.
+	leagueDescJoiningEnabled := leagueFields[3].Descriptor()
+	// league.DefaultJoiningEnabled holds the default value on creation for the joining_enabled field.
+	league.DefaultJoiningEnabled = leagueDescJoiningEnabled.Default.(bool)
 	// leagueDescID is the schema descriptor for id field.
 	leagueDescID := leagueMixinFields0[0].Descriptor()
 	// league.DefaultID holds the default value on creation for the id field.

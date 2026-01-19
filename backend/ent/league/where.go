@@ -81,6 +81,11 @@ func SeasonYear(v int) predicate.League {
 	return predicate.League(sql.FieldEQ(FieldSeasonYear, v))
 }
 
+// JoiningEnabled applies equality check predicate on the "joining_enabled" field. It's identical to JoiningEnabledEQ.
+func JoiningEnabled(v bool) predicate.League {
+	return predicate.League(sql.FieldEQ(FieldJoiningEnabled, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.League {
 	return predicate.League(sql.FieldEQ(FieldCreatedAt, v))
@@ -329,6 +334,16 @@ func SeasonYearLT(v int) predicate.League {
 // SeasonYearLTE applies the LTE predicate on the "season_year" field.
 func SeasonYearLTE(v int) predicate.League {
 	return predicate.League(sql.FieldLTE(FieldSeasonYear, v))
+}
+
+// JoiningEnabledEQ applies the EQ predicate on the "joining_enabled" field.
+func JoiningEnabledEQ(v bool) predicate.League {
+	return predicate.League(sql.FieldEQ(FieldJoiningEnabled, v))
+}
+
+// JoiningEnabledNEQ applies the NEQ predicate on the "joining_enabled" field.
+func JoiningEnabledNEQ(v bool) predicate.League {
+	return predicate.League(sql.FieldNEQ(FieldJoiningEnabled, v))
 }
 
 // HasCreatedBy applies the HasEdge predicate on the "created_by" edge.

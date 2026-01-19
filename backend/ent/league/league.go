@@ -25,6 +25,8 @@ const (
 	FieldCode = "code"
 	// FieldSeasonYear holds the string denoting the season_year field in the database.
 	FieldSeasonYear = "season_year"
+	// FieldJoiningEnabled holds the string denoting the joining_enabled field in the database.
+	FieldJoiningEnabled = "joining_enabled"
 	// EdgeCreatedBy holds the string denoting the created_by edge name in mutations.
 	EdgeCreatedBy = "created_by"
 	// EdgeMemberships holds the string denoting the memberships edge name in mutations.
@@ -73,6 +75,7 @@ var Columns = []string{
 	FieldName,
 	FieldCode,
 	FieldSeasonYear,
+	FieldJoiningEnabled,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "leagues"
@@ -107,6 +110,8 @@ var (
 	NameValidator func(string) error
 	// CodeValidator is a validator for the "code" field. It is called by the builders before save.
 	CodeValidator func(string) error
+	// DefaultJoiningEnabled holds the default value on creation for the "joining_enabled" field.
+	DefaultJoiningEnabled bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -142,6 +147,11 @@ func ByCode(opts ...sql.OrderTermOption) OrderOption {
 // BySeasonYear orders the results by the season_year field.
 func BySeasonYear(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldSeasonYear, opts...).ToFunc()
+}
+
+// ByJoiningEnabled orders the results by the joining_enabled field.
+func ByJoiningEnabled(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldJoiningEnabled, opts...).ToFunc()
 }
 
 // ByCreatedByField orders the results by created_by field.
