@@ -26,7 +26,7 @@ func (Tournament) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Unique().
-			Comment("ScratchGolf API ID (string)"),
+			Comment("Live Golf Data API ID (string)"),
 		field.Int("bdl_id").
 			Optional().
 			Nillable().

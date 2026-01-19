@@ -1,4 +1,4 @@
-package scratchgolf
+package livegolfdata
 
 import (
 	"context"
@@ -7,8 +7,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-// Client is the SlashGolf API client (via RapidAPI).
-// Note: SlashGolf and ScratchGolf are the same API - we keep the package name for compatibility.
+// Client is the Live Golf Data API client (via RapidAPI).
 // FREE tier: 250 requests/month (hard limit), 60 requests/minute.
 // Used primarily for tournament field data before tournaments start.
 type Client struct {
@@ -17,12 +16,11 @@ type Client struct {
 	baseURL string
 }
 
-// New creates a new SlashGolf API client configured for RapidAPI.
+// New creates a new Live Golf Data API client configured for RapidAPI.
 func New(apiKey, baseURL string) *Client {
 	client := resty.New().
 		SetBaseURL(baseURL).
 		SetHeader("X-RapidAPI-Key", apiKey).
-		SetHeader("X-RapidAPI-Host", "slashgolf.p.rapidapi.com").
 		SetHeader("Content-Type", "application/json")
 
 	return &Client{

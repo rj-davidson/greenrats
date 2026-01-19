@@ -164,7 +164,8 @@ ENV=development
 DATABASE_URL=postgres://greenrats:greenrats@localhost:5432/greenrats?sslmode=disable
 WORKOS_API_KEY=
 WORKOS_CLIENT_ID=
-SCRATCHGOLF_API_KEY=
+LIVE_GOLF_DATA_API_KEY=
+LIVE_GOLF_DATA_BASE_URL=https://live-golf-data.p.rapidapi.com
 BALLDONTLIE_API_KEY=
 ```
 
@@ -233,7 +234,8 @@ ENV=production|development
 DATABASE_URL=<railway-provided>
 WORKOS_API_KEY=
 WORKOS_CLIENT_ID=
-SCRATCH_GOLF_API_KEY=
+LIVE_GOLF_DATA_API_KEY=
+LIVE_GOLF_DATA_BASE_URL=https://live-golf-data.p.rapidapi.com
 BALL_DONT_LIE_API_KEY=
 SENTRY_DSN=
 RESEND_API_KEY=

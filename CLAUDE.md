@@ -135,7 +135,7 @@ backend/
       leaderboards/            # Earnings calculations, rankings
       users/                   # User profiles
     external/                  # External API clients
-      scratchgolf/             # Scratch Golf API client
+      livegolfdata/            # Live Golf Data API client
       balldontlie/             # BallDontLie.io client
   ent/
     schema/                    # Ent schema definitions

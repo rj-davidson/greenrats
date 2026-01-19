@@ -28,8 +28,8 @@ services:
       DATABASE_URL: postgres://greenrats:greenrats@postgres:5432/greenrats?sslmode=disable
       WORKOS_API_KEY: ${WORKOS_API_KEY:-}
       WORKOS_CLIENT_ID: ${WORKOS_CLIENT_ID:-}
-      SCRATCHGOLF_API_KEY: ${SCRATCHGOLF_API_KEY:-}
-      SCRATCHGOLF_BASE_URL: ${SCRATCHGOLF_BASE_URL:-https://api.scratchgolf.com}
+      LIVE_GOLF_DATA_API_KEY: ${LIVE_GOLF_DATA_API_KEY:-}
+      LIVE_GOLF_DATA_BASE_URL: ${LIVE_GOLF_DATA_BASE_URL:-https://live-golf-data.p.rapidapi.com}
       BALLDONTLIE_API_KEY: ${BALLDONTLIE_API_KEY:-}
       BALLDONTLIE_BASE_URL: ${BALLDONTLIE_BASE_URL:-https://api.balldontlie.io}
     ports:
@@ -48,8 +48,8 @@ services:
     environment:
       ENV: development
       DATABASE_URL: postgres://greenrats:greenrats@postgres:5432/greenrats?sslmode=disable
-      SCRATCHGOLF_API_KEY: ${SCRATCHGOLF_API_KEY:-}
-      SCRATCHGOLF_BASE_URL: ${SCRATCHGOLF_BASE_URL:-https://api.scratchgolf.com}
+      LIVE_GOLF_DATA_API_KEY: ${LIVE_GOLF_DATA_API_KEY:-}
+      LIVE_GOLF_DATA_BASE_URL: ${LIVE_GOLF_DATA_BASE_URL:-https://live-golf-data.p.rapidapi.com}
       BALLDONTLIE_API_KEY: ${BALLDONTLIE_API_KEY:-}
       BALLDONTLIE_BASE_URL: ${BALLDONTLIE_BASE_URL:-https://api.balldontlie.io}
     depends_on:
