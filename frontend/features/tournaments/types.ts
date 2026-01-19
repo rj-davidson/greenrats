@@ -34,6 +34,7 @@ export const leaderboardEntrySchema = z.object({
   current_round: z.number(),
   cut: z.boolean(),
   status: z.string(),
+  earnings: z.number(),
 });
 
 export const getLeaderboardResponseSchema = z.object({

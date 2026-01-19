@@ -199,6 +199,7 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboar
 			CurrentRound:    e.CurrentRound,
 			Cut:             e.Cut,
 			Status:          string(e.Status),
+			Earnings:        e.Earnings,
 		}
 	}
 

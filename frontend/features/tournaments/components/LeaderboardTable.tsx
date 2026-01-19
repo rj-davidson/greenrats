@@ -29,7 +29,21 @@ function formatThru(thru: number, status: string): string {
   return `${thru}`;
 }
 
-function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
+function formatEarnings(earnings: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(earnings);
+}
+
+function LeaderboardRow({
+  entry,
+  showEarnings,
+}: {
+  entry: LeaderboardEntry;
+  showEarnings: boolean;
+}) {
   const isTopThree = entry.position >= 1 && entry.position <= 3 && !entry.cut;
   const isCut = entry.cut;
 
@@ -52,6 +66,11 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
       <TableCell className="text-muted-foreground">
         {formatThru(entry.thru, entry.status)}
       </TableCell>
+      {showEarnings && (
+        <TableCell className="text-right font-mono">
+          {entry.earnings > 0 ? formatEarnings(entry.earnings) : "-"}
+        </TableCell>
+      )}
     </TableRow>
   );
 }
@@ -89,6 +108,8 @@ export function LeaderboardTable({ tournamentId }: LeaderboardTableProps) {
     );
   }
 
+  const showEarnings = data.entries.some((entry) => entry.earnings > 0);
+
   return (
     <Table>
       <TableHeader>
@@ -98,11 +119,12 @@ export function LeaderboardTable({ tournamentId }: LeaderboardTableProps) {
           <TableHead className="w-20">Country</TableHead>
           <TableHead className="w-20">Score</TableHead>
           <TableHead className="w-16">Thru</TableHead>
+          {showEarnings && <TableHead className="w-28 text-right">Earnings</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
         {data.entries.map((entry) => (
-          <LeaderboardRow key={entry.golfer_id} entry={entry} />
+          <LeaderboardRow key={entry.golfer_id} entry={entry} showEarnings={showEarnings} />
         ))}
       </TableBody>
     </Table>

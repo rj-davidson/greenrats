@@ -46,6 +46,7 @@ type LeaderboardEntry struct {
 	CurrentRound    int    `json:"current_round"`
 	Cut             bool   `json:"cut"`
 	Status          string `json:"status"`
+	Earnings        int    `json:"earnings"`
 }
 
 // GetLeaderboardResponse represents the response for getting a tournament leaderboard.
