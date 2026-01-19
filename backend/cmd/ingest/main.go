@@ -1048,17 +1048,19 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 	return nil
 }
 
-// syncEarnings fetches earnings data for recently completed tournaments.
-// Runs at 1 day, 2 days, and 7 days after tournament end to ensure data is captured.
+// syncEarnings fetches earnings data for completed tournaments.
+// Syncs any completed tournament missing earnings, plus recently completed
+// tournaments on days 1, 2, and 7 to catch late updates.
 func (i *Ingester) syncEarnings(ctx context.Context) {
 	log.Println("Checking for tournaments needing earnings sync...")
 
 	now := time.Now().UTC()
+	currentYear := now.Year()
 
 	tournaments, err := i.db.Tournament.Query().
 		Where(
 			tournament.StatusEQ(tournament.StatusCompleted),
-			tournament.EndDateGTE(now.AddDate(0, 0, -8)),
+			tournament.SeasonYearGTE(currentYear-1),
 		).
 		All(ctx)
 	if err != nil {
@@ -1067,26 +1069,32 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 	}
 
 	if len(tournaments) == 0 {
-		log.Println("No recently completed tournaments found")
+		log.Println("No completed tournaments found")
 		return
 	}
 
 	for _, t := range tournaments {
-		daysSinceEnd := int(now.Sub(t.EndDate).Hours() / 24)
-		shouldSync := daysSinceEnd == 1 || daysSinceEnd == 2 || daysSinceEnd == 7
-
 		hasEarnings, err := i.tournamentHasEarnings(ctx, t)
 		if err != nil {
 			log.Printf("failed to check earnings for tournament %s: %v", t.Name, err)
 			continue
 		}
 
-		if !shouldSync && hasEarnings {
+		if !hasEarnings {
+			log.Printf("Tournament %s missing earnings, syncing...", t.Name)
+			if err := i.syncTournamentEarnings(ctx, t); err != nil {
+				log.Printf("failed to sync earnings for tournament %s: %v", t.Name, err)
+			}
 			continue
 		}
 
-		if err := i.syncTournamentEarnings(ctx, t); err != nil {
-			log.Printf("failed to sync earnings for tournament %s: %v", t.Name, err)
+		daysSinceEnd := int(now.Sub(t.EndDate).Hours() / 24)
+		shouldRefresh := daysSinceEnd == 1 || daysSinceEnd == 2 || daysSinceEnd == 7
+		if shouldRefresh {
+			log.Printf("Refreshing earnings for recently completed tournament %s (day %d)", t.Name, daysSinceEnd)
+			if err := i.syncTournamentEarnings(ctx, t); err != nil {
+				log.Printf("failed to sync earnings for tournament %s: %v", t.Name, err)
+			}
 		}
 	}
 
