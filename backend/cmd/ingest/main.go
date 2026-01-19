@@ -288,6 +288,8 @@ func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tourname
 	} else if err != nil {
 		return fmt.Errorf("failed to query tournament: %w", err)
 	} else {
+		previousStatus := existing.Status
+
 		// Update existing tournament
 		updater := existing.Update().
 			SetName(t.Name).
@@ -312,6 +314,10 @@ func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tourname
 			return fmt.Errorf("failed to update tournament: %w", err)
 		}
 		log.Printf("Updated tournament: %s (status: %s)", t.Name, status)
+
+		if previousStatus != tournament.StatusCompleted && status == tournament.StatusCompleted {
+			i.sendTournamentResultsEmails(ctx, existing)
+		}
 	}
 
 	return nil
@@ -814,6 +820,180 @@ func (i *Ingester) sendPickReminderEmail(ctx context.Context, u *ent.User, l *en
 	}
 
 	return i.email.SendPickReminder(u.Email, data)
+}
+
+func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tournament) {
+	log.Printf("Sending tournament results emails for: %s", t.Name)
+
+	winnerEntry, err := i.db.TournamentEntry.Query().
+		Where(
+			tournamententry.HasTournamentWith(tournament.IDEQ(t.ID)),
+			tournamententry.PositionEQ(1),
+		).
+		WithGolfer().
+		First(ctx)
+
+	tournamentWinner := "Unknown"
+	if err == nil && winnerEntry.Edges.Golfer != nil {
+		tournamentWinner = winnerEntry.Edges.Golfer.Name
+	}
+
+	picks, err := i.db.Pick.Query().
+		Where(pick.HasTournamentWith(tournament.IDEQ(t.ID))).
+		WithUser().
+		WithGolfer().
+		WithLeague().
+		All(ctx)
+	if err != nil {
+		log.Printf("failed to query picks: %v", err)
+		return
+	}
+
+	for _, p := range picks {
+		if p.Edges.User == nil || p.Edges.League == nil || p.Edges.Golfer == nil {
+			continue
+		}
+		if p.Edges.User.DisplayName == nil {
+			continue
+		}
+
+		alreadySent, err := i.db.EmailReminder.Query().
+			Where(
+				emailreminder.HasUserWith(user.IDEQ(p.Edges.User.ID)),
+				emailreminder.HasTournamentWith(tournament.IDEQ(t.ID)),
+				emailreminder.HasLeagueWith(league.IDEQ(p.Edges.League.ID)),
+				emailreminder.ReminderTypeEQ(emailreminder.ReminderTypeTournamentResults),
+			).
+			Exist(ctx)
+		if err != nil {
+			log.Printf("failed to check reminder status: %v", err)
+			continue
+		}
+		if alreadySent {
+			continue
+		}
+
+		golferEntry, _ := i.db.TournamentEntry.Query().
+			Where(
+				tournamententry.HasTournamentWith(tournament.IDEQ(t.ID)),
+				tournamententry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
+			).
+			Only(ctx)
+
+		position := "N/A"
+		earnings := "$0"
+		if golferEntry != nil {
+			if golferEntry.Cut {
+				position = "CUT"
+			} else if golferEntry.Position > 0 {
+				position = fmt.Sprintf("%d", golferEntry.Position)
+			}
+			earnings = formatCurrency(golferEntry.Earnings)
+		}
+
+		userRank, totalEarnings := i.calculateLeagueStandings(ctx, p.Edges.User.ID, p.Edges.League.ID, t.SeasonYear)
+
+		data := &email.TournamentResultsData{
+			DisplayName:      *p.Edges.User.DisplayName,
+			TournamentName:   t.Name,
+			TournamentWinner: tournamentWinner,
+			LeagueName:       p.Edges.League.Name,
+			GolferName:       p.Edges.Golfer.Name,
+			GolferPosition:   position,
+			GolferEarnings:   earnings,
+			UserRank:         userRank,
+			TotalEarnings:    formatCurrency(totalEarnings),
+		}
+
+		if err := i.email.SendTournamentResults(p.Edges.User.Email, data); err != nil {
+			log.Printf("failed to send results to %s: %v", p.Edges.User.Email, err)
+			continue
+		}
+
+		_, err = i.db.EmailReminder.Create().
+			SetUserID(p.Edges.User.ID).
+			SetTournamentID(t.ID).
+			SetLeagueID(p.Edges.League.ID).
+			SetReminderType(emailreminder.ReminderTypeTournamentResults).
+			Save(ctx)
+		if err != nil {
+			log.Printf("failed to record reminder: %v", err)
+		}
+	}
+
+	log.Printf("Finished sending tournament results emails for: %s", t.Name)
+}
+
+func (i *Ingester) calculateLeagueStandings(ctx context.Context, userID, leagueID uuid.UUID, seasonYear int) (rank int, totalEarnings int) {
+	type userEarnings struct {
+		userID   uuid.UUID
+		earnings int
+	}
+
+	picks, err := i.db.Pick.Query().
+		Where(
+			pick.HasLeagueWith(league.IDEQ(leagueID)),
+			pick.SeasonYearEQ(seasonYear),
+		).
+		WithUser().
+		WithGolfer().
+		WithTournament().
+		All(ctx)
+	if err != nil {
+		return 0, 0
+	}
+
+	earningsMap := make(map[uuid.UUID]int)
+	for _, p := range picks {
+		if p.Edges.User == nil || p.Edges.Golfer == nil || p.Edges.Tournament == nil {
+			continue
+		}
+		entry, err := i.db.TournamentEntry.Query().
+			Where(
+				tournamententry.HasTournamentWith(tournament.IDEQ(p.Edges.Tournament.ID)),
+				tournamententry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
+			).
+			Only(ctx)
+		if err == nil {
+			earningsMap[p.Edges.User.ID] += entry.Earnings
+		}
+	}
+
+	var allEarnings []userEarnings
+	for uid, e := range earningsMap {
+		allEarnings = append(allEarnings, userEarnings{userID: uid, earnings: e})
+	}
+
+	for i := 0; i < len(allEarnings); i++ {
+		for j := i + 1; j < len(allEarnings); j++ {
+			if allEarnings[j].earnings > allEarnings[i].earnings {
+				allEarnings[i], allEarnings[j] = allEarnings[j], allEarnings[i]
+			}
+		}
+	}
+
+	userTotal := earningsMap[userID]
+	userRank := 1
+	for _, e := range allEarnings {
+		if e.userID == userID {
+			break
+		}
+		if e.earnings > userTotal {
+			userRank++
+		}
+	}
+
+	return userRank, userTotal
+}
+
+func formatCurrency(amount int) string {
+	if amount >= 1000000 {
+		return fmt.Sprintf("$%.2fM", float64(amount)/1000000)
+	}
+	if amount >= 1000 {
+		return fmt.Sprintf("$%dK", amount/1000)
+	}
+	return fmt.Sprintf("$%d", amount)
 }
 
 var _ = uuid.Nil
