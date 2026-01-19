@@ -264,7 +264,8 @@ func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tourname
 		Where(tournament.BdlID(t.ID)).
 		Only(ctx)
 
-	if ent.IsNotFound(err) {
+	switch {
+	case ent.IsNotFound(err):
 		// Create new tournament
 		builder := i.db.Tournament.Create().
 			SetBdlID(t.ID).
@@ -291,9 +292,9 @@ func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tourname
 			return fmt.Errorf("failed to create tournament: %w", err)
 		}
 		log.Printf("Created tournament: %s", t.Name)
-	} else if err != nil {
+	case err != nil:
 		return fmt.Errorf("failed to query tournament: %w", err)
-	} else {
+	default:
 		previousStatus := existing.Status
 
 		// Update existing tournament
@@ -378,7 +379,8 @@ func (i *Ingester) upsertPlayer(ctx context.Context, p *balldontlie.Player) erro
 			Only(ctx)
 	}
 
-	if ent.IsNotFound(err) {
+	switch {
+	case ent.IsNotFound(err):
 		// Create new golfer
 		builder := i.db.Golfer.Create().
 			SetBdlID(p.ID).
@@ -400,9 +402,9 @@ func (i *Ingester) upsertPlayer(ctx context.Context, p *balldontlie.Player) erro
 			return fmt.Errorf("failed to create golfer: %w", err)
 		}
 		log.Printf("Created golfer: %s", name)
-	} else if err != nil {
+	case err != nil:
 		return fmt.Errorf("failed to query golfer: %w", err)
-	} else {
+	default:
 		// Update existing golfer
 		updater := existing.Update().
 			SetName(name).
@@ -1006,7 +1008,8 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 		).
 		Only(ctx)
 
-	if ent.IsNotFound(err) {
+	switch {
+	case ent.IsNotFound(err):
 		_, err = i.db.TournamentEntry.Create().
 			SetTournament(t).
 			SetGolfer(g).
@@ -1019,9 +1022,9 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 		if err != nil {
 			return fmt.Errorf("failed to create tournament entry: %w", err)
 		}
-	} else if err != nil {
+	case err != nil:
 		return fmt.Errorf("failed to query tournament entry: %w", err)
-	} else {
+	default:
 		_, err = existing.Update().
 			SetPosition(position).
 			SetCut(cut).
@@ -1272,7 +1275,7 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 	log.Printf("Finished sending tournament results emails for: %s", t.Name)
 }
 
-func (i *Ingester) calculateLeagueStandings(ctx context.Context, userID, leagueID uuid.UUID, seasonYear int) (rank int, totalEarnings int) {
+func (i *Ingester) calculateLeagueStandings(ctx context.Context, userID, leagueID uuid.UUID, seasonYear int) (rank, totalEarnings int) {
 	type userEarnings struct {
 		userID   uuid.UUID
 		earnings int

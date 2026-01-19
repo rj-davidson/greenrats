@@ -112,7 +112,7 @@ type graphQLRequest struct {
 	Variables     map[string]interface{} `json:"variables,omitempty"`
 }
 
-func (c *Client) GetField(ctx context.Context, fieldID string, includeWithdrawn bool, changesOnly bool) (*Field, error) {
+func (c *Client) GetField(ctx context.Context, fieldID string, includeWithdrawn, changesOnly bool) (*Field, error) {
 	var response struct {
 		Data struct {
 			Field Field `json:"field"`
