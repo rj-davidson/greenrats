@@ -44,9 +44,11 @@ type LeagueEdges struct {
 	Memberships []*LeagueMembership `json:"memberships,omitempty"`
 	// Picks holds the value of the picks edge.
 	Picks []*Pick `json:"picks,omitempty"`
+	// CommissionerActions holds the value of the commissioner_actions edge.
+	CommissionerActions []*CommissionerAction `json:"commissioner_actions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // CreatedByOrErr returns the CreatedBy value or an error if the edge
@@ -76,6 +78,15 @@ func (e LeagueEdges) PicksOrErr() ([]*Pick, error) {
 		return e.Picks, nil
 	}
 	return nil, &NotLoadedError{edge: "picks"}
+}
+
+// CommissionerActionsOrErr returns the CommissionerActions value or an error if the edge
+// was not loaded in eager-loading.
+func (e LeagueEdges) CommissionerActionsOrErr() ([]*CommissionerAction, error) {
+	if e.loadedTypes[3] {
+		return e.CommissionerActions, nil
+	}
+	return nil, &NotLoadedError{edge: "commissioner_actions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -177,6 +188,11 @@ func (_m *League) QueryMemberships() *LeagueMembershipQuery {
 // QueryPicks queries the "picks" edge of the League entity.
 func (_m *League) QueryPicks() *PickQuery {
 	return NewLeagueClient(_m.config).QueryPicks(_m)
+}
+
+// QueryCommissionerActions queries the "commissioner_actions" edge of the League entity.
+func (_m *League) QueryCommissionerActions() *CommissionerActionQuery {
+	return NewLeagueClient(_m.config).QueryCommissionerActions(_m)
 }
 
 // Update returns a builder for updating this League.

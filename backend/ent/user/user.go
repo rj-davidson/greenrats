@@ -29,6 +29,10 @@ const (
 	EdgePicks = "picks"
 	// EdgeLeagueMemberships holds the string denoting the league_memberships edge name in mutations.
 	EdgeLeagueMemberships = "league_memberships"
+	// EdgeCommissionerActions holds the string denoting the commissioner_actions edge name in mutations.
+	EdgeCommissionerActions = "commissioner_actions"
+	// EdgeAffectedActions holds the string denoting the affected_actions edge name in mutations.
+	EdgeAffectedActions = "affected_actions"
 	// Table holds the table name of the user in the database.
 	Table = "users"
 	// PicksTable is the table that holds the picks relation/edge.
@@ -45,6 +49,20 @@ const (
 	LeagueMembershipsInverseTable = "league_memberships"
 	// LeagueMembershipsColumn is the table column denoting the league_memberships relation/edge.
 	LeagueMembershipsColumn = "user_league_memberships"
+	// CommissionerActionsTable is the table that holds the commissioner_actions relation/edge.
+	CommissionerActionsTable = "commissioner_actions"
+	// CommissionerActionsInverseTable is the table name for the CommissionerAction entity.
+	// It exists in this package in order to avoid circular dependency with the "commissioneraction" package.
+	CommissionerActionsInverseTable = "commissioner_actions"
+	// CommissionerActionsColumn is the table column denoting the commissioner_actions relation/edge.
+	CommissionerActionsColumn = "user_commissioner_actions"
+	// AffectedActionsTable is the table that holds the affected_actions relation/edge.
+	AffectedActionsTable = "commissioner_actions"
+	// AffectedActionsInverseTable is the table name for the CommissionerAction entity.
+	// It exists in this package in order to avoid circular dependency with the "commissioneraction" package.
+	AffectedActionsInverseTable = "commissioner_actions"
+	// AffectedActionsColumn is the table column denoting the affected_actions relation/edge.
+	AffectedActionsColumn = "user_affected_actions"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -142,6 +160,34 @@ func ByLeagueMemberships(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption
 		sqlgraph.OrderByNeighborTerms(s, newLeagueMembershipsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCommissionerActionsCount orders the results by commissioner_actions count.
+func ByCommissionerActionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCommissionerActionsStep(), opts...)
+	}
+}
+
+// ByCommissionerActions orders the results by commissioner_actions terms.
+func ByCommissionerActions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCommissionerActionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByAffectedActionsCount orders the results by affected_actions count.
+func ByAffectedActionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newAffectedActionsStep(), opts...)
+	}
+}
+
+// ByAffectedActions orders the results by affected_actions terms.
+func ByAffectedActions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newAffectedActionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPicksStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -154,5 +200,19 @@ func newLeagueMembershipsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LeagueMembershipsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, LeagueMembershipsTable, LeagueMembershipsColumn),
+	)
+}
+func newCommissionerActionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CommissionerActionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CommissionerActionsTable, CommissionerActionsColumn),
+	)
+}
+func newAffectedActionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(AffectedActionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, AffectedActionsTable, AffectedActionsColumn),
 	)
 }

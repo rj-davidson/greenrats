@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -119,6 +120,36 @@ func (_c *UserCreate) AddLeagueMemberships(v ...*LeagueMembership) *UserCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddLeagueMembershipIDs(ids...)
+}
+
+// AddCommissionerActionIDs adds the "commissioner_actions" edge to the CommissionerAction entity by IDs.
+func (_c *UserCreate) AddCommissionerActionIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddCommissionerActionIDs(ids...)
+	return _c
+}
+
+// AddCommissionerActions adds the "commissioner_actions" edges to the CommissionerAction entity.
+func (_c *UserCreate) AddCommissionerActions(v ...*CommissionerAction) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddCommissionerActionIDs(ids...)
+}
+
+// AddAffectedActionIDs adds the "affected_actions" edge to the CommissionerAction entity by IDs.
+func (_c *UserCreate) AddAffectedActionIDs(ids ...uuid.UUID) *UserCreate {
+	_c.mutation.AddAffectedActionIDs(ids...)
+	return _c
+}
+
+// AddAffectedActions adds the "affected_actions" edges to the CommissionerAction entity.
+func (_c *UserCreate) AddAffectedActions(v ...*CommissionerAction) *UserCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddAffectedActionIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -274,6 +305,38 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leaguemembership.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.CommissionerActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CommissionerActionsTable,
+			Columns: []string{user.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.AffectedActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AffectedActionsTable,
+			Columns: []string{user.AffectedActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -412,6 +412,52 @@ func HasLeagueMembershipsWith(preds ...predicate.LeagueMembership) predicate.Use
 	})
 }
 
+// HasCommissionerActions applies the HasEdge predicate on the "commissioner_actions" edge.
+func HasCommissionerActions() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, CommissionerActionsTable, CommissionerActionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCommissionerActionsWith applies the HasEdge predicate on the "commissioner_actions" edge with a given conditions (other predicates).
+func HasCommissionerActionsWith(preds ...predicate.CommissionerAction) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newCommissionerActionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasAffectedActions applies the HasEdge predicate on the "affected_actions" edge.
+func HasAffectedActions() predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, AffectedActionsTable, AffectedActionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasAffectedActionsWith applies the HasEdge predicate on the "affected_actions" edge with a given conditions (other predicates).
+func HasAffectedActionsWith(preds ...predicate.CommissionerAction) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		step := newAffectedActionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.User) predicate.User {
 	return predicate.User(sql.AndPredicates(predicates...))

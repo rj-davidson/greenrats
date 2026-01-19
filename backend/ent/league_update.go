@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
@@ -128,6 +129,21 @@ func (_u *LeagueUpdate) AddPicks(v ...*Pick) *LeagueUpdate {
 	return _u.AddPickIDs(ids...)
 }
 
+// AddCommissionerActionIDs adds the "commissioner_actions" edge to the CommissionerAction entity by IDs.
+func (_u *LeagueUpdate) AddCommissionerActionIDs(ids ...uuid.UUID) *LeagueUpdate {
+	_u.mutation.AddCommissionerActionIDs(ids...)
+	return _u
+}
+
+// AddCommissionerActions adds the "commissioner_actions" edges to the CommissionerAction entity.
+func (_u *LeagueUpdate) AddCommissionerActions(v ...*CommissionerAction) *LeagueUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCommissionerActionIDs(ids...)
+}
+
 // Mutation returns the LeagueMutation object of the builder.
 func (_u *LeagueUpdate) Mutation() *LeagueMutation {
 	return _u.mutation
@@ -179,6 +195,27 @@ func (_u *LeagueUpdate) RemovePicks(v ...*Pick) *LeagueUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemovePickIDs(ids...)
+}
+
+// ClearCommissionerActions clears all "commissioner_actions" edges to the CommissionerAction entity.
+func (_u *LeagueUpdate) ClearCommissionerActions() *LeagueUpdate {
+	_u.mutation.ClearCommissionerActions()
+	return _u
+}
+
+// RemoveCommissionerActionIDs removes the "commissioner_actions" edge to CommissionerAction entities by IDs.
+func (_u *LeagueUpdate) RemoveCommissionerActionIDs(ids ...uuid.UUID) *LeagueUpdate {
+	_u.mutation.RemoveCommissionerActionIDs(ids...)
+	return _u
+}
+
+// RemoveCommissionerActions removes "commissioner_actions" edges to CommissionerAction entities.
+func (_u *LeagueUpdate) RemoveCommissionerActions(v ...*CommissionerAction) *LeagueUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCommissionerActionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -381,6 +418,51 @@ func (_u *LeagueUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.CommissionerActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   league.CommissionerActionsTable,
+			Columns: []string{league.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCommissionerActionsIDs(); len(nodes) > 0 && !_u.mutation.CommissionerActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   league.CommissionerActionsTable,
+			Columns: []string{league.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CommissionerActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   league.CommissionerActionsTable,
+			Columns: []string{league.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{league.Label}
@@ -497,6 +579,21 @@ func (_u *LeagueUpdateOne) AddPicks(v ...*Pick) *LeagueUpdateOne {
 	return _u.AddPickIDs(ids...)
 }
 
+// AddCommissionerActionIDs adds the "commissioner_actions" edge to the CommissionerAction entity by IDs.
+func (_u *LeagueUpdateOne) AddCommissionerActionIDs(ids ...uuid.UUID) *LeagueUpdateOne {
+	_u.mutation.AddCommissionerActionIDs(ids...)
+	return _u
+}
+
+// AddCommissionerActions adds the "commissioner_actions" edges to the CommissionerAction entity.
+func (_u *LeagueUpdateOne) AddCommissionerActions(v ...*CommissionerAction) *LeagueUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCommissionerActionIDs(ids...)
+}
+
 // Mutation returns the LeagueMutation object of the builder.
 func (_u *LeagueUpdateOne) Mutation() *LeagueMutation {
 	return _u.mutation
@@ -548,6 +645,27 @@ func (_u *LeagueUpdateOne) RemovePicks(v ...*Pick) *LeagueUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemovePickIDs(ids...)
+}
+
+// ClearCommissionerActions clears all "commissioner_actions" edges to the CommissionerAction entity.
+func (_u *LeagueUpdateOne) ClearCommissionerActions() *LeagueUpdateOne {
+	_u.mutation.ClearCommissionerActions()
+	return _u
+}
+
+// RemoveCommissionerActionIDs removes the "commissioner_actions" edge to CommissionerAction entities by IDs.
+func (_u *LeagueUpdateOne) RemoveCommissionerActionIDs(ids ...uuid.UUID) *LeagueUpdateOne {
+	_u.mutation.RemoveCommissionerActionIDs(ids...)
+	return _u
+}
+
+// RemoveCommissionerActions removes "commissioner_actions" edges to CommissionerAction entities.
+func (_u *LeagueUpdateOne) RemoveCommissionerActions(v ...*CommissionerAction) *LeagueUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCommissionerActionIDs(ids...)
 }
 
 // Where appends a list predicates to the LeagueUpdate builder.
@@ -773,6 +891,51 @@ func (_u *LeagueUpdateOne) sqlSave(ctx context.Context) (_node *League, err erro
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pick.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CommissionerActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   league.CommissionerActionsTable,
+			Columns: []string{league.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCommissionerActionsIDs(); len(nodes) > 0 && !_u.mutation.CommissionerActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   league.CommissionerActionsTable,
+			Columns: []string{league.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CommissionerActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   league.CommissionerActionsTable,
+			Columns: []string{league.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

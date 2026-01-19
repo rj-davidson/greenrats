@@ -31,6 +31,8 @@ const (
 	EdgeMemberships = "memberships"
 	// EdgePicks holds the string denoting the picks edge name in mutations.
 	EdgePicks = "picks"
+	// EdgeCommissionerActions holds the string denoting the commissioner_actions edge name in mutations.
+	EdgeCommissionerActions = "commissioner_actions"
 	// Table holds the table name of the league in the database.
 	Table = "leagues"
 	// CreatedByTable is the table that holds the created_by relation/edge.
@@ -54,6 +56,13 @@ const (
 	PicksInverseTable = "picks"
 	// PicksColumn is the table column denoting the picks relation/edge.
 	PicksColumn = "league_picks"
+	// CommissionerActionsTable is the table that holds the commissioner_actions relation/edge.
+	CommissionerActionsTable = "commissioner_actions"
+	// CommissionerActionsInverseTable is the table name for the CommissionerAction entity.
+	// It exists in this package in order to avoid circular dependency with the "commissioneraction" package.
+	CommissionerActionsInverseTable = "commissioner_actions"
+	// CommissionerActionsColumn is the table column denoting the commissioner_actions relation/edge.
+	CommissionerActionsColumn = "league_commissioner_actions"
 )
 
 // Columns holds all SQL columns for league fields.
@@ -169,6 +178,20 @@ func ByPicks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newPicksStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCommissionerActionsCount orders the results by commissioner_actions count.
+func ByCommissionerActionsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newCommissionerActionsStep(), opts...)
+	}
+}
+
+// ByCommissionerActions orders the results by commissioner_actions terms.
+func ByCommissionerActions(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCommissionerActionsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newCreatedByStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -188,5 +211,12 @@ func newPicksStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(PicksInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, PicksTable, PicksColumn),
+	)
+}
+func newCommissionerActionsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CommissionerActionsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, CommissionerActionsTable, CommissionerActionsColumn),
 	)
 }

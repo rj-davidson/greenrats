@@ -8,6 +8,43 @@ import (
 )
 
 var (
+	// CommissionerActionsColumns holds the columns for the "commissioner_actions" table.
+	CommissionerActionsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "action_type", Type: field.TypeEnum, Enums: []string{"pick_change", "join_code_reset", "joining_disabled", "joining_enabled"}},
+		{Name: "description", Type: field.TypeString},
+		{Name: "metadata", Type: field.TypeJSON, Nullable: true, SchemaType: map[string]string{"postgres": "jsonb"}},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "league_commissioner_actions", Type: field.TypeUUID},
+		{Name: "user_commissioner_actions", Type: field.TypeUUID},
+		{Name: "user_affected_actions", Type: field.TypeUUID, Nullable: true},
+	}
+	// CommissionerActionsTable holds the schema information for the "commissioner_actions" table.
+	CommissionerActionsTable = &schema.Table{
+		Name:       "commissioner_actions",
+		Columns:    CommissionerActionsColumns,
+		PrimaryKey: []*schema.Column{CommissionerActionsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "commissioner_actions_leagues_commissioner_actions",
+				Columns:    []*schema.Column{CommissionerActionsColumns[5]},
+				RefColumns: []*schema.Column{LeaguesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "commissioner_actions_users_commissioner_actions",
+				Columns:    []*schema.Column{CommissionerActionsColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "commissioner_actions_users_affected_actions",
+				Columns:    []*schema.Column{CommissionerActionsColumns[7]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// GolfersColumns holds the columns for the "golfers" table.
 	GolfersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -227,6 +264,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		CommissionerActionsTable,
 		GolfersTable,
 		LeaguesTable,
 		LeagueMembershipsTable,
@@ -238,6 +276,9 @@ var (
 )
 
 func init() {
+	CommissionerActionsTable.ForeignKeys[0].RefTable = LeaguesTable
+	CommissionerActionsTable.ForeignKeys[1].RefTable = UsersTable
+	CommissionerActionsTable.ForeignKeys[2].RefTable = UsersTable
 	LeaguesTable.ForeignKeys[0].RefTable = UsersTable
 	LeagueMembershipsTable.ForeignKeys[0].RefTable = LeaguesTable
 	LeagueMembershipsTable.ForeignKeys[1].RefTable = UsersTable

@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
@@ -31,14 +32,716 @@ const (
 	OpUpdateOne = ent.OpUpdateOne
 
 	// Node types.
-	TypeGolfer           = "Golfer"
-	TypeLeague           = "League"
-	TypeLeagueMembership = "LeagueMembership"
-	TypePick             = "Pick"
-	TypeTournament       = "Tournament"
-	TypeTournamentEntry  = "TournamentEntry"
-	TypeUser             = "User"
+	TypeCommissionerAction = "CommissionerAction"
+	TypeGolfer             = "Golfer"
+	TypeLeague             = "League"
+	TypeLeagueMembership   = "LeagueMembership"
+	TypePick               = "Pick"
+	TypeTournament         = "Tournament"
+	TypeTournamentEntry    = "TournamentEntry"
+	TypeUser               = "User"
 )
+
+// CommissionerActionMutation represents an operation that mutates the CommissionerAction nodes in the graph.
+type CommissionerActionMutation struct {
+	config
+	op                   Op
+	typ                  string
+	id                   *uuid.UUID
+	action_type          *commissioneraction.ActionType
+	description          *string
+	metadata             *map[string]interface{}
+	created_at           *time.Time
+	clearedFields        map[string]struct{}
+	league               *uuid.UUID
+	clearedleague        bool
+	commissioner         *uuid.UUID
+	clearedcommissioner  bool
+	affected_user        *uuid.UUID
+	clearedaffected_user bool
+	done                 bool
+	oldValue             func(context.Context) (*CommissionerAction, error)
+	predicates           []predicate.CommissionerAction
+}
+
+var _ ent.Mutation = (*CommissionerActionMutation)(nil)
+
+// commissioneractionOption allows management of the mutation configuration using functional options.
+type commissioneractionOption func(*CommissionerActionMutation)
+
+// newCommissionerActionMutation creates new mutation for the CommissionerAction entity.
+func newCommissionerActionMutation(c config, op Op, opts ...commissioneractionOption) *CommissionerActionMutation {
+	m := &CommissionerActionMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeCommissionerAction,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withCommissionerActionID sets the ID field of the mutation.
+func withCommissionerActionID(id uuid.UUID) commissioneractionOption {
+	return func(m *CommissionerActionMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *CommissionerAction
+		)
+		m.oldValue = func(ctx context.Context) (*CommissionerAction, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().CommissionerAction.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withCommissionerAction sets the old CommissionerAction of the mutation.
+func withCommissionerAction(node *CommissionerAction) commissioneractionOption {
+	return func(m *CommissionerActionMutation) {
+		m.oldValue = func(context.Context) (*CommissionerAction, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m CommissionerActionMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m CommissionerActionMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of CommissionerAction entities.
+func (m *CommissionerActionMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *CommissionerActionMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *CommissionerActionMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().CommissionerAction.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetActionType sets the "action_type" field.
+func (m *CommissionerActionMutation) SetActionType(ct commissioneraction.ActionType) {
+	m.action_type = &ct
+}
+
+// ActionType returns the value of the "action_type" field in the mutation.
+func (m *CommissionerActionMutation) ActionType() (r commissioneraction.ActionType, exists bool) {
+	v := m.action_type
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldActionType returns the old "action_type" field's value of the CommissionerAction entity.
+// If the CommissionerAction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommissionerActionMutation) OldActionType(ctx context.Context) (v commissioneraction.ActionType, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldActionType is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldActionType requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldActionType: %w", err)
+	}
+	return oldValue.ActionType, nil
+}
+
+// ResetActionType resets all changes to the "action_type" field.
+func (m *CommissionerActionMutation) ResetActionType() {
+	m.action_type = nil
+}
+
+// SetDescription sets the "description" field.
+func (m *CommissionerActionMutation) SetDescription(s string) {
+	m.description = &s
+}
+
+// Description returns the value of the "description" field in the mutation.
+func (m *CommissionerActionMutation) Description() (r string, exists bool) {
+	v := m.description
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldDescription returns the old "description" field's value of the CommissionerAction entity.
+// If the CommissionerAction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommissionerActionMutation) OldDescription(ctx context.Context) (v string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldDescription is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldDescription requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldDescription: %w", err)
+	}
+	return oldValue.Description, nil
+}
+
+// ResetDescription resets all changes to the "description" field.
+func (m *CommissionerActionMutation) ResetDescription() {
+	m.description = nil
+}
+
+// SetMetadata sets the "metadata" field.
+func (m *CommissionerActionMutation) SetMetadata(value map[string]interface{}) {
+	m.metadata = &value
+}
+
+// Metadata returns the value of the "metadata" field in the mutation.
+func (m *CommissionerActionMutation) Metadata() (r map[string]interface{}, exists bool) {
+	v := m.metadata
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldMetadata returns the old "metadata" field's value of the CommissionerAction entity.
+// If the CommissionerAction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommissionerActionMutation) OldMetadata(ctx context.Context) (v map[string]interface{}, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldMetadata is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldMetadata requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldMetadata: %w", err)
+	}
+	return oldValue.Metadata, nil
+}
+
+// ClearMetadata clears the value of the "metadata" field.
+func (m *CommissionerActionMutation) ClearMetadata() {
+	m.metadata = nil
+	m.clearedFields[commissioneraction.FieldMetadata] = struct{}{}
+}
+
+// MetadataCleared returns if the "metadata" field was cleared in this mutation.
+func (m *CommissionerActionMutation) MetadataCleared() bool {
+	_, ok := m.clearedFields[commissioneraction.FieldMetadata]
+	return ok
+}
+
+// ResetMetadata resets all changes to the "metadata" field.
+func (m *CommissionerActionMutation) ResetMetadata() {
+	m.metadata = nil
+	delete(m.clearedFields, commissioneraction.FieldMetadata)
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *CommissionerActionMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *CommissionerActionMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the CommissionerAction entity.
+// If the CommissionerAction object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *CommissionerActionMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *CommissionerActionMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetLeagueID sets the "league" edge to the League entity by id.
+func (m *CommissionerActionMutation) SetLeagueID(id uuid.UUID) {
+	m.league = &id
+}
+
+// ClearLeague clears the "league" edge to the League entity.
+func (m *CommissionerActionMutation) ClearLeague() {
+	m.clearedleague = true
+}
+
+// LeagueCleared reports if the "league" edge to the League entity was cleared.
+func (m *CommissionerActionMutation) LeagueCleared() bool {
+	return m.clearedleague
+}
+
+// LeagueID returns the "league" edge ID in the mutation.
+func (m *CommissionerActionMutation) LeagueID() (id uuid.UUID, exists bool) {
+	if m.league != nil {
+		return *m.league, true
+	}
+	return
+}
+
+// LeagueIDs returns the "league" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// LeagueID instead. It exists only for internal usage by the builders.
+func (m *CommissionerActionMutation) LeagueIDs() (ids []uuid.UUID) {
+	if id := m.league; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetLeague resets all changes to the "league" edge.
+func (m *CommissionerActionMutation) ResetLeague() {
+	m.league = nil
+	m.clearedleague = false
+}
+
+// SetCommissionerID sets the "commissioner" edge to the User entity by id.
+func (m *CommissionerActionMutation) SetCommissionerID(id uuid.UUID) {
+	m.commissioner = &id
+}
+
+// ClearCommissioner clears the "commissioner" edge to the User entity.
+func (m *CommissionerActionMutation) ClearCommissioner() {
+	m.clearedcommissioner = true
+}
+
+// CommissionerCleared reports if the "commissioner" edge to the User entity was cleared.
+func (m *CommissionerActionMutation) CommissionerCleared() bool {
+	return m.clearedcommissioner
+}
+
+// CommissionerID returns the "commissioner" edge ID in the mutation.
+func (m *CommissionerActionMutation) CommissionerID() (id uuid.UUID, exists bool) {
+	if m.commissioner != nil {
+		return *m.commissioner, true
+	}
+	return
+}
+
+// CommissionerIDs returns the "commissioner" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CommissionerID instead. It exists only for internal usage by the builders.
+func (m *CommissionerActionMutation) CommissionerIDs() (ids []uuid.UUID) {
+	if id := m.commissioner; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCommissioner resets all changes to the "commissioner" edge.
+func (m *CommissionerActionMutation) ResetCommissioner() {
+	m.commissioner = nil
+	m.clearedcommissioner = false
+}
+
+// SetAffectedUserID sets the "affected_user" edge to the User entity by id.
+func (m *CommissionerActionMutation) SetAffectedUserID(id uuid.UUID) {
+	m.affected_user = &id
+}
+
+// ClearAffectedUser clears the "affected_user" edge to the User entity.
+func (m *CommissionerActionMutation) ClearAffectedUser() {
+	m.clearedaffected_user = true
+}
+
+// AffectedUserCleared reports if the "affected_user" edge to the User entity was cleared.
+func (m *CommissionerActionMutation) AffectedUserCleared() bool {
+	return m.clearedaffected_user
+}
+
+// AffectedUserID returns the "affected_user" edge ID in the mutation.
+func (m *CommissionerActionMutation) AffectedUserID() (id uuid.UUID, exists bool) {
+	if m.affected_user != nil {
+		return *m.affected_user, true
+	}
+	return
+}
+
+// AffectedUserIDs returns the "affected_user" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// AffectedUserID instead. It exists only for internal usage by the builders.
+func (m *CommissionerActionMutation) AffectedUserIDs() (ids []uuid.UUID) {
+	if id := m.affected_user; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetAffectedUser resets all changes to the "affected_user" edge.
+func (m *CommissionerActionMutation) ResetAffectedUser() {
+	m.affected_user = nil
+	m.clearedaffected_user = false
+}
+
+// Where appends a list predicates to the CommissionerActionMutation builder.
+func (m *CommissionerActionMutation) Where(ps ...predicate.CommissionerAction) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the CommissionerActionMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *CommissionerActionMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.CommissionerAction, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *CommissionerActionMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *CommissionerActionMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (CommissionerAction).
+func (m *CommissionerActionMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *CommissionerActionMutation) Fields() []string {
+	fields := make([]string, 0, 4)
+	if m.action_type != nil {
+		fields = append(fields, commissioneraction.FieldActionType)
+	}
+	if m.description != nil {
+		fields = append(fields, commissioneraction.FieldDescription)
+	}
+	if m.metadata != nil {
+		fields = append(fields, commissioneraction.FieldMetadata)
+	}
+	if m.created_at != nil {
+		fields = append(fields, commissioneraction.FieldCreatedAt)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *CommissionerActionMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case commissioneraction.FieldActionType:
+		return m.ActionType()
+	case commissioneraction.FieldDescription:
+		return m.Description()
+	case commissioneraction.FieldMetadata:
+		return m.Metadata()
+	case commissioneraction.FieldCreatedAt:
+		return m.CreatedAt()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *CommissionerActionMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case commissioneraction.FieldActionType:
+		return m.OldActionType(ctx)
+	case commissioneraction.FieldDescription:
+		return m.OldDescription(ctx)
+	case commissioneraction.FieldMetadata:
+		return m.OldMetadata(ctx)
+	case commissioneraction.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	}
+	return nil, fmt.Errorf("unknown CommissionerAction field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CommissionerActionMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case commissioneraction.FieldActionType:
+		v, ok := value.(commissioneraction.ActionType)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetActionType(v)
+		return nil
+	case commissioneraction.FieldDescription:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetDescription(v)
+		return nil
+	case commissioneraction.FieldMetadata:
+		v, ok := value.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetMetadata(v)
+		return nil
+	case commissioneraction.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	}
+	return fmt.Errorf("unknown CommissionerAction field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *CommissionerActionMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *CommissionerActionMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *CommissionerActionMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown CommissionerAction numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *CommissionerActionMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(commissioneraction.FieldMetadata) {
+		fields = append(fields, commissioneraction.FieldMetadata)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *CommissionerActionMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *CommissionerActionMutation) ClearField(name string) error {
+	switch name {
+	case commissioneraction.FieldMetadata:
+		m.ClearMetadata()
+		return nil
+	}
+	return fmt.Errorf("unknown CommissionerAction nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *CommissionerActionMutation) ResetField(name string) error {
+	switch name {
+	case commissioneraction.FieldActionType:
+		m.ResetActionType()
+		return nil
+	case commissioneraction.FieldDescription:
+		m.ResetDescription()
+		return nil
+	case commissioneraction.FieldMetadata:
+		m.ResetMetadata()
+		return nil
+	case commissioneraction.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	}
+	return fmt.Errorf("unknown CommissionerAction field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *CommissionerActionMutation) AddedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.league != nil {
+		edges = append(edges, commissioneraction.EdgeLeague)
+	}
+	if m.commissioner != nil {
+		edges = append(edges, commissioneraction.EdgeCommissioner)
+	}
+	if m.affected_user != nil {
+		edges = append(edges, commissioneraction.EdgeAffectedUser)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *CommissionerActionMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case commissioneraction.EdgeLeague:
+		if id := m.league; id != nil {
+			return []ent.Value{*id}
+		}
+	case commissioneraction.EdgeCommissioner:
+		if id := m.commissioner; id != nil {
+			return []ent.Value{*id}
+		}
+	case commissioneraction.EdgeAffectedUser:
+		if id := m.affected_user; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *CommissionerActionMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 3)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *CommissionerActionMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *CommissionerActionMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 3)
+	if m.clearedleague {
+		edges = append(edges, commissioneraction.EdgeLeague)
+	}
+	if m.clearedcommissioner {
+		edges = append(edges, commissioneraction.EdgeCommissioner)
+	}
+	if m.clearedaffected_user {
+		edges = append(edges, commissioneraction.EdgeAffectedUser)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *CommissionerActionMutation) EdgeCleared(name string) bool {
+	switch name {
+	case commissioneraction.EdgeLeague:
+		return m.clearedleague
+	case commissioneraction.EdgeCommissioner:
+		return m.clearedcommissioner
+	case commissioneraction.EdgeAffectedUser:
+		return m.clearedaffected_user
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *CommissionerActionMutation) ClearEdge(name string) error {
+	switch name {
+	case commissioneraction.EdgeLeague:
+		m.ClearLeague()
+		return nil
+	case commissioneraction.EdgeCommissioner:
+		m.ClearCommissioner()
+		return nil
+	case commissioneraction.EdgeAffectedUser:
+		m.ClearAffectedUser()
+		return nil
+	}
+	return fmt.Errorf("unknown CommissionerAction unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *CommissionerActionMutation) ResetEdge(name string) error {
+	switch name {
+	case commissioneraction.EdgeLeague:
+		m.ResetLeague()
+		return nil
+	case commissioneraction.EdgeCommissioner:
+		m.ResetCommissioner()
+		return nil
+	case commissioneraction.EdgeAffectedUser:
+		m.ResetAffectedUser()
+		return nil
+	}
+	return fmt.Errorf("unknown CommissionerAction edge %s", name)
+}
 
 // GolferMutation represents an operation that mutates the Golfer nodes in the graph.
 type GolferMutation struct {
@@ -1352,27 +2055,30 @@ func (m *GolferMutation) ResetEdge(name string) error {
 // LeagueMutation represents an operation that mutates the League nodes in the graph.
 type LeagueMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *uuid.UUID
-	created_at         *time.Time
-	updated_at         *time.Time
-	name               *string
-	code               *string
-	season_year        *int
-	addseason_year     *int
-	clearedFields      map[string]struct{}
-	created_by         *uuid.UUID
-	clearedcreated_by  bool
-	memberships        map[uuid.UUID]struct{}
-	removedmemberships map[uuid.UUID]struct{}
-	clearedmemberships bool
-	picks              map[uuid.UUID]struct{}
-	removedpicks       map[uuid.UUID]struct{}
-	clearedpicks       bool
-	done               bool
-	oldValue           func(context.Context) (*League, error)
-	predicates         []predicate.League
+	op                          Op
+	typ                         string
+	id                          *uuid.UUID
+	created_at                  *time.Time
+	updated_at                  *time.Time
+	name                        *string
+	code                        *string
+	season_year                 *int
+	addseason_year              *int
+	clearedFields               map[string]struct{}
+	created_by                  *uuid.UUID
+	clearedcreated_by           bool
+	memberships                 map[uuid.UUID]struct{}
+	removedmemberships          map[uuid.UUID]struct{}
+	clearedmemberships          bool
+	picks                       map[uuid.UUID]struct{}
+	removedpicks                map[uuid.UUID]struct{}
+	clearedpicks                bool
+	commissioner_actions        map[uuid.UUID]struct{}
+	removedcommissioner_actions map[uuid.UUID]struct{}
+	clearedcommissioner_actions bool
+	done                        bool
+	oldValue                    func(context.Context) (*League, error)
+	predicates                  []predicate.League
 }
 
 var _ ent.Mutation = (*LeagueMutation)(nil)
@@ -1826,6 +2532,60 @@ func (m *LeagueMutation) ResetPicks() {
 	m.removedpicks = nil
 }
 
+// AddCommissionerActionIDs adds the "commissioner_actions" edge to the CommissionerAction entity by ids.
+func (m *LeagueMutation) AddCommissionerActionIDs(ids ...uuid.UUID) {
+	if m.commissioner_actions == nil {
+		m.commissioner_actions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.commissioner_actions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCommissionerActions clears the "commissioner_actions" edge to the CommissionerAction entity.
+func (m *LeagueMutation) ClearCommissionerActions() {
+	m.clearedcommissioner_actions = true
+}
+
+// CommissionerActionsCleared reports if the "commissioner_actions" edge to the CommissionerAction entity was cleared.
+func (m *LeagueMutation) CommissionerActionsCleared() bool {
+	return m.clearedcommissioner_actions
+}
+
+// RemoveCommissionerActionIDs removes the "commissioner_actions" edge to the CommissionerAction entity by IDs.
+func (m *LeagueMutation) RemoveCommissionerActionIDs(ids ...uuid.UUID) {
+	if m.removedcommissioner_actions == nil {
+		m.removedcommissioner_actions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.commissioner_actions, ids[i])
+		m.removedcommissioner_actions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCommissionerActions returns the removed IDs of the "commissioner_actions" edge to the CommissionerAction entity.
+func (m *LeagueMutation) RemovedCommissionerActionsIDs() (ids []uuid.UUID) {
+	for id := range m.removedcommissioner_actions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CommissionerActionsIDs returns the "commissioner_actions" edge IDs in the mutation.
+func (m *LeagueMutation) CommissionerActionsIDs() (ids []uuid.UUID) {
+	for id := range m.commissioner_actions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCommissionerActions resets all changes to the "commissioner_actions" edge.
+func (m *LeagueMutation) ResetCommissionerActions() {
+	m.commissioner_actions = nil
+	m.clearedcommissioner_actions = false
+	m.removedcommissioner_actions = nil
+}
+
 // Where appends a list predicates to the LeagueMutation builder.
 func (m *LeagueMutation) Where(ps ...predicate.League) {
 	m.predicates = append(m.predicates, ps...)
@@ -2042,7 +2802,7 @@ func (m *LeagueMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *LeagueMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.created_by != nil {
 		edges = append(edges, league.EdgeCreatedBy)
 	}
@@ -2051,6 +2811,9 @@ func (m *LeagueMutation) AddedEdges() []string {
 	}
 	if m.picks != nil {
 		edges = append(edges, league.EdgePicks)
+	}
+	if m.commissioner_actions != nil {
+		edges = append(edges, league.EdgeCommissionerActions)
 	}
 	return edges
 }
@@ -2075,18 +2838,27 @@ func (m *LeagueMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case league.EdgeCommissionerActions:
+		ids := make([]ent.Value, 0, len(m.commissioner_actions))
+		for id := range m.commissioner_actions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *LeagueMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedmemberships != nil {
 		edges = append(edges, league.EdgeMemberships)
 	}
 	if m.removedpicks != nil {
 		edges = append(edges, league.EdgePicks)
+	}
+	if m.removedcommissioner_actions != nil {
+		edges = append(edges, league.EdgeCommissionerActions)
 	}
 	return edges
 }
@@ -2107,13 +2879,19 @@ func (m *LeagueMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case league.EdgeCommissionerActions:
+		ids := make([]ent.Value, 0, len(m.removedcommissioner_actions))
+		for id := range m.removedcommissioner_actions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *LeagueMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedcreated_by {
 		edges = append(edges, league.EdgeCreatedBy)
 	}
@@ -2122,6 +2900,9 @@ func (m *LeagueMutation) ClearedEdges() []string {
 	}
 	if m.clearedpicks {
 		edges = append(edges, league.EdgePicks)
+	}
+	if m.clearedcommissioner_actions {
+		edges = append(edges, league.EdgeCommissionerActions)
 	}
 	return edges
 }
@@ -2136,6 +2917,8 @@ func (m *LeagueMutation) EdgeCleared(name string) bool {
 		return m.clearedmemberships
 	case league.EdgePicks:
 		return m.clearedpicks
+	case league.EdgeCommissionerActions:
+		return m.clearedcommissioner_actions
 	}
 	return false
 }
@@ -2163,6 +2946,9 @@ func (m *LeagueMutation) ResetEdge(name string) error {
 		return nil
 	case league.EdgePicks:
 		m.ResetPicks()
+		return nil
+	case league.EdgeCommissionerActions:
+		m.ResetCommissionerActions()
 		return nil
 	}
 	return fmt.Errorf("unknown League edge %s", name)
@@ -5906,24 +6692,30 @@ func (m *TournamentEntryMutation) ResetEdge(name string) error {
 // UserMutation represents an operation that mutates the User nodes in the graph.
 type UserMutation struct {
 	config
-	op                        Op
-	typ                       string
-	id                        *uuid.UUID
-	created_at                *time.Time
-	updated_at                *time.Time
-	workos_id                 *string
-	email                     *string
-	display_name              *string
-	clearedFields             map[string]struct{}
-	picks                     map[uuid.UUID]struct{}
-	removedpicks              map[uuid.UUID]struct{}
-	clearedpicks              bool
-	league_memberships        map[uuid.UUID]struct{}
-	removedleague_memberships map[uuid.UUID]struct{}
-	clearedleague_memberships bool
-	done                      bool
-	oldValue                  func(context.Context) (*User, error)
-	predicates                []predicate.User
+	op                          Op
+	typ                         string
+	id                          *uuid.UUID
+	created_at                  *time.Time
+	updated_at                  *time.Time
+	workos_id                   *string
+	email                       *string
+	display_name                *string
+	clearedFields               map[string]struct{}
+	picks                       map[uuid.UUID]struct{}
+	removedpicks                map[uuid.UUID]struct{}
+	clearedpicks                bool
+	league_memberships          map[uuid.UUID]struct{}
+	removedleague_memberships   map[uuid.UUID]struct{}
+	clearedleague_memberships   bool
+	commissioner_actions        map[uuid.UUID]struct{}
+	removedcommissioner_actions map[uuid.UUID]struct{}
+	clearedcommissioner_actions bool
+	affected_actions            map[uuid.UUID]struct{}
+	removedaffected_actions     map[uuid.UUID]struct{}
+	clearedaffected_actions     bool
+	done                        bool
+	oldValue                    func(context.Context) (*User, error)
+	predicates                  []predicate.User
 }
 
 var _ ent.Mutation = (*UserMutation)(nil)
@@ -6331,6 +7123,114 @@ func (m *UserMutation) ResetLeagueMemberships() {
 	m.removedleague_memberships = nil
 }
 
+// AddCommissionerActionIDs adds the "commissioner_actions" edge to the CommissionerAction entity by ids.
+func (m *UserMutation) AddCommissionerActionIDs(ids ...uuid.UUID) {
+	if m.commissioner_actions == nil {
+		m.commissioner_actions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.commissioner_actions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearCommissionerActions clears the "commissioner_actions" edge to the CommissionerAction entity.
+func (m *UserMutation) ClearCommissionerActions() {
+	m.clearedcommissioner_actions = true
+}
+
+// CommissionerActionsCleared reports if the "commissioner_actions" edge to the CommissionerAction entity was cleared.
+func (m *UserMutation) CommissionerActionsCleared() bool {
+	return m.clearedcommissioner_actions
+}
+
+// RemoveCommissionerActionIDs removes the "commissioner_actions" edge to the CommissionerAction entity by IDs.
+func (m *UserMutation) RemoveCommissionerActionIDs(ids ...uuid.UUID) {
+	if m.removedcommissioner_actions == nil {
+		m.removedcommissioner_actions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.commissioner_actions, ids[i])
+		m.removedcommissioner_actions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedCommissionerActions returns the removed IDs of the "commissioner_actions" edge to the CommissionerAction entity.
+func (m *UserMutation) RemovedCommissionerActionsIDs() (ids []uuid.UUID) {
+	for id := range m.removedcommissioner_actions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// CommissionerActionsIDs returns the "commissioner_actions" edge IDs in the mutation.
+func (m *UserMutation) CommissionerActionsIDs() (ids []uuid.UUID) {
+	for id := range m.commissioner_actions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetCommissionerActions resets all changes to the "commissioner_actions" edge.
+func (m *UserMutation) ResetCommissionerActions() {
+	m.commissioner_actions = nil
+	m.clearedcommissioner_actions = false
+	m.removedcommissioner_actions = nil
+}
+
+// AddAffectedActionIDs adds the "affected_actions" edge to the CommissionerAction entity by ids.
+func (m *UserMutation) AddAffectedActionIDs(ids ...uuid.UUID) {
+	if m.affected_actions == nil {
+		m.affected_actions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.affected_actions[ids[i]] = struct{}{}
+	}
+}
+
+// ClearAffectedActions clears the "affected_actions" edge to the CommissionerAction entity.
+func (m *UserMutation) ClearAffectedActions() {
+	m.clearedaffected_actions = true
+}
+
+// AffectedActionsCleared reports if the "affected_actions" edge to the CommissionerAction entity was cleared.
+func (m *UserMutation) AffectedActionsCleared() bool {
+	return m.clearedaffected_actions
+}
+
+// RemoveAffectedActionIDs removes the "affected_actions" edge to the CommissionerAction entity by IDs.
+func (m *UserMutation) RemoveAffectedActionIDs(ids ...uuid.UUID) {
+	if m.removedaffected_actions == nil {
+		m.removedaffected_actions = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.affected_actions, ids[i])
+		m.removedaffected_actions[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedAffectedActions returns the removed IDs of the "affected_actions" edge to the CommissionerAction entity.
+func (m *UserMutation) RemovedAffectedActionsIDs() (ids []uuid.UUID) {
+	for id := range m.removedaffected_actions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// AffectedActionsIDs returns the "affected_actions" edge IDs in the mutation.
+func (m *UserMutation) AffectedActionsIDs() (ids []uuid.UUID) {
+	for id := range m.affected_actions {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetAffectedActions resets all changes to the "affected_actions" edge.
+func (m *UserMutation) ResetAffectedActions() {
+	m.affected_actions = nil
+	m.clearedaffected_actions = false
+	m.removedaffected_actions = nil
+}
+
 // Where appends a list predicates to the UserMutation builder.
 func (m *UserMutation) Where(ps ...predicate.User) {
 	m.predicates = append(m.predicates, ps...)
@@ -6541,12 +7441,18 @@ func (m *UserMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *UserMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 4)
 	if m.picks != nil {
 		edges = append(edges, user.EdgePicks)
 	}
 	if m.league_memberships != nil {
 		edges = append(edges, user.EdgeLeagueMemberships)
+	}
+	if m.commissioner_actions != nil {
+		edges = append(edges, user.EdgeCommissionerActions)
+	}
+	if m.affected_actions != nil {
+		edges = append(edges, user.EdgeAffectedActions)
 	}
 	return edges
 }
@@ -6567,18 +7473,36 @@ func (m *UserMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeCommissionerActions:
+		ids := make([]ent.Value, 0, len(m.commissioner_actions))
+		for id := range m.commissioner_actions {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeAffectedActions:
+		ids := make([]ent.Value, 0, len(m.affected_actions))
+		for id := range m.affected_actions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *UserMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 4)
 	if m.removedpicks != nil {
 		edges = append(edges, user.EdgePicks)
 	}
 	if m.removedleague_memberships != nil {
 		edges = append(edges, user.EdgeLeagueMemberships)
+	}
+	if m.removedcommissioner_actions != nil {
+		edges = append(edges, user.EdgeCommissionerActions)
+	}
+	if m.removedaffected_actions != nil {
+		edges = append(edges, user.EdgeAffectedActions)
 	}
 	return edges
 }
@@ -6599,18 +7523,36 @@ func (m *UserMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case user.EdgeCommissionerActions:
+		ids := make([]ent.Value, 0, len(m.removedcommissioner_actions))
+		for id := range m.removedcommissioner_actions {
+			ids = append(ids, id)
+		}
+		return ids
+	case user.EdgeAffectedActions:
+		ids := make([]ent.Value, 0, len(m.removedaffected_actions))
+		for id := range m.removedaffected_actions {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *UserMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 4)
 	if m.clearedpicks {
 		edges = append(edges, user.EdgePicks)
 	}
 	if m.clearedleague_memberships {
 		edges = append(edges, user.EdgeLeagueMemberships)
+	}
+	if m.clearedcommissioner_actions {
+		edges = append(edges, user.EdgeCommissionerActions)
+	}
+	if m.clearedaffected_actions {
+		edges = append(edges, user.EdgeAffectedActions)
 	}
 	return edges
 }
@@ -6623,6 +7565,10 @@ func (m *UserMutation) EdgeCleared(name string) bool {
 		return m.clearedpicks
 	case user.EdgeLeagueMemberships:
 		return m.clearedleague_memberships
+	case user.EdgeCommissionerActions:
+		return m.clearedcommissioner_actions
+	case user.EdgeAffectedActions:
+		return m.clearedaffected_actions
 	}
 	return false
 }
@@ -6644,6 +7590,12 @@ func (m *UserMutation) ResetEdge(name string) error {
 		return nil
 	case user.EdgeLeagueMemberships:
 		m.ResetLeagueMemberships()
+		return nil
+	case user.EdgeCommissionerActions:
+		m.ResetCommissionerActions()
+		return nil
+	case user.EdgeAffectedActions:
+		m.ResetAffectedActions()
 		return nil
 	}
 	return fmt.Errorf("unknown User edge %s", name)

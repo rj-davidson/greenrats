@@ -40,9 +40,13 @@ type UserEdges struct {
 	Picks []*Pick `json:"picks,omitempty"`
 	// LeagueMemberships holds the value of the league_memberships edge.
 	LeagueMemberships []*LeagueMembership `json:"league_memberships,omitempty"`
+	// CommissionerActions holds the value of the commissioner_actions edge.
+	CommissionerActions []*CommissionerAction `json:"commissioner_actions,omitempty"`
+	// AffectedActions holds the value of the affected_actions edge.
+	AffectedActions []*CommissionerAction `json:"affected_actions,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [4]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -61,6 +65,24 @@ func (e UserEdges) LeagueMembershipsOrErr() ([]*LeagueMembership, error) {
 		return e.LeagueMemberships, nil
 	}
 	return nil, &NotLoadedError{edge: "league_memberships"}
+}
+
+// CommissionerActionsOrErr returns the CommissionerActions value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) CommissionerActionsOrErr() ([]*CommissionerAction, error) {
+	if e.loadedTypes[2] {
+		return e.CommissionerActions, nil
+	}
+	return nil, &NotLoadedError{edge: "commissioner_actions"}
+}
+
+// AffectedActionsOrErr returns the AffectedActions value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) AffectedActionsOrErr() ([]*CommissionerAction, error) {
+	if e.loadedTypes[3] {
+		return e.AffectedActions, nil
+	}
+	return nil, &NotLoadedError{edge: "affected_actions"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -147,6 +169,16 @@ func (_m *User) QueryPicks() *PickQuery {
 // QueryLeagueMemberships queries the "league_memberships" edge of the User entity.
 func (_m *User) QueryLeagueMemberships() *LeagueMembershipQuery {
 	return NewUserClient(_m.config).QueryLeagueMemberships(_m)
+}
+
+// QueryCommissionerActions queries the "commissioner_actions" edge of the User entity.
+func (_m *User) QueryCommissionerActions() *CommissionerActionQuery {
+	return NewUserClient(_m.config).QueryCommissionerActions(_m)
+}
+
+// QueryAffectedActions queries the "affected_actions" edge of the User entity.
+func (_m *User) QueryAffectedActions() *CommissionerActionQuery {
+	return NewUserClient(_m.config).QueryAffectedActions(_m)
 }
 
 // Update returns a builder for updating this User.

@@ -9,6 +9,18 @@ import (
 	"github.com/rj-davidson/greenrats/ent"
 )
 
+// The CommissionerActionFunc type is an adapter to allow the use of ordinary
+// function as CommissionerAction mutator.
+type CommissionerActionFunc func(context.Context, *ent.CommissionerActionMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CommissionerActionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CommissionerActionMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CommissionerActionMutation", m)
+}
+
 // The GolferFunc type is an adapter to allow the use of ordinary
 // function as Golfer mutator.
 type GolferFunc func(context.Context, *ent.GolferMutation) (ent.Value, error)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
@@ -20,6 +21,23 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	commissioneractionMixin := schema.CommissionerAction{}.Mixin()
+	commissioneractionMixinFields0 := commissioneractionMixin[0].Fields()
+	_ = commissioneractionMixinFields0
+	commissioneractionFields := schema.CommissionerAction{}.Fields()
+	_ = commissioneractionFields
+	// commissioneractionDescDescription is the schema descriptor for description field.
+	commissioneractionDescDescription := commissioneractionFields[1].Descriptor()
+	// commissioneraction.DescriptionValidator is a validator for the "description" field. It is called by the builders before save.
+	commissioneraction.DescriptionValidator = commissioneractionDescDescription.Validators[0].(func(string) error)
+	// commissioneractionDescCreatedAt is the schema descriptor for created_at field.
+	commissioneractionDescCreatedAt := commissioneractionFields[3].Descriptor()
+	// commissioneraction.DefaultCreatedAt holds the default value on creation for the created_at field.
+	commissioneraction.DefaultCreatedAt = commissioneractionDescCreatedAt.Default.(func() time.Time)
+	// commissioneractionDescID is the schema descriptor for id field.
+	commissioneractionDescID := commissioneractionMixinFields0[0].Descriptor()
+	// commissioneraction.DefaultID holds the default value on creation for the id field.
+	commissioneraction.DefaultID = commissioneractionDescID.Default.(func() uuid.UUID)
 	golferMixin := schema.Golfer{}.Mixin()
 	golferMixinFields0 := golferMixin[0].Fields()
 	_ = golferMixinFields0

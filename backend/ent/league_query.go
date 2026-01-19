@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
@@ -23,14 +24,15 @@ import (
 // LeagueQuery is the builder for querying League entities.
 type LeagueQuery struct {
 	config
-	ctx             *QueryContext
-	order           []league.OrderOption
-	inters          []Interceptor
-	predicates      []predicate.League
-	withCreatedBy   *UserQuery
-	withMemberships *LeagueMembershipQuery
-	withPicks       *PickQuery
-	withFKs         bool
+	ctx                     *QueryContext
+	order                   []league.OrderOption
+	inters                  []Interceptor
+	predicates              []predicate.League
+	withCreatedBy           *UserQuery
+	withMemberships         *LeagueMembershipQuery
+	withPicks               *PickQuery
+	withCommissionerActions *CommissionerActionQuery
+	withFKs                 bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -126,6 +128,28 @@ func (_q *LeagueQuery) QueryPicks() *PickQuery {
 			sqlgraph.From(league.Table, league.FieldID, selector),
 			sqlgraph.To(pick.Table, pick.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, league.PicksTable, league.PicksColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCommissionerActions chains the current query on the "commissioner_actions" edge.
+func (_q *LeagueQuery) QueryCommissionerActions() *CommissionerActionQuery {
+	query := (&CommissionerActionClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(league.Table, league.FieldID, selector),
+			sqlgraph.To(commissioneraction.Table, commissioneraction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, league.CommissionerActionsTable, league.CommissionerActionsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -320,14 +344,15 @@ func (_q *LeagueQuery) Clone() *LeagueQuery {
 		return nil
 	}
 	return &LeagueQuery{
-		config:          _q.config,
-		ctx:             _q.ctx.Clone(),
-		order:           append([]league.OrderOption{}, _q.order...),
-		inters:          append([]Interceptor{}, _q.inters...),
-		predicates:      append([]predicate.League{}, _q.predicates...),
-		withCreatedBy:   _q.withCreatedBy.Clone(),
-		withMemberships: _q.withMemberships.Clone(),
-		withPicks:       _q.withPicks.Clone(),
+		config:                  _q.config,
+		ctx:                     _q.ctx.Clone(),
+		order:                   append([]league.OrderOption{}, _q.order...),
+		inters:                  append([]Interceptor{}, _q.inters...),
+		predicates:              append([]predicate.League{}, _q.predicates...),
+		withCreatedBy:           _q.withCreatedBy.Clone(),
+		withMemberships:         _q.withMemberships.Clone(),
+		withPicks:               _q.withPicks.Clone(),
+		withCommissionerActions: _q.withCommissionerActions.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -364,6 +389,17 @@ func (_q *LeagueQuery) WithPicks(opts ...func(*PickQuery)) *LeagueQuery {
 		opt(query)
 	}
 	_q.withPicks = query
+	return _q
+}
+
+// WithCommissionerActions tells the query-builder to eager-load the nodes that are connected to
+// the "commissioner_actions" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeagueQuery) WithCommissionerActions(opts ...func(*CommissionerActionQuery)) *LeagueQuery {
+	query := (&CommissionerActionClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withCommissionerActions = query
 	return _q
 }
 
@@ -446,10 +482,11 @@ func (_q *LeagueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Leagu
 		nodes       = []*League{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withCreatedBy != nil,
 			_q.withMemberships != nil,
 			_q.withPicks != nil,
+			_q.withCommissionerActions != nil,
 		}
 	)
 	if _q.withCreatedBy != nil {
@@ -493,6 +530,15 @@ func (_q *LeagueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Leagu
 		if err := _q.loadPicks(ctx, query, nodes,
 			func(n *League) { n.Edges.Picks = []*Pick{} },
 			func(n *League, e *Pick) { n.Edges.Picks = append(n.Edges.Picks, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withCommissionerActions; query != nil {
+		if err := _q.loadCommissionerActions(ctx, query, nodes,
+			func(n *League) { n.Edges.CommissionerActions = []*CommissionerAction{} },
+			func(n *League, e *CommissionerAction) {
+				n.Edges.CommissionerActions = append(n.Edges.CommissionerActions, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -588,6 +634,37 @@ func (_q *LeagueQuery) loadPicks(ctx context.Context, query *PickQuery, nodes []
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "league_picks" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeagueQuery) loadCommissionerActions(ctx context.Context, query *CommissionerActionQuery, nodes []*League, init func(*League), assign func(*League, *CommissionerAction)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*League)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.CommissionerAction(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(league.CommissionerActionsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.league_commissioner_actions
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "league_commissioner_actions" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "league_commissioner_actions" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

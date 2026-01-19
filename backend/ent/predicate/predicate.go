@@ -6,6 +6,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// CommissionerAction is the predicate function for commissioneraction builders.
+type CommissionerAction func(*sql.Selector)
+
 // Golfer is the predicate function for golfer builders.
 type Golfer func(*sql.Selector)
 

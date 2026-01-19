@@ -16,6 +16,7 @@ import (
 	"entgo.io/ent/dialect"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
@@ -30,6 +31,8 @@ type Client struct {
 	config
 	// Schema is the client for creating, migrating and dropping schema.
 	Schema *migrate.Schema
+	// CommissionerAction is the client for interacting with the CommissionerAction builders.
+	CommissionerAction *CommissionerActionClient
 	// Golfer is the client for interacting with the Golfer builders.
 	Golfer *GolferClient
 	// League is the client for interacting with the League builders.
@@ -55,6 +58,7 @@ func NewClient(opts ...Option) *Client {
 
 func (c *Client) init() {
 	c.Schema = migrate.NewSchema(c.driver)
+	c.CommissionerAction = NewCommissionerActionClient(c.config)
 	c.Golfer = NewGolferClient(c.config)
 	c.League = NewLeagueClient(c.config)
 	c.LeagueMembership = NewLeagueMembershipClient(c.config)
@@ -152,15 +156,16 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	cfg := c.config
 	cfg.driver = tx
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		Golfer:           NewGolferClient(cfg),
-		League:           NewLeagueClient(cfg),
-		LeagueMembership: NewLeagueMembershipClient(cfg),
-		Pick:             NewPickClient(cfg),
-		Tournament:       NewTournamentClient(cfg),
-		TournamentEntry:  NewTournamentEntryClient(cfg),
-		User:             NewUserClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		CommissionerAction: NewCommissionerActionClient(cfg),
+		Golfer:             NewGolferClient(cfg),
+		League:             NewLeagueClient(cfg),
+		LeagueMembership:   NewLeagueMembershipClient(cfg),
+		Pick:               NewPickClient(cfg),
+		Tournament:         NewTournamentClient(cfg),
+		TournamentEntry:    NewTournamentEntryClient(cfg),
+		User:               NewUserClient(cfg),
 	}, nil
 }
 
@@ -178,22 +183,23 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 	cfg := c.config
 	cfg.driver = &txDriver{tx: tx, drv: c.driver}
 	return &Tx{
-		ctx:              ctx,
-		config:           cfg,
-		Golfer:           NewGolferClient(cfg),
-		League:           NewLeagueClient(cfg),
-		LeagueMembership: NewLeagueMembershipClient(cfg),
-		Pick:             NewPickClient(cfg),
-		Tournament:       NewTournamentClient(cfg),
-		TournamentEntry:  NewTournamentEntryClient(cfg),
-		User:             NewUserClient(cfg),
+		ctx:                ctx,
+		config:             cfg,
+		CommissionerAction: NewCommissionerActionClient(cfg),
+		Golfer:             NewGolferClient(cfg),
+		League:             NewLeagueClient(cfg),
+		LeagueMembership:   NewLeagueMembershipClient(cfg),
+		Pick:               NewPickClient(cfg),
+		Tournament:         NewTournamentClient(cfg),
+		TournamentEntry:    NewTournamentEntryClient(cfg),
+		User:               NewUserClient(cfg),
 	}, nil
 }
 
 // Debug returns a new debug-client. It's used to get verbose logging on specific operations.
 //
 //	client.Debug().
-//		Golfer.
+//		CommissionerAction.
 //		Query().
 //		Count(ctx)
 func (c *Client) Debug() *Client {
@@ -216,8 +222,8 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.Golfer, c.League, c.LeagueMembership, c.Pick, c.Tournament, c.TournamentEntry,
-		c.User,
+		c.CommissionerAction, c.Golfer, c.League, c.LeagueMembership, c.Pick,
+		c.Tournament, c.TournamentEntry, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -227,8 +233,8 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.Golfer, c.League, c.LeagueMembership, c.Pick, c.Tournament, c.TournamentEntry,
-		c.User,
+		c.CommissionerAction, c.Golfer, c.League, c.LeagueMembership, c.Pick,
+		c.Tournament, c.TournamentEntry, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -237,6 +243,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 // Mutate implements the ent.Mutator interface.
 func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 	switch m := m.(type) {
+	case *CommissionerActionMutation:
+		return c.CommissionerAction.mutate(ctx, m)
 	case *GolferMutation:
 		return c.Golfer.mutate(ctx, m)
 	case *LeagueMutation:
@@ -253,6 +261,187 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.User.mutate(ctx, m)
 	default:
 		return nil, fmt.Errorf("ent: unknown mutation type %T", m)
+	}
+}
+
+// CommissionerActionClient is a client for the CommissionerAction schema.
+type CommissionerActionClient struct {
+	config
+}
+
+// NewCommissionerActionClient returns a client for the CommissionerAction from the given config.
+func NewCommissionerActionClient(c config) *CommissionerActionClient {
+	return &CommissionerActionClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `commissioneraction.Hooks(f(g(h())))`.
+func (c *CommissionerActionClient) Use(hooks ...Hook) {
+	c.hooks.CommissionerAction = append(c.hooks.CommissionerAction, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `commissioneraction.Intercept(f(g(h())))`.
+func (c *CommissionerActionClient) Intercept(interceptors ...Interceptor) {
+	c.inters.CommissionerAction = append(c.inters.CommissionerAction, interceptors...)
+}
+
+// Create returns a builder for creating a CommissionerAction entity.
+func (c *CommissionerActionClient) Create() *CommissionerActionCreate {
+	mutation := newCommissionerActionMutation(c.config, OpCreate)
+	return &CommissionerActionCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of CommissionerAction entities.
+func (c *CommissionerActionClient) CreateBulk(builders ...*CommissionerActionCreate) *CommissionerActionCreateBulk {
+	return &CommissionerActionCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *CommissionerActionClient) MapCreateBulk(slice any, setFunc func(*CommissionerActionCreate, int)) *CommissionerActionCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &CommissionerActionCreateBulk{err: fmt.Errorf("calling to CommissionerActionClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*CommissionerActionCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &CommissionerActionCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for CommissionerAction.
+func (c *CommissionerActionClient) Update() *CommissionerActionUpdate {
+	mutation := newCommissionerActionMutation(c.config, OpUpdate)
+	return &CommissionerActionUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *CommissionerActionClient) UpdateOne(_m *CommissionerAction) *CommissionerActionUpdateOne {
+	mutation := newCommissionerActionMutation(c.config, OpUpdateOne, withCommissionerAction(_m))
+	return &CommissionerActionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *CommissionerActionClient) UpdateOneID(id uuid.UUID) *CommissionerActionUpdateOne {
+	mutation := newCommissionerActionMutation(c.config, OpUpdateOne, withCommissionerActionID(id))
+	return &CommissionerActionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for CommissionerAction.
+func (c *CommissionerActionClient) Delete() *CommissionerActionDelete {
+	mutation := newCommissionerActionMutation(c.config, OpDelete)
+	return &CommissionerActionDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *CommissionerActionClient) DeleteOne(_m *CommissionerAction) *CommissionerActionDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *CommissionerActionClient) DeleteOneID(id uuid.UUID) *CommissionerActionDeleteOne {
+	builder := c.Delete().Where(commissioneraction.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &CommissionerActionDeleteOne{builder}
+}
+
+// Query returns a query builder for CommissionerAction.
+func (c *CommissionerActionClient) Query() *CommissionerActionQuery {
+	return &CommissionerActionQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeCommissionerAction},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a CommissionerAction entity by its id.
+func (c *CommissionerActionClient) Get(ctx context.Context, id uuid.UUID) (*CommissionerAction, error) {
+	return c.Query().Where(commissioneraction.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *CommissionerActionClient) GetX(ctx context.Context, id uuid.UUID) *CommissionerAction {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryLeague queries the league edge of a CommissionerAction.
+func (c *CommissionerActionClient) QueryLeague(_m *CommissionerAction) *LeagueQuery {
+	query := (&LeagueClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commissioneraction.Table, commissioneraction.FieldID, id),
+			sqlgraph.To(league.Table, league.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, commissioneraction.LeagueTable, commissioneraction.LeagueColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCommissioner queries the commissioner edge of a CommissionerAction.
+func (c *CommissionerActionClient) QueryCommissioner(_m *CommissionerAction) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commissioneraction.Table, commissioneraction.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, commissioneraction.CommissionerTable, commissioneraction.CommissionerColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAffectedUser queries the affected_user edge of a CommissionerAction.
+func (c *CommissionerActionClient) QueryAffectedUser(_m *CommissionerAction) *UserQuery {
+	query := (&UserClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(commissioneraction.Table, commissioneraction.FieldID, id),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, commissioneraction.AffectedUserTable, commissioneraction.AffectedUserColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *CommissionerActionClient) Hooks() []Hook {
+	return c.hooks.CommissionerAction
+}
+
+// Interceptors returns the client interceptors.
+func (c *CommissionerActionClient) Interceptors() []Interceptor {
+	return c.inters.CommissionerAction
+}
+
+func (c *CommissionerActionClient) mutate(ctx context.Context, m *CommissionerActionMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&CommissionerActionCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&CommissionerActionUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&CommissionerActionUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&CommissionerActionDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown CommissionerAction mutation op: %q", m.Op())
 	}
 }
 
@@ -570,6 +759,22 @@ func (c *LeagueClient) QueryPicks(_m *League) *PickQuery {
 			sqlgraph.From(league.Table, league.FieldID, id),
 			sqlgraph.To(pick.Table, pick.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, league.PicksTable, league.PicksColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCommissionerActions queries the commissioner_actions edge of a League.
+func (c *LeagueClient) QueryCommissionerActions(_m *League) *CommissionerActionQuery {
+	query := (&CommissionerActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(league.Table, league.FieldID, id),
+			sqlgraph.To(commissioneraction.Table, commissioneraction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, league.CommissionerActionsTable, league.CommissionerActionsColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1434,6 +1639,38 @@ func (c *UserClient) QueryLeagueMemberships(_m *User) *LeagueMembershipQuery {
 	return query
 }
 
+// QueryCommissionerActions queries the commissioner_actions edge of a User.
+func (c *UserClient) QueryCommissionerActions(_m *User) *CommissionerActionQuery {
+	query := (&CommissionerActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(commissioneraction.Table, commissioneraction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.CommissionerActionsTable, user.CommissionerActionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryAffectedActions queries the affected_actions edge of a User.
+func (c *UserClient) QueryAffectedActions(_m *User) *CommissionerActionQuery {
+	query := (&CommissionerActionClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(user.Table, user.FieldID, id),
+			sqlgraph.To(commissioneraction.Table, commissioneraction.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, user.AffectedActionsTable, user.AffectedActionsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *UserClient) Hooks() []Hook {
 	return c.hooks.User
@@ -1462,11 +1699,11 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		Golfer, League, LeagueMembership, Pick, Tournament, TournamentEntry,
-		User []ent.Hook
+		CommissionerAction, Golfer, League, LeagueMembership, Pick, Tournament,
+		TournamentEntry, User []ent.Hook
 	}
 	inters struct {
-		Golfer, League, LeagueMembership, Pick, Tournament, TournamentEntry,
-		User []ent.Interceptor
+		CommissionerAction, Golfer, League, LeagueMembership, Pick, Tournament,
+		TournamentEntry, User []ent.Interceptor
 	}
 )

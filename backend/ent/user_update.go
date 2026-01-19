@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
@@ -115,6 +116,36 @@ func (_u *UserUpdate) AddLeagueMemberships(v ...*LeagueMembership) *UserUpdate {
 	return _u.AddLeagueMembershipIDs(ids...)
 }
 
+// AddCommissionerActionIDs adds the "commissioner_actions" edge to the CommissionerAction entity by IDs.
+func (_u *UserUpdate) AddCommissionerActionIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddCommissionerActionIDs(ids...)
+	return _u
+}
+
+// AddCommissionerActions adds the "commissioner_actions" edges to the CommissionerAction entity.
+func (_u *UserUpdate) AddCommissionerActions(v ...*CommissionerAction) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCommissionerActionIDs(ids...)
+}
+
+// AddAffectedActionIDs adds the "affected_actions" edge to the CommissionerAction entity by IDs.
+func (_u *UserUpdate) AddAffectedActionIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.AddAffectedActionIDs(ids...)
+	return _u
+}
+
+// AddAffectedActions adds the "affected_actions" edges to the CommissionerAction entity.
+func (_u *UserUpdate) AddAffectedActions(v ...*CommissionerAction) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAffectedActionIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -160,6 +191,48 @@ func (_u *UserUpdate) RemoveLeagueMemberships(v ...*LeagueMembership) *UserUpdat
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveLeagueMembershipIDs(ids...)
+}
+
+// ClearCommissionerActions clears all "commissioner_actions" edges to the CommissionerAction entity.
+func (_u *UserUpdate) ClearCommissionerActions() *UserUpdate {
+	_u.mutation.ClearCommissionerActions()
+	return _u
+}
+
+// RemoveCommissionerActionIDs removes the "commissioner_actions" edge to CommissionerAction entities by IDs.
+func (_u *UserUpdate) RemoveCommissionerActionIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveCommissionerActionIDs(ids...)
+	return _u
+}
+
+// RemoveCommissionerActions removes "commissioner_actions" edges to CommissionerAction entities.
+func (_u *UserUpdate) RemoveCommissionerActions(v ...*CommissionerAction) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCommissionerActionIDs(ids...)
+}
+
+// ClearAffectedActions clears all "affected_actions" edges to the CommissionerAction entity.
+func (_u *UserUpdate) ClearAffectedActions() *UserUpdate {
+	_u.mutation.ClearAffectedActions()
+	return _u
+}
+
+// RemoveAffectedActionIDs removes the "affected_actions" edge to CommissionerAction entities by IDs.
+func (_u *UserUpdate) RemoveAffectedActionIDs(ids ...uuid.UUID) *UserUpdate {
+	_u.mutation.RemoveAffectedActionIDs(ids...)
+	return _u
+}
+
+// RemoveAffectedActions removes "affected_actions" edges to CommissionerAction entities.
+func (_u *UserUpdate) RemoveAffectedActions(v ...*CommissionerAction) *UserUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAffectedActionIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -330,6 +403,96 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.CommissionerActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CommissionerActionsTable,
+			Columns: []string{user.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCommissionerActionsIDs(); len(nodes) > 0 && !_u.mutation.CommissionerActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CommissionerActionsTable,
+			Columns: []string{user.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CommissionerActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CommissionerActionsTable,
+			Columns: []string{user.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AffectedActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AffectedActionsTable,
+			Columns: []string{user.AffectedActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAffectedActionsIDs(); len(nodes) > 0 && !_u.mutation.AffectedActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AffectedActionsTable,
+			Columns: []string{user.AffectedActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AffectedActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AffectedActionsTable,
+			Columns: []string{user.AffectedActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -434,6 +597,36 @@ func (_u *UserUpdateOne) AddLeagueMemberships(v ...*LeagueMembership) *UserUpdat
 	return _u.AddLeagueMembershipIDs(ids...)
 }
 
+// AddCommissionerActionIDs adds the "commissioner_actions" edge to the CommissionerAction entity by IDs.
+func (_u *UserUpdateOne) AddCommissionerActionIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddCommissionerActionIDs(ids...)
+	return _u
+}
+
+// AddCommissionerActions adds the "commissioner_actions" edges to the CommissionerAction entity.
+func (_u *UserUpdateOne) AddCommissionerActions(v ...*CommissionerAction) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddCommissionerActionIDs(ids...)
+}
+
+// AddAffectedActionIDs adds the "affected_actions" edge to the CommissionerAction entity by IDs.
+func (_u *UserUpdateOne) AddAffectedActionIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.AddAffectedActionIDs(ids...)
+	return _u
+}
+
+// AddAffectedActions adds the "affected_actions" edges to the CommissionerAction entity.
+func (_u *UserUpdateOne) AddAffectedActions(v ...*CommissionerAction) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddAffectedActionIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -479,6 +672,48 @@ func (_u *UserUpdateOne) RemoveLeagueMemberships(v ...*LeagueMembership) *UserUp
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveLeagueMembershipIDs(ids...)
+}
+
+// ClearCommissionerActions clears all "commissioner_actions" edges to the CommissionerAction entity.
+func (_u *UserUpdateOne) ClearCommissionerActions() *UserUpdateOne {
+	_u.mutation.ClearCommissionerActions()
+	return _u
+}
+
+// RemoveCommissionerActionIDs removes the "commissioner_actions" edge to CommissionerAction entities by IDs.
+func (_u *UserUpdateOne) RemoveCommissionerActionIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveCommissionerActionIDs(ids...)
+	return _u
+}
+
+// RemoveCommissionerActions removes "commissioner_actions" edges to CommissionerAction entities.
+func (_u *UserUpdateOne) RemoveCommissionerActions(v ...*CommissionerAction) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveCommissionerActionIDs(ids...)
+}
+
+// ClearAffectedActions clears all "affected_actions" edges to the CommissionerAction entity.
+func (_u *UserUpdateOne) ClearAffectedActions() *UserUpdateOne {
+	_u.mutation.ClearAffectedActions()
+	return _u
+}
+
+// RemoveAffectedActionIDs removes the "affected_actions" edge to CommissionerAction entities by IDs.
+func (_u *UserUpdateOne) RemoveAffectedActionIDs(ids ...uuid.UUID) *UserUpdateOne {
+	_u.mutation.RemoveAffectedActionIDs(ids...)
+	return _u
+}
+
+// RemoveAffectedActions removes "affected_actions" edges to CommissionerAction entities.
+func (_u *UserUpdateOne) RemoveAffectedActions(v ...*CommissionerAction) *UserUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveAffectedActionIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -672,6 +907,96 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(leaguemembership.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CommissionerActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CommissionerActionsTable,
+			Columns: []string{user.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedCommissionerActionsIDs(); len(nodes) > 0 && !_u.mutation.CommissionerActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CommissionerActionsTable,
+			Columns: []string{user.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CommissionerActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.CommissionerActionsTable,
+			Columns: []string{user.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.AffectedActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AffectedActionsTable,
+			Columns: []string{user.AffectedActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedAffectedActionsIDs(); len(nodes) > 0 && !_u.mutation.AffectedActionsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AffectedActionsTable,
+			Columns: []string{user.AffectedActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.AffectedActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.AffectedActionsTable,
+			Columns: []string{user.AffectedActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

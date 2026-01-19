@@ -39,5 +39,7 @@ func (User) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("picks", Pick.Type),
 		edge.To("league_memberships", LeagueMembership.Type),
+		edge.To("commissioner_actions", CommissionerAction.Type),
+		edge.To("affected_actions", CommissionerAction.Type),
 	}
 }

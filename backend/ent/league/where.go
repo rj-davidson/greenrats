@@ -400,6 +400,29 @@ func HasPicksWith(preds ...predicate.Pick) predicate.League {
 	})
 }
 
+// HasCommissionerActions applies the HasEdge predicate on the "commissioner_actions" edge.
+func HasCommissionerActions() predicate.League {
+	return predicate.League(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, CommissionerActionsTable, CommissionerActionsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCommissionerActionsWith applies the HasEdge predicate on the "commissioner_actions" edge with a given conditions (other predicates).
+func HasCommissionerActionsWith(preds ...predicate.CommissionerAction) predicate.League {
+	return predicate.League(func(s *sql.Selector) {
+		step := newCommissionerActionsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.League) predicate.League {
 	return predicate.League(sql.AndPredicates(predicates...))

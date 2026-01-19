@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
@@ -123,6 +124,21 @@ func (_c *LeagueCreate) AddPicks(v ...*Pick) *LeagueCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddPickIDs(ids...)
+}
+
+// AddCommissionerActionIDs adds the "commissioner_actions" edge to the CommissionerAction entity by IDs.
+func (_c *LeagueCreate) AddCommissionerActionIDs(ids ...uuid.UUID) *LeagueCreate {
+	_c.mutation.AddCommissionerActionIDs(ids...)
+	return _c
+}
+
+// AddCommissionerActions adds the "commissioner_actions" edges to the CommissionerAction entity.
+func (_c *LeagueCreate) AddCommissionerActions(v ...*CommissionerAction) *LeagueCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddCommissionerActionIDs(ids...)
 }
 
 // Mutation returns the LeagueMutation object of the builder.
@@ -301,6 +317,22 @@ func (_c *LeagueCreate) createSpec() (*League, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(pick.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.CommissionerActionsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   league.CommissionerActionsTable,
+			Columns: []string{league.CommissionerActionsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(commissioneraction.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
