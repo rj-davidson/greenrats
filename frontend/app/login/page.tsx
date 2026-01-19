@@ -26,7 +26,7 @@ export default async function LoginPage() {
         <CardContent>
           <form action={signIn}>
             <Button type="submit" className="w-full" size="lg">
-              Sign in with WorkOS
+              Sign in
             </Button>
           </form>
         </CardContent>

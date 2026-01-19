@@ -13,6 +13,7 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/internal/config"
+	"github.com/rj-davidson/greenrats/internal/demo"
 	"github.com/rj-davidson/greenrats/internal/server"
 )
 
@@ -51,6 +52,12 @@ func run() error {
 	// Run auto-migration in development (use Atlas in production)
 	if cfg.IsDevelopment() {
 		if err := db.Schema.Create(context.Background()); err != nil {
+			return err
+		}
+	}
+
+	if cfg.IsDevelopment() {
+		if err := demo.EnsureDemoLeague(context.Background(), db); err != nil {
 			return err
 		}
 	}

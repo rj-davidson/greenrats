@@ -101,7 +101,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarContent>
         {(currentTournament || recentCompleted) && (
           <SidebarGroup>
-            <SidebarGroupLabel>Tournaments</SidebarGroupLabel>
+            <SidebarGroupLabel>Upcoming</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {currentTournament && (
