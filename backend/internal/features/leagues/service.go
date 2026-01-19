@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
+	"log"
 	"math/big"
 	"time"
 
@@ -187,10 +188,13 @@ func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*League, error) {
 		return nil, fmt.Errorf("failed to get league: %w", err)
 	}
 
-	memberCount, _ := s.db.LeagueMembership.
+	memberCount, err := s.db.LeagueMembership.
 		Query().
 		Where(leaguemembership.HasLeagueWith(league.IDEQ(id))).
 		Count(ctx)
+	if err != nil {
+		log.Printf("warning: failed to count members for league %s: %v", id, err)
+	}
 
 	return &League{
 		ID:             entLeague.ID,
@@ -215,10 +219,13 @@ func (s *Service) GetByIDWithRole(ctx context.Context, id, userID uuid.UUID) (*L
 		return nil, fmt.Errorf("failed to get league: %w", err)
 	}
 
-	memberCount, _ := s.db.LeagueMembership.
+	memberCount, err := s.db.LeagueMembership.
 		Query().
 		Where(leaguemembership.HasLeagueWith(league.IDEQ(id))).
 		Count(ctx)
+	if err != nil {
+		log.Printf("warning: failed to count members for league %s: %v", id, err)
+	}
 
 	l := &League{
 		ID:             entLeague.ID,
@@ -340,10 +347,13 @@ func (s *Service) RegenerateJoinCode(ctx context.Context, leagueID, commissioner
 		return nil, fmt.Errorf("failed to log action: %w", err)
 	}
 
-	memberCount, _ := s.db.LeagueMembership.
+	memberCount, err := s.db.LeagueMembership.
 		Query().
 		Where(leaguemembership.HasLeagueWith(league.IDEQ(leagueID))).
 		Count(ctx)
+	if err != nil {
+		log.Printf("warning: failed to count members for league %s: %v", leagueID, err)
+	}
 
 	return &League{
 		ID:             entLeague.ID,
@@ -395,10 +405,13 @@ func (s *Service) SetJoiningEnabled(ctx context.Context, leagueID, commissionerI
 		return nil, fmt.Errorf("failed to log action: %w", err)
 	}
 
-	memberCount, _ := s.db.LeagueMembership.
+	memberCount, err := s.db.LeagueMembership.
 		Query().
 		Where(leaguemembership.HasLeagueWith(league.IDEQ(leagueID))).
 		Count(ctx)
+	if err != nil {
+		log.Printf("warning: failed to count members for league %s: %v", leagueID, err)
+	}
 
 	return &League{
 		ID:             entLeague.ID,

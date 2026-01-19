@@ -52,6 +52,9 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 		var err error
 		jwksProvider, err = auth.NewJWKSProvider(cfg.WorkOSClientID)
 		if err != nil {
+			if cfg.IsProduction() {
+				log.Fatalf("Failed to initialize JWKS provider in production: %v", err)
+			}
 			log.Printf("Warning: failed to initialize JWKS provider: %v", err)
 			log.Printf("Auth will use SkipVerify mode (development only)")
 			authCfg.SkipVerify = true

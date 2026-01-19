@@ -51,7 +51,7 @@ func Load() (*Config, error) {
 	v.SetDefault("LIVE_GOLF_DATA_BASE_URL", "https://live-golf-data.p.rapidapi.com")
 	v.SetDefault("BALL_DONT_LIE_API_KEY", "")
 	v.SetDefault("BALL_DONT_LIE_BASE_URL", "https://api.balldontlie.io")
-	v.SetDefault("PGA_TOUR_API_KEY", "da2-gsrx5bibzbb4njvhl7t37wqyl4")
+	v.SetDefault("PGA_TOUR_API_KEY", "")
 	v.SetDefault("PGA_TOUR_BASE_URL", "https://orchestrator.pgatour.com/graphql")
 	v.SetDefault("SENTRY_DSN", "")
 	v.SetDefault("RESEND_API_KEY", "")

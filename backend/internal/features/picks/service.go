@@ -507,11 +507,13 @@ func (s *Service) OverridePick(ctx context.Context, params OverridePickParams) (
 	}
 
 	metadata := map[string]any{
-		"old_golfer_id":   pickEnt.Edges.Golfer.ID.String(),
-		"old_golfer_name": oldGolferName,
 		"new_golfer_id":   params.NewGolferID.String(),
 		"new_golfer_name": newGolferEnt.Name,
 		"pick_user_id":    pickUserID.String(),
+	}
+	if pickEnt.Edges.Golfer != nil {
+		metadata["old_golfer_id"] = pickEnt.Edges.Golfer.ID.String()
+		metadata["old_golfer_name"] = oldGolferName
 	}
 
 	_, err = s.db.CommissionerAction.

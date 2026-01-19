@@ -38,9 +38,6 @@ func (s *Server) setupRoutes() {
 	tournamentHandler := tournaments.NewHandler(tournamentService)
 	tournamentHandler.RegisterRoutesWithGroup(tournamentGroup)
 
-	// Golfer routes - public
-	// golferGroup := v1.Group("/golfers")
-
 	// League routes - requires auth and user provisioning
 	leagueGroup := v1.Group("/leagues",
 		auth.Middleware(*s.authConfig),

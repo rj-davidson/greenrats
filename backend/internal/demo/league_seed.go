@@ -78,7 +78,12 @@ func EnsureDemoLeague(ctx context.Context, db *ent.Client) error {
 	if err != nil {
 		return fmt.Errorf("failed to start demo league transaction: %w", err)
 	}
-	defer tx.Rollback()
+	committed := false
+	defer func() {
+		if !committed {
+			_ = tx.Rollback()
+		}
+	}()
 
 	owner, err := ensureDemoOwner(ctx, tx)
 	if err != nil {
@@ -161,6 +166,7 @@ func EnsureDemoLeague(ctx context.Context, db *ent.Client) error {
 	if err := tx.Commit(); err != nil {
 		return fmt.Errorf("failed to commit demo league: %w", err)
 	}
+	committed = true
 
 	log.Printf(
 		"Demo league seeded: league_id=%s picks=%d skipped_golfers=%d skipped_entries=%d",

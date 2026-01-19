@@ -88,8 +88,15 @@ func (s *Service) GetOrCreate(ctx context.Context, params GetOrCreateParams) (*G
 
 // GetByID returns a user by their database ID.
 func (s *Service) GetByID(ctx context.Context, id string) (*ent.User, error) {
-	// TODO: Implement
-	return nil, nil
+	uid, err := uuid.FromString(id)
+	if err != nil {
+		return nil, fmt.Errorf("invalid user ID: %w", err)
+	}
+	u, err := s.db.User.Get(ctx, uid)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+	return u, nil
 }
 
 // GetByWorkOSID returns a user by their WorkOS ID.
