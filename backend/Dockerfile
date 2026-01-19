@@ -24,15 +24,20 @@ FROM alpine:3.19
 
 WORKDIR /app
 
-# Install runtime dependencies
-RUN apk add --no-cache ca-certificates tzdata
+# Install runtime dependencies and Atlas CLI
+RUN apk add --no-cache ca-certificates tzdata curl \
+    && curl -sSf https://atlasgo.sh | sh
 
 # Copy binaries from builder
 COPY --from=builder /bin/api /app/api
 COPY --from=builder /bin/ingest /app/ingest
 
-# Copy migrations if needed
+# Copy migrations and Atlas config
 COPY --from=builder /app/migrations /app/migrations
+COPY --from=builder /app/atlas.hcl /app/atlas.hcl
 
-# Default to running the API
-CMD ["/app/api"]
+# Create entrypoint script that runs migrations then starts API
+RUN printf '#!/bin/sh\nset -e\natlas migrate apply --env production --url "$DATABASE_URL"\nexec /app/api\n' > /app/entrypoint.sh \
+    && chmod +x /app/entrypoint.sh
+
+CMD ["/app/entrypoint.sh"]
