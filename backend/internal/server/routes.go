@@ -5,6 +5,7 @@ import (
 
 	"github.com/rj-davidson/greenrats/internal/auth"
 	"github.com/rj-davidson/greenrats/internal/features/leagues"
+	"github.com/rj-davidson/greenrats/internal/features/picks"
 	"github.com/rj-davidson/greenrats/internal/features/tournaments"
 	"github.com/rj-davidson/greenrats/internal/features/users"
 )
@@ -49,10 +50,14 @@ func (s *Server) setupRoutes() {
 	leagueHandler.RegisterRoutesWithGroup(leagueGroup)
 
 	// Pick routes - requires auth and user provisioning
-	// pickGroup := v1.Group("/picks",
-	//     auth.Middleware(*s.authConfig),
-	//     auth.EnsureUserMiddleware(ensureUserCfg),
-	// )
+	pickService := picks.NewService(s.db)
+	pickHandler := picks.NewHandler(pickService)
+	pickHandler.RegisterRoutes(v1.Group("",
+		auth.Middleware(*s.authConfig),
+		auth.EnsureUserMiddleware(ensureUserCfg),
+	))
+	pickHandler.RegisterLeagueRoutes(leagueGroup)
+	pickHandler.RegisterTournamentRoutes(tournamentGroup)
 
 	// User routes - requires auth and user provisioning
 	userGroup := v1.Group("/users",

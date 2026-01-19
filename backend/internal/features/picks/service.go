@@ -118,7 +118,6 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*Pick, error
 			pick.HasUserWith(user.IDEQ(params.UserID)),
 			pick.HasGolferWith(golfer.IDEQ(params.GolferID)),
 			pick.HasLeagueWith(league.IDEQ(params.LeagueID)),
-			pick.SeasonYearEQ(tournamentEnt.SeasonYear),
 		).
 		Exist(ctx)
 	if err != nil {
@@ -324,14 +323,14 @@ func (s *Service) getPickWindowStatus(t *ent.Tournament) PickWindowStatus {
 }
 
 func (s *Service) GetAvailableGolfers(ctx context.Context, userID, leagueID, tournamentID uuid.UUID) (*AvailableGolfersResponse, error) {
-	tournamentEnt, err := s.db.Tournament.Query().
+	tournamentExists, err := s.db.Tournament.Query().
 		Where(tournament.IDEQ(tournamentID)).
-		Only(ctx)
+		Exist(ctx)
 	if err != nil {
-		if ent.IsNotFound(err) {
-			return nil, ErrTournamentNotFound
-		}
-		return nil, fmt.Errorf("failed to get tournament: %w", err)
+		return nil, fmt.Errorf("failed to check tournament: %w", err)
+	}
+	if !tournamentExists {
+		return nil, ErrTournamentNotFound
 	}
 
 	entries, err := s.db.TournamentEntry.Query().
@@ -347,7 +346,6 @@ func (s *Service) GetAvailableGolfers(ctx context.Context, userID, leagueID, tou
 		Where(
 			pick.HasUserWith(user.IDEQ(userID)),
 			pick.HasLeagueWith(league.IDEQ(leagueID)),
-			pick.SeasonYearEQ(tournamentEnt.SeasonYear),
 		).
 		WithGolfer().
 		All(ctx)
