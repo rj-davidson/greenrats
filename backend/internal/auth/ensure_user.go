@@ -28,7 +28,10 @@ func EnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 
 		email := GetUserEmail(c)
 		if email == "" {
-			email = workosID + "@placeholder.greenrats.app"
+			log.Printf("[ENSURE_USER] No email in JWT for user %s", workosID)
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+				"error": "email claim missing from token",
+			})
 		}
 
 		result, err := cfg.UserService.GetOrCreate(c.Context(), users.GetOrCreateParams{
