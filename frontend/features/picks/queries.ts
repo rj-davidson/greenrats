@@ -30,7 +30,7 @@ export const buildPickWindowKey = (tournamentId: string) =>
 export function buildGetUserPicksQueryOptions(
   leagueId?: string,
   seasonYear?: number,
-  requestor: Requestor = makeClientRequest
+  requestor: Requestor = makeClientRequest,
 ) {
   const params: Record<string, string> = {};
   if (leagueId) params.league_id = leagueId;
@@ -48,7 +48,7 @@ export function buildGetUserPicksQueryOptions(
 export function buildGetLeaguePicksQueryOptions(
   leagueId: string,
   tournamentId: string,
-  requestor: Requestor = makeClientRequest
+  requestor: Requestor = makeClientRequest,
 ) {
   return queryOptions<ListPicksResponse>({
     queryKey: buildLeaguePicksKey(leagueId, tournamentId),
@@ -63,7 +63,7 @@ export function buildGetLeaguePicksQueryOptions(
 export function buildGetAvailableGolfersQueryOptions(
   leagueId: string,
   tournamentId: string,
-  requestor: Requestor = makeClientRequest
+  requestor: Requestor = makeClientRequest,
 ) {
   return queryOptions<AvailableGolfersResponse>({
     queryKey: buildAvailableGolfersKey(leagueId, tournamentId),
@@ -77,11 +77,12 @@ export function buildGetAvailableGolfersQueryOptions(
 
 export function buildGetPickWindowQueryOptions(
   tournamentId: string,
-  requestor: Requestor = makeClientRequest
+  requestor: Requestor = makeClientRequest,
 ) {
   return queryOptions<PickWindowStatus>({
     queryKey: buildPickWindowKey(tournamentId),
-    queryFn: () => requestor.get<PickWindowStatus>(`/api/v1/tournaments/${tournamentId}/pick-window`),
+    queryFn: () =>
+      requestor.get<PickWindowStatus>(`/api/v1/tournaments/${tournamentId}/pick-window`),
     enabled: !!tournamentId,
   });
 }
@@ -136,7 +137,7 @@ export function useOverridePick() {
     }) => {
       return makeClientRequest.put<OverridePickResponse>(
         `/api/v1/leagues/${leagueId}/picks/${pickId}`,
-        { golfer_id: golferId }
+        { golfer_id: golferId },
       );
     },
     onSuccess: (_data, { leagueId }) => {

@@ -20,13 +20,7 @@ import {
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { useCurrentUser } from "@/features/users/queries";
 import { signOut } from "@workos-inc/authkit-nextjs";
-import {
-  ChevronsUpDownIcon,
-  LogOutIcon,
-  MonitorIcon,
-  MoonIcon,
-  SunIcon,
-} from "lucide-react";
+import { ChevronsUpDownIcon, LogOutIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 
 export function SidebarUser() {

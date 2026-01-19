@@ -1,5 +1,6 @@
 "use client";
 
+import { SidebarUser } from "./sidebar-user";
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +21,6 @@ import { CalendarIcon, ChevronRightIcon, HomeIcon, TrophyIcon } from "lucide-rea
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
-import { SidebarUser } from "./sidebar-user";
 
 const MAX_SIDEBAR_LEAGUES = 6;
 
@@ -57,8 +57,7 @@ function useSidebarTournaments() {
 
   const isLoading = activeLoading || upcomingLoading || completedLoading;
 
-  const currentTournament =
-    activeData?.tournament ?? upcomingData?.tournaments?.[0] ?? null;
+  const currentTournament = activeData?.tournament ?? upcomingData?.tournaments?.[0] ?? null;
   const recentCompleted = completedData?.tournaments?.[0] ?? null;
 
   return { currentTournament, recentCompleted, isLoading };

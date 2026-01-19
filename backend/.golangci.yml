@@ -4,18 +4,19 @@ run:
 
 linters:
   enable:
-    - errcheck        # Check for unchecked errors
-    - gosimple        # Simplify code
-    - govet           # Suspicious constructs
-    - ineffassign     # Unused assignments
-    - staticcheck     # Static analysis
-    - unused          # Unused code
-    - gofmt           # Formatting
-    - goimports       # Import organization
-    - misspell        # Spelling mistakes
-    - gocritic        # Opinionated linter
-    - errname         # Error naming conventions
-    - errorlint       # Error wrapping
+    - errcheck # Check for unchecked errors
+    - gosimple # Simplify code
+    - govet # Suspicious constructs
+    - ineffassign # Unused assignments
+    - staticcheck # Static analysis
+    - unused # Unused code
+    - gofmt # Formatting
+    - goimports # Import organization
+    - misspell # Spelling mistakes
+    - gocritic # Opinionated linter
+    - errname # Error naming conventions
+    - errorlint # Error wrapping
+    - gosec
 
 linters-settings:
   errcheck:

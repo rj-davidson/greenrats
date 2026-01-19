@@ -2,6 +2,7 @@
 
 import { useUserLeagues } from "../queries";
 import type { League } from "../types";
+import { Badge } from "@/components/shadcn/badge";
 import {
   Card,
   CardContent,
@@ -9,15 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card";
-import { Badge } from "@/components/shadcn/badge";
 
 function RoleBadge({ role }: { role: string }) {
   const isOwner = role === "Owner";
-  return (
-    <Badge variant={isOwner ? "default" : "secondary"}>
-      {role}
-    </Badge>
-  );
+  return <Badge variant={isOwner ? "default" : "secondary"}>{role}</Badge>;
 }
 
 function LeagueCard({ league }: { league: League }) {

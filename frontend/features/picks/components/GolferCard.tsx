@@ -26,7 +26,7 @@ export function GolferCard({ golfer, selected, onClick }: GolferCardProps) {
       className={cn(
         "flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors",
         "hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-        selected && "border-primary bg-primary/5"
+        selected && "border-primary bg-primary/5",
       )}
     >
       <Avatar className="size-10">

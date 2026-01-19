@@ -1,8 +1,8 @@
+import { TournamentCoverage } from "./tournament-coverage";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { buildGetTournamentQueryOptions } from "@/features/tournaments/queries";
 import { makeServerRequest } from "@/lib/query/server-requestor";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
-import { TournamentCoverage } from "./tournament-coverage";
 
 interface TournamentPageProps {
   params: Promise<{ id: string }>;

@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
 import type { AvailableGolfer } from "../types";
 import { GolferCard } from "./GolferCard";
 import { Input } from "@/components/shadcn/input";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { SearchIcon } from "lucide-react";
+import { useMemo, useState } from "react";
 
 interface GolferSelectorProps {
   golfers: AvailableGolfer[];
@@ -29,7 +29,7 @@ export function GolferSelector({
       (g) =>
         g.name.toLowerCase().includes(query) ||
         g.country?.toLowerCase().includes(query) ||
-        g.country_code.toLowerCase().includes(query)
+        g.country_code.toLowerCase().includes(query),
     );
   }, [golfers, search]);
 

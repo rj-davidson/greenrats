@@ -1,7 +1,3 @@
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import { withAuth } from "@workos-inc/authkit-nextjs";
-
 import { AppSidebar } from "@/components/core/app-sidebar";
 import { Button } from "@/components/shadcn/button";
 import {
@@ -11,14 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/shadcn/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/shadcn/sidebar";
 import { LeaguesSection } from "@/features/leagues/components";
 import type { User } from "@/features/users/types";
 import { makeServerRequest } from "@/lib/query/server-requestor";
+import { withAuth } from "@workos-inc/authkit-nextjs";
+import Link from "next/link";
+import { redirect } from "next/navigation";
 
 function LandingPage() {
   return (

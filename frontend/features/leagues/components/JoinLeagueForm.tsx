@@ -1,10 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useJoinLeague } from "../queries";
 import { joinLeagueRequestSchema } from "../types";
 import { Button } from "@/components/shadcn/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn/card";
 import {
   Form,
   FormControl,
@@ -17,6 +22,7 @@ import {
 import { Input } from "@/components/shadcn/input";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UsersIcon } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import type { z } from "zod";

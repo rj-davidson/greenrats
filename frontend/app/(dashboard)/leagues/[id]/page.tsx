@@ -1,7 +1,7 @@
+import { LeagueDetail } from "./league-detail";
 import { buildGetLeagueQueryOptions } from "@/features/leagues/queries";
 import { makeServerRequest } from "@/lib/query/server-requestor";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
-import { LeagueDetail } from "./league-detail";
 
 interface LeaguePageProps {
   params: Promise<{ id: string }>;

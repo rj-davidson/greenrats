@@ -1,10 +1,7 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-
+import { useCheckDisplayName, useSetDisplayName } from "../queries";
+import { type SetDisplayNameRequest, setDisplayNameRequestSchema } from "../types";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -23,11 +20,10 @@ import {
   FormMessage,
 } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input";
-import { useCheckDisplayName, useSetDisplayName } from "../queries";
-import {
-  type SetDisplayNameRequest,
-  setDisplayNameRequestSchema,
-} from "../types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 
 export function OnboardingForm() {
   const router = useRouter();
@@ -75,8 +71,8 @@ export function OnboardingForm() {
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Choose Your Display Name</CardTitle>
         <CardDescription>
-          This is how other players will see you on the leaderboard. Choose
-          wisely - you won&apos;t be able to change it later!
+          This is how other players will see you on the leaderboard. Choose wisely - you won&apos;t
+          be able to change it later!
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -89,30 +85,19 @@ export function OnboardingForm() {
                 <FormItem>
                   <FormLabel>Display Name</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Enter a unique display name"
-                      {...field}
-                    />
+                    <Input placeholder="Enter a unique display name" {...field} />
                   </FormControl>
                   <FormDescription>
                     <span className="text-muted-foreground block mb-1">
                       3-20 characters. Letters, numbers, and underscores only.
                     </span>
                     {showAvailability && (
-                      <span
-                        className={
-                          isAvailable ? "text-green-600" : "text-red-600"
-                        }
-                      >
-                        {isAvailable
-                          ? "This name is available!"
-                          : "This name is already taken."}
+                      <span className={isAvailable ? "text-green-600" : "text-red-600"}>
+                        {isAvailable ? "This name is available!" : "This name is already taken."}
                       </span>
                     )}
                     {isCheckingAvailability && debouncedName.length >= 3 && (
-                      <span className="text-muted-foreground">
-                        Checking availability...
-                      </span>
+                      <span className="text-muted-foreground">Checking availability...</span>
                     )}
                   </FormDescription>
                   <FormMessage />

@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { useRegenerateJoinCode, useSetJoiningEnabled } from "../queries";
 import type { League } from "../types";
 import { Button } from "@/components/shadcn/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn/card";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +19,7 @@ import {
   DialogTitle,
 } from "@/components/shadcn/dialog";
 import { CheckIcon, CopyIcon, RefreshCwIcon, ShieldIcon, UsersIcon } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface CommissionerPanelProps {
@@ -118,8 +124,8 @@ export function CommissionerPanel({ league }: CommissionerPanelProps) {
           <DialogHeader>
             <DialogTitle>Regenerate Join Code?</DialogTitle>
             <DialogDescription>
-              This will create a new join code. The old code will no longer work. Anyone who has
-              the old code will need the new one to join.
+              This will create a new join code. The old code will no longer work. Anyone who has the
+              old code will need the new one to join.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

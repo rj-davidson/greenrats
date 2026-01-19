@@ -1,14 +1,20 @@
 "use client";
 
-import { useState } from "react";
 import { useAvailableGolfers, useCreatePick, usePickWindow } from "../queries";
 import type { AvailableGolfer } from "../types";
 import { GolferSelector } from "./GolferSelector";
 import { PickConfirmDialog } from "./PickConfirmDialog";
 import { Badge } from "@/components/shadcn/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn/card";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { CalendarIcon, ClockIcon, LockIcon } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface PickMakerProps {
@@ -34,7 +40,7 @@ export function PickMaker({ leagueId, tournamentId, onPickSuccess }: PickMakerPr
   const { data: pickWindow, isLoading: windowLoading } = usePickWindow(tournamentId);
   const { data: golfersData, isLoading: golfersLoading } = useAvailableGolfers(
     leagueId,
-    tournamentId
+    tournamentId,
   );
   const createPick = useCreatePick();
 

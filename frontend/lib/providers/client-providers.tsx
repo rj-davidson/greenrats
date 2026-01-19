@@ -29,9 +29,10 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user) {
       setUserInfo({
         email: user.email,
-        name: user.firstName && user.lastName
-          ? `${user.firstName} ${user.lastName}`
-          : user.firstName || user.lastName || "",
+        name:
+          user.firstName && user.lastName
+            ? `${user.firstName} ${user.lastName}`
+            : user.firstName || user.lastName || "",
       });
     }
   }, [user]);
@@ -61,7 +62,12 @@ export function ClientProviders({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
       <QueryProvider>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
           <TooltipProvider>
             {children}
             <Toaster />

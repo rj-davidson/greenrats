@@ -1,8 +1,7 @@
-import { redirect } from "next/navigation";
-
 import { OnboardingForm } from "@/features/users/components";
 import type { User } from "@/features/users/types";
 import { makeServerRequest } from "@/lib/query/server-requestor";
+import { redirect } from "next/navigation";
 
 export default async function OnboardingPage() {
   // Fetch the current user

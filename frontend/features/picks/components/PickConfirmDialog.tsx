@@ -66,8 +66,8 @@ export function PickConfirmDialog({
         <div className="bg-destructive/10 text-destructive flex items-start gap-3 rounded-lg p-3 text-sm">
           <TriangleAlertIcon className="mt-0.5 size-4 shrink-0" />
           <div>
-            <strong>This cannot be changed.</strong> Once confirmed, you cannot pick{" "}
-            {golfer.name} again this season in this league.
+            <strong>This cannot be changed.</strong> Once confirmed, you cannot pick {golfer.name}{" "}
+            again this season in this league.
           </div>
         </div>
 

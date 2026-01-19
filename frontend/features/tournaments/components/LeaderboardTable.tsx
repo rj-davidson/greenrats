@@ -44,10 +44,14 @@ function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
         </div>
       </TableCell>
       <TableCell className="text-muted-foreground">{entry.country_code}</TableCell>
-      <TableCell className={cn("font-mono", entry.score < 0 && "text-green-600 dark:text-green-400")}>
+      <TableCell
+        className={cn("font-mono", entry.score < 0 && "text-green-600 dark:text-green-400")}
+      >
         {formatScore(entry.score)}
       </TableCell>
-      <TableCell className="text-muted-foreground">{formatThru(entry.thru, entry.status)}</TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatThru(entry.thru, entry.status)}
+      </TableCell>
     </TableRow>
   );
 }

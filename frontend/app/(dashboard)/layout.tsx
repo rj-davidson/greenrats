@@ -1,9 +1,5 @@
 import { AppSidebar } from "@/components/core/app-sidebar";
-import {
-  SidebarInset,
-  SidebarProvider,
-  SidebarTrigger,
-} from "@/components/shadcn/sidebar";
+import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/shadcn/sidebar";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
