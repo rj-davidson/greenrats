@@ -3,6 +3,10 @@ FROM oven/bun:1 AS builder
 
 WORKDIR /app
 
+# Build arguments for NEXT_PUBLIC_ variables (baked in at build time)
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 # Copy package files
 COPY package.json bun.lockb ./
 
