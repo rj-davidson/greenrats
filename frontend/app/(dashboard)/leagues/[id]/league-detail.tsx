@@ -1,6 +1,7 @@
 "use client";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
+import { LeagueLeaderboard } from "@/features/leaderboards/components";
 import {
   ActionLog,
   CommissionerPanel,
@@ -63,9 +64,7 @@ export function LeagueDetail({ id }: LeagueDetailProps) {
         </TabsContent>
 
         <TabsContent value="leaderboard">
-          <div className="rounded-lg border border-dashed p-12 text-center">
-            <p className="text-muted-foreground">Leaderboard coming soon</p>
-          </div>
+          <LeagueLeaderboard leagueId={id} />
         </TabsContent>
 
         {isOwner && (
