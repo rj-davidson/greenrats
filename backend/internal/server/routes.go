@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/rj-davidson/greenrats/internal/auth"
+	"github.com/rj-davidson/greenrats/internal/features/leaderboards"
 	"github.com/rj-davidson/greenrats/internal/features/leagues"
 	"github.com/rj-davidson/greenrats/internal/features/picks"
 	"github.com/rj-davidson/greenrats/internal/features/tournaments"
@@ -48,6 +49,11 @@ func (s *Server) setupRoutes() {
 	leagueService := leagues.NewService(s.db)
 	leagueHandler := leagues.NewHandler(leagueService)
 	leagueHandler.RegisterRoutesWithGroup(leagueGroup)
+
+	// Leaderboard routes - on league group
+	leaderboardService := leaderboards.NewService(s.db)
+	leaderboardHandler := leaderboards.NewHandler(leaderboardService)
+	leaderboardHandler.RegisterLeagueRoutes(leagueGroup)
 
 	// Pick routes - requires auth and user provisioning
 	pickService := picks.NewService(s.db)
