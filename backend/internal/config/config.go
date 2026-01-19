@@ -28,6 +28,11 @@ type Config struct {
 
 	// Monitoring
 	SentryDSN string `mapstructure:"SENTRY_DSN"`
+
+	// Email
+	ResendAPIKey string `mapstructure:"RESEND_API_KEY"`
+	FromEmail    string `mapstructure:"FROM_EMAIL"`
+	SendEmails   bool   `mapstructure:"SEND_EMAILS"`
 }
 
 // Load reads configuration from environment variables and .env file.
@@ -45,6 +50,9 @@ func Load() (*Config, error) {
 	v.SetDefault("BALL_DONT_LIE_API_KEY", "")
 	v.SetDefault("BALL_DONT_LIE_BASE_URL", "https://api.balldontlie.io")
 	v.SetDefault("SENTRY_DSN", "")
+	v.SetDefault("RESEND_API_KEY", "")
+	v.SetDefault("FROM_EMAIL", "noreply@greenrats.com")
+	v.SetDefault("SEND_EMAILS", false)
 
 	// Read from .env file if it exists
 	v.SetConfigName(".env")
@@ -70,6 +78,9 @@ func Load() (*Config, error) {
 	_ = v.BindEnv("BALL_DONT_LIE_API_KEY")
 	_ = v.BindEnv("BALL_DONT_LIE_BASE_URL")
 	_ = v.BindEnv("SENTRY_DSN")
+	_ = v.BindEnv("RESEND_API_KEY")
+	_ = v.BindEnv("FROM_EMAIL")
+	_ = v.BindEnv("SEND_EMAILS")
 
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
