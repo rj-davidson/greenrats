@@ -178,6 +178,77 @@ WORKOS_COOKIE_PASSWORD=  # 32+ characters
 NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
+## Deployment (Railway)
+
+GreenRats is deployed on [Railway](https://railway.app) with two environments:
+
+### Environments
+
+| Environment | Purpose | Email Sending |
+|-------------|---------|---------------|
+| Development | Staging/testing | Disabled |
+| Production | Live application | Enabled |
+
+### Services
+
+Each environment runs three services:
+
+1. **API** - Fiber HTTP server (`backend/cmd/api`)
+2. **Ingest** - Background data sync service (`backend/cmd/ingest`)
+3. **Frontend** - Next.js application
+
+Plus a **PostgreSQL** database addon.
+
+### Deployment Workflow
+
+1. **Push to main** triggers automatic deployment to Development
+2. **Create release** or manual promote deploys to Production
+
+### Environment Variables
+
+Configure these in Railway for each environment:
+
+**Backend (API & Ingest)**
+```
+ENV=production|development
+DATABASE_URL=<railway-provided>
+WORKOS_API_KEY=
+WORKOS_CLIENT_ID=
+SCRATCH_GOLF_API_KEY=
+BALL_DONT_LIE_API_KEY=
+SENTRY_DSN=
+RESEND_API_KEY=
+FROM_EMAIL=noreply@greenrats.com
+SEND_EMAILS=true|false
+```
+
+**Frontend**
+```
+WORKOS_CLIENT_ID=
+WORKOS_API_KEY=
+WORKOS_REDIRECT_URI=https://greenrats.com/api/auth/callback
+WORKOS_COOKIE_PASSWORD=
+NEXT_PUBLIC_API_URL=https://api.greenrats.com
+NEXT_PUBLIC_SENTRY_DSN=
+```
+
+### Manual Deployment
+
+```bash
+# Install Railway CLI
+npm install -g @railway/cli
+
+# Login
+railway login
+
+# Link to project
+railway link
+
+# Deploy specific service
+railway up --service api
+railway up --service frontend
+```
+
 ## Development Guidelines
 
 See [CLAUDE.md](./CLAUDE.md) for detailed development instructions, coding conventions, and workflow guidance.

@@ -1,0 +1,18 @@
+[build]
+builder = "nixpacks"
+
+[build.nixpacksPlan]
+providers = ["go"]
+
+[build.nixpacksPlan.phases.setup]
+nixPkgs = ["go_1_25"]
+
+[build.nixpacksPlan.phases.build]
+cmds = ["go build -o bin/api ./cmd/api", "go build -o bin/ingest ./cmd/ingest"]
+
+[deploy]
+startCommand = "./bin/api"
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 5
