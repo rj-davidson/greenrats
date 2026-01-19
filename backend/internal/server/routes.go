@@ -47,7 +47,7 @@ func (s *Server) setupRoutes() {
 		auth.EnsureUserMiddleware(ensureUserCfg),
 	)
 	leagueService := leagues.NewService(s.db)
-	leagueHandler := leagues.NewHandler(leagueService)
+	leagueHandler := leagues.NewHandler(leagueService, s.emailClient)
 	leagueHandler.RegisterRoutesWithGroup(leagueGroup)
 
 	// Leaderboard routes - on league group
@@ -70,7 +70,7 @@ func (s *Server) setupRoutes() {
 		auth.Middleware(*s.authConfig),
 		auth.EnsureUserMiddleware(ensureUserCfg),
 	)
-	userHandler := users.NewHandler(s.userService)
+	userHandler := users.NewHandler(s.userService, s.emailClient)
 	userHandler.RegisterRoutesWithGroup(userGroup)
 }
 

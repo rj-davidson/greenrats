@@ -11,6 +11,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/internal/auth"
 	"github.com/rj-davidson/greenrats/internal/config"
+	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/features/users"
 	"github.com/rj-davidson/greenrats/internal/sse"
 )
@@ -25,6 +26,7 @@ type Server struct {
 	authConfig   *auth.Config
 	jwksProvider *auth.JWKSProvider
 	userService  *users.Service
+	emailClient  *email.Client
 }
 
 // New creates a new Server instance.
@@ -66,6 +68,9 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 	// Initialize user service
 	userService := users.NewService(db)
 
+	// Initialize email client
+	emailClient := email.New(cfg)
+
 	s := &Server{
 		app:          app,
 		config:       cfg,
@@ -75,6 +80,7 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 		authConfig:   authCfg,
 		jwksProvider: jwksProvider,
 		userService:  userService,
+		emailClient:  emailClient,
 	}
 
 	s.setupMiddleware()

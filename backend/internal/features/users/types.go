@@ -43,6 +43,6 @@ type UpcomingTournament struct {
 }
 
 type PendingActionsResponse struct {
-	PendingPicks         []PendingPickAction  `json:"pending_picks"`
-	UpcomingTournaments  []UpcomingTournament `json:"upcoming_tournaments"`
+	PendingPicks        []PendingPickAction  `json:"pending_picks"`
+	UpcomingTournaments []UpcomingTournament `json:"upcoming_tournaments"`
 }

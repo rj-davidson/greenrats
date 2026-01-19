@@ -8,6 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/internal/email"
 )
 
 var displayNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
@@ -15,11 +16,12 @@ var displayNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 // Handler handles HTTP requests for users.
 type Handler struct {
 	service *Service
+	email   *email.Client
 }
 
 // NewHandler creates a new user handler.
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, emailClient *email.Client) *Handler {
+	return &Handler{service: service, email: emailClient}
 }
 
 // RegisterRoutes registers user routes on the given router.
@@ -127,6 +129,16 @@ func (h *Handler) SetDisplayName(c *fiber.Ctx) error {
 	}
 
 	log.Printf("[USERS] SetDisplayName: success user=%s display_name=%s", user.ID, displayName)
+
+	if h.email != nil {
+		go func() {
+			if err := h.email.SendWelcome(updated.Email, email.WelcomeData{
+				DisplayName: displayName,
+			}); err != nil {
+				log.Printf("[USERS] Failed to send welcome email: %v", err)
+			}
+		}()
+	}
 
 	return c.JSON(UserResponse{
 		ID:          updated.ID,

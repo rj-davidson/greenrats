@@ -18,7 +18,7 @@ import (
 func TestHandler_GetMe(t *testing.T) {
 	t.Run("returns user when authenticated", func(t *testing.T) {
 		app := fiber.New()
-		handler := NewHandler(nil) // service not needed for this test
+		handler := NewHandler(nil, nil) // service not needed for this test
 
 		// Create a mock user
 		userID := uuid.Must(uuid.NewV4())
@@ -58,7 +58,7 @@ func TestHandler_GetMe(t *testing.T) {
 
 	t.Run("returns 401 when not authenticated", func(t *testing.T) {
 		app := fiber.New()
-		handler := NewHandler(nil)
+		handler := NewHandler(nil, nil)
 
 		app.Get("/users/me", handler.GetMe)
 
@@ -81,7 +81,7 @@ func TestHandler_GetMe(t *testing.T) {
 
 func TestHandler_RegisterRoutesWithGroup(t *testing.T) {
 	app := fiber.New()
-	handler := NewHandler(nil)
+	handler := NewHandler(nil, nil)
 
 	group := app.Group("/users")
 	handler.RegisterRoutesWithGroup(group)

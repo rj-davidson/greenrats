@@ -2,20 +2,23 @@ package leagues
 
 import (
 	"errors"
+	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/internal/auth"
+	"github.com/rj-davidson/greenrats/internal/email"
 )
 
 type Handler struct {
 	service *Service
+	email   *email.Client
 }
 
-func NewHandler(service *Service) *Handler {
-	return &Handler{service: service}
+func NewHandler(service *Service, emailClient *email.Client) *Handler {
+	return &Handler{service: service, email: emailClient}
 }
 
 func (h *Handler) RegisterRoutes(router fiber.Router) {
@@ -175,6 +178,21 @@ func (h *Handler) JoinLeague(c *fiber.Ctx) error {
 	league, err := h.service.JoinLeague(c.Context(), userID, code)
 	if err != nil {
 		return h.handleServiceError(c, err)
+	}
+
+	if h.email != nil {
+		user := auth.GetDBUser(c)
+		if user != nil && user.DisplayName != nil {
+			go func() {
+				if err := h.email.SendLeagueJoin(user.Email, email.LeagueJoinData{
+					DisplayName: *user.DisplayName,
+					LeagueName:  league.Name,
+					IsNewMember: true,
+				}); err != nil {
+					log.Printf("[LEAGUES] Failed to send league join email: %v", err)
+				}
+			}()
+		}
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(JoinLeagueResponse{
