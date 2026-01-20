@@ -140,9 +140,6 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 	earningsTicker := time.NewTicker(earningsCheckInterval)
 	defer earningsTicker.Stop()
 
-	// ONE-TIME: Re-sync Sony Open earnings (delete after deploy)
-	i.resyncSonyOpenEarnings(ctx)
-
 	// Run initial syncs only if data is stale
 	log.Println("Checking for required initial syncs...")
 	if i.shouldSync(ctx, "tournaments", tournamentSyncInterval) {
@@ -1102,41 +1099,6 @@ func formatCurrency(amount int) string {
 		return fmt.Sprintf("$%dK", amount/1000)
 	}
 	return fmt.Sprintf("$%d", amount)
-}
-
-// ONE-TIME: Re-sync Sony Open earnings - DELETE AFTER DEPLOY
-func (i *Ingester) resyncSonyOpenEarnings(ctx context.Context) {
-	const sonyOpenBdlID = 7
-
-	t, err := i.db.Tournament.Query().
-		Where(tournament.BdlID(sonyOpenBdlID)).
-		Only(ctx)
-	if err != nil {
-		log.Printf("Sony Open not found (bdl_id=%d), skipping one-time sync: %v", sonyOpenBdlID, err)
-		return
-	}
-
-	log.Printf("ONE-TIME: Re-syncing earnings for %s", t.Name)
-
-	// Reset all earnings to 0
-	_, err = i.db.TournamentEntry.Update().
-		Where(tournamententry.HasTournamentWith(tournament.IDEQ(t.ID))).
-		SetEarnings(0).
-		Save(ctx)
-	if err != nil {
-		log.Printf("failed to reset earnings: %v", err)
-		i.captureJobError("resync_sony_open", err)
-		return
-	}
-
-	// Fetch fresh earnings
-	if err := i.syncTournamentEarnings(ctx, t); err != nil {
-		log.Printf("failed to sync earnings for %s: %v", t.Name, err)
-		i.captureJobError("resync_sony_open", err)
-		return
-	}
-
-	log.Printf("ONE-TIME: Completed earnings re-sync for %s", t.Name)
 }
 
 var _ = uuid.Nil
