@@ -55,6 +55,7 @@ func (h *Handler) GetMe(c *fiber.Ctx) error {
 		ID:          user.ID,
 		Email:       user.Email,
 		DisplayName: user.DisplayName,
+		IsAdmin:     user.IsAdmin,
 		CreatedAt:   user.CreatedAt,
 		UpdatedAt:   user.UpdatedAt,
 	})
@@ -144,6 +145,7 @@ func (h *Handler) SetDisplayName(c *fiber.Ctx) error {
 		ID:          updated.ID,
 		Email:       updated.Email,
 		DisplayName: updated.DisplayName,
+		IsAdmin:     updated.IsAdmin,
 		CreatedAt:   updated.CreatedAt,
 		UpdatedAt:   updated.UpdatedAt,
 	})

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/spf13/viper"
@@ -36,6 +37,8 @@ type Config struct {
 	ScrapeDoAPIKey string `mapstructure:"SCRAPE_DO_API_KEY"`
 
 	CurrentSeason int `mapstructure:"CURRENT_SEASON"`
+
+	AdminEmails []string `mapstructure:"-"`
 }
 
 func Load() (*Config, error) {
@@ -98,6 +101,16 @@ func Load() (*Config, error) {
 		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
 	}
 
+	adminEmailsRaw := v.GetString("ADMIN_EMAILS")
+	if adminEmailsRaw != "" {
+		for _, email := range strings.Split(adminEmailsRaw, ",") {
+			trimmed := strings.TrimSpace(strings.ToLower(email))
+			if trimmed != "" {
+				cfg.AdminEmails = append(cfg.AdminEmails, trimmed)
+			}
+		}
+	}
+
 	return &cfg, nil
 }
 
@@ -107,4 +120,9 @@ func (c *Config) IsDevelopment() bool {
 
 func (c *Config) IsProduction() bool {
 	return c.Env == "production"
+}
+
+func (c *Config) IsAdminEmail(email string) bool {
+	normalized := strings.TrimSpace(strings.ToLower(email))
+	return slices.Contains(c.AdminEmails, normalized)
 }

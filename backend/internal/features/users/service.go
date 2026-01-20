@@ -14,16 +14,18 @@ import (
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
+	"github.com/rj-davidson/greenrats/internal/config"
 )
 
 // Service handles user business logic.
 type Service struct {
-	db *ent.Client
+	db     *ent.Client
+	config *config.Config
 }
 
-// NewService creates a new user service.
-func NewService(db *ent.Client) *Service {
-	return &Service{db: db}
+// New creates a new user service.
+func New(db *ent.Client, cfg *config.Config) *Service {
+	return &Service{db: db, config: cfg}
 }
 
 // GetOrCreateParams contains the parameters for GetOrCreate.
@@ -57,10 +59,12 @@ func (s *Service) GetOrCreate(ctx context.Context, params GetOrCreateParams) (*G
 	}
 
 	// User not found, create a new one (display_name will be null until set during onboarding)
+	isAdmin := s.config.IsAdminEmail(params.Email)
 	newUser, err := s.db.User.
 		Create().
 		SetWorkosID(params.WorkOSID).
 		SetEmail(params.Email).
+		SetIsAdmin(isAdmin).
 		Save(ctx)
 
 	if err == nil {

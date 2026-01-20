@@ -312,6 +312,7 @@ var (
 		{Name: "workos_id", Type: field.TypeString, Unique: true},
 		{Name: "email", Type: field.TypeString},
 		{Name: "display_name", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "is_admin", Type: field.TypeBool, Default: false},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

@@ -69,3 +69,9 @@ func GetDBUserID(c *fiber.Ctx) uuid.UUID {
 	}
 	return uuid.Nil
 }
+
+// IsAdmin returns true if the authenticated user has admin privileges.
+func IsAdmin(c *fiber.Ctx) bool {
+	user := GetDBUser(c)
+	return user != nil && user.IsAdmin
+}

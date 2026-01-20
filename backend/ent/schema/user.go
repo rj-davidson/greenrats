@@ -31,6 +31,8 @@ func (User) Fields() []ent.Field {
 			Unique().
 			Optional().
 			Nillable(),
+		field.Bool("is_admin").
+			Default(false),
 	}
 }
 

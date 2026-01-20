@@ -87,6 +87,20 @@ func (_u *UserUpdate) ClearDisplayName() *UserUpdate {
 	return _u
 }
 
+// SetIsAdmin sets the "is_admin" field.
+func (_u *UserUpdate) SetIsAdmin(v bool) *UserUpdate {
+	_u.mutation.SetIsAdmin(v)
+	return _u
+}
+
+// SetNillableIsAdmin sets the "is_admin" field if the given value is not nil.
+func (_u *UserUpdate) SetNillableIsAdmin(v *bool) *UserUpdate {
+	if v != nil {
+		_u.SetIsAdmin(*v)
+	}
+	return _u
+}
+
 // AddPickIDs adds the "picks" edge to the Pick entity by IDs.
 func (_u *UserUpdate) AddPickIDs(ids ...uuid.UUID) *UserUpdate {
 	_u.mutation.AddPickIDs(ids...)
@@ -349,6 +363,9 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.DisplayNameCleared() {
 		_spec.ClearField(user.FieldDisplayName, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsAdmin(); ok {
+		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
 	}
 	if _u.mutation.PicksCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -649,6 +666,20 @@ func (_u *UserUpdateOne) ClearDisplayName() *UserUpdateOne {
 	return _u
 }
 
+// SetIsAdmin sets the "is_admin" field.
+func (_u *UserUpdateOne) SetIsAdmin(v bool) *UserUpdateOne {
+	_u.mutation.SetIsAdmin(v)
+	return _u
+}
+
+// SetNillableIsAdmin sets the "is_admin" field if the given value is not nil.
+func (_u *UserUpdateOne) SetNillableIsAdmin(v *bool) *UserUpdateOne {
+	if v != nil {
+		_u.SetIsAdmin(*v)
+	}
+	return _u
+}
+
 // AddPickIDs adds the "picks" edge to the Pick entity by IDs.
 func (_u *UserUpdateOne) AddPickIDs(ids ...uuid.UUID) *UserUpdateOne {
 	_u.mutation.AddPickIDs(ids...)
@@ -941,6 +972,9 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	}
 	if _u.mutation.DisplayNameCleared() {
 		_spec.ClearField(user.FieldDisplayName, field.TypeString)
+	}
+	if value, ok := _u.mutation.IsAdmin(); ok {
+		_spec.SetField(user.FieldIsAdmin, field.TypeBool, value)
 	}
 	if _u.mutation.PicksCleared() {
 		edge := &sqlgraph.EdgeSpec{

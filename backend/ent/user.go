@@ -28,6 +28,8 @@ type User struct {
 	Email string `json:"email,omitempty"`
 	// DisplayName holds the value of the "display_name" field.
 	DisplayName *string `json:"display_name,omitempty"`
+	// IsAdmin holds the value of the "is_admin" field.
+	IsAdmin bool `json:"is_admin,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
 	Edges        UserEdges `json:"edges"`
@@ -101,6 +103,8 @@ func (*User) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
+		case user.FieldIsAdmin:
+			values[i] = new(sql.NullBool)
 		case user.FieldWorkosID, user.FieldEmail, user.FieldDisplayName:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt:
@@ -158,6 +162,12 @@ func (_m *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.DisplayName = new(string)
 				*_m.DisplayName = value.String
+			}
+		case user.FieldIsAdmin:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_admin", values[i])
+			} else if value.Valid {
+				_m.IsAdmin = value.Bool
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -236,6 +246,9 @@ func (_m *User) String() string {
 		builder.WriteString("display_name=")
 		builder.WriteString(*v)
 	}
+	builder.WriteString(", ")
+	builder.WriteString("is_admin=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsAdmin))
 	builder.WriteByte(')')
 	return builder.String()
 }

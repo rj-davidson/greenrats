@@ -69,7 +69,7 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 	}
 
 	// Initialize user service
-	userService := users.NewService(db)
+	userService := users.New(db, cfg)
 
 	// Initialize email client
 	emailClient := email.New(cfg)

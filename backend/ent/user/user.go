@@ -25,6 +25,8 @@ const (
 	FieldEmail = "email"
 	// FieldDisplayName holds the string denoting the display_name field in the database.
 	FieldDisplayName = "display_name"
+	// FieldIsAdmin holds the string denoting the is_admin field in the database.
+	FieldIsAdmin = "is_admin"
 	// EdgePicks holds the string denoting the picks edge name in mutations.
 	EdgePicks = "picks"
 	// EdgeLeagueMemberships holds the string denoting the league_memberships edge name in mutations.
@@ -82,6 +84,7 @@ var Columns = []string{
 	FieldWorkosID,
 	FieldEmail,
 	FieldDisplayName,
+	FieldIsAdmin,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -105,6 +108,8 @@ var (
 	WorkosIDValidator func(string) error
 	// EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	EmailValidator func(string) error
+	// DefaultIsAdmin holds the default value on creation for the "is_admin" field.
+	DefaultIsAdmin bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -140,6 +145,11 @@ func ByEmail(opts ...sql.OrderTermOption) OrderOption {
 // ByDisplayName orders the results by the display_name field.
 func ByDisplayName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldDisplayName, opts...).ToFunc()
+}
+
+// ByIsAdmin orders the results by the is_admin field.
+func ByIsAdmin(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsAdmin, opts...).ToFunc()
 }
 
 // ByPicksCount orders the results by picks count.
