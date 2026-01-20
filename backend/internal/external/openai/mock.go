@@ -42,3 +42,12 @@ func (m *MockClient) MatchPlayersToLeaderboard(ctx context.Context, leaderboard 
 	result, _ := args.Get(0).([]EarningsResult)
 	return result, args.Error(1)
 }
+
+func (m *MockClient) ParseLeaderboardContent(ctx context.Context, content, tournamentName string) (*LeaderboardResponse, error) {
+	args := m.Called(ctx, content, tournamentName)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, _ := args.Get(0).(*LeaderboardResponse)
+	return result, args.Error(1)
+}

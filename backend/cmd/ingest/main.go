@@ -28,6 +28,7 @@ import (
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
+	"github.com/rj-davidson/greenrats/internal/external/exa"
 	"github.com/rj-davidson/greenrats/internal/external/openai"
 )
 
@@ -49,6 +50,7 @@ type Ingester struct {
 	db          *ent.Client
 	config      *config.Config
 	ballDontLie *balldontlie.Client
+	exa         *exa.Client
 	openai      *openai.Client
 	email       *email.Client
 }
@@ -86,6 +88,7 @@ func run() error {
 	defer db.Close()
 
 	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL)
+	exaClient := exa.New(cfg.ExaAPIKey)
 	openaiClient := openai.New(cfg.OpenAIAPIKey, cfg.OpenAIModel)
 	emailClient := email.New(cfg)
 
@@ -93,6 +96,7 @@ func run() error {
 		db:          db,
 		config:      cfg,
 		ballDontLie: bdlClient,
+		exa:         exaClient,
 		openai:      openaiClient,
 		email:       emailClient,
 	}
@@ -707,7 +711,7 @@ func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament)
 const earningsBatchSize = 10
 
 func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament) error {
-	log.Printf("Syncing earnings for tournament: %s via OpenAI", t.Name)
+	log.Printf("Syncing earnings for tournament: %s via Exa + OpenAI", t.Name)
 
 	year := t.SeasonYear
 	if year == 0 {
@@ -756,17 +760,35 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 		return nil
 	}
 
-	leaderboard, err := i.openai.SearchTournamentLeaderboard(ctx, t.Name, year)
+	exaResponse, err := i.exa.SearchEarnings(ctx, t.Name, year)
 	if err != nil {
-		return fmt.Errorf("failed to fetch leaderboard from OpenAI: %w", err)
+		return fmt.Errorf("failed to search earnings via Exa: %w", err)
 	}
 
-	if len(leaderboard.Entries) == 0 {
-		log.Printf("No leaderboard entries from OpenAI for tournament %s", t.Name)
+	if len(exaResponse.Results) == 0 {
+		log.Printf("No Exa results found for tournament %s", t.Name)
 		return nil
 	}
 
-	log.Printf("Fetched leaderboard with %d entries for tournament %s", len(leaderboard.Entries), t.Name)
+	var content strings.Builder
+	for _, result := range exaResponse.Results {
+		content.WriteString(result.Text)
+		content.WriteString("\n\n")
+	}
+
+	log.Printf("Exa returned %d results for tournament %s, parsing with OpenAI", len(exaResponse.Results), t.Name)
+
+	leaderboard, err := i.openai.ParseLeaderboardContent(ctx, content.String(), t.Name)
+	if err != nil {
+		return fmt.Errorf("failed to parse leaderboard content via OpenAI: %w", err)
+	}
+
+	if len(leaderboard.Entries) == 0 {
+		log.Printf("No leaderboard entries parsed for tournament %s", t.Name)
+		return nil
+	}
+
+	log.Printf("Parsed leaderboard with %d entries for tournament %s", len(leaderboard.Entries), t.Name)
 
 	var allResults []openai.EarningsResult
 	numBatches := (len(golferInputs) + earningsBatchSize - 1) / earningsBatchSize

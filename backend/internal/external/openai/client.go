@@ -195,3 +195,34 @@ func (c *Client) MatchPlayersToLeaderboard(ctx context.Context, leaderboard *Lea
 
 	return result.Results, nil
 }
+
+func (c *Client) ParseLeaderboardContent(ctx context.Context, content, tournamentName string) (*LeaderboardResponse, error) {
+	prompt := parseLeaderboardContentPrompt(content, tournamentName)
+
+	resp, err := c.client.Responses.New(ctx, responses.ResponseNewParams{
+		Model: c.model,
+		Text: responses.ResponseTextConfigParam{
+			Format: responses.ResponseFormatTextConfigUnionParam{
+				OfJSONSchema: &responses.ResponseFormatTextJSONSchemaConfigParam{
+					Name:   "leaderboard_response",
+					Strict: openai.Bool(true),
+					Type:   "json_schema",
+					Schema: leaderboardResponseSchema(),
+				},
+			},
+		},
+		Input: responses.ResponseNewParamsInputUnion{
+			OfString: openai.String(prompt),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse leaderboard content: %w", err)
+	}
+
+	var result LeaderboardResponse
+	if err := json.Unmarshal([]byte(resp.OutputText()), &result); err != nil {
+		return nil, fmt.Errorf("failed to parse leaderboard response: %w", err)
+	}
+
+	return &result, nil
+}

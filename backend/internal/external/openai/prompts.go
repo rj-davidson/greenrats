@@ -47,3 +47,16 @@ For each matched golfer, return:
 
 Only return golfers that you can confidently match. If no match is found for a golfer, omit them from the results.`, leaderboardJSON, golfersJSON)
 }
+
+func parseLeaderboardContentPrompt(content, tournamentName string) string {
+	return fmt.Sprintf(`You are a golf data extraction agent. Parse the following webpage content to extract the leaderboard with prize money for the %s.
+
+Content:
+%s
+
+Return ALL players who earned prize money in the tournament. For each player, return:
+- name: The player's full name as shown in the results
+- earnings: Prize money earned in USD as an integer (parse from strings like "$3,600,000" to 3600000)
+
+If the content does not contain earnings data or the tournament results are not available, return an empty entries array.`, tournamentName, content)
+}
