@@ -66,7 +66,7 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	pick, err := h.service.Create(c.Context(), CreateParams{
+	pick, err := h.service.Create(c.UserContext(), CreateParams{
 		UserID:       userID,
 		TournamentID: req.TournamentID,
 		GolferID:     req.GolferID,
@@ -109,7 +109,7 @@ func (h *Handler) GetUserPicks(c *fiber.Ctx) error {
 		seasonYear = year
 	}
 
-	resp, err := h.service.GetUserPicks(c.Context(), userID, leagueID, seasonYear)
+	resp, err := h.service.GetUserPicks(c.UserContext(), userID, leagueID, seasonYear)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get picks",
@@ -148,7 +148,7 @@ func (h *Handler) GetLeaguePicks(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.GetLeaguePicks(c.Context(), leagueID, tournamentID)
+	resp, err := h.service.GetLeaguePicks(c.UserContext(), leagueID, tournamentID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get league picks",
@@ -187,7 +187,7 @@ func (h *Handler) GetAvailableGolfers(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.GetAvailableGolfers(c.Context(), userID, leagueID, tournamentID)
+	resp, err := h.service.GetAvailableGolfers(c.UserContext(), userID, leagueID, tournamentID)
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}
@@ -203,7 +203,7 @@ func (h *Handler) GetPickWindow(c *fiber.Ctx) error {
 		})
 	}
 
-	status, err := h.service.CanMakePick(c.Context(), tournamentID)
+	status, err := h.service.CanMakePick(c.UserContext(), tournamentID)
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}
@@ -246,7 +246,7 @@ func (h *Handler) OverridePick(c *fiber.Ctx) error {
 		})
 	}
 
-	pick, err := h.service.OverridePick(c.Context(), OverridePickParams{
+	pick, err := h.service.OverridePick(c.UserContext(), OverridePickParams{
 		LeagueID:       leagueID,
 		PickID:         pickID,
 		NewGolferID:    req.GolferID,
@@ -287,7 +287,7 @@ func (h *Handler) UpdateUserPick(c *fiber.Ctx) error {
 		})
 	}
 
-	pick, err := h.service.UpdateUserPick(c.Context(), UpdatePickParams{
+	pick, err := h.service.UpdateUserPick(c.UserContext(), UpdatePickParams{
 		UserID:      userID,
 		PickID:      pickID,
 		NewGolferID: req.GolferID,

@@ -110,7 +110,7 @@ func (h *Handler) SetDisplayName(c *fiber.Ctx) error {
 		})
 	}
 
-	updated, err := h.service.SetDisplayName(c.Context(), user.ID.String(), displayName)
+	updated, err := h.service.SetDisplayName(c.UserContext(), user.ID.String(), displayName)
 	if err != nil {
 		log.Printf("[USERS] SetDisplayName: service error: %v", err)
 		if strings.Contains(err.Error(), "already set") {
@@ -163,7 +163,7 @@ func (h *Handler) CheckDisplayName(c *fiber.Ctx) error {
 
 	log.Printf("[USERS] CheckDisplayName: checking name=%q", name)
 
-	available, err := h.service.IsDisplayNameAvailable(c.Context(), name)
+	available, err := h.service.IsDisplayNameAvailable(c.UserContext(), name)
 	if err != nil {
 		log.Printf("[USERS] CheckDisplayName: error checking availability: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -187,7 +187,7 @@ func (h *Handler) GetPendingActions(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.GetPendingActions(c.Context(), user.ID)
+	resp, err := h.service.GetPendingActions(c.UserContext(), user.ID)
 	if err != nil {
 		log.Printf("[USERS] GetPendingActions: error: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

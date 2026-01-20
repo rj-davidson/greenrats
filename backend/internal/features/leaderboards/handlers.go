@@ -38,7 +38,7 @@ func (h *Handler) GetLeagueLeaderboard(c *fiber.Ctx) error {
 		seasonYear = year
 	}
 
-	resp, err := h.service.GetLeagueLeaderboard(c.Context(), leagueID, seasonYear)
+	resp, err := h.service.GetLeagueLeaderboard(c.UserContext(), leagueID, seasonYear)
 	if err != nil {
 		if err.Error() == "league not found" {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{

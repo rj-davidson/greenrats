@@ -58,7 +58,7 @@ func (h *Handler) Create(c *fiber.Ctx) error {
 		})
 	}
 
-	league, err := h.service.Create(c.Context(), CreateParams{
+	league, err := h.service.Create(c.UserContext(), CreateParams{
 		Name:   name,
 		UserID: userID,
 	})
@@ -81,7 +81,7 @@ func (h *Handler) ListUserLeagues(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.ListUserLeagues(c.Context(), userID)
+	resp, err := h.service.ListUserLeagues(c.UserContext(), userID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to list leagues",
@@ -110,9 +110,9 @@ func (h *Handler) GetByID(c *fiber.Ctx) error {
 
 	var league *League
 	if userID != uuid.Nil {
-		league, err = h.service.GetByIDWithRole(c.Context(), id, userID)
+		league, err = h.service.GetByIDWithRole(c.UserContext(), id, userID)
 	} else {
-		league, err = h.service.GetByID(c.Context(), id)
+		league, err = h.service.GetByID(c.UserContext(), id)
 	}
 
 	if err != nil {
@@ -145,7 +145,7 @@ func (h *Handler) GetLeagueTournaments(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.GetLeagueTournaments(c.Context(), leagueID, userID)
+	resp, err := h.service.GetLeagueTournaments(c.UserContext(), leagueID, userID)
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}
@@ -175,7 +175,7 @@ func (h *Handler) JoinLeague(c *fiber.Ctx) error {
 		})
 	}
 
-	league, err := h.service.JoinLeague(c.Context(), userID, code)
+	league, err := h.service.JoinLeague(c.UserContext(), userID, code)
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}
@@ -215,7 +215,7 @@ func (h *Handler) RegenerateJoinCode(c *fiber.Ctx) error {
 		})
 	}
 
-	league, err := h.service.RegenerateJoinCode(c.Context(), leagueID, userID)
+	league, err := h.service.RegenerateJoinCode(c.UserContext(), leagueID, userID)
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}
@@ -245,7 +245,7 @@ func (h *Handler) SetJoiningEnabled(c *fiber.Ctx) error {
 		})
 	}
 
-	league, err := h.service.SetJoiningEnabled(c.Context(), leagueID, userID, req.Enabled)
+	league, err := h.service.SetJoiningEnabled(c.UserContext(), leagueID, userID, req.Enabled)
 	if err != nil {
 		return h.handleServiceError(c, err)
 	}

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect"
+	_ "github.com/lib/pq"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/modules/postgres"

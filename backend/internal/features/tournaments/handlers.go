@@ -39,7 +39,7 @@ func (h *Handler) List(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.List(c.Context(), req)
+	resp, err := h.service.List(c.UserContext(), req)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to list tournaments",
@@ -58,7 +58,7 @@ func (h *Handler) GetByID(c *fiber.Ctx) error {
 		})
 	}
 
-	tournament, err := h.service.GetByID(c.Context(), id)
+	tournament, err := h.service.GetByID(c.UserContext(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrInvalidTournamentID):
@@ -81,7 +81,7 @@ func (h *Handler) GetByID(c *fiber.Ctx) error {
 
 // GetActive handles GET /tournaments/active
 func (h *Handler) GetActive(c *fiber.Ctx) error {
-	tournament, err := h.service.GetActive(c.Context())
+	tournament, err := h.service.GetActive(c.UserContext())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get active tournament",
@@ -106,7 +106,7 @@ func (h *Handler) GetLeaderboard(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.GetLeaderboard(c.Context(), id)
+	resp, err := h.service.GetLeaderboard(c.UserContext(), id)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrInvalidTournamentID):

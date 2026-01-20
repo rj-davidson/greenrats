@@ -63,7 +63,7 @@ func TestLeaguesIntegration(t *testing.T) {
 		resp = memberApp.Post("/leagues/join", leagues.JoinLeagueRequest{
 			Code: joinCode,
 		})
-		require.Equal(t, fiber.StatusOK, resp.StatusCode)
+		require.Equal(t, fiber.StatusCreated, resp.StatusCode)
 
 		var joinResult leagues.JoinLeagueResponse
 		require.NoError(t, resp.JSON(&joinResult))
@@ -74,9 +74,9 @@ func TestLeaguesIntegration(t *testing.T) {
 		resp = memberApp.Get("/leagues/" + leagueID.String())
 		require.Equal(t, fiber.StatusOK, resp.StatusCode)
 
-		var getResult leagues.League
+		var getResult leagues.GetLeagueResponse
 		require.NoError(t, resp.JSON(&getResult))
-		assert.Equal(t, 2, getResult.MemberCount)
+		assert.Equal(t, 2, getResult.League.MemberCount)
 	})
 
 	t.Run("commissioner controls", func(t *testing.T) {
@@ -156,19 +156,20 @@ func TestLeaguesIntegration(t *testing.T) {
 	})
 
 	t.Run("league tournaments view", func(t *testing.T) {
+		uniqueYear := 2099
 		owner := factory.CreateUser()
-		league := factory.CreateLeague(owner, time.Now().Year())
+		league := factory.CreateLeague(owner, uniqueYear)
 		user := factory.CreateUser()
 		factory.AddUserToLeague(user, league)
 
 		tourn1 := factory.CreateCompletedTournament(
 			testutil.WithTournamentName("Completed"),
-			testutil.WithSeasonYear(time.Now().Year()),
+			testutil.WithSeasonYear(uniqueYear),
 		)
 		factory.CreateUpcomingTournament(
 			7,
 			testutil.WithTournamentName("Upcoming"),
-			testutil.WithSeasonYear(time.Now().Year()),
+			testutil.WithSeasonYear(uniqueYear),
 		)
 
 		golfer := factory.CreateGolfer()

@@ -2,7 +2,7 @@ package demo
 
 import (
 	"context"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/csv"
 	"errors"
 	"fmt"
@@ -250,7 +250,7 @@ func ensureDemoMember(ctx context.Context, tx *ent.Tx, username string) (*ent.Us
 }
 
 func demoWorkosID(username string) string {
-	sum := sha1.Sum([]byte(strings.ToLower(username)))
+	sum := sha256.Sum256([]byte(strings.ToLower(username)))
 	return fmt.Sprintf("demo:%x", sum)
 }
 
@@ -258,7 +258,7 @@ func demoEmail(username string) string {
 	if strings.Contains(username, "@") {
 		return username
 	}
-	sum := sha1.Sum([]byte(strings.ToLower(username)))
+	sum := sha256.Sum256([]byte(strings.ToLower(username)))
 	return fmt.Sprintf("demo+%x@greenrats.local", sum[:8])
 }
 
