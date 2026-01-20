@@ -43,7 +43,7 @@ func (s *Server) setupRoutes() {
 		auth.Middleware(*s.authConfig),
 		auth.EnsureUserMiddleware(ensureUserCfg),
 	)
-	leagueService := leagues.NewService(s.db)
+	leagueService := leagues.NewService(s.db, s.config.CurrentSeason)
 	leagueHandler := leagues.NewHandler(leagueService, s.emailClient)
 	leagueHandler.RegisterRoutesWithGroup(leagueGroup)
 

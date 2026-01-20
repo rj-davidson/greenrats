@@ -7,15 +7,12 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-// Client is the BallDontLie API client for PGA golf data.
-// Requires ALL-STAR tier ($9.99/mo) for tournament_results endpoint.
 type Client struct {
 	client  *resty.Client
 	apiKey  string
 	baseURL string
 }
 
-// New creates a new BallDontLie API client.
 func New(apiKey, baseURL string) *Client {
 	client := resty.New().
 		SetBaseURL(baseURL).
@@ -29,76 +26,6 @@ func New(apiKey, baseURL string) *Client {
 	}
 }
 
-// Player represents a golfer from the BallDontLie PGA API.
-type Player struct {
-	ID          int    `json:"id"`
-	FirstName   string `json:"first_name"`
-	LastName    string `json:"last_name"`
-	DisplayName string `json:"display_name"`
-	Country     string `json:"country"`
-	CountryCode string `json:"country_code"`
-	OWGR        int    `json:"owgr"`
-	Active      bool   `json:"active"`
-}
-
-// Tournament represents a tournament from the BallDontLie PGA API.
-type Tournament struct {
-	ID        int    `json:"id"`
-	Name      string `json:"name"`
-	StartDate string `json:"start_date"`
-	EndDate   string `json:"end_date"`
-	Course    string `json:"course"`
-	Location  string `json:"location"`
-	Purse     string `json:"purse"` // Total prize money as string (API returns string)
-	Season    int    `json:"season"`
-}
-
-// TournamentResult represents a golfer's result in a tournament.
-// Available from the ALL-STAR tier endpoint.
-// The API returns nested tournament and player objects.
-type TournamentResult struct {
-	Tournament       TournamentInfo `json:"tournament"`
-	Player           Player         `json:"player"`
-	Position         string         `json:"position"`
-	PositionNumeric  int            `json:"position_numeric"`
-	TotalScore       int            `json:"total_score"`
-	ParRelativeScore *int           `json:"par_relative_score"`
-}
-
-// TournamentInfo is the nested tournament object in tournament results.
-type TournamentInfo struct {
-	ID     int    `json:"id"`
-	Season int    `json:"season"`
-	Name   string `json:"name"`
-	Status string `json:"status"`
-}
-
-// Meta contains pagination metadata from the API.
-type Meta struct {
-	NextCursor int `json:"next_cursor,omitempty"`
-	PerPage    int `json:"per_page"`
-}
-
-// PlayersResponse is the API response for players endpoint.
-type PlayersResponse struct {
-	Data []Player `json:"data"`
-	Meta Meta     `json:"meta"`
-}
-
-// TournamentsResponse is the API response for tournaments endpoint.
-type TournamentsResponse struct {
-	Data []Tournament `json:"data"`
-	Meta Meta         `json:"meta"`
-}
-
-// TournamentResultsResponse is the API response for tournament results endpoint.
-type TournamentResultsResponse struct {
-	Data []TournamentResult `json:"data"`
-	Meta Meta               `json:"meta"`
-}
-
-// GetPlayers fetches all PGA players.
-// FREE tier endpoint: GET /pga/v1/players
 func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
 	var allPlayers []Player
 	cursor := 0
@@ -135,8 +62,6 @@ func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
 	return allPlayers, nil
 }
 
-// GetTournaments fetches tournaments for a given season.
-// FREE tier endpoint: GET /pga/v1/tournaments
 func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, error) {
 	var allTournaments []Tournament
 	cursor := 0
@@ -174,10 +99,6 @@ func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, 
 	return allTournaments, nil
 }
 
-// GetTournamentResults fetches results/leaderboard for a tournament.
-// ALL-STAR tier endpoint ($9.99/mo): GET /pga/v1/tournament_results
-// Returns positions, scores, and earnings for all players in the tournament.
-// Note: The API uses "tournament_ids[]" as the filter parameter name.
 func (c *Client) GetTournamentResults(ctx context.Context, tournamentID int) ([]TournamentResult, error) {
 	var allResults []TournamentResult
 	cursor := 0

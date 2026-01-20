@@ -23,7 +23,7 @@ func TestLeaguesIntegration(t *testing.T) {
 	db := testutil.NewPostgresTestDB(ctx, t)
 	factory := testutil.NewFactory(t, db)
 
-	leagueService := leagues.NewService(db)
+	leagueService := leagues.NewService(db, 2026)
 	leagueHandler := leagues.NewHandler(leagueService, nil)
 	leaderboardService := leaderboards.NewService(db)
 	leaderboardHandler := leaderboards.NewHandler(leaderboardService)

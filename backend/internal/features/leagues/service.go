@@ -37,11 +37,12 @@ var (
 )
 
 type Service struct {
-	db *ent.Client
+	db            *ent.Client
+	currentSeason int
 }
 
-func NewService(db *ent.Client) *Service {
-	return &Service{db: db}
+func NewService(db *ent.Client, currentSeason int) *Service {
+	return &Service{db: db, currentSeason: currentSeason}
 }
 
 type CreateParams struct {
@@ -55,7 +56,7 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*League, err
 		return nil, fmt.Errorf("failed to generate join code: %w", err)
 	}
 
-	seasonYear := time.Now().Year()
+	seasonYear := s.currentSeason
 
 	tx, err := s.db.Tx(ctx)
 	if err != nil {

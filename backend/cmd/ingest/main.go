@@ -196,15 +196,14 @@ func (i *Ingester) captureJobError(job string, err error) {
 func (i *Ingester) syncTournaments(ctx context.Context) {
 	log.Println("Starting tournament sync...")
 
-	currentYear := time.Now().Year()
-	tournaments, err := i.ballDontLie.GetTournaments(ctx, currentYear)
+	tournaments, err := i.ballDontLie.GetTournaments(ctx, i.config.CurrentSeason)
 	if err != nil {
 		log.Printf("failed to fetch tournaments from BallDontLie: %v", err)
 		i.captureJobError("sync_tournaments", err)
 		return
 	}
 
-	log.Printf("Fetched %d tournaments for %d season", len(tournaments), currentYear)
+	log.Printf("Fetched %d tournaments for %d season", len(tournaments), i.config.CurrentSeason)
 
 	for idx := range tournaments {
 		if err := i.upsertTournament(ctx, &tournaments[idx]); err != nil {
@@ -217,9 +216,13 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	log.Println("Tournament sync completed")
 }
 
-// parseEndDate attempts to parse the tournament end date from various formats.
-// Returns the end date with a buffer (06:00 UTC the next day) to account for
-// late finishes and timezone differences (e.g., Hawaii is UTC-10).
+func parseEndDatePtr(endDateStr *string, startDate time.Time) time.Time {
+	if endDateStr == nil || *endDateStr == "" {
+		return startDate.AddDate(0, 0, 4).Add(6 * time.Hour)
+	}
+	return parseEndDate(*endDateStr, startDate)
+}
+
 func parseEndDate(endDateStr string, startDate time.Time) time.Time {
 	const iso8601Millis = "2006-01-02T15:04:05.000Z"
 
@@ -269,7 +272,7 @@ func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tourname
 		return fmt.Errorf("failed to parse start date: %w", err)
 	}
 
-	endDate := parseEndDate(t.EndDate, startDate)
+	endDate := parseEndDatePtr(t.EndDate, startDate)
 
 	// Determine status based on dates
 	now := time.Now().UTC()
@@ -296,14 +299,14 @@ func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tourname
 			SetStatus(status).
 			SetSeasonYear(t.Season)
 
-		if t.Course != "" {
-			builder.SetCourse(t.Course)
+		if t.CourseName != nil && *t.CourseName != "" {
+			builder.SetCourse(*t.CourseName)
 		}
-		if t.Location != "" {
-			builder.SetLocation(t.Location)
+		if t.City != nil && *t.City != "" {
+			builder.SetLocation(*t.City)
 		}
-		if t.Purse != "" {
-			if purse, err := strconv.Atoi(t.Purse); err == nil && purse > 0 {
+		if t.Purse != nil && *t.Purse != "" {
+			if purse, err := strconv.Atoi(*t.Purse); err == nil && purse > 0 {
 				builder.SetPurse(purse)
 			}
 		}
@@ -325,14 +328,14 @@ func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tourname
 			SetEndDate(endDate).
 			SetStatus(status)
 
-		if t.Course != "" {
-			updater.SetCourse(t.Course)
+		if t.CourseName != nil && *t.CourseName != "" {
+			updater.SetCourse(*t.CourseName)
 		}
-		if t.Location != "" {
-			updater.SetLocation(t.Location)
+		if t.City != nil && *t.City != "" {
+			updater.SetLocation(*t.City)
 		}
-		if t.Purse != "" {
-			if purse, err := strconv.Atoi(t.Purse); err == nil && purse > 0 {
+		if t.Purse != nil && *t.Purse != "" {
+			if purse, err := strconv.Atoi(*t.Purse); err == nil && purse > 0 {
 				updater.SetPurse(purse)
 			}
 		}
@@ -367,7 +370,7 @@ func (i *Ingester) syncPlayers(ctx context.Context) {
 
 	for idx := range players {
 		if err := i.upsertPlayer(ctx, &players[idx]); err != nil {
-			log.Printf("failed to upsert player %s %s: %v", players[idx].FirstName, players[idx].LastName, err)
+			log.Printf("failed to upsert player %s: %v", players[idx].DisplayName, err)
 			i.captureJobError("sync_players", err)
 			continue
 		}
@@ -376,27 +379,22 @@ func (i *Ingester) syncPlayers(ctx context.Context) {
 	log.Println("Player sync completed")
 }
 
-// upsertPlayer creates or updates a golfer from BallDontLie data.
 func (i *Ingester) upsertPlayer(ctx context.Context, p *balldontlie.Player) error {
-	// Use display_name from API if available, otherwise construct from first/last
 	name := p.DisplayName
-	if name == "" {
-		name = fmt.Sprintf("%s %s", p.FirstName, p.LastName)
+	if name == "" && p.FirstName != nil && p.LastName != nil {
+		name = fmt.Sprintf("%s %s", *p.FirstName, *p.LastName)
 	}
 
-	// Use country_code with fallback to "UNK"
-	countryCode := p.CountryCode
-	if countryCode == "" {
-		countryCode = "UNK"
+	countryCode := "UNK"
+	if p.CountryCode != nil && *p.CountryCode != "" {
+		countryCode = *p.CountryCode
 	}
 
-	// Try to find existing golfer by BallDontLie ID
 	existing, err := i.db.Golfer.Query().
 		Where(golfer.BdlID(p.ID)).
 		Only(ctx)
 
 	if ent.IsNotFound(err) {
-		// Try to find by name match (for linking with Live Golf Data)
 		existing, err = i.db.Golfer.Query().
 			Where(golfer.Name(name)).
 			Only(ctx)
@@ -404,20 +402,23 @@ func (i *Ingester) upsertPlayer(ctx context.Context, p *balldontlie.Player) erro
 
 	switch {
 	case ent.IsNotFound(err):
-		// Create new golfer
 		builder := i.db.Golfer.Create().
 			SetBdlID(p.ID).
 			SetName(name).
-			SetFirstName(p.FirstName).
-			SetLastName(p.LastName).
 			SetCountryCode(countryCode).
 			SetActive(p.Active)
 
-		if p.Country != "" {
-			builder.SetCountry(p.Country)
+		if p.FirstName != nil {
+			builder.SetFirstName(*p.FirstName)
 		}
-		if p.OWGR > 0 {
-			builder.SetOwgr(p.OWGR)
+		if p.LastName != nil {
+			builder.SetLastName(*p.LastName)
+		}
+		if p.Country != nil && *p.Country != "" {
+			builder.SetCountry(*p.Country)
+		}
+		if p.OWGR != nil && *p.OWGR > 0 {
+			builder.SetOwgr(*p.OWGR)
 		}
 
 		_, err = builder.Save(ctx)
@@ -428,20 +429,23 @@ func (i *Ingester) upsertPlayer(ctx context.Context, p *balldontlie.Player) erro
 	case err != nil:
 		return fmt.Errorf("failed to query golfer: %w", err)
 	default:
-		// Update existing golfer
 		updater := existing.Update().
 			SetName(name).
-			SetFirstName(p.FirstName).
-			SetLastName(p.LastName).
 			SetCountryCode(countryCode).
 			SetActive(p.Active).
 			SetBdlID(p.ID)
 
-		if p.Country != "" {
-			updater.SetCountry(p.Country)
+		if p.FirstName != nil {
+			updater.SetFirstName(*p.FirstName)
 		}
-		if p.OWGR > 0 {
-			updater.SetOwgr(p.OWGR)
+		if p.LastName != nil {
+			updater.SetLastName(*p.LastName)
+		}
+		if p.Country != nil && *p.Country != "" {
+			updater.SetCountry(*p.Country)
+		}
+		if p.OWGR != nil && *p.OWGR > 0 {
+			updater.SetOwgr(*p.OWGR)
 		}
 
 		_, err = updater.Save(ctx)
@@ -1019,21 +1023,29 @@ func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament,
 
 	status := tournamententry.StatusActive
 	cut := false
-	switch r.Tournament.Status {
-	case "COMPLETED":
-		status = tournamententry.StatusFinished
-	case "IN_PROGRESS":
-		status = tournamententry.StatusActive
+	if r.Tournament.Status != nil {
+		switch *r.Tournament.Status {
+		case "COMPLETED":
+			status = tournamententry.StatusFinished
+		case "IN_PROGRESS":
+			status = tournamententry.StatusActive
+		}
 	}
 
-	position := r.PositionNumeric
-	if r.Position == "CUT" {
+	position := 0
+	if r.PositionNumeric != nil {
+		position = *r.PositionNumeric
+	}
+	if r.Position != nil && *r.Position == "CUT" {
 		cut = true
 		status = tournamententry.StatusFinished
 	}
 
-	score := r.TotalScore // API's total_score is actually score relative to par
-	totalStrokes := 0     // API doesn't provide actual total strokes
+	score := 0
+	if r.TotalScore != nil {
+		score = *r.TotalScore
+	}
+	totalStrokes := 0
 
 	existing, err := i.db.TournamentEntry.Query().
 		Where(

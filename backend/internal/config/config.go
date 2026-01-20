@@ -7,20 +7,15 @@ import (
 	"github.com/spf13/viper"
 )
 
-// Config holds all configuration for the application.
 type Config struct {
-	// Server
 	Port int    `mapstructure:"PORT"`
 	Env  string `mapstructure:"ENV"`
 
-	// Database
 	DatabaseURL string `mapstructure:"DATABASE_URL"`
 
-	// WorkOS Authentication
 	WorkOSAPIKey   string `mapstructure:"WORKOS_API_KEY"`
 	WorkOSClientID string `mapstructure:"WORKOS_CLIENT_ID"`
 
-	// External APIs
 	LiveGolfDataAPIKey  string `mapstructure:"LIVE_GOLF_DATA_API_KEY"`
 	LiveGolfDataBaseURL string `mapstructure:"LIVE_GOLF_DATA_BASE_URL"`
 	BallDontLieAPIKey   string `mapstructure:"BALL_DONT_LIE_API_KEY"`
@@ -28,20 +23,18 @@ type Config struct {
 	PGATourAPIKey       string `mapstructure:"PGA_TOUR_API_KEY"`
 	PGATourBaseURL      string `mapstructure:"PGA_TOUR_BASE_URL"`
 
-	// Monitoring
 	SentryDSN string `mapstructure:"SENTRY_DSN"`
 
-	// Email
 	ResendAPIKey string `mapstructure:"RESEND_API_KEY"`
 	FromEmail    string `mapstructure:"FROM_EMAIL"`
 	SendEmails   bool   `mapstructure:"SEND_EMAILS"`
+
+	CurrentSeason int `mapstructure:"CURRENT_SEASON"`
 }
 
-// Load reads configuration from environment variables and .env file.
 func Load() (*Config, error) {
 	v := viper.New()
 
-	// Set defaults
 	v.SetDefault("PORT", 8000)
 	v.SetDefault("ENV", "development")
 	v.SetDefault("DATABASE_URL", "")
@@ -57,21 +50,18 @@ func Load() (*Config, error) {
 	v.SetDefault("RESEND_API_KEY", "")
 	v.SetDefault("FROM_EMAIL", "noreply@greenrats.com")
 	v.SetDefault("SEND_EMAILS", false)
+	v.SetDefault("CURRENT_SEASON", 2026)
 
-	// Read from .env file if it exists
 	v.SetConfigName(".env")
 	v.SetConfigType("env")
 	v.AddConfigPath(".")
 	v.AddConfigPath("..")
 
-	// Ignore error if .env file doesn't exist
 	_ = v.ReadInConfig()
 
-	// Read from environment variables (must bind keys for AutomaticEnv to work)
 	v.AutomaticEnv()
 	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
-	// Bind environment variables explicitly
 	_ = v.BindEnv("PORT")
 	_ = v.BindEnv("ENV")
 	_ = v.BindEnv("DATABASE_URL")
@@ -87,6 +77,7 @@ func Load() (*Config, error) {
 	_ = v.BindEnv("RESEND_API_KEY")
 	_ = v.BindEnv("FROM_EMAIL")
 	_ = v.BindEnv("SEND_EMAILS")
+	_ = v.BindEnv("CURRENT_SEASON")
 
 	var cfg Config
 	if err := v.Unmarshal(&cfg); err != nil {
@@ -96,12 +87,10 @@ func Load() (*Config, error) {
 	return &cfg, nil
 }
 
-// IsDevelopment returns true if the environment is development.
 func (c *Config) IsDevelopment() bool {
 	return c.Env == "development"
 }
 
-// IsProduction returns true if the environment is production.
 func (c *Config) IsProduction() bool {
 	return c.Env == "production"
 }
