@@ -275,6 +275,14 @@ railway up --service frontend
 
 See [CLAUDE.md](./CLAUDE.md) for detailed development instructions, coding conventions, and workflow guidance.
 
+## Future Data Sources
+
+Potential APIs for future integration:
+
+| API | URL | Notes |
+|-----|-----|-------|
+| PGA Tour GraphQL | `https://orchestrator.pgatour.com/graphql` | Official PGA Tour data, requires reverse engineering |
+
 ## License
 
 Private - All rights reserved.

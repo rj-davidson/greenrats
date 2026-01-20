@@ -9,4 +9,5 @@ export enum QueryKey {
   LEAGUES = "leagues",
   LEADERBOARDS = "leaderboards",
   USERS = "users",
+  ADMIN = "admin",
 }

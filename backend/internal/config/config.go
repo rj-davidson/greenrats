@@ -21,8 +21,6 @@ type Config struct {
 	LiveGolfDataBaseURL string `mapstructure:"LIVE_GOLF_DATA_BASE_URL"`
 	BallDontLieAPIKey   string `mapstructure:"BALL_DONT_LIE_API_KEY"`
 	BallDontLieBaseURL  string `mapstructure:"BALL_DONT_LIE_BASE_URL"`
-	PGATourAPIKey       string `mapstructure:"PGA_TOUR_API_KEY"`
-	PGATourBaseURL      string `mapstructure:"PGA_TOUR_BASE_URL"`
 
 	SentryDSN string `mapstructure:"SENTRY_DSN"`
 
@@ -53,8 +51,6 @@ func Load() (*Config, error) {
 	v.SetDefault("LIVE_GOLF_DATA_BASE_URL", "https://live-golf-data.p.rapidapi.com")
 	v.SetDefault("BALL_DONT_LIE_API_KEY", "")
 	v.SetDefault("BALL_DONT_LIE_BASE_URL", "https://api.balldontlie.io")
-	v.SetDefault("PGA_TOUR_API_KEY", "")
-	v.SetDefault("PGA_TOUR_BASE_URL", "https://orchestrator.pgatour.com/graphql")
 	v.SetDefault("SENTRY_DSN", "")
 	v.SetDefault("RESEND_API_KEY", "")
 	v.SetDefault("FROM_EMAIL", "noreply@greenrats.com")
@@ -84,8 +80,6 @@ func Load() (*Config, error) {
 	_ = v.BindEnv("LIVE_GOLF_DATA_BASE_URL")
 	_ = v.BindEnv("BALL_DONT_LIE_API_KEY")
 	_ = v.BindEnv("BALL_DONT_LIE_BASE_URL")
-	_ = v.BindEnv("PGA_TOUR_API_KEY")
-	_ = v.BindEnv("PGA_TOUR_BASE_URL")
 	_ = v.BindEnv("SENTRY_DSN")
 	_ = v.BindEnv("RESEND_API_KEY")
 	_ = v.BindEnv("FROM_EMAIL")

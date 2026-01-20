@@ -1,4 +1,9 @@
-import type { CheckDisplayNameResponse, PendingActionsResponse, SetDisplayNameRequest, User } from "@/features/users/types";
+import type {
+  CheckDisplayNameResponse,
+  PendingActionsResponse,
+  SetDisplayNameRequest,
+  User,
+} from "@/features/users/types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import type { Requestor } from "@/lib/query/requestor";
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -63,4 +68,12 @@ export function buildGetPendingActionsQueryOptions(requestor: Requestor = makeCl
 
 export function usePendingActions() {
   return useQuery(buildGetPendingActionsQueryOptions());
+}
+
+export function buildGetCurrentUserQueryOptions(requestor: Requestor = makeClientRequest) {
+  return queryOptions<User>({
+    queryKey: userKeys.me(),
+    queryFn: () => requestor.get<User>("/api/v1/users/me"),
+    staleTime: 5 * 60 * 1000,
+  });
 }

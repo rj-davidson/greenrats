@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/rj-davidson/greenrats/internal/auth"
+	"github.com/rj-davidson/greenrats/internal/features/admin"
 	"github.com/rj-davidson/greenrats/internal/features/leaderboards"
 	"github.com/rj-davidson/greenrats/internal/features/leagues"
 	"github.com/rj-davidson/greenrats/internal/features/picks"
@@ -69,6 +70,16 @@ func (s *Server) setupRoutes() {
 	)
 	userHandler := users.NewHandler(s.userService, s.emailClient)
 	userHandler.RegisterRoutesWithGroup(userGroup)
+
+	// Admin routes - requires auth, user provisioning, and admin access
+	adminGroup := v1.Group("/admin",
+		auth.Middleware(*s.authConfig),
+		auth.EnsureUserMiddleware(ensureUserCfg),
+		auth.RequireAdminMiddleware(),
+	)
+	adminService := admin.NewService(s.db)
+	adminHandler := admin.NewHandler(adminService, s.adminIngestService, s.logger)
+	adminHandler.RegisterRoutesWithGroup(adminGroup)
 }
 
 // healthCheck returns the health status of the API.

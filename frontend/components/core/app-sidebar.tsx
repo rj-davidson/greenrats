@@ -17,7 +17,8 @@ import { LeagueMonogram } from "@/features/leagues/components";
 import { useUserLeagues } from "@/features/leagues/queries";
 import { useActiveTournament, useTournaments } from "@/features/tournaments/queries";
 import type { Tournament } from "@/features/tournaments/types";
-import { CalendarIcon, ChevronRightIcon, TrophyIcon } from "lucide-react";
+import { useCurrentUser } from "@/features/users/queries";
+import { CalendarIcon, ChevronRightIcon, SettingsIcon, TrophyIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
@@ -76,6 +77,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const { currentTournament, recentCompleted } = useSidebarTournaments();
   const { leagues, hasMore } = useSidebarLeagues();
+  const { data: user } = useCurrentUser();
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -165,6 +167,27 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+        {user?.is_admin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Admin</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname.startsWith("/admin")}
+                    tooltip="Admin Dashboard"
+                  >
+                    <Link href="/admin">
+                      <SettingsIcon className="size-4" />
+                      <span>Dashboard</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

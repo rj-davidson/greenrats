@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
+	"os"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -12,21 +14,29 @@ import (
 	"github.com/rj-davidson/greenrats/internal/auth"
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/email"
+	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
+	"github.com/rj-davidson/greenrats/internal/external/exa"
+	"github.com/rj-davidson/greenrats/internal/external/openai"
+	"github.com/rj-davidson/greenrats/internal/external/scrapedo"
+	"github.com/rj-davidson/greenrats/internal/features/admin"
+	"github.com/rj-davidson/greenrats/internal/features/golfers"
 	"github.com/rj-davidson/greenrats/internal/features/users"
 	"github.com/rj-davidson/greenrats/internal/sse"
 )
 
 // Server holds the HTTP server and its dependencies.
 type Server struct {
-	app          *fiber.App
-	config       *config.Config
-	db           *ent.Client
-	sseBroker    *sse.Broker
-	sseHandler   *sse.Handler
-	authConfig   *auth.Config
-	jwksProvider *auth.JWKSProvider
-	userService  *users.Service
-	emailClient  *email.Client
+	app                *fiber.App
+	config             *config.Config
+	db                 *ent.Client
+	sseBroker          *sse.Broker
+	sseHandler         *sse.Handler
+	authConfig         *auth.Config
+	jwksProvider       *auth.JWKSProvider
+	userService        *users.Service
+	emailClient        *email.Client
+	adminIngestService *admin.IngestService
+	logger             *slog.Logger
 }
 
 // New creates a new Server instance.
@@ -74,16 +84,39 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 	// Initialize email client
 	emailClient := email.New(cfg)
 
+	// Initialize logger
+	logLevel := slog.LevelInfo
+	if cfg.IsDevelopment() {
+		logLevel = slog.LevelDebug
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	}))
+
+	// Initialize external clients for admin ingest service
+	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, logger)
+	exaClient := exa.New(cfg.ExaAPIKey, logger)
+	openaiClient := openai.New(cfg.OpenAIAPIKey, cfg.OpenAIModel, logger)
+	scrapeDoClient := scrapedo.New(cfg.ScrapeDoAPIKey, logger)
+	golferSvc := golfers.NewService(db)
+
+	// Initialize admin ingest service
+	adminIngestSvc := admin.NewIngestService(
+		db, cfg, bdlClient, exaClient, openaiClient, scrapeDoClient, golferSvc, logger,
+	)
+
 	s := &Server{
-		app:          app,
-		config:       cfg,
-		db:           db,
-		sseBroker:    broker,
-		sseHandler:   sseHandler,
-		authConfig:   authCfg,
-		jwksProvider: jwksProvider,
-		userService:  userService,
-		emailClient:  emailClient,
+		app:                app,
+		config:             cfg,
+		db:                 db,
+		sseBroker:          broker,
+		sseHandler:         sseHandler,
+		authConfig:         authCfg,
+		jwksProvider:       jwksProvider,
+		userService:        userService,
+		emailClient:        emailClient,
+		adminIngestService: adminIngestSvc,
+		logger:             logger,
 	}
 
 	s.setupMiddleware()
