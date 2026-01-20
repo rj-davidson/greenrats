@@ -180,6 +180,17 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 	}
 }
 
+func (i *Ingester) captureJobError(job string, err error) {
+	if err == nil {
+		return
+	}
+
+	sentry.WithScope(func(scope *sentry.Scope) {
+		scope.SetTag("job", job)
+		sentry.CaptureException(err)
+	})
+}
+
 // syncTournaments fetches and stores tournament data from BallDontLie.
 // Runs daily to minimize API calls.
 func (i *Ingester) syncTournaments(ctx context.Context) {
@@ -189,6 +200,7 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	tournaments, err := i.ballDontLie.GetTournaments(ctx, currentYear)
 	if err != nil {
 		log.Printf("failed to fetch tournaments from BallDontLie: %v", err)
+		i.captureJobError("sync_tournaments", err)
 		return
 	}
 
@@ -197,6 +209,7 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	for idx := range tournaments {
 		if err := i.upsertTournament(ctx, &tournaments[idx]); err != nil {
 			log.Printf("failed to upsert tournament %s: %v", tournaments[idx].Name, err)
+			i.captureJobError("sync_tournaments", err)
 			continue
 		}
 	}
@@ -346,6 +359,7 @@ func (i *Ingester) syncPlayers(ctx context.Context) {
 	players, err := i.ballDontLie.GetPlayers(ctx)
 	if err != nil {
 		log.Printf("failed to fetch players from BallDontLie: %v", err)
+		i.captureJobError("sync_players", err)
 		return
 	}
 
@@ -354,6 +368,7 @@ func (i *Ingester) syncPlayers(ctx context.Context) {
 	for idx := range players {
 		if err := i.upsertPlayer(ctx, &players[idx]); err != nil {
 			log.Printf("failed to upsert player %s %s: %v", players[idx].FirstName, players[idx].LastName, err)
+			i.captureJobError("sync_players", err)
 			continue
 		}
 	}
@@ -457,6 +472,7 @@ func (i *Ingester) syncUpcomingTournamentFields(ctx context.Context) {
 		All(ctx)
 	if err != nil {
 		log.Printf("failed to query upcoming tournaments: %v", err)
+		i.captureJobError("sync_upcoming_fields", err)
 		return
 	}
 
@@ -464,6 +480,7 @@ func (i *Ingester) syncUpcomingTournamentFields(ctx context.Context) {
 		count, err := t.QueryEntries().Count(ctx)
 		if err != nil {
 			log.Printf("failed to count entries for tournament %s: %v", t.Name, err)
+			i.captureJobError("sync_upcoming_fields", err)
 			continue
 		}
 
@@ -474,6 +491,7 @@ func (i *Ingester) syncUpcomingTournamentFields(ctx context.Context) {
 
 		if err := i.syncTournamentField(ctx, t); err != nil {
 			log.Printf("failed to sync field for tournament %s: %v", t.Name, err)
+			i.captureJobError("sync_upcoming_fields", err)
 		}
 	}
 
@@ -493,6 +511,7 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 				golferEnt, err := i.upsertGolferFromLiveGolfData(ctx, &golfers[idx])
 				if err != nil {
 					log.Printf("failed to upsert golfer %s: %v", golfers[idx].Name, err)
+					i.captureJobError("sync_tournament_field", err)
 					continue
 				}
 
@@ -503,6 +522,7 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 					Save(ctx)
 				if err != nil {
 					log.Printf("failed to create entry for golfer %s: %v", golfers[idx].Name, err)
+					i.captureJobError("sync_tournament_field", err)
 					continue
 				}
 				entryCount++
@@ -514,6 +534,7 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 
 		if err != nil {
 			log.Printf("Live Golf Data field fetch failed for %s: %v", t.Name, err)
+			i.captureJobError("sync_tournament_field", err)
 		} else {
 			log.Printf("Live Golf Data field empty for %s, falling back to PGA Tour", t.Name)
 		}
@@ -546,6 +567,7 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 		golferEnt, err := i.upsertGolferFromPgaTour(ctx, &player)
 		if err != nil {
 			log.Printf("failed to upsert golfer %s: %v", player.DisplayName, err)
+			i.captureJobError("sync_tournament_field", err)
 			continue
 		}
 
@@ -556,6 +578,7 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 			Save(ctx)
 		if err != nil {
 			log.Printf("failed to create entry for golfer %s: %v", player.DisplayName, err)
+			i.captureJobError("sync_tournament_field", err)
 			continue
 		}
 		entryCount++
@@ -937,6 +960,7 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) {
 		All(ctx)
 	if err != nil {
 		log.Printf("failed to query active tournaments: %v", err)
+		i.captureJobError("sync_leaderboards", err)
 		return
 	}
 
@@ -953,6 +977,7 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) {
 
 		if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
 			log.Printf("failed to sync leaderboard for tournament %s: %v", t.Name, err)
+			i.captureJobError("sync_leaderboards", err)
 		}
 	}
 
@@ -973,6 +998,7 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 	for idx := range results {
 		if err := i.upsertTournamentEntry(ctx, t, &results[idx]); err != nil {
 			log.Printf("failed to upsert result for player %s: %v", results[idx].Player.DisplayName, err)
+			i.captureJobError("sync_tournament_leaderboard", err)
 			continue
 		}
 	}
@@ -1065,6 +1091,7 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 		All(ctx)
 	if err != nil {
 		log.Printf("failed to query completed tournaments: %v", err)
+		i.captureJobError("sync_earnings", err)
 		return
 	}
 
@@ -1077,6 +1104,7 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 		hasEarnings, err := i.tournamentHasEarnings(ctx, t)
 		if err != nil {
 			log.Printf("failed to check earnings for tournament %s: %v", t.Name, err)
+			i.captureJobError("sync_earnings", err)
 			continue
 		}
 
@@ -1084,6 +1112,7 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 			log.Printf("Tournament %s missing earnings, syncing...", t.Name)
 			if err := i.syncTournamentEarnings(ctx, t); err != nil {
 				log.Printf("failed to sync earnings for tournament %s: %v", t.Name, err)
+				i.captureJobError("sync_earnings", err)
 			}
 			continue
 		}
@@ -1094,6 +1123,7 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 			log.Printf("Refreshing earnings for recently completed tournament %s (day %d)", t.Name, daysSinceEnd)
 			if err := i.syncTournamentEarnings(ctx, t); err != nil {
 				log.Printf("failed to sync earnings for tournament %s: %v", t.Name, err)
+				i.captureJobError("sync_earnings", err)
 			}
 		}
 	}
@@ -1144,6 +1174,7 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 		}
 		if err != nil {
 			log.Printf("failed to find golfer %s: %v", golferName, err)
+			i.captureJobError("sync_earnings", err)
 			continue
 		}
 
@@ -1158,6 +1189,7 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 		}
 		if err != nil {
 			log.Printf("failed to query tournament entry for %s: %v", golferName, err)
+			i.captureJobError("sync_earnings", err)
 			continue
 		}
 
@@ -1165,6 +1197,7 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 			_, err = entry.Update().SetEarnings(e.Earnings).Save(ctx)
 			if err != nil {
 				log.Printf("failed to update earnings for %s: %v", golferName, err)
+				i.captureJobError("sync_earnings", err)
 				continue
 			}
 			updated++
@@ -1198,6 +1231,7 @@ func (i *Ingester) findLiveGolfDataTournamentID(ctx context.Context, t *ent.Tour
 		if name == target {
 			if err := i.saveLiveGolfDataTournamentID(ctx, t, s.ID); err != nil {
 				log.Printf("failed to save Live Golf Data tournament ID: %v", err)
+				i.captureJobError("sync_earnings", err)
 			}
 			return s.ID, nil
 		}
@@ -1209,6 +1243,7 @@ func (i *Ingester) findLiveGolfDataTournamentID(ctx context.Context, t *ent.Tour
 	if fallback != "" {
 		if err := i.saveLiveGolfDataTournamentID(ctx, t, fallback); err != nil {
 			log.Printf("failed to save Live Golf Data tournament ID: %v", err)
+			i.captureJobError("sync_earnings", err)
 		}
 		return fallback, nil
 	}
@@ -1237,6 +1272,7 @@ func (i *Ingester) sendPickReminders(ctx context.Context) {
 		All(ctx)
 	if err != nil {
 		log.Printf("failed to query upcoming tournaments: %v", err)
+		i.captureJobError("send_pick_reminders", err)
 		return
 	}
 
@@ -1260,6 +1296,7 @@ func (i *Ingester) sendRemindersForTournament(ctx context.Context, t *ent.Tourna
 		All(ctx)
 	if err != nil {
 		log.Printf("failed to query leagues: %v", err)
+		i.captureJobError("send_pick_reminders", err)
 		return
 	}
 
@@ -1275,6 +1312,7 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 		All(ctx)
 	if err != nil {
 		log.Printf("failed to query league memberships: %v", err)
+		i.captureJobError("send_pick_reminders", err)
 		return
 	}
 
@@ -1297,6 +1335,7 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 			Exist(ctx)
 		if err != nil {
 			log.Printf("failed to check pick: %v", err)
+			i.captureJobError("send_pick_reminders", err)
 			continue
 		}
 		if hasPick {
@@ -1313,6 +1352,7 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 			Exist(ctx)
 		if err != nil {
 			log.Printf("failed to check reminder status: %v", err)
+			i.captureJobError("send_pick_reminders", err)
 			continue
 		}
 		if alreadySent {
@@ -1321,6 +1361,7 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 
 		if err := i.sendPickReminderEmail(ctx, u, l, t); err != nil {
 			log.Printf("failed to send reminder to %s: %v", u.Email, err)
+			i.captureJobError("send_pick_reminders", err)
 			continue
 		}
 
@@ -1332,6 +1373,7 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 			Save(ctx)
 		if err != nil {
 			log.Printf("failed to record reminder: %v", err)
+			i.captureJobError("send_pick_reminders", err)
 		}
 	}
 }
@@ -1378,6 +1420,7 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 		All(ctx)
 	if err != nil {
 		log.Printf("failed to query picks: %v", err)
+		i.captureJobError("send_tournament_results", err)
 		return
 	}
 
@@ -1399,6 +1442,7 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 			Exist(ctx)
 		if err != nil {
 			log.Printf("failed to check reminder status: %v", err)
+			i.captureJobError("send_tournament_results", err)
 			continue
 		}
 		if alreadySent {
@@ -1439,6 +1483,7 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 
 		if err := i.email.SendTournamentResults(p.Edges.User.Email, data); err != nil {
 			log.Printf("failed to send results to %s: %v", p.Edges.User.Email, err)
+			i.captureJobError("send_tournament_results", err)
 			continue
 		}
 
@@ -1450,6 +1495,7 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 			Save(ctx)
 		if err != nil {
 			log.Printf("failed to record reminder: %v", err)
+			i.captureJobError("send_tournament_results", err)
 		}
 	}
 
