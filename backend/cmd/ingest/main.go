@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -11,7 +10,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"unicode"
 
 	"github.com/getsentry/sentry-go"
 	"github.com/gofrs/uuid/v5"
@@ -29,33 +27,29 @@ import (
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
-	"github.com/rj-davidson/greenrats/internal/external/livegolfdata"
-	"github.com/rj-davidson/greenrats/internal/external/pgatour"
+	"github.com/rj-davidson/greenrats/internal/external/openai"
 )
 
 // Sync intervals based on cost optimization plan:
 // - Tournaments: Daily (24 hours) via BallDontLie
 // - Leaderboards: Hourly during active tournaments via BallDontLie
 // - Players: Weekly via BallDontLie
-// - Tournament Field: On-demand (3 days before) via Live Golf Data (250 req/mo limit)
+// - Earnings: Every 6 hours via OpenAI web search
 const (
 	tournamentSyncInterval  = 24 * time.Hour
 	leaderboardSyncInterval = 1 * time.Hour
 	playerSyncInterval      = 7 * 24 * time.Hour // Weekly
-	fieldCheckInterval      = 6 * time.Hour      // Check for upcoming tournaments needing field sync
 	reminderCheckInterval   = 1 * time.Hour      // Check for pick reminders
 	earningsCheckInterval   = 6 * time.Hour      // Check for earnings to sync
-	daysBeforeFieldSync     = 5                  // Sync field 5 days before tournament starts
 	pickWindowDays          = 3                  // Pick window opens this many days before tournament
 )
 
 type Ingester struct {
-	db           *ent.Client
-	config       *config.Config
-	liveGolfData *livegolfdata.Client
-	ballDontLie  *balldontlie.Client
-	pgaTour      *pgatour.Client
-	email        *email.Client
+	db          *ent.Client
+	config      *config.Config
+	ballDontLie *balldontlie.Client
+	openai      *openai.Client
+	email       *email.Client
 }
 
 func main() {
@@ -90,18 +84,16 @@ func run() error {
 	}
 	defer db.Close()
 
-	lgdClient := livegolfdata.New(cfg.LiveGolfDataAPIKey, cfg.LiveGolfDataBaseURL)
 	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL)
-	pgaTourClient := pgatour.New(cfg.PGATourAPIKey, cfg.PGATourBaseURL)
+	openaiClient := openai.New(cfg.OpenAIAPIKey, cfg.OpenAIModel)
 	emailClient := email.New(cfg)
 
 	ingester := &Ingester{
-		db:           db,
-		config:       cfg,
-		liveGolfData: lgdClient,
-		ballDontLie:  bdlClient,
-		pgaTour:      pgaTourClient,
-		email:        emailClient,
+		db:          db,
+		config:      cfg,
+		ballDontLie: bdlClient,
+		openai:      openaiClient,
+		email:       emailClient,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -139,10 +131,6 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 	playerTicker := time.NewTicker(playerSyncInterval)
 	defer playerTicker.Stop()
 
-	// Field check - every 6 hours to find tournaments needing field sync
-	fieldCheckTicker := time.NewTicker(fieldCheckInterval)
-	defer fieldCheckTicker.Stop()
-
 	// Pick reminder check - hourly
 	reminderTicker := time.NewTicker(reminderCheckInterval)
 	defer reminderTicker.Stop()
@@ -155,7 +143,6 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 	log.Println("Running initial data syncs...")
 	i.syncTournaments(ctx)
 	i.syncPlayers(ctx)
-	i.syncUpcomingTournamentFields(ctx)
 	i.syncLeaderboards(ctx)
 	i.syncEarnings(ctx)
 	i.sendPickReminders(ctx)
@@ -170,8 +157,6 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 			i.syncLeaderboards(ctx)
 		case <-playerTicker.C:
 			i.syncPlayers(ctx)
-		case <-fieldCheckTicker.C:
-			i.syncUpcomingTournamentFields(ctx)
 		case <-earningsTicker.C:
 			i.syncEarnings(ctx)
 		case <-reminderTicker.C:
@@ -457,502 +442,6 @@ func (i *Ingester) upsertPlayer(ctx context.Context, p *balldontlie.Player) erro
 	return nil
 }
 
-// syncUpcomingTournamentFields checks for tournaments starting within 3 days
-// and syncs their field from Live Golf Data if not already synced.
-// Uses Live Golf Data's tournament-field endpoint (counts toward 250/month limit).
-func (i *Ingester) syncUpcomingTournamentFields(ctx context.Context) {
-	log.Println("Checking for tournaments needing field sync...")
-
-	// Find tournaments starting within the next 3 days that need field sync
-	now := time.Now()
-	threshold := now.AddDate(0, 0, daysBeforeFieldSync)
-
-	tournaments, err := i.db.Tournament.Query().
-		Where(
-			tournament.StatusEQ(tournament.StatusUpcoming),
-			tournament.StartDateLTE(threshold),
-			tournament.StartDateGTE(now),
-		).
-		All(ctx)
-	if err != nil {
-		log.Printf("failed to query upcoming tournaments: %v", err)
-		i.captureJobError("sync_upcoming_fields", err)
-		return
-	}
-
-	for _, t := range tournaments {
-		count, err := t.QueryEntries().Count(ctx)
-		if err != nil {
-			log.Printf("failed to count entries for tournament %s: %v", t.Name, err)
-			i.captureJobError("sync_upcoming_fields", err)
-			continue
-		}
-
-		if count > 0 {
-			log.Printf("Tournament %s already has %d entries in field", t.Name, count)
-			continue
-		}
-
-		if err := i.syncTournamentField(ctx, t); err != nil {
-			log.Printf("failed to sync field for tournament %s: %v", t.Name, err)
-			i.captureJobError("sync_upcoming_fields", err)
-		}
-	}
-
-	log.Println("Field sync check completed")
-}
-
-func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) error {
-	if t.ScratchgolfID != nil {
-		log.Printf("Syncing field for tournament: %s (Live Golf Data ID: %s)", t.Name, *t.ScratchgolfID)
-
-		golfers, err := i.liveGolfData.GetTournamentField(ctx, *t.ScratchgolfID)
-		if err == nil && len(golfers) > 0 {
-			log.Printf("Fetched %d golfers for tournament %s", len(golfers), t.Name)
-
-			var entryCount int
-			for idx := range golfers {
-				golferEnt, err := i.upsertGolferFromLiveGolfData(ctx, &golfers[idx])
-				if err != nil {
-					log.Printf("failed to upsert golfer %s: %v", golfers[idx].Name, err)
-					i.captureJobError("sync_tournament_field", err)
-					continue
-				}
-
-				_, err = i.db.TournamentEntry.Create().
-					SetTournament(t).
-					SetGolfer(golferEnt).
-					SetStatus(tournamententry.StatusPending).
-					Save(ctx)
-				if err != nil {
-					log.Printf("failed to create entry for golfer %s: %v", golfers[idx].Name, err)
-					i.captureJobError("sync_tournament_field", err)
-					continue
-				}
-				entryCount++
-			}
-
-			log.Printf("Created %d entries for tournament %s", entryCount, t.Name)
-			return nil
-		}
-
-		if err != nil {
-			log.Printf("Live Golf Data field fetch failed for %s: %v", t.Name, err)
-			i.captureJobError("sync_tournament_field", err)
-		} else {
-			log.Printf("Live Golf Data field empty for %s, falling back to PGA Tour", t.Name)
-		}
-	}
-
-	if i.pgaTour == nil {
-		return fmt.Errorf("PGA Tour client not configured")
-	}
-
-	fieldID, err := i.findPgaTourTournamentID(ctx, t)
-	if err != nil {
-		return err
-	}
-
-	field, err := i.pgaTour.GetField(ctx, fieldID, false, false)
-	if err != nil {
-		return fmt.Errorf("failed to fetch PGA Tour field: %w", err)
-	}
-
-	if len(field.Players) == 0 {
-		log.Printf("PGA Tour field empty for tournament %s", t.Name)
-		return nil
-	}
-
-	log.Printf("Fetched %d PGA Tour golfers for tournament %s", len(field.Players), t.Name)
-
-	var entryCount int
-	for idx := range field.Players {
-		player := field.Players[idx]
-		golferEnt, err := i.upsertGolferFromPgaTour(ctx, &player)
-		if err != nil {
-			log.Printf("failed to upsert golfer %s: %v", player.DisplayName, err)
-			i.captureJobError("sync_tournament_field", err)
-			continue
-		}
-
-		_, err = i.db.TournamentEntry.Create().
-			SetTournament(t).
-			SetGolfer(golferEnt).
-			SetStatus(tournamententry.StatusPending).
-			Save(ctx)
-		if err != nil {
-			log.Printf("failed to create entry for golfer %s: %v", player.DisplayName, err)
-			i.captureJobError("sync_tournament_field", err)
-			continue
-		}
-		entryCount++
-	}
-
-	log.Printf("Created %d entries for tournament %s", entryCount, t.Name)
-	return nil
-}
-
-func (i *Ingester) findPgaTourTournamentID(ctx context.Context, t *ent.Tournament) (string, error) {
-	if i.pgaTour == nil {
-		return "", fmt.Errorf("PGA Tour client not configured")
-	}
-
-	year := t.SeasonYear
-	if year == 0 {
-		year = t.StartDate.Year()
-	}
-
-	tournaments, err := i.pgaTour.GetUpcomingSchedule(ctx, pgatour.DefaultTourCode, year)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch PGA Tour schedule: %w", err)
-	}
-
-	target := normalizeTournamentName(t.Name)
-	var fallback string
-	for idx := range tournaments {
-		name := normalizeTournamentName(tournaments[idx].TournamentName)
-		if name == target {
-			return tournaments[idx].ID, nil
-		}
-		if fallback == "" && (strings.Contains(name, target) || strings.Contains(target, name)) {
-			fallback = tournaments[idx].ID
-		}
-	}
-
-	if fallback != "" {
-		return fallback, nil
-	}
-
-	return "", fmt.Errorf("no PGA Tour schedule match for tournament %s", t.Name)
-}
-
-func normalizeTournamentName(name string) string {
-	name = strings.ToLower(strings.TrimSpace(name))
-	var builder strings.Builder
-	builder.Grow(len(name))
-	for _, r := range name {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == ' ' {
-			builder.WriteRune(r)
-		}
-	}
-	return strings.Join(strings.Fields(builder.String()), " ")
-}
-
-func (i *Ingester) upsertGolferFromPgaTour(ctx context.Context, p *pgatour.FieldPlayer) (*ent.Golfer, error) {
-	name := p.DisplayName
-	if name == "" {
-		name = p.ShortName
-	}
-	if name == "" && p.FirstName != "" && p.LastName != "" {
-		name = fmt.Sprintf("%s %s", p.FirstName, p.LastName)
-	}
-	if name == "" {
-		return nil, fmt.Errorf("missing golfer name")
-	}
-
-	existing, err := i.findMatchingGolfer(ctx, name, p.FirstName, p.LastName)
-
-	if errors.Is(err, errNoMatch) {
-		builder := i.db.Golfer.Create().
-			SetName(name).
-			SetActive(true)
-
-		if p.FirstName != "" {
-			builder.SetFirstName(p.FirstName)
-		}
-		if p.LastName != "" {
-			builder.SetLastName(p.LastName)
-		}
-		if p.Country != "" {
-			builder.SetCountry(p.Country)
-		}
-		if p.OWGR.Valid && p.OWGR.Int > 0 {
-			builder.SetOwgr(p.OWGR.Int)
-		}
-
-		return builder.Save(ctx)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to query golfer: %w", err)
-	}
-
-	updater := existing.Update()
-	if p.FirstName != "" {
-		updater.SetFirstName(p.FirstName)
-	}
-	if p.LastName != "" {
-		updater.SetLastName(p.LastName)
-	}
-	if p.Country != "" {
-		updater.SetCountry(p.Country)
-	}
-	if p.OWGR.Valid && p.OWGR.Int > 0 {
-		updater.SetOwgr(p.OWGR.Int)
-	}
-
-	return updater.Save(ctx)
-}
-
-var errNoMatch = errors.New("no golfer match")
-
-func (i *Ingester) findMatchingGolfer(ctx context.Context, displayName, firstName, lastName string) (*ent.Golfer, error) {
-	if displayName != "" {
-		existing, err := i.db.Golfer.Query().
-			Where(golfer.NameEqualFold(displayName)).
-			Only(ctx)
-		if err == nil || !ent.IsNotFound(err) {
-			return existing, err
-		}
-	}
-
-	if firstName != "" && lastName != "" {
-		existing, err := i.db.Golfer.Query().
-			Where(
-				golfer.FirstNameEqualFold(firstName),
-				golfer.LastNameEqualFold(lastName),
-			).
-			Only(ctx)
-		if err == nil || !ent.IsNotFound(err) {
-			return existing, err
-		}
-	}
-
-	if lastName == "" {
-		return nil, errNoMatch
-	}
-
-	candidates, err := i.db.Golfer.Query().
-		Where(golfer.LastNameEqualFold(lastName)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	bestScore := 0
-	var best *ent.Golfer
-	for _, candidate := range candidates {
-		candidateName := candidate.Name
-		if candidateName == "" && candidate.FirstName != nil && candidate.LastName != nil {
-			candidateName = fmt.Sprintf("%s %s", *candidate.FirstName, *candidate.LastName)
-		}
-		score := scoreNameMatch(displayName, candidateName, firstName, lastName)
-		if score > bestScore {
-			bestScore = score
-			best = candidate
-		}
-	}
-
-	if best != nil && bestScore >= 60 {
-		return best, nil
-	}
-
-	return nil, errNoMatch
-}
-
-func scoreNameMatch(displayName, candidateName, firstName, lastName string) int {
-	normalizedDisplay := normalizePersonName(displayName)
-	normalizedCandidate := normalizePersonName(candidateName)
-
-	if normalizedDisplay == "" || normalizedCandidate == "" {
-		return 0
-	}
-
-	if normalizedDisplay == normalizedCandidate {
-		return 100
-	}
-
-	if strings.Contains(normalizedDisplay, normalizedCandidate) || strings.Contains(normalizedCandidate, normalizedDisplay) {
-		return 80
-	}
-
-	displayTokens := strings.Fields(normalizedDisplay)
-	candidateTokens := strings.Fields(normalizedCandidate)
-	if len(displayTokens) == 0 || len(candidateTokens) == 0 {
-		return 0
-	}
-
-	displayLast := displayTokens[len(displayTokens)-1]
-	candidateLast := candidateTokens[len(candidateTokens)-1]
-	if displayLast != candidateLast {
-		return 0
-	}
-
-	displayFirst := displayTokens[0]
-	candidateFirst := candidateTokens[0]
-
-	if displayFirst == candidateFirst {
-		return 90
-	}
-
-	if strings.HasPrefix(displayFirst, candidateFirst) || strings.HasPrefix(candidateFirst, displayFirst) {
-		return 70
-	}
-
-	if displayFirst[:1] == candidateFirst[:1] {
-		return 60
-	}
-
-	if firstName != "" && lastName != "" {
-		normalizedFirst := normalizePersonName(firstName)
-		normalizedLast := normalizePersonName(lastName)
-		if normalizedLast == candidateLast && normalizedFirst != "" && candidateFirst != "" &&
-			normalizedFirst[:1] == candidateFirst[:1] {
-			return 60
-		}
-	}
-
-	return 0
-}
-
-func normalizePersonName(name string) string {
-	if name == "" {
-		return ""
-	}
-
-	if strings.Contains(name, ",") {
-		parts := strings.SplitN(name, ",", 2)
-		left := strings.TrimSpace(parts[0])
-		right := strings.TrimSpace(parts[1])
-		if left != "" && right != "" {
-			name = right + " " + left
-		}
-	}
-
-	name = strings.ToLower(strings.TrimSpace(name))
-	if name == "" {
-		return ""
-	}
-
-	var builder strings.Builder
-	builder.Grow(len(name))
-	for _, r := range name {
-		if unicode.IsLetter(r) || unicode.IsDigit(r) || r == ' ' {
-			builder.WriteRune(r)
-			continue
-		}
-		if r == '-' || r == '.' || r == '\'' {
-			builder.WriteRune(' ')
-		}
-	}
-
-	normalized := removeDiacritics(builder.String())
-	parts := strings.Fields(normalized)
-	if len(parts) == 0 {
-		return ""
-	}
-
-	suffixes := map[string]struct{}{
-		"jr": {}, "sr": {}, "ii": {}, "iii": {}, "iv": {}, "v": {},
-	}
-	for len(parts) > 0 {
-		if _, ok := suffixes[parts[len(parts)-1]]; ok {
-			parts = parts[:len(parts)-1]
-			continue
-		}
-		break
-	}
-
-	return strings.Join(parts, " ")
-}
-
-func removeDiacritics(input string) string {
-	return strings.Map(func(r rune) rune {
-		switch r {
-		case '\u00e0', '\u00e1', '\u00e2', '\u00e3', '\u00e4', '\u00e5',
-			'\u0101', '\u0103', '\u0105':
-			return 'a'
-		case '\u00e7', '\u0107', '\u0109', '\u010b', '\u010d':
-			return 'c'
-		case '\u00e8', '\u00e9', '\u00ea', '\u00eb', '\u0113', '\u0115',
-			'\u0117', '\u0119', '\u011b':
-			return 'e'
-		case '\u00ec', '\u00ed', '\u00ee', '\u00ef', '\u012b', '\u012d',
-			'\u012f', '\u0131':
-			return 'i'
-		case '\u00f1', '\u0144', '\u0146', '\u0148':
-			return 'n'
-		case '\u00f2', '\u00f3', '\u00f4', '\u00f5', '\u00f6', '\u00f8',
-			'\u014d', '\u014f', '\u0151':
-			return 'o'
-		case '\u00f9', '\u00fa', '\u00fb', '\u00fc', '\u016b', '\u016d',
-			'\u016f', '\u0171', '\u0173':
-			return 'u'
-		case '\u00fd', '\u00ff', '\u0177':
-			return 'y'
-		case '\u00df':
-			return 's'
-		case '\u0142':
-			return 'l'
-		default:
-			return r
-		}
-	}, input)
-}
-
-// upsertGolferFromLiveGolfData creates or updates a golfer from Live Golf Data.
-func (i *Ingester) upsertGolferFromLiveGolfData(ctx context.Context, g *livegolfdata.Golfer) (*ent.Golfer, error) {
-	// Try to find existing golfer by Live Golf Data ID
-	existing, err := i.db.Golfer.Query().
-		Where(golfer.ScratchgolfID(g.ID)).
-		Only(ctx)
-
-	if ent.IsNotFound(err) {
-		// Try to find by name match (for linking with BallDontLie data)
-		name := g.Name
-		if name == "" && g.FirstName != "" && g.LastName != "" {
-			name = fmt.Sprintf("%s %s", g.FirstName, g.LastName)
-		}
-
-		existing, err = i.db.Golfer.Query().
-			Where(golfer.Name(name)).
-			Only(ctx)
-
-		if ent.IsNotFound(err) {
-			// Create new golfer
-			builder := i.db.Golfer.Create().
-				SetScratchgolfID(g.ID).
-				SetName(name)
-
-			if g.Country != "" {
-				builder.SetCountry(g.Country)
-			}
-			if g.FirstName != "" {
-				builder.SetFirstName(g.FirstName)
-			}
-			if g.LastName != "" {
-				builder.SetLastName(g.LastName)
-			}
-			if g.WorldRanking > 0 {
-				builder.SetOwgr(g.WorldRanking)
-			}
-			if g.ImageURL != "" {
-				builder.SetImageURL(g.ImageURL)
-			}
-
-			return builder.Save(ctx)
-		} else if err != nil {
-			return nil, fmt.Errorf("failed to query golfer: %w", err)
-		}
-
-		// Found by name, update with Live Golf Data ID
-		return existing.Update().
-			SetScratchgolfID(g.ID).
-			Save(ctx)
-	} else if err != nil {
-		return nil, fmt.Errorf("failed to query golfer: %w", err)
-	}
-
-	// Update existing golfer
-	updater := existing.Update()
-	if g.WorldRanking > 0 {
-		updater.SetOwgr(g.WorldRanking)
-	}
-	if g.ImageURL != "" {
-		updater.SetImageURL(g.ImageURL)
-	}
-
-	return updater.Save(ctx)
-}
-
 // syncLeaderboards fetches live leaderboard data for active tournaments from BallDontLie.
 // Runs hourly (vs the previous 2-minute interval) to optimize API usage.
 func (i *Ingester) syncLeaderboards(ctx context.Context) {
@@ -1153,62 +642,73 @@ func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament)
 }
 
 func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament) error {
-	log.Printf("Syncing earnings for tournament: %s", t.Name)
-
-	lgdTournamentID, err := i.findLiveGolfDataTournamentID(ctx, t)
-	if err != nil {
-		return fmt.Errorf("failed to find Live Golf Data tournament ID: %w", err)
-	}
+	log.Printf("Syncing earnings for tournament: %s via OpenAI", t.Name)
 
 	year := t.SeasonYear
 	if year == 0 {
 		year = t.EndDate.Year()
 	}
 
-	earnings, err := i.liveGolfData.GetEarnings(ctx, lgdTournamentID, year)
+	entries, err := i.db.TournamentEntry.Query().
+		Where(tournamententry.HasTournamentWith(tournament.IDEQ(t.ID))).
+		WithGolfer().
+		All(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to fetch earnings: %w", err)
+		return fmt.Errorf("failed to query tournament entries: %w", err)
 	}
 
-	if earnings == nil {
-		log.Printf("Earnings not yet available for tournament %s", t.Name)
+	if len(entries) == 0 {
+		log.Printf("No tournament entries for %s, skipping earnings sync", t.Name)
 		return nil
 	}
 
-	log.Printf("Fetched %d earnings entries for tournament %s", len(earnings), t.Name)
+	golferInputs := make([]openai.GolferInput, 0, len(entries))
+	entryByGolferID := make(map[string]*ent.TournamentEntry)
+	for _, entry := range entries {
+		if entry.Edges.Golfer == nil {
+			continue
+		}
+		g := entry.Edges.Golfer
+		input := openai.GolferInput{
+			GolferID: g.ID.String(),
+			Name:     g.Name,
+		}
+		if g.FirstName != nil {
+			input.FirstName = *g.FirstName
+		}
+		if g.LastName != nil {
+			input.LastName = *g.LastName
+		}
+		golferInputs = append(golferInputs, input)
+		entryByGolferID[g.ID.String()] = entry
+	}
+
+	results, err := i.openai.SearchTournamentEarnings(ctx, t.Name, year, golferInputs)
+	if err != nil {
+		return fmt.Errorf("failed to fetch earnings from OpenAI: %w", err)
+	}
+
+	if len(results) == 0 {
+		log.Printf("No earnings results from OpenAI for tournament %s", t.Name)
+		return nil
+	}
+
+	log.Printf("Fetched %d earnings entries for tournament %s", len(results), t.Name)
 
 	var updated int
-	for _, e := range earnings {
-		golferName := fmt.Sprintf("%s %s", e.FirstName, e.LastName)
-		g, err := i.findMatchingGolfer(ctx, golferName, e.FirstName, e.LastName)
-		if errors.Is(err, errNoMatch) {
-			continue
-		}
-		if err != nil {
-			log.Printf("failed to find golfer %s: %v", golferName, err)
-			i.captureJobError("sync_earnings", err)
+	for _, r := range results {
+		entry, ok := entryByGolferID[r.GolferID]
+		if !ok {
 			continue
 		}
 
-		entry, err := i.db.TournamentEntry.Query().
-			Where(
-				tournamententry.HasTournamentWith(tournament.IDEQ(t.ID)),
-				tournamententry.HasGolferWith(golfer.IDEQ(g.ID)),
-			).
-			Only(ctx)
-		if ent.IsNotFound(err) {
-			continue
-		}
-		if err != nil {
-			log.Printf("failed to query tournament entry for %s: %v", golferName, err)
-			i.captureJobError("sync_earnings", err)
-			continue
-		}
-
-		if entry.Earnings != e.Earnings {
-			_, err = entry.Update().SetEarnings(e.Earnings).Save(ctx)
+		if entry.Earnings != r.Earnings || entry.Position != r.Position {
+			_, err = entry.Update().
+				SetEarnings(r.Earnings).
+				SetPosition(r.Position).
+				Save(ctx)
 			if err != nil {
-				log.Printf("failed to update earnings for %s: %v", golferName, err)
+				log.Printf("failed to update earnings for golfer %s: %v", r.GolferID, err)
 				i.captureJobError("sync_earnings", err)
 				continue
 			}
@@ -1218,54 +718,6 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 
 	log.Printf("Updated earnings for %d golfers in tournament %s", updated, t.Name)
 	return nil
-}
-
-func (i *Ingester) findLiveGolfDataTournamentID(ctx context.Context, t *ent.Tournament) (string, error) {
-	if t.ScratchgolfID != nil && *t.ScratchgolfID != "" {
-		return *t.ScratchgolfID, nil
-	}
-
-	year := t.SeasonYear
-	if year == 0 {
-		year = t.EndDate.Year()
-	}
-
-	schedule, err := i.liveGolfData.GetSchedule(ctx, year)
-	if err != nil {
-		return "", fmt.Errorf("failed to fetch Live Golf Data schedule: %w", err)
-	}
-
-	target := normalizeTournamentName(t.Name)
-	var fallback string
-	for idx := range schedule {
-		s := &schedule[idx]
-		name := normalizeTournamentName(s.Name)
-		if name == target {
-			if err := i.saveLiveGolfDataTournamentID(ctx, t, s.ID); err != nil {
-				log.Printf("failed to save Live Golf Data tournament ID: %v", err)
-				i.captureJobError("sync_earnings", err)
-			}
-			return s.ID, nil
-		}
-		if fallback == "" && (strings.Contains(name, target) || strings.Contains(target, name)) {
-			fallback = s.ID
-		}
-	}
-
-	if fallback != "" {
-		if err := i.saveLiveGolfDataTournamentID(ctx, t, fallback); err != nil {
-			log.Printf("failed to save Live Golf Data tournament ID: %v", err)
-			i.captureJobError("sync_earnings", err)
-		}
-		return fallback, nil
-	}
-
-	return "", fmt.Errorf("no Live Golf Data schedule match for tournament %s", t.Name)
-}
-
-func (i *Ingester) saveLiveGolfDataTournamentID(ctx context.Context, t *ent.Tournament, lgdID string) error {
-	_, err := t.Update().SetScratchgolfID(lgdID).Save(ctx)
-	return err
 }
 
 func (i *Ingester) sendPickReminders(ctx context.Context) {
