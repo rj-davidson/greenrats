@@ -71,13 +71,13 @@ func (s *Service) List(ctx context.Context, req ListTournamentsRequest) (*ListTo
 func (s *Service) GetByID(ctx context.Context, id string) (*Tournament, error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {
-		return nil, fmt.Errorf("invalid tournament ID: %w", err)
+		return nil, ErrInvalidTournamentID
 	}
 
 	t, err := s.db.Tournament.Get(ctx, uid)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, nil
+			return nil, ErrTournamentNotFound
 		}
 		return nil, fmt.Errorf("failed to get tournament: %w", err)
 	}
@@ -107,13 +107,13 @@ func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboardResponse, error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {
-		return nil, fmt.Errorf("invalid tournament ID: %w", err)
+		return nil, ErrInvalidTournamentID
 	}
 
 	t, err := s.db.Tournament.Get(ctx, uid)
 	if err != nil {
 		if ent.IsNotFound(err) {
-			return nil, nil
+			return nil, ErrTournamentNotFound
 		}
 		return nil, fmt.Errorf("failed to get tournament: %w", err)
 	}

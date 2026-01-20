@@ -1,0 +1,630 @@
+package picks
+
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/internal/testutil"
+)
+
+func TestService_Create(t *testing.T) {
+	t.Run("creates pick successfully when validations pass", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfer := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer)
+
+		pick, err := service.Create(ctx, CreateParams{
+			UserID:       user.ID,
+			TournamentID: tourn.ID,
+			GolferID:     golfer.ID,
+			LeagueID:     league.ID,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, user.ID, pick.UserID)
+		assert.Equal(t, tourn.ID, pick.TournamentID)
+		assert.Equal(t, golfer.ID, pick.GolferID)
+		assert.Equal(t, league.ID, pick.LeagueID)
+	})
+
+	t.Run("returns error when tournament not found", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		user := factory.CreateUser()
+		golfer := factory.CreateGolfer()
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		factory.AddUserToLeague(user, league)
+
+		_, err := service.Create(ctx, CreateParams{
+			UserID:       user.ID,
+			TournamentID: factory.RandomUUID(),
+			GolferID:     golfer.ID,
+			LeagueID:     league.ID,
+		})
+
+		require.ErrorIs(t, err, ErrTournamentNotFound)
+	})
+
+	t.Run("returns error when tournament not upcoming", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateActiveTournament()
+		golfer := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer)
+
+		_, err := service.Create(ctx, CreateParams{
+			UserID:       user.ID,
+			TournamentID: tourn.ID,
+			GolferID:     golfer.ID,
+			LeagueID:     league.ID,
+		})
+
+		require.ErrorIs(t, err, ErrTournamentNotUpcoming)
+	})
+
+	t.Run("returns error when pick window closed", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(10)
+		golfer := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer)
+
+		_, err := service.Create(ctx, CreateParams{
+			UserID:       user.ID,
+			TournamentID: tourn.ID,
+			GolferID:     golfer.ID,
+			LeagueID:     league.ID,
+		})
+
+		require.ErrorIs(t, err, ErrPickWindowClosed)
+	})
+
+	t.Run("returns error when golfer not found", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+
+		_, err := service.Create(ctx, CreateParams{
+			UserID:       user.ID,
+			TournamentID: tourn.ID,
+			GolferID:     factory.RandomUUID(),
+			LeagueID:     league.ID,
+		})
+
+		require.ErrorIs(t, err, ErrGolferNotFound)
+	})
+
+	t.Run("returns error when not league member", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfer := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer)
+
+		_, err := service.Create(ctx, CreateParams{
+			UserID:       user.ID,
+			TournamentID: tourn.ID,
+			GolferID:     golfer.ID,
+			LeagueID:     league.ID,
+		})
+
+		require.ErrorIs(t, err, ErrNotLeagueMember)
+	})
+
+	t.Run("returns error when golfer not in field", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfer := factory.CreateGolfer()
+
+		_, err := service.Create(ctx, CreateParams{
+			UserID:       user.ID,
+			TournamentID: tourn.ID,
+			GolferID:     golfer.ID,
+			LeagueID:     league.ID,
+		})
+
+		require.ErrorIs(t, err, ErrGolferNotInField)
+	})
+
+	t.Run("returns error when golfer already used", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn1 := factory.CreateUpcomingTournament(2)
+		tourn2 := factory.CreateUpcomingTournament(2, testutil.WithTournamentName("Second Tournament"))
+		golfer := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn1, golfer)
+		factory.CreateTournamentEntry(tourn2, golfer)
+
+		factory.CreatePick(user, tourn1, golfer, league)
+
+		_, err := service.Create(ctx, CreateParams{
+			UserID:       user.ID,
+			TournamentID: tourn2.ID,
+			GolferID:     golfer.ID,
+			LeagueID:     league.ID,
+		})
+
+		require.ErrorIs(t, err, ErrGolferAlreadyUsed)
+	})
+
+	t.Run("returns error when pick already exists", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer1)
+		factory.CreateTournamentEntry(tourn, golfer2)
+
+		factory.CreatePick(user, tourn, golfer1, league)
+
+		_, err := service.Create(ctx, CreateParams{
+			UserID:       user.ID,
+			TournamentID: tourn.ID,
+			GolferID:     golfer2.ID,
+			LeagueID:     league.ID,
+		})
+
+		require.ErrorIs(t, err, ErrPickAlreadyExists)
+	})
+}
+
+func TestService_CanMakePick(t *testing.T) {
+	t.Run("returns open when in pick window", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateUpcomingTournament(2)
+
+		status, err := service.CanMakePick(ctx, tourn.ID)
+
+		require.NoError(t, err)
+		assert.True(t, status.IsOpen)
+	})
+
+	t.Run("returns closed when before pick window", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateUpcomingTournament(10)
+
+		status, err := service.CanMakePick(ctx, tourn.ID)
+
+		require.NoError(t, err)
+		assert.False(t, status.IsOpen)
+		assert.Equal(t, "pick window not yet open", status.Reason)
+	})
+
+	t.Run("returns closed when tournament active", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateActiveTournament()
+
+		status, err := service.CanMakePick(ctx, tourn.ID)
+
+		require.NoError(t, err)
+		assert.False(t, status.IsOpen)
+		assert.Equal(t, "tournament has already started", status.Reason)
+	})
+
+	t.Run("returns error when tournament not found", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		_, err := service.CanMakePick(ctx, factory.RandomUUID())
+
+		require.ErrorIs(t, err, ErrTournamentNotFound)
+	})
+}
+
+func TestService_GetUserPicks(t *testing.T) {
+	t.Run("returns all user picks", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn1 := factory.CreateCompletedTournament()
+		tourn2 := factory.CreateCompletedTournament(testutil.WithTournamentName("Second"))
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+
+		factory.CreatePick(user, tourn1, golfer1, league)
+		factory.CreatePick(user, tourn2, golfer2, league)
+
+		resp, err := service.GetUserPicks(ctx, user.ID, league.ID, 0)
+
+		require.NoError(t, err)
+		assert.Equal(t, 2, resp.Total)
+	})
+
+	t.Run("filters by season year", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateCompletedTournament(testutil.WithSeasonYear(2024))
+		golfer := factory.CreateGolfer()
+
+		factory.CreatePick(user, tourn, golfer, league)
+
+		resp, err := service.GetUserPicks(ctx, user.ID, league.ID, 2025)
+
+		require.NoError(t, err)
+		assert.Equal(t, 0, resp.Total)
+	})
+}
+
+func TestService_GetAvailableGolfers(t *testing.T) {
+	t.Run("returns all golfers in field", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfers := factory.CreateGolfers(5)
+		factory.CreateTournamentField(tourn, golfers)
+
+		resp, err := service.GetAvailableGolfers(ctx, user.ID, league.ID, tourn.ID)
+
+		require.NoError(t, err)
+		assert.Equal(t, 5, resp.Total)
+	})
+
+	t.Run("marks used golfers", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn1 := factory.CreateCompletedTournament()
+		tourn2 := factory.CreateUpcomingTournament(2)
+
+		golfer := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn1, golfer)
+		factory.CreateTournamentEntry(tourn2, golfer)
+
+		factory.CreatePick(user, tourn1, golfer, league)
+
+		resp, err := service.GetAvailableGolfers(ctx, user.ID, league.ID, tourn2.ID)
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, resp.Total)
+		assert.True(t, resp.Golfers[0].IsUsed)
+	})
+
+	t.Run("returns error when tournament not found", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		_, err := service.GetAvailableGolfers(ctx, user.ID, league.ID, factory.RandomUUID())
+
+		require.ErrorIs(t, err, ErrTournamentNotFound)
+	})
+}
+
+func TestService_UpdateUserPick(t *testing.T) {
+	t.Run("updates pick successfully", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer1)
+		factory.CreateTournamentEntry(tourn, golfer2)
+
+		pick := factory.CreatePick(user, tourn, golfer1, league)
+
+		updated, err := service.UpdateUserPick(ctx, UpdatePickParams{
+			UserID:      user.ID,
+			PickID:      pick.ID,
+			NewGolferID: golfer2.ID,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, golfer2.ID, updated.GolferID)
+	})
+
+	t.Run("returns error when not pick owner", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		otherUser := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+		factory.AddUserToLeague(otherUser, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer1)
+		factory.CreateTournamentEntry(tourn, golfer2)
+
+		pick := factory.CreatePick(user, tourn, golfer1, league)
+
+		_, err := service.UpdateUserPick(ctx, UpdatePickParams{
+			UserID:      otherUser.ID,
+			PickID:      pick.ID,
+			NewGolferID: golfer2.ID,
+		})
+
+		require.ErrorIs(t, err, ErrNotPickOwner)
+	})
+
+	t.Run("returns error when tournament not upcoming", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateTournament(
+			testutil.WithStartDate(time.Now().AddDate(0, 0, 2)),
+			testutil.WithTournamentStatus(tournament.StatusActive),
+		)
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer1)
+		factory.CreateTournamentEntry(tourn, golfer2)
+
+		pick := factory.CreatePick(user, tourn, golfer1, league)
+
+		_, err := service.UpdateUserPick(ctx, UpdatePickParams{
+			UserID:      user.ID,
+			PickID:      pick.ID,
+			NewGolferID: golfer2.ID,
+		})
+
+		require.ErrorIs(t, err, ErrTournamentNotUpcoming)
+	})
+
+	t.Run("returns error when golfer already used", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn1 := factory.CreateCompletedTournament()
+		tourn2 := factory.CreateUpcomingTournament(2)
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn1, golfer2)
+		factory.CreateTournamentEntry(tourn2, golfer1)
+		factory.CreateTournamentEntry(tourn2, golfer2)
+
+		factory.CreatePick(user, tourn1, golfer2, league)
+		pick := factory.CreatePick(user, tourn2, golfer1, league)
+
+		_, err := service.UpdateUserPick(ctx, UpdatePickParams{
+			UserID:      user.ID,
+			PickID:      pick.ID,
+			NewGolferID: golfer2.ID,
+		})
+
+		require.ErrorIs(t, err, ErrGolferAlreadyUsed)
+	})
+}
+
+func TestService_OverridePick(t *testing.T) {
+	t.Run("commissioner overrides pick successfully", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer1)
+		factory.CreateTournamentEntry(tourn, golfer2)
+
+		pick := factory.CreatePick(user, tourn, golfer1, league)
+
+		updated, err := service.OverridePick(ctx, OverridePickParams{
+			LeagueID:       league.ID,
+			PickID:         pick.ID,
+			NewGolferID:    golfer2.ID,
+			CommissionerID: owner.ID,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, golfer2.ID, updated.GolferID)
+	})
+
+	t.Run("returns error when not commissioner", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer1)
+		factory.CreateTournamentEntry(tourn, golfer2)
+
+		pick := factory.CreatePick(user, tourn, golfer1, league)
+
+		_, err := service.OverridePick(ctx, OverridePickParams{
+			LeagueID:       league.ID,
+			PickID:         pick.ID,
+			NewGolferID:    golfer2.ID,
+			CommissionerID: user.ID,
+		})
+
+		require.ErrorIs(t, err, ErrNotCommissioner)
+	})
+
+	t.Run("returns error when tournament completed", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateCompletedTournament()
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn, golfer1)
+		factory.CreateTournamentEntry(tourn, golfer2)
+
+		pick := factory.CreatePick(user, tourn, golfer1, league)
+
+		_, err := service.OverridePick(ctx, OverridePickParams{
+			LeagueID:       league.ID,
+			PickID:         pick.ID,
+			NewGolferID:    golfer2.ID,
+			CommissionerID: owner.ID,
+		})
+
+		require.ErrorIs(t, err, ErrTournamentCompleted)
+	})
+}

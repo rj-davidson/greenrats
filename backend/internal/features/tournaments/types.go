@@ -1,6 +1,14 @@
 package tournaments
 
-import "time"
+import (
+	"errors"
+	"time"
+)
+
+var (
+	ErrInvalidTournamentID = errors.New("invalid tournament ID")
+	ErrTournamentNotFound  = errors.New("tournament not found")
+)
 
 // Tournament represents a golf tournament.
 type Tournament struct {

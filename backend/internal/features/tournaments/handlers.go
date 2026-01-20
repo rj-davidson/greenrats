@@ -1,6 +1,8 @@
 package tournaments
 
 import (
+	"errors"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -58,15 +60,20 @@ func (h *Handler) GetByID(c *fiber.Ctx) error {
 
 	tournament, err := h.service.GetByID(c.Context(), id)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to get tournament",
-		})
-	}
-
-	if tournament == nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "tournament not found",
-		})
+		switch {
+		case errors.Is(err, ErrInvalidTournamentID):
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid tournament id",
+			})
+		case errors.Is(err, ErrTournamentNotFound):
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "tournament not found",
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "failed to get tournament",
+			})
+		}
 	}
 
 	return c.JSON(GetTournamentResponse{Tournament: *tournament})
@@ -101,15 +108,20 @@ func (h *Handler) GetLeaderboard(c *fiber.Ctx) error {
 
 	resp, err := h.service.GetLeaderboard(c.Context(), id)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to get leaderboard",
-		})
-	}
-
-	if resp == nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
-			"error": "tournament not found",
-		})
+		switch {
+		case errors.Is(err, ErrInvalidTournamentID):
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid tournament id",
+			})
+		case errors.Is(err, ErrTournamentNotFound):
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "tournament not found",
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "failed to get leaderboard",
+			})
+		}
 	}
 
 	return c.JSON(resp)
