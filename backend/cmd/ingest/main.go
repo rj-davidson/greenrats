@@ -30,6 +30,8 @@ import (
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/exa"
 	"github.com/rj-davidson/greenrats/internal/external/openai"
+	"github.com/rj-davidson/greenrats/internal/external/scrapedo"
+	"github.com/rj-davidson/greenrats/internal/features/golfers"
 )
 
 // Sync intervals based on cost optimization plan:
@@ -53,6 +55,8 @@ type Ingester struct {
 	exa         *exa.Client
 	openai      *openai.Client
 	email       *email.Client
+	scrapedo    *scrapedo.Client
+	golfers     *golfers.Service
 }
 
 func main() {
@@ -91,6 +95,8 @@ func run() error {
 	exaClient := exa.New(cfg.ExaAPIKey)
 	openaiClient := openai.New(cfg.OpenAIAPIKey, cfg.OpenAIModel)
 	emailClient := email.New(cfg)
+	scrapeDoClient := scrapedo.New(cfg.ScrapeDoAPIKey)
+	golferSvc := golfers.NewService(db)
 
 	ingester := &Ingester{
 		db:          db,
@@ -99,6 +105,8 @@ func run() error {
 		exa:         exaClient,
 		openai:      openaiClient,
 		email:       emailClient,
+		scrapedo:    scrapeDoClient,
+		golfers:     golferSvc,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -711,7 +719,7 @@ func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament)
 const earningsBatchSize = 10
 
 func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament) error {
-	log.Printf("Syncing earnings for tournament: %s via Exa + OpenAI", t.Name)
+	log.Printf("Syncing earnings for tournament: %s", t.Name)
 
 	year := t.SeasonYear
 	if year == 0 {
@@ -770,34 +778,154 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 		return nil
 	}
 
-	var content strings.Builder
+	log.Printf("Exa returned %d results for tournament %s", len(exaResponse.Results), t.Name)
+
+	var exaContent strings.Builder
 	for _, result := range exaResponse.Results {
-		content.WriteString(result.Text)
-		content.WriteString("\n\n")
+		exaContent.WriteString(result.Text)
+		exaContent.WriteString("\n\n")
 	}
 
-	log.Printf("Exa returned %d results for tournament %s, parsing with OpenAI", len(exaResponse.Results), t.Name)
+	matchedGolferIDs := make(map[string]bool)
+	var updated int
 
-	leaderboard, err := i.openai.ParseLeaderboardContent(ctx, content.String(), t.Name)
+	if i.config.ScrapeDoAPIKey != "" {
+		updated, matchedGolferIDs = i.tryScrapedoEarnings(ctx, t, exaResponse, golferInputs, entryByGolferID)
+	}
+
+	unmatchedGolfers := make([]openai.GolferInput, 0)
+	for _, g := range golferInputs {
+		if !matchedGolferIDs[g.GolferID] {
+			unmatchedGolfers = append(unmatchedGolfers, g)
+		}
+	}
+
+	if len(unmatchedGolfers) > 0 {
+		log.Printf("Using OpenAI to match %d remaining golfers for tournament %s", len(unmatchedGolfers), t.Name)
+		openaiUpdated := i.matchWithOpenAI(ctx, t, exaContent.String(), unmatchedGolfers, entryByGolferID)
+		updated += openaiUpdated
+	}
+
+	log.Printf("Updated earnings for %d golfers in tournament %s", updated, t.Name)
+	return nil
+}
+
+func (i *Ingester) tryScrapedoEarnings(
+	ctx context.Context,
+	t *ent.Tournament,
+	exaResponse *exa.SearchResponse,
+	golferInputs []openai.GolferInput,
+	entryByGolferID map[string]*ent.TournamentEntry,
+) (updated int, matchedIDs map[string]bool) {
+	matchedIDs = make(map[string]bool)
+
+	for _, result := range exaResponse.Results {
+		log.Printf("Trying scrape.do for URL: %s", result.URL)
+
+		scrapeResp, err := i.scrapedo.Scrape(ctx, result.URL, scrapedo.ScrapeOptions{Render: true})
+		if err != nil {
+			log.Printf("scrape.do failed for %s: %v", result.URL, err)
+			continue
+		}
+
+		if scrapeResp.StatusCode != 200 {
+			log.Printf("scrape.do returned status %d for %s", scrapeResp.StatusCode, result.URL)
+			continue
+		}
+
+		parseResult := scrapedo.ParseLeaderboard(scrapeResp.Content)
+		if !parseResult.Success {
+			log.Printf("Programmatic parsing failed for %s (found %d entries, need 10+)", result.URL, len(parseResult.Entries))
+			continue
+		}
+
+		log.Printf("Successfully parsed %d leaderboard entries from %s", len(parseResult.Entries), result.URL)
+
+		for _, golferInput := range golferInputs {
+			if matchedIDs[golferInput.GolferID] {
+				continue
+			}
+
+			for _, parsed := range parseResult.Entries {
+				if i.namesMatch(golferInput, parsed.Name) {
+					entry := entryByGolferID[golferInput.GolferID]
+					if entry != nil && entry.Earnings != parsed.Earnings {
+						_, err := entry.Update().
+							SetEarnings(parsed.Earnings).
+							Save(ctx)
+						if err != nil {
+							log.Printf("failed to update earnings for golfer %s: %v", golferInput.GolferID, err)
+							i.captureJobError("sync_earnings", err)
+							continue
+						}
+						updated++
+					}
+					matchedIDs[golferInput.GolferID] = true
+					break
+				}
+			}
+		}
+
+		if len(matchedIDs) == len(golferInputs) {
+			log.Printf("All golfers matched via scrape.do for tournament %s", t.Name)
+			break
+		}
+	}
+
+	log.Printf("scrape.do matched %d/%d golfers for tournament %s", len(matchedIDs), len(golferInputs), t.Name)
+	return updated, matchedIDs
+}
+
+func (i *Ingester) namesMatch(golferInput openai.GolferInput, parsedName string) bool {
+	parsedCandidates := golfers.NormalizeName(parsedName)
+	golferCandidates := golfers.NormalizeName(golferInput.Name)
+
+	for _, pc := range parsedCandidates {
+		for _, gc := range golferCandidates {
+			if strings.EqualFold(pc, gc) {
+				return true
+			}
+		}
+	}
+
+	if golferInput.FirstName != "" && golferInput.LastName != "" {
+		fullName := golferInput.FirstName + " " + golferInput.LastName
+		for _, pc := range parsedCandidates {
+			if strings.EqualFold(pc, fullName) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (i *Ingester) matchWithOpenAI(
+	ctx context.Context,
+	t *ent.Tournament,
+	content string,
+	golferInputs []openai.GolferInput,
+	entryByGolferID map[string]*ent.TournamentEntry,
+) int {
+	leaderboard, err := i.openai.ParseLeaderboardContent(ctx, content, t.Name)
 	if err != nil {
-		return fmt.Errorf("failed to parse leaderboard content via OpenAI: %w", err)
+		log.Printf("failed to parse leaderboard content via OpenAI: %v", err)
+		i.captureJobError("sync_earnings", err)
+		return 0
 	}
 
 	if len(leaderboard.Entries) == 0 {
 		log.Printf("No leaderboard entries parsed for tournament %s", t.Name)
-		return nil
+		return 0
 	}
 
-	log.Printf("Parsed leaderboard with %d entries for tournament %s", len(leaderboard.Entries), t.Name)
+	log.Printf("OpenAI parsed leaderboard with %d entries for tournament %s", len(leaderboard.Entries), t.Name)
 
 	var allResults []openai.EarningsResult
 	numBatches := (len(golferInputs) + earningsBatchSize - 1) / earningsBatchSize
-	for batch := 0; batch < numBatches; batch++ {
+	for batch := range numBatches {
 		start := batch * earningsBatchSize
-		end := start + earningsBatchSize
-		if end > len(golferInputs) {
-			end = len(golferInputs)
-		}
+		end := min(start+earningsBatchSize, len(golferInputs))
 		batchGolfers := golferInputs[start:end]
 
 		log.Printf("Matching batch %d/%d (%d golfers) for tournament %s", batch+1, numBatches, len(batchGolfers), t.Name)
@@ -813,11 +941,9 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 	}
 
 	if len(allResults) == 0 {
-		log.Printf("No earnings results matched for tournament %s", t.Name)
-		return nil
+		log.Printf("No earnings results matched via OpenAI for tournament %s", t.Name)
+		return 0
 	}
-
-	log.Printf("Matched %d earnings entries for tournament %s", len(allResults), t.Name)
 
 	var updated int
 	for _, r := range allResults {
@@ -839,8 +965,7 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 		}
 	}
 
-	log.Printf("Updated earnings for %d golfers in tournament %s", updated, t.Name)
-	return nil
+	return updated
 }
 
 func (i *Ingester) sendPickReminders(ctx context.Context) {
