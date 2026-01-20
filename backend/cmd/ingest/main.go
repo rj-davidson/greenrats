@@ -1139,7 +1139,7 @@ func formatCurrency(amount int) string {
 	return fmt.Sprintf("$%d", amount)
 }
 
-// ONE-TIME: Re-sync Sony Open earnings - DELETE AFTER DEPLOY
+// ONE-TIME: Re-sync Sony Open leaderboard and earnings - DELETE AFTER DEPLOY
 func (i *Ingester) resyncSonyOpenEarnings(ctx context.Context) {
 	const sonyOpenBdlID = 7
 
@@ -1151,9 +1151,14 @@ func (i *Ingester) resyncSonyOpenEarnings(ctx context.Context) {
 		return
 	}
 
-	log.Printf("ONE-TIME: Re-syncing earnings for %s", t.Name)
+	log.Printf("ONE-TIME: Re-syncing leaderboard and earnings for %s", t.Name)
 
-	// Reset all earnings to 0
+	if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
+		log.Printf("failed to sync leaderboard for %s: %v", t.Name, err)
+		i.captureJobError("resync_sony_open", err)
+		return
+	}
+
 	_, err = i.db.TournamentEntry.Update().
 		Where(tournamententry.HasTournamentWith(tournament.IDEQ(t.ID))).
 		SetEarnings(0).
@@ -1164,14 +1169,13 @@ func (i *Ingester) resyncSonyOpenEarnings(ctx context.Context) {
 		return
 	}
 
-	// Fetch fresh earnings
 	if err := i.syncTournamentEarnings(ctx, t); err != nil {
 		log.Printf("failed to sync earnings for %s: %v", t.Name, err)
 		i.captureJobError("resync_sony_open", err)
 		return
 	}
 
-	log.Printf("ONE-TIME: Completed earnings re-sync for %s", t.Name)
+	log.Printf("ONE-TIME: Completed leaderboard and earnings re-sync for %s", t.Name)
 }
 
 var _ = uuid.Nil
