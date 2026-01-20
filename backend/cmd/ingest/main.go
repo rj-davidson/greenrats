@@ -728,6 +728,9 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 		if entry.Edges.Golfer == nil {
 			continue
 		}
+		if entry.Cut || entry.Position == 0 {
+			continue
+		}
 		g := entry.Edges.Golfer
 		input := openai.GolferInput{
 			GolferID: g.ID.String(),
