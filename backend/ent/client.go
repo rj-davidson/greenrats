@@ -22,6 +22,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -44,6 +45,8 @@ type Client struct {
 	LeagueMembership *LeagueMembershipClient
 	// Pick is the client for interacting with the Pick builders.
 	Pick *PickClient
+	// SyncStatus is the client for interacting with the SyncStatus builders.
+	SyncStatus *SyncStatusClient
 	// Tournament is the client for interacting with the Tournament builders.
 	Tournament *TournamentClient
 	// TournamentEntry is the client for interacting with the TournamentEntry builders.
@@ -67,6 +70,7 @@ func (c *Client) init() {
 	c.League = NewLeagueClient(c.config)
 	c.LeagueMembership = NewLeagueMembershipClient(c.config)
 	c.Pick = NewPickClient(c.config)
+	c.SyncStatus = NewSyncStatusClient(c.config)
 	c.Tournament = NewTournamentClient(c.config)
 	c.TournamentEntry = NewTournamentEntryClient(c.config)
 	c.User = NewUserClient(c.config)
@@ -168,6 +172,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		League:             NewLeagueClient(cfg),
 		LeagueMembership:   NewLeagueMembershipClient(cfg),
 		Pick:               NewPickClient(cfg),
+		SyncStatus:         NewSyncStatusClient(cfg),
 		Tournament:         NewTournamentClient(cfg),
 		TournamentEntry:    NewTournamentEntryClient(cfg),
 		User:               NewUserClient(cfg),
@@ -196,6 +201,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		League:             NewLeagueClient(cfg),
 		LeagueMembership:   NewLeagueMembershipClient(cfg),
 		Pick:               NewPickClient(cfg),
+		SyncStatus:         NewSyncStatusClient(cfg),
 		Tournament:         NewTournamentClient(cfg),
 		TournamentEntry:    NewTournamentEntryClient(cfg),
 		User:               NewUserClient(cfg),
@@ -229,7 +235,7 @@ func (c *Client) Close() error {
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.CommissionerAction, c.EmailReminder, c.Golfer, c.League, c.LeagueMembership,
-		c.Pick, c.Tournament, c.TournamentEntry, c.User,
+		c.Pick, c.SyncStatus, c.Tournament, c.TournamentEntry, c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -240,7 +246,7 @@ func (c *Client) Use(hooks ...Hook) {
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.CommissionerAction, c.EmailReminder, c.Golfer, c.League, c.LeagueMembership,
-		c.Pick, c.Tournament, c.TournamentEntry, c.User,
+		c.Pick, c.SyncStatus, c.Tournament, c.TournamentEntry, c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -261,6 +267,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.LeagueMembership.mutate(ctx, m)
 	case *PickMutation:
 		return c.Pick.mutate(ctx, m)
+	case *SyncStatusMutation:
+		return c.SyncStatus.mutate(ctx, m)
 	case *TournamentMutation:
 		return c.Tournament.mutate(ctx, m)
 	case *TournamentEntryMutation:
@@ -1374,6 +1382,139 @@ func (c *PickClient) mutate(ctx context.Context, m *PickMutation) (Value, error)
 	}
 }
 
+// SyncStatusClient is a client for the SyncStatus schema.
+type SyncStatusClient struct {
+	config
+}
+
+// NewSyncStatusClient returns a client for the SyncStatus from the given config.
+func NewSyncStatusClient(c config) *SyncStatusClient {
+	return &SyncStatusClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `syncstatus.Hooks(f(g(h())))`.
+func (c *SyncStatusClient) Use(hooks ...Hook) {
+	c.hooks.SyncStatus = append(c.hooks.SyncStatus, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `syncstatus.Intercept(f(g(h())))`.
+func (c *SyncStatusClient) Intercept(interceptors ...Interceptor) {
+	c.inters.SyncStatus = append(c.inters.SyncStatus, interceptors...)
+}
+
+// Create returns a builder for creating a SyncStatus entity.
+func (c *SyncStatusClient) Create() *SyncStatusCreate {
+	mutation := newSyncStatusMutation(c.config, OpCreate)
+	return &SyncStatusCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of SyncStatus entities.
+func (c *SyncStatusClient) CreateBulk(builders ...*SyncStatusCreate) *SyncStatusCreateBulk {
+	return &SyncStatusCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *SyncStatusClient) MapCreateBulk(slice any, setFunc func(*SyncStatusCreate, int)) *SyncStatusCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &SyncStatusCreateBulk{err: fmt.Errorf("calling to SyncStatusClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*SyncStatusCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &SyncStatusCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for SyncStatus.
+func (c *SyncStatusClient) Update() *SyncStatusUpdate {
+	mutation := newSyncStatusMutation(c.config, OpUpdate)
+	return &SyncStatusUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *SyncStatusClient) UpdateOne(_m *SyncStatus) *SyncStatusUpdateOne {
+	mutation := newSyncStatusMutation(c.config, OpUpdateOne, withSyncStatus(_m))
+	return &SyncStatusUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *SyncStatusClient) UpdateOneID(id uuid.UUID) *SyncStatusUpdateOne {
+	mutation := newSyncStatusMutation(c.config, OpUpdateOne, withSyncStatusID(id))
+	return &SyncStatusUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for SyncStatus.
+func (c *SyncStatusClient) Delete() *SyncStatusDelete {
+	mutation := newSyncStatusMutation(c.config, OpDelete)
+	return &SyncStatusDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *SyncStatusClient) DeleteOne(_m *SyncStatus) *SyncStatusDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *SyncStatusClient) DeleteOneID(id uuid.UUID) *SyncStatusDeleteOne {
+	builder := c.Delete().Where(syncstatus.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &SyncStatusDeleteOne{builder}
+}
+
+// Query returns a query builder for SyncStatus.
+func (c *SyncStatusClient) Query() *SyncStatusQuery {
+	return &SyncStatusQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeSyncStatus},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a SyncStatus entity by its id.
+func (c *SyncStatusClient) Get(ctx context.Context, id uuid.UUID) (*SyncStatus, error) {
+	return c.Query().Where(syncstatus.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *SyncStatusClient) GetX(ctx context.Context, id uuid.UUID) *SyncStatus {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// Hooks returns the client hooks.
+func (c *SyncStatusClient) Hooks() []Hook {
+	return c.hooks.SyncStatus
+}
+
+// Interceptors returns the client interceptors.
+func (c *SyncStatusClient) Interceptors() []Interceptor {
+	return c.inters.SyncStatus
+}
+
+func (c *SyncStatusClient) mutate(ctx context.Context, m *SyncStatusMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&SyncStatusCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&SyncStatusUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&SyncStatusUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&SyncStatusDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown SyncStatus mutation op: %q", m.Op())
+	}
+}
+
 // TournamentClient is a client for the Tournament schema.
 type TournamentClient struct {
 	config
@@ -1937,10 +2078,10 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 type (
 	hooks struct {
 		CommissionerAction, EmailReminder, Golfer, League, LeagueMembership, Pick,
-		Tournament, TournamentEntry, User []ent.Hook
+		SyncStatus, Tournament, TournamentEntry, User []ent.Hook
 	}
 	inters struct {
 		CommissionerAction, EmailReminder, Golfer, League, LeagueMembership, Pick,
-		Tournament, TournamentEntry, User []ent.Interceptor
+		SyncStatus, Tournament, TournamentEntry, User []ent.Interceptor
 	}
 )

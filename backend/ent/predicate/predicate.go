@@ -24,6 +24,9 @@ type LeagueMembership func(*sql.Selector)
 // Pick is the predicate function for pick builders.
 type Pick func(*sql.Selector)
 
+// SyncStatus is the predicate function for syncstatus builders.
+type SyncStatus func(*sql.Selector)
+
 // Tournament is the predicate function for tournament builders.
 type Tournament func(*sql.Selector)
 

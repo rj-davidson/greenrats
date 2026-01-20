@@ -22,7 +22,7 @@ type Tournament struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// ScratchGolf API ID (string)
+	// Live Golf Data API ID (string)
 	ScratchgolfID *string `json:"scratchgolf_id,omitempty"`
 	// BallDontLie API ID (int)
 	BdlID *int `json:"bdl_id,omitempty"`

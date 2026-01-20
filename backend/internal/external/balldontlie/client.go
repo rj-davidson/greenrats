@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/time/rate"
 )
 
 type Client struct {
 	client  *resty.Client
-	apiKey  string
-	baseURL string
+	limiter *rate.Limiter
 }
 
 func New(apiKey, baseURL string) *Client {
@@ -19,11 +19,16 @@ func New(apiKey, baseURL string) *Client {
 		SetHeader("Authorization", apiKey).
 		SetHeader("Content-Type", "application/json")
 
+	limiter := rate.NewLimiter(rate.Limit(RateLimit), RateBurst)
+
 	return &Client{
 		client:  client,
-		apiKey:  apiKey,
-		baseURL: baseURL,
+		limiter: limiter,
 	}
+}
+
+func (c *Client) wait(ctx context.Context) error {
+	return c.limiter.Wait(ctx)
 }
 
 func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
@@ -31,6 +36,10 @@ func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
 	cursor := 0
 
 	for {
+		if err := c.wait(ctx); err != nil {
+			return nil, fmt.Errorf("rate limiter: %w", err)
+		}
+
 		var response PlayersResponse
 
 		req := c.client.R().
@@ -67,6 +76,10 @@ func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, 
 	cursor := 0
 
 	for {
+		if err := c.wait(ctx); err != nil {
+			return nil, fmt.Errorf("rate limiter: %w", err)
+		}
+
 		var response TournamentsResponse
 
 		req := c.client.R().
@@ -104,6 +117,10 @@ func (c *Client) GetTournamentResults(ctx context.Context, tournamentID int) ([]
 	cursor := 0
 
 	for {
+		if err := c.wait(ctx); err != nil {
+			return nil, fmt.Errorf("rate limiter: %w", err)
+		}
+
 		var response TournamentResultsResponse
 
 		req := c.client.R().

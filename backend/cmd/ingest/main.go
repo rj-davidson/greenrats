@@ -21,6 +21,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -139,12 +140,28 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 	earningsTicker := time.NewTicker(earningsCheckInterval)
 	defer earningsTicker.Stop()
 
-	// Run initial syncs on startup
-	log.Println("Running initial data syncs...")
-	i.syncTournaments(ctx)
-	i.syncPlayers(ctx)
-	i.syncLeaderboards(ctx)
-	i.syncEarnings(ctx)
+	// Run initial syncs only if data is stale
+	log.Println("Checking for required initial syncs...")
+	if i.shouldSync(ctx, "tournaments", tournamentSyncInterval) {
+		i.syncTournaments(ctx)
+	} else {
+		log.Println("Skipping tournament sync (data is fresh)")
+	}
+	if i.shouldSync(ctx, "players", playerSyncInterval) {
+		i.syncPlayers(ctx)
+	} else {
+		log.Println("Skipping player sync (data is fresh)")
+	}
+	if i.shouldSync(ctx, "leaderboards", leaderboardSyncInterval) {
+		i.syncLeaderboards(ctx)
+	} else {
+		log.Println("Skipping leaderboard sync (data is fresh)")
+	}
+	if i.shouldSync(ctx, "earnings", earningsCheckInterval) {
+		i.syncEarnings(ctx)
+	} else {
+		log.Println("Skipping earnings sync (data is fresh)")
+	}
 	i.sendPickReminders(ctx)
 
 	for {
@@ -176,6 +193,45 @@ func (i *Ingester) captureJobError(job string, err error) {
 	})
 }
 
+func (i *Ingester) shouldSync(ctx context.Context, syncType string, interval time.Duration) bool {
+	status, err := i.db.SyncStatus.Query().
+		Where(syncstatus.SyncTypeEQ(syncType)).
+		Only(ctx)
+
+	if ent.IsNotFound(err) {
+		return true
+	}
+	if err != nil {
+		log.Printf("failed to check sync status for %s: %v", syncType, err)
+		return true
+	}
+
+	return time.Now().After(status.LastSyncAt.Add(interval))
+}
+
+func (i *Ingester) recordSync(ctx context.Context, syncType string) {
+	now := time.Now()
+
+	existing, err := i.db.SyncStatus.Query().
+		Where(syncstatus.SyncTypeEQ(syncType)).
+		Only(ctx)
+
+	if ent.IsNotFound(err) {
+		_, err = i.db.SyncStatus.Create().
+			SetSyncType(syncType).
+			SetLastSyncAt(now).
+			Save(ctx)
+	} else if err == nil {
+		_, err = existing.Update().
+			SetLastSyncAt(now).
+			Save(ctx)
+	}
+
+	if err != nil {
+		log.Printf("failed to record sync for %s: %v", syncType, err)
+	}
+}
+
 // syncTournaments fetches and stores tournament data from BallDontLie.
 // Runs daily to minimize API calls.
 func (i *Ingester) syncTournaments(ctx context.Context) {
@@ -198,6 +254,7 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 		}
 	}
 
+	i.recordSync(ctx, "tournaments")
 	log.Println("Tournament sync completed")
 }
 
@@ -361,6 +418,7 @@ func (i *Ingester) syncPlayers(ctx context.Context) {
 		}
 	}
 
+	i.recordSync(ctx, "players")
 	log.Println("Player sync completed")
 }
 
@@ -474,6 +532,7 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) {
 		}
 	}
 
+	i.recordSync(ctx, "leaderboards")
 	log.Println("Leaderboard sync completed")
 }
 
@@ -629,6 +688,7 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 		}
 	}
 
+	i.recordSync(ctx, "earnings")
 	log.Println("Earnings sync completed")
 }
 

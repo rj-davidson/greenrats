@@ -13,6 +13,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/schema"
+	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -156,6 +157,31 @@ func init() {
 	pickDescID := pickMixinFields0[0].Descriptor()
 	// pick.DefaultID holds the default value on creation for the id field.
 	pick.DefaultID = pickDescID.Default.(func() uuid.UUID)
+	syncstatusMixin := schema.SyncStatus{}.Mixin()
+	syncstatusMixinFields0 := syncstatusMixin[0].Fields()
+	_ = syncstatusMixinFields0
+	syncstatusMixinFields1 := syncstatusMixin[1].Fields()
+	_ = syncstatusMixinFields1
+	syncstatusFields := schema.SyncStatus{}.Fields()
+	_ = syncstatusFields
+	// syncstatusDescCreatedAt is the schema descriptor for created_at field.
+	syncstatusDescCreatedAt := syncstatusMixinFields1[0].Descriptor()
+	// syncstatus.DefaultCreatedAt holds the default value on creation for the created_at field.
+	syncstatus.DefaultCreatedAt = syncstatusDescCreatedAt.Default.(func() time.Time)
+	// syncstatusDescUpdatedAt is the schema descriptor for updated_at field.
+	syncstatusDescUpdatedAt := syncstatusMixinFields1[1].Descriptor()
+	// syncstatus.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	syncstatus.DefaultUpdatedAt = syncstatusDescUpdatedAt.Default.(func() time.Time)
+	// syncstatus.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	syncstatus.UpdateDefaultUpdatedAt = syncstatusDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// syncstatusDescSyncType is the schema descriptor for sync_type field.
+	syncstatusDescSyncType := syncstatusFields[0].Descriptor()
+	// syncstatus.SyncTypeValidator is a validator for the "sync_type" field. It is called by the builders before save.
+	syncstatus.SyncTypeValidator = syncstatusDescSyncType.Validators[0].(func(string) error)
+	// syncstatusDescID is the schema descriptor for id field.
+	syncstatusDescID := syncstatusMixinFields0[0].Descriptor()
+	// syncstatus.DefaultID holds the default value on creation for the id field.
+	syncstatus.DefaultID = syncstatusDescID.Default.(func() uuid.UUID)
 	tournamentMixin := schema.Tournament{}.Mixin()
 	tournamentMixinFields0 := tournamentMixin[0].Fields()
 	_ = tournamentMixinFields0

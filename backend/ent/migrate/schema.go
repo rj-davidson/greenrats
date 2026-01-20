@@ -225,6 +225,20 @@ var (
 			},
 		},
 	}
+	// SyncStatusColumns holds the columns for the "sync_status" table.
+	SyncStatusColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "sync_type", Type: field.TypeString, Unique: true},
+		{Name: "last_sync_at", Type: field.TypeTime},
+	}
+	// SyncStatusTable holds the schema information for the "sync_status" table.
+	SyncStatusTable = &schema.Table{
+		Name:       "sync_status",
+		Columns:    SyncStatusColumns,
+		PrimaryKey: []*schema.Column{SyncStatusColumns[0]},
+	}
 	// TournamentsColumns holds the columns for the "tournaments" table.
 	TournamentsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -313,6 +327,7 @@ var (
 		LeaguesTable,
 		LeagueMembershipsTable,
 		PicksTable,
+		SyncStatusTable,
 		TournamentsTable,
 		TournamentEntriesTable,
 		UsersTable,

@@ -81,6 +81,18 @@ func (f PickFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PickMutation", m)
 }
 
+// The SyncStatusFunc type is an adapter to allow the use of ordinary
+// function as SyncStatus mutator.
+type SyncStatusFunc func(context.Context, *ent.SyncStatusMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SyncStatusFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SyncStatusMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SyncStatusMutation", m)
+}
+
 // The TournamentFunc type is an adapter to allow the use of ordinary
 // function as Tournament mutator.
 type TournamentFunc func(context.Context, *ent.TournamentMutation) (ent.Value, error)
