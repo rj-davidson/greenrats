@@ -15,7 +15,7 @@ func TestHandler_Create(t *testing.T) {
 	t.Run("creates league successfully", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		user := factory.CreateUser()
@@ -36,7 +36,7 @@ func TestHandler_Create(t *testing.T) {
 
 	t.Run("returns 401 when not authenticated", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		app := testutil.NewTestApp(t)
@@ -50,7 +50,7 @@ func TestHandler_Create(t *testing.T) {
 	t.Run("returns 400 when name missing", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		user := factory.CreateUser()
@@ -68,7 +68,7 @@ func TestHandler_ListUserLeagues(t *testing.T) {
 	t.Run("returns user leagues", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		user := factory.CreateUser()
@@ -88,7 +88,7 @@ func TestHandler_ListUserLeagues(t *testing.T) {
 
 	t.Run("returns 401 when not authenticated", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		app := testutil.NewTestApp(t)
@@ -104,7 +104,7 @@ func TestHandler_GetByID(t *testing.T) {
 	t.Run("returns league when found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		user := factory.CreateUser()
@@ -125,7 +125,7 @@ func TestHandler_GetByID(t *testing.T) {
 	t.Run("returns 404 when not found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		user := factory.CreateUser()
@@ -143,7 +143,7 @@ func TestHandler_JoinLeague(t *testing.T) {
 	t.Run("joins league successfully", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		owner := factory.CreateUser()
@@ -165,7 +165,7 @@ func TestHandler_JoinLeague(t *testing.T) {
 	t.Run("returns 400 for invalid code", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		user := factory.CreateUser()
@@ -181,7 +181,7 @@ func TestHandler_JoinLeague(t *testing.T) {
 	t.Run("returns 409 when already member", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		owner := factory.CreateUser()
@@ -202,7 +202,7 @@ func TestHandler_RegenerateJoinCode(t *testing.T) {
 	t.Run("regenerates code successfully", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		owner := factory.CreateUser()
@@ -224,7 +224,7 @@ func TestHandler_RegenerateJoinCode(t *testing.T) {
 	t.Run("returns 403 when not commissioner", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		owner := factory.CreateUser()
@@ -245,7 +245,7 @@ func TestHandler_SetJoiningEnabled(t *testing.T) {
 	t.Run("updates joining enabled successfully", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		owner := factory.CreateUser()
@@ -266,7 +266,7 @@ func TestHandler_SetJoiningEnabled(t *testing.T) {
 	t.Run("returns 403 when not commissioner", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, 2026)
 		handler := NewHandler(service, nil)
 
 		owner := factory.CreateUser()
