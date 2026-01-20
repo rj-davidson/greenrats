@@ -111,6 +111,7 @@ atlas migrate apply --env local
 | ORM | Ent |
 | Migrations | Atlas |
 | Config | Viper |
+| Logging | slog (stdlib) |
 | Auth | WorkOS JWT |
 | Real-time | SSE |
 

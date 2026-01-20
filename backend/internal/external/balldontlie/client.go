@@ -3,6 +3,7 @@ package balldontlie
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/time/rate"
@@ -11,9 +12,10 @@ import (
 type Client struct {
 	client  *resty.Client
 	limiter *rate.Limiter
+	logger  *slog.Logger
 }
 
-func New(apiKey, baseURL string) *Client {
+func New(apiKey, baseURL string, logger *slog.Logger) *Client {
 	client := resty.New().
 		SetBaseURL(baseURL).
 		SetHeader("Authorization", apiKey).
@@ -24,6 +26,7 @@ func New(apiKey, baseURL string) *Client {
 	return &Client{
 		client:  client,
 		limiter: limiter,
+		logger:  logger,
 	}
 }
 
@@ -32,6 +35,8 @@ func (c *Client) wait(ctx context.Context) error {
 }
 
 func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
+	c.logger.Info("fetching players from BallDontLie")
+
 	var allPlayers []Player
 	cursor := 0
 
@@ -61,6 +66,7 @@ func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
 		}
 
 		allPlayers = append(allPlayers, response.Data...)
+		c.logger.Debug("fetched player page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -68,10 +74,13 @@ func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
 		cursor = response.Meta.NextCursor
 	}
 
+	c.logger.Info("players fetch complete", "total", len(allPlayers))
 	return allPlayers, nil
 }
 
 func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, error) {
+	c.logger.Info("fetching tournaments", "season", season)
+
 	var allTournaments []Tournament
 	cursor := 0
 
@@ -102,6 +111,7 @@ func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, 
 		}
 
 		allTournaments = append(allTournaments, response.Data...)
+		c.logger.Debug("fetched tournament page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -109,10 +119,13 @@ func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, 
 		cursor = response.Meta.NextCursor
 	}
 
+	c.logger.Info("tournaments fetch complete", "total", len(allTournaments))
 	return allTournaments, nil
 }
 
 func (c *Client) GetTournamentResults(ctx context.Context, tournamentID int) ([]TournamentResult, error) {
+	c.logger.Info("fetching tournament results", "tournament_id", tournamentID)
+
 	var allResults []TournamentResult
 	cursor := 0
 
@@ -143,6 +156,7 @@ func (c *Client) GetTournamentResults(ctx context.Context, tournamentID int) ([]
 		}
 
 		allResults = append(allResults, response.Data...)
+		c.logger.Debug("fetched results page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -150,5 +164,6 @@ func (c *Client) GetTournamentResults(ctx context.Context, tournamentID int) ([]
 		cursor = response.Meta.NextCursor
 	}
 
+	c.logger.Info("tournament results fetch complete", "total", len(allResults))
 	return allResults, nil
 }

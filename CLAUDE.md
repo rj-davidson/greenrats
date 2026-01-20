@@ -164,6 +164,36 @@ Each feature is self-contained:
 - Use dependency injection (pass services to handlers)
 - Errors should be wrapped with context: `fmt.Errorf("failed to get pick: %w", err)`
 
+**Logging**:
+- Use Go's built-in `log/slog` package for structured logging
+- External service clients receive a `*slog.Logger` via constructor injection
+- Log levels:
+  - **Info**: API call start (operation name, key parameters like tournament name, year)
+  - **Debug**: Pagination progress, response details, counts
+  - **Warn**: Retryable errors, unexpected but handled conditions
+  - **Error**: Leave to callers—they have more context
+- Development mode uses `slog.LevelDebug`, production uses `slog.LevelInfo`
+- For tests, use a discard logger: `slog.New(slog.NewTextHandler(io.Discard, nil))`
+
+```go
+// External client pattern
+type Client struct {
+    client *resty.Client
+    logger *slog.Logger
+}
+
+func New(apiKey string, logger *slog.Logger) *Client {
+    return &Client{client: client, logger: logger}
+}
+
+func (c *Client) FetchData(ctx context.Context, id string) (*Data, error) {
+    c.logger.Info("fetching data", "id", id)
+    // ... implementation ...
+    c.logger.Debug("fetch complete", "results", len(data))
+    return data, nil
+}
+```
+
 **Data Model Notes**:
 - Tournament and golfer data is **shared** across all leagues
 - Picks and leaderboards are **league-scoped**

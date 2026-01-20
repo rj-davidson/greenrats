@@ -3,6 +3,7 @@ package exa
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/go-resty/resty/v2"
 )
@@ -14,19 +15,22 @@ const (
 
 type Client struct {
 	client *resty.Client
+	logger *slog.Logger
 }
 
-func New(apiKey string) *Client {
+func New(apiKey string, logger *slog.Logger) *Client {
 	client := resty.New().
 		SetBaseURL(baseURL).
 		SetHeader("x-api-key", apiKey).
 		SetHeader("Content-Type", "application/json")
 
-	return &Client{client: client}
+	return &Client{client: client, logger: logger}
 }
 
 func (c *Client) SearchEarnings(ctx context.Context, tournamentName string, year int) (*SearchResponse, error) {
-	query := fmt.Sprintf("%d %s leaderboard earnings results", year, tournamentName)
+	c.logger.Info("searching earnings", "tournament", tournamentName, "year", year)
+
+	query := fmt.Sprintf("%d %s earnings", year, tournamentName)
 
 	req := SearchRequest{
 		Query:          query,
@@ -54,5 +58,6 @@ func (c *Client) SearchEarnings(ctx context.Context, tournamentName string, year
 		return nil, fmt.Errorf("exa API error: %s - %s", resp.Status(), resp.String())
 	}
 
+	c.logger.Debug("exa search complete", "results", len(response.Results))
 	return &response, nil
 }

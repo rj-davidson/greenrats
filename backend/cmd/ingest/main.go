@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"strconv"
@@ -57,6 +58,7 @@ type Ingester struct {
 	email       *email.Client
 	scrapedo    *scrapedo.Client
 	golfers     *golfers.Service
+	logger      *slog.Logger
 }
 
 func main() {
@@ -70,6 +72,14 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
+
+	logLevel := slog.LevelInfo
+	if cfg.IsDevelopment() {
+		logLevel = slog.LevelDebug
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	}))
 
 	if cfg.SentryDSN != "" {
 		if err := sentry.Init(sentry.ClientOptions{
@@ -91,11 +101,11 @@ func run() error {
 	}
 	defer db.Close()
 
-	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL)
-	exaClient := exa.New(cfg.ExaAPIKey)
-	openaiClient := openai.New(cfg.OpenAIAPIKey, cfg.OpenAIModel)
+	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, logger)
+	exaClient := exa.New(cfg.ExaAPIKey, logger)
+	openaiClient := openai.New(cfg.OpenAIAPIKey, cfg.OpenAIModel, logger)
 	emailClient := email.New(cfg)
-	scrapeDoClient := scrapedo.New(cfg.ScrapeDoAPIKey)
+	scrapeDoClient := scrapedo.New(cfg.ScrapeDoAPIKey, logger)
 	golferSvc := golfers.NewService(db)
 
 	ingester := &Ingester{
@@ -107,6 +117,7 @@ func run() error {
 		email:       emailClient,
 		scrapedo:    scrapeDoClient,
 		golfers:     golferSvc,
+		logger:      logger,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -820,26 +831,26 @@ func (i *Ingester) tryScrapedoEarnings(
 	matchedIDs = make(map[string]bool)
 
 	for _, result := range exaResponse.Results {
-		log.Printf("Trying scrape.do for URL: %s", result.URL)
+		i.logger.Info("trying scrape.do", "url", result.URL, "tournament", t.Name)
 
 		scrapeResp, err := i.scrapedo.Scrape(ctx, result.URL, scrapedo.ScrapeOptions{Render: true})
 		if err != nil {
-			log.Printf("scrape.do failed for %s: %v", result.URL, err)
+			i.logger.Warn("scrape.do failed", "url", result.URL, "error", err)
 			continue
 		}
 
 		if scrapeResp.StatusCode != 200 {
-			log.Printf("scrape.do returned status %d for %s", scrapeResp.StatusCode, result.URL)
+			i.logger.Warn("scrape.do returned non-200 status", "url", result.URL, "status", scrapeResp.StatusCode)
 			continue
 		}
 
 		parseResult := scrapedo.ParseLeaderboard(scrapeResp.Content)
 		if !parseResult.Success {
-			log.Printf("Programmatic parsing failed for %s (found %d entries, need 10+)", result.URL, len(parseResult.Entries))
+			i.logger.Debug("programmatic parsing failed", "url", result.URL, "entries", len(parseResult.Entries))
 			continue
 		}
 
-		log.Printf("Successfully parsed %d leaderboard entries from %s", len(parseResult.Entries), result.URL)
+		i.logger.Debug("parsed leaderboard entries", "url", result.URL, "entries", len(parseResult.Entries))
 
 		for _, golferInput := range golferInputs {
 			if matchedIDs[golferInput.GolferID] {
@@ -854,12 +865,20 @@ func (i *Ingester) tryScrapedoEarnings(
 							SetEarnings(parsed.Earnings).
 							Save(ctx)
 						if err != nil {
-							log.Printf("failed to update earnings for golfer %s: %v", golferInput.GolferID, err)
+							i.logger.Warn("failed to update earnings for golfer", "golfer_id", golferInput.GolferID, "error", err)
 							i.captureJobError("sync_earnings", err)
 							continue
 						}
 						updated++
 					}
+					i.logger.Debug(
+						"scrape.do matched earnings",
+						"golfer_id", golferInput.GolferID,
+						"golfer_name", golferInput.Name,
+						"parsed_name", parsed.Name,
+						"earnings", parsed.Earnings,
+						"url", result.URL,
+					)
 					matchedIDs[golferInput.GolferID] = true
 					break
 				}
@@ -867,12 +886,12 @@ func (i *Ingester) tryScrapedoEarnings(
 		}
 
 		if len(matchedIDs) == len(golferInputs) {
-			log.Printf("All golfers matched via scrape.do for tournament %s", t.Name)
+			i.logger.Info("all golfers matched via scrape.do", "tournament", t.Name)
 			break
 		}
 	}
 
-	log.Printf("scrape.do matched %d/%d golfers for tournament %s", len(matchedIDs), len(golferInputs), t.Name)
+	i.logger.Info("scrape.do match summary", "matched", len(matchedIDs), "total", len(golferInputs), "tournament", t.Name)
 	return updated, matchedIDs
 }
 

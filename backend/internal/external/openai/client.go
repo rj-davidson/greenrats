@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
@@ -13,14 +14,17 @@ import (
 type Client struct {
 	client openai.Client
 	model  string
+	logger *slog.Logger
 }
 
-func New(apiKey, model string) *Client {
+func New(apiKey, model string, logger *slog.Logger) *Client {
 	client := openai.NewClient(option.WithAPIKey(apiKey))
-	return &Client{client: client, model: model}
+	return &Client{client: client, model: model, logger: logger}
 }
 
 func (c *Client) SearchTournamentEarnings(ctx context.Context, tournamentName string, year int, golfers []GolferInput) ([]EarningsResult, error) {
+	c.logger.Info("searching tournament earnings", "tournament", tournamentName, "year", year, "golfers", len(golfers))
+
 	golfersJSON, err := json.Marshal(golfers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal golfers: %w", err)
@@ -56,6 +60,7 @@ func (c *Client) SearchTournamentEarnings(ctx context.Context, tournamentName st
 		return nil, fmt.Errorf("failed to parse earnings response: %w", err)
 	}
 
+	c.logger.Debug("tournament earnings search complete", "results", len(result.Results))
 	return result.Results, nil
 }
 
@@ -89,6 +94,8 @@ func earningsResponseSchema() map[string]any {
 }
 
 func (c *Client) SearchTournamentLeaderboard(ctx context.Context, tournamentName string, year int) (*LeaderboardResponse, error) {
+	c.logger.Info("searching tournament leaderboard", "tournament", tournamentName, "year", year)
+
 	prompt := leaderboardSearchPrompt(tournamentName, year)
 
 	resp, err := c.client.Responses.New(ctx, responses.ResponseNewParams{
@@ -119,6 +126,7 @@ func (c *Client) SearchTournamentLeaderboard(ctx context.Context, tournamentName
 		return nil, fmt.Errorf("failed to parse leaderboard response: %w", err)
 	}
 
+	c.logger.Debug("tournament leaderboard search complete", "entries", len(result.Entries))
 	return &result, nil
 }
 
@@ -156,6 +164,8 @@ func leaderboardResponseSchema() map[string]any {
 }
 
 func (c *Client) MatchPlayersToLeaderboard(ctx context.Context, leaderboard *LeaderboardResponse, golfers []GolferInput) ([]EarningsResult, error) {
+	c.logger.Info("matching players to leaderboard", "golfers", len(golfers), "leaderboard_entries", len(leaderboard.Entries))
+
 	leaderboardJSON, err := json.Marshal(leaderboard.Entries)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal leaderboard: %w", err)
@@ -193,10 +203,13 @@ func (c *Client) MatchPlayersToLeaderboard(ctx context.Context, leaderboard *Lea
 		return nil, fmt.Errorf("failed to parse match response: %w", err)
 	}
 
+	c.logger.Debug("player matching complete", "results", len(result.Results))
 	return result.Results, nil
 }
 
 func (c *Client) ParseLeaderboardContent(ctx context.Context, content, tournamentName string) (*LeaderboardResponse, error) {
+	c.logger.Info("parsing leaderboard content", "tournament", tournamentName)
+
 	prompt := parseLeaderboardContentPrompt(content, tournamentName)
 
 	resp, err := c.client.Responses.New(ctx, responses.ResponseNewParams{
@@ -224,5 +237,6 @@ func (c *Client) ParseLeaderboardContent(ctx context.Context, content, tournamen
 		return nil, fmt.Errorf("failed to parse leaderboard response: %w", err)
 	}
 
+	c.logger.Debug("parsed leaderboard", "entries", len(result.Entries))
 	return &result, nil
 }

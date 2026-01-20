@@ -1,6 +1,8 @@
 package balldontlie
 
 import (
+	"io"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -9,7 +11,8 @@ import (
 )
 
 func TestNewClientCreatesRateLimiter(t *testing.T) {
-	client := New("test-api-key", "https://api.example.com")
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	client := New("test-api-key", "https://api.example.com", logger)
 
 	assert.NotNil(t, client.limiter)
 	assert.Equal(t, rate.Limit(RateLimit), client.limiter.Limit())
