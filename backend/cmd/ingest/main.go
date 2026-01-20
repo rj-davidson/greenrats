@@ -701,6 +701,8 @@ func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament)
 		Exist(ctx)
 }
 
+const earningsBatchSize = 10
+
 func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament) error {
 	log.Printf("Syncing earnings for tournament: %s via OpenAI", t.Name)
 
@@ -746,29 +748,62 @@ func (i *Ingester) syncTournamentEarnings(ctx context.Context, t *ent.Tournament
 		entryByGolferID[g.ID.String()] = entry
 	}
 
-	results, err := i.openai.SearchTournamentEarnings(ctx, t.Name, year, golferInputs)
-	if err != nil {
-		return fmt.Errorf("failed to fetch earnings from OpenAI: %w", err)
-	}
-
-	if len(results) == 0 {
-		log.Printf("No earnings results from OpenAI for tournament %s", t.Name)
+	if len(golferInputs) == 0 {
+		log.Printf("No eligible golfers for earnings sync in %s", t.Name)
 		return nil
 	}
 
-	log.Printf("Fetched %d earnings entries for tournament %s", len(results), t.Name)
+	leaderboard, err := i.openai.SearchTournamentLeaderboard(ctx, t.Name, year)
+	if err != nil {
+		return fmt.Errorf("failed to fetch leaderboard from OpenAI: %w", err)
+	}
+
+	if len(leaderboard.Entries) == 0 {
+		log.Printf("No leaderboard entries from OpenAI for tournament %s", t.Name)
+		return nil
+	}
+
+	log.Printf("Fetched leaderboard with %d entries for tournament %s", len(leaderboard.Entries), t.Name)
+
+	var allResults []openai.EarningsResult
+	numBatches := (len(golferInputs) + earningsBatchSize - 1) / earningsBatchSize
+	for batch := 0; batch < numBatches; batch++ {
+		start := batch * earningsBatchSize
+		end := start + earningsBatchSize
+		if end > len(golferInputs) {
+			end = len(golferInputs)
+		}
+		batchGolfers := golferInputs[start:end]
+
+		log.Printf("Matching batch %d/%d (%d golfers) for tournament %s", batch+1, numBatches, len(batchGolfers), t.Name)
+
+		results, err := i.openai.MatchPlayersToLeaderboard(ctx, leaderboard, batchGolfers)
+		if err != nil {
+			log.Printf("failed to match batch %d for tournament %s: %v", batch+1, t.Name, err)
+			i.captureJobError("sync_earnings", err)
+			continue
+		}
+
+		allResults = append(allResults, results...)
+	}
+
+	if len(allResults) == 0 {
+		log.Printf("No earnings results matched for tournament %s", t.Name)
+		return nil
+	}
+
+	log.Printf("Matched %d earnings entries for tournament %s", len(allResults), t.Name)
 
 	var updated int
-	for _, r := range results {
+	for _, r := range allResults {
 		entry, ok := entryByGolferID[r.GolferID]
 		if !ok {
 			continue
 		}
 
-		if entry.Earnings != r.Earnings || entry.Position != r.Position {
+		if entry.Earnings != r.Earnings {
 			_, err = entry.Update().
 				SetEarnings(r.Earnings).
-				SetPosition(r.Position).
 				Save(ctx)
 			if err != nil {
 				log.Printf("failed to update earnings for golfer %s: %v", r.GolferID, err)
