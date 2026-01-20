@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"math"
 	"os"
 	"os/signal"
 	"strconv"
@@ -216,6 +217,16 @@ func (i *Ingester) captureJobError(job string, err error) {
 	sentry.WithScope(func(scope *sentry.Scope) {
 		scope.SetTag("job", job)
 		sentry.CaptureException(err)
+	})
+}
+
+func (i *Ingester) captureJobMessage(job, message string, extras map[string]interface{}) {
+	sentry.WithScope(func(scope *sentry.Scope) {
+		scope.SetTag("job", job)
+		for key, value := range extras {
+			scope.SetExtra(key, value)
+		}
+		sentry.CaptureMessage(message)
 	})
 }
 
@@ -829,8 +840,11 @@ func (i *Ingester) tryScrapedoEarnings(
 	entryByGolferID map[string]*ent.TournamentEntry,
 ) (updated int, matchedIDs map[string]bool) {
 	matchedIDs = make(map[string]bool)
+	triedURLs := make([]string, 0, len(exaResponse.Results))
+	targetMatches := int(math.Ceil(scrapedo.EarningsMatchThreshold * float64(len(golferInputs))))
 
 	for _, result := range exaResponse.Results {
+		triedURLs = append(triedURLs, result.URL)
 		i.logger.Info("trying scrape.do", "url", result.URL, "tournament", t.Name)
 
 		scrapeResp, err := i.scrapedo.Scrape(ctx, result.URL, scrapedo.ScrapeOptions{Render: true})
@@ -852,46 +866,92 @@ func (i *Ingester) tryScrapedoEarnings(
 
 		i.logger.Debug("parsed leaderboard entries", "url", result.URL, "entries", len(parseResult.Entries))
 
+		parsedNames := make([]string, 0, len(parseResult.Entries))
+		for _, parsed := range parseResult.Entries {
+			parsedNames = append(parsedNames, parsed.Name)
+		}
+
+		matchedPairs := make([]string, 0)
+		attemptedGolferNames := make([]string, 0)
+		unmatchedGolferNames := make([]string, 0)
+
 		for _, golferInput := range golferInputs {
 			if matchedIDs[golferInput.GolferID] {
 				continue
 			}
 
+			attemptedGolferNames = append(attemptedGolferNames, golferInput.Name)
+			matchedThisResult := false
 			for _, parsed := range parseResult.Entries {
-				if i.namesMatch(golferInput, parsed.Name) {
-					entry := entryByGolferID[golferInput.GolferID]
-					if entry != nil && entry.Earnings != parsed.Earnings {
-						_, err := entry.Update().
-							SetEarnings(parsed.Earnings).
-							Save(ctx)
-						if err != nil {
-							i.logger.Warn("failed to update earnings for golfer", "golfer_id", golferInput.GolferID, "error", err)
-							i.captureJobError("sync_earnings", err)
-							continue
-						}
-						updated++
-					}
-					i.logger.Debug(
-						"scrape.do matched earnings",
-						"golfer_id", golferInput.GolferID,
-						"golfer_name", golferInput.Name,
-						"parsed_name", parsed.Name,
-						"earnings", parsed.Earnings,
-						"url", result.URL,
-					)
-					matchedIDs[golferInput.GolferID] = true
-					break
+				if !i.namesMatch(golferInput, parsed.Name) {
+					continue
 				}
+				entry := entryByGolferID[golferInput.GolferID]
+				if entry != nil && entry.Earnings != parsed.Earnings {
+					_, err := entry.Update().
+						SetEarnings(parsed.Earnings).
+						Save(ctx)
+					if err != nil {
+						i.logger.Warn("failed to update earnings for golfer", "golfer_id", golferInput.GolferID, "error", err)
+						i.captureJobError("sync_earnings", err)
+						continue
+					}
+					updated++
+				}
+				i.logger.Debug(
+					"scrape.do matched earnings",
+					"golfer_id", golferInput.GolferID,
+					"golfer_name", golferInput.Name,
+					"parsed_name", parsed.Name,
+					"earnings", parsed.Earnings,
+					"url", result.URL,
+				)
+				matchedPairs = append(matchedPairs, golferInput.Name+" => "+parsed.Name)
+				matchedIDs[golferInput.GolferID] = true
+				matchedThisResult = true
+				break
+			}
+
+			if !matchedThisResult {
+				unmatchedGolferNames = append(unmatchedGolferNames, golferInput.Name)
 			}
 		}
 
-		if len(matchedIDs) == len(golferInputs) {
-			i.logger.Info("all golfers matched via scrape.do", "tournament", t.Name)
+		i.logger.Info(
+			"scrape.do name comparisons",
+			"url", result.URL,
+			"parsed_names", parsedNames,
+			"golfer_names", attemptedGolferNames,
+			"matched_pairs", matchedPairs,
+			"unmatched_golfers", unmatchedGolferNames,
+		)
+
+		if len(matchedIDs) >= targetMatches {
+			i.logger.Info(
+				"scrape.do match threshold reached",
+				"matched", len(matchedIDs),
+				"target", targetMatches,
+				"tournament", t.Name,
+			)
 			break
 		}
 	}
 
 	i.logger.Info("scrape.do match summary", "matched", len(matchedIDs), "total", len(golferInputs), "tournament", t.Name)
+	if len(matchedIDs) < len(golferInputs) {
+		unmatched := make([]string, 0, len(golferInputs)-len(matchedIDs))
+		for _, golferInput := range golferInputs {
+			if !matchedIDs[golferInput.GolferID] {
+				unmatched = append(unmatched, golferInput.Name)
+			}
+		}
+		i.captureJobMessage("sync_earnings", "scrape.do unmatched golfers", map[string]interface{}{
+			"tournament":  t.Name,
+			"count":       len(unmatched),
+			"golfers":     unmatched,
+			"source_urls": triedURLs,
+		})
+	}
 	return updated, matchedIDs
 }
 

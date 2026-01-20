@@ -15,8 +15,8 @@ func TestNewClientCreatesRateLimiter(t *testing.T) {
 	client := New("test-api-key", "https://api.example.com", logger)
 
 	assert.NotNil(t, client.limiter)
-	assert.Equal(t, rate.Limit(RateLimit), client.limiter.Limit())
-	assert.Equal(t, RateBurst, client.limiter.Burst())
+	assert.Equal(t, rate.Limit(APIRateLimitPerSecond), client.limiter.Limit())
+	assert.Equal(t, APIRateBurst, client.limiter.Burst())
 }
 
 func TestRateLimiterThrottlesRequests(t *testing.T) {
@@ -34,6 +34,6 @@ func TestRateLimiterThrottlesRequests(t *testing.T) {
 }
 
 func TestConfigConstants(t *testing.T) {
-	assert.Equal(t, 2.0, RateLimit)
-	assert.Equal(t, 5, RateBurst)
+	assert.Equal(t, 2.0, APIRateLimitPerSecond)
+	assert.Equal(t, 5, APIRateBurst)
 }

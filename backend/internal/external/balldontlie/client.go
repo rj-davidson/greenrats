@@ -21,7 +21,7 @@ func New(apiKey, baseURL string, logger *slog.Logger) *Client {
 		SetHeader("Authorization", apiKey).
 		SetHeader("Content-Type", "application/json")
 
-	limiter := rate.NewLimiter(rate.Limit(RateLimit), RateBurst)
+	limiter := rate.NewLimiter(rate.Limit(APIRateLimitPerSecond), APIRateBurst)
 
 	return &Client{
 		client:  client,
