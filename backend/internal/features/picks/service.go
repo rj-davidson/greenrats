@@ -169,6 +169,159 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*Pick, error
 	}, nil
 }
 
+type CreatePickForUserParams struct {
+	CommissionerID uuid.UUID
+	TargetUserID   uuid.UUID
+	LeagueID       uuid.UUID
+	TournamentID   uuid.UUID
+	GolferID       uuid.UUID
+}
+
+func (s *Service) CreatePickForUser(ctx context.Context, params CreatePickForUserParams) (*Pick, error) {
+	isOwner, err := s.isLeagueOwner(ctx, params.LeagueID, params.CommissionerID)
+	if err != nil {
+		return nil, err
+	}
+	if !isOwner {
+		return nil, ErrNotCommissioner
+	}
+
+	tournamentEnt, err := s.db.Tournament.Query().
+		Where(tournament.IDEQ(params.TournamentID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrTournamentNotFound
+		}
+		return nil, fmt.Errorf("failed to get tournament: %w", err)
+	}
+
+	targetUserEnt, err := s.db.User.Query().
+		Where(user.IDEQ(params.TargetUserID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, fmt.Errorf("failed to get user: %w", err)
+	}
+
+	isMember, err := s.db.LeagueMembership.Query().
+		Where(
+			leaguemembership.HasUserWith(user.IDEQ(params.TargetUserID)),
+			leaguemembership.HasLeagueWith(league.IDEQ(params.LeagueID)),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check membership: %w", err)
+	}
+	if !isMember {
+		return nil, ErrNotLeagueMember
+	}
+
+	golferEnt, err := s.db.Golfer.Query().
+		Where(golfer.IDEQ(params.GolferID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrGolferNotFound
+		}
+		return nil, fmt.Errorf("failed to get golfer: %w", err)
+	}
+
+	inField, err := s.db.TournamentEntry.Query().
+		Where(
+			tournamententry.HasTournamentWith(tournament.IDEQ(params.TournamentID)),
+			tournamententry.HasGolferWith(golfer.IDEQ(params.GolferID)),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check tournament field: %w", err)
+	}
+	if !inField {
+		return nil, ErrGolferNotInField
+	}
+
+	golferUsed, err := s.db.Pick.Query().
+		Where(
+			pick.HasUserWith(user.IDEQ(params.TargetUserID)),
+			pick.HasGolferWith(golfer.IDEQ(params.GolferID)),
+			pick.HasLeagueWith(league.IDEQ(params.LeagueID)),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check golfer usage: %w", err)
+	}
+	if golferUsed {
+		return nil, ErrGolferAlreadyUsed
+	}
+
+	pickExists, err := s.db.Pick.Query().
+		Where(
+			pick.HasUserWith(user.IDEQ(params.TargetUserID)),
+			pick.HasTournamentWith(tournament.IDEQ(params.TournamentID)),
+			pick.HasLeagueWith(league.IDEQ(params.LeagueID)),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check existing pick: %w", err)
+	}
+	if pickExists {
+		return nil, ErrPickAlreadyExists
+	}
+
+	pickEnt, err := s.db.Pick.Create().
+		SetUserID(params.TargetUserID).
+		SetTournamentID(params.TournamentID).
+		SetGolferID(params.GolferID).
+		SetLeagueID(params.LeagueID).
+		SetSeasonYear(tournamentEnt.SeasonYear).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create pick: %w", err)
+	}
+
+	metadata := map[string]any{
+		"golfer_id":         params.GolferID.String(),
+		"golfer_name":       golferEnt.Name,
+		"pick_user_id":      params.TargetUserID.String(),
+		"tournament_id":     tournamentEnt.ID.String(),
+		"tournament_name":   tournamentEnt.Name,
+		"tournament_status": string(tournamentEnt.Status),
+	}
+
+	_, err = s.db.CommissionerAction.
+		Create().
+		SetActionType(commissioneraction.ActionTypePickChange).
+		SetDescription(fmt.Sprintf("Added pick %s", golferEnt.Name)).
+		SetMetadata(metadata).
+		SetLeagueID(params.LeagueID).
+		SetCommissionerID(params.CommissionerID).
+		SetAffectedUserID(params.TargetUserID).
+		Save(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to log action: %w", err)
+	}
+
+	userName := ""
+	if targetUserEnt.DisplayName != nil {
+		userName = *targetUserEnt.DisplayName
+	}
+
+	return &Pick{
+		ID:             pickEnt.ID,
+		UserID:         params.TargetUserID,
+		TournamentID:   params.TournamentID,
+		GolferID:       params.GolferID,
+		LeagueID:       params.LeagueID,
+		SeasonYear:     pickEnt.SeasonYear,
+		CreatedAt:      pickEnt.CreatedAt,
+		UserName:       userName,
+		TournamentName: tournamentEnt.Name,
+		GolferName:     golferEnt.Name,
+	}, nil
+}
+
 func (s *Service) GetUserPicks(ctx context.Context, userID, leagueID uuid.UUID, seasonYear int) (*ListPicksResponse, error) {
 	query := s.db.Pick.Query().
 		Where(pick.HasUserWith(user.IDEQ(userID))).

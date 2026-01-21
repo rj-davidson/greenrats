@@ -26,7 +26,7 @@ import {
 } from "@/components/shadcn/select";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { useLeagueMembers, useLeagueTournaments } from "@/features/leagues/queries";
-import { useAvailableGolfersForUser, useOverridePick } from "@/features/picks/queries";
+import { useAvailableGolfersForUser, useCreatePickForUser, useOverridePick } from "@/features/picks/queries";
 import type { LeagueMember } from "@/features/leagues/types";
 import type { AvailableGolfer } from "@/features/picks/types";
 import { AlertTriangleIcon, CheckIcon, EditIcon } from "lucide-react";
@@ -54,6 +54,7 @@ export function PickManagement({ leagueId }: PickManagementProps) {
     selectedMember?.id ?? "",
   );
   const overridePick = useOverridePick();
+  const createPickForUser = useCreatePickForUser();
 
   const pastTournaments =
     tournamentsData?.tournaments.filter((t) => t.status === "completed" || t.status === "active") ??
@@ -78,27 +79,40 @@ export function PickManagement({ leagueId }: PickManagementProps) {
   };
 
   const handleConfirmChange = async () => {
-    if (!selectedMember?.pick || !selectedGolfer || !selectedTournamentId) return;
+    if (!selectedMember || !selectedGolfer || !selectedTournamentId) return;
 
     try {
-      await overridePick.mutateAsync({
-        leagueId,
-        pickId: selectedMember.pick.id,
-        golferId: selectedGolfer.id,
-        tournamentId: selectedTournamentId,
-      });
-      toast.success(
-        `Changed ${selectedMember.display_name}'s pick to ${selectedGolfer.name}`,
-      );
+      if (selectedMember.pick) {
+        await overridePick.mutateAsync({
+          leagueId,
+          pickId: selectedMember.pick.id,
+          golferId: selectedGolfer.id,
+          tournamentId: selectedTournamentId,
+        });
+        toast.success(
+          `Changed ${selectedMember.display_name}'s pick to ${selectedGolfer.name}`,
+        );
+      } else {
+        await createPickForUser.mutateAsync({
+          leagueId,
+          userId: selectedMember.id,
+          tournamentId: selectedTournamentId,
+          golferId: selectedGolfer.id,
+        });
+        toast.success(
+          `Added ${selectedGolfer.name} as ${selectedMember.display_name}'s pick`,
+        );
+      }
       setConfirmDialogOpen(false);
       setSelectedMember(null);
       setSelectedGolfer(null);
     } catch {
-      toast.error("Failed to change pick");
+      toast.error(selectedMember.pick ? "Failed to change pick" : "Failed to add pick");
     }
   };
 
-  const canProceedToConfirm = selectedMember?.pick && selectedGolfer;
+  const isAddingPick = selectedMember && !selectedMember.pick;
+  const canProceedToConfirm = selectedMember && selectedGolfer;
 
   return (
     <>
@@ -175,18 +189,15 @@ export function PickManagement({ leagueId }: PickManagementProps) {
                   ))}
                 </div>
               )}
-              {selectedMember && !selectedMember.pick && (
-                <p className="text-sm text-amber-600">
-                  This member has no pick for this tournament. You cannot modify a non-existent pick.
-                </p>
-              )}
             </div>
           )}
 
-          {/* Step 3: Select New Golfer */}
-          {selectedMember?.pick && (
+          {/* Step 3: Select Golfer */}
+          {selectedMember && (
             <div className="space-y-2">
-              <label className="text-sm font-medium">3. Select New Golfer</label>
+              <label className="text-sm font-medium">
+                3. Select {selectedMember.pick ? "New " : ""}Golfer
+              </label>
               {golfersLoading ? (
                 <div className="space-y-2">
                   {[1, 2, 3, 4, 5].map((i) => (
@@ -247,7 +258,7 @@ export function PickManagement({ leagueId }: PickManagementProps) {
           {/* Confirm Button */}
           {canProceedToConfirm && (
             <Button className="w-full" onClick={() => setConfirmDialogOpen(true)}>
-              Change Pick
+              {isAddingPick ? "Add Pick" : "Change Pick"}
             </Button>
           )}
         </CardContent>
@@ -257,9 +268,9 @@ export function PickManagement({ leagueId }: PickManagementProps) {
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Confirm Pick Change</DialogTitle>
+            <DialogTitle>Confirm Pick {isAddingPick ? "Addition" : "Change"}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to change this pick?
+              Are you sure you want to {isAddingPick ? "add" : "change"} this pick?
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-4">
@@ -270,20 +281,23 @@ export function PickManagement({ leagueId }: PickManagementProps) {
               <p className="text-sm">
                 <span className="font-medium">Member:</span> {selectedMember?.display_name}
               </p>
+              {selectedMember?.pick && (
+                <p className="text-sm">
+                  <span className="font-medium">Current Pick:</span>{" "}
+                  {selectedMember.pick.golfer_name}
+                </p>
+              )}
               <p className="text-sm">
-                <span className="font-medium">Current Pick:</span>{" "}
-                {selectedMember?.pick?.golfer_name}
-              </p>
-              <p className="text-sm">
-                <span className="font-medium">New Pick:</span> {selectedGolfer?.name}
+                <span className="font-medium">{isAddingPick ? "Pick" : "New Pick"}:</span>{" "}
+                {selectedGolfer?.name}
               </p>
             </div>
             {selectedTournament?.status === "completed" && (
               <div className="flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-50 p-3 dark:bg-amber-950/20">
                 <AlertTriangleIcon className="mt-0.5 size-4 shrink-0 text-amber-600" />
                 <p className="text-sm text-amber-700 dark:text-amber-400">
-                  This tournament has already completed. Changing this pick will affect the
-                  leaderboard and earnings calculations.
+                  This tournament has already completed. {isAddingPick ? "Adding" : "Changing"} this
+                  pick will affect the leaderboard and earnings calculations.
                 </p>
               </div>
             )}
@@ -292,8 +306,17 @@ export function PickManagement({ leagueId }: PickManagementProps) {
             <Button variant="outline" onClick={() => setConfirmDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleConfirmChange} disabled={overridePick.isPending}>
-              {overridePick.isPending ? "Changing..." : "Confirm Change"}
+            <Button
+              onClick={handleConfirmChange}
+              disabled={overridePick.isPending || createPickForUser.isPending}
+            >
+              {overridePick.isPending || createPickForUser.isPending
+                ? isAddingPick
+                  ? "Adding..."
+                  : "Changing..."
+                : isAddingPick
+                  ? "Confirm Add"
+                  : "Confirm Change"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -77,3 +77,13 @@ type UpdatePickRequest struct {
 type UpdatePickResponse struct {
 	Pick Pick `json:"pick"`
 }
+
+type CreatePickForUserRequest struct {
+	UserID       uuid.UUID `json:"user_id"`
+	TournamentID uuid.UUID `json:"tournament_id"`
+	GolferID     uuid.UUID `json:"golfer_id"`
+}
+
+type CreatePickForUserResponse struct {
+	Pick Pick `json:"pick"`
+}

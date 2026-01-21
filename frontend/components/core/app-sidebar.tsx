@@ -84,7 +84,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem className="w-full flex items-center justify-center">
+          <SidebarMenuItem className="flex w-full items-center justify-center">
               <Link href="/">
                 <Image
                   src="/assets/logo.png"

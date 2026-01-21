@@ -81,3 +81,17 @@ export const overridePickResponseSchema = z.object({
 });
 
 export type OverridePickResponse = z.infer<typeof overridePickResponseSchema>;
+
+export const createPickForUserRequestSchema = z.object({
+  user_id: z.string().min(1, "User is required"),
+  tournament_id: z.string().min(1, "Tournament is required"),
+  golfer_id: z.string().min(1, "Golfer is required"),
+});
+
+export type CreatePickForUserRequest = z.infer<typeof createPickForUserRequestSchema>;
+
+export const createPickForUserResponseSchema = z.object({
+  pick: pickSchema,
+});
+
+export type CreatePickForUserResponse = z.infer<typeof createPickForUserResponseSchema>;

@@ -1,5 +1,6 @@
 import type {
   AvailableGolfersResponse,
+  CreatePickForUserResponse,
   CreatePickRequest,
   CreatePickResponse,
   ListPicksResponse,
@@ -180,6 +181,38 @@ export function useOverridePick() {
           queryKey: [QueryKey.LEAGUES, "members", leagueId, tournamentId],
         });
       }
+    },
+  });
+}
+
+export function useCreatePickForUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      leagueId,
+      userId,
+      tournamentId,
+      golferId,
+    }: {
+      leagueId: string;
+      userId: string;
+      tournamentId: string;
+      golferId: string;
+    }) => {
+      return makeClientRequest.post<CreatePickForUserResponse>(
+        `/api/v1/leagues/${leagueId}/picks/create-for-user`,
+        { user_id: userId, tournament_id: tournamentId, golfer_id: golferId },
+      );
+    },
+    onSuccess: (_data, { leagueId, tournamentId }) => {
+      void queryClient.invalidateQueries({ queryKey: [QueryKey.PICKS, "league", leagueId] });
+      void queryClient.invalidateQueries({
+        queryKey: [QueryKey.LEAGUES, "commissioner-actions", leagueId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: [QueryKey.LEAGUES, "members", leagueId, tournamentId],
+      });
     },
   });
 }
