@@ -15,7 +15,13 @@ type ParseResult struct {
 	Entries []ParsedEntry
 }
 
-type ParsedEntry struct {
-	Name     string
+type EarningsCandidate struct {
 	Earnings int
+	Context  string
+}
+
+type ParsedEntry struct {
+	Name       string
+	Earnings   int
+	Candidates []EarningsCandidate
 }

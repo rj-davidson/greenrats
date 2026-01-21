@@ -25,3 +25,22 @@ type LeaderboardResponse struct {
 	TournamentName string             `json:"tournament_name"`
 	Entries        []LeaderboardEntry `json:"entries"`
 }
+
+type DuplicateEarningsCandidate struct {
+	Earnings int    `json:"earnings"`
+	Context  string `json:"context"`
+}
+
+type DuplicateEarningsInput struct {
+	GolferName string                       `json:"golfer_name"`
+	Candidates []DuplicateEarningsCandidate `json:"candidates"`
+}
+
+type DuplicateEarningsResult struct {
+	GolferName string `json:"golfer_name" jsonschema_description:"The golfer name from the input"`
+	Earnings   int    `json:"earnings" jsonschema_description:"The correct prize money earned in USD"`
+}
+
+type DuplicateEarningsResponse struct {
+	Results []DuplicateEarningsResult `json:"results" jsonschema_description:"Resolved earnings for each golfer"`
+}

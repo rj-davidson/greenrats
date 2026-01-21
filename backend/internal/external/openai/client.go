@@ -204,6 +204,9 @@ func (c *Client) MatchPlayersToLeaderboard(ctx context.Context, leaderboard *Lea
 	}
 
 	c.logger.Debug("player matching complete", "results", len(result.Results))
+	for _, r := range result.Results {
+		c.logger.Debug("matched golfer", "golfer_id", r.GolferID, "earnings", r.Earnings)
+	}
 	return result.Results, nil
 }
 
@@ -239,4 +242,81 @@ func (c *Client) ParseLeaderboardContent(ctx context.Context, content, tournamen
 
 	c.logger.Debug("parsed leaderboard", "entries", len(result.Entries))
 	return &result, nil
+}
+
+func (c *Client) ResolveDuplicateEarnings(ctx context.Context, tournamentName string, inputs []DuplicateEarningsInput) (map[string]int, error) {
+	c.logger.Info("resolving duplicate earnings", "tournament", tournamentName, "duplicates", len(inputs))
+
+	if len(inputs) == 0 {
+		return make(map[string]int), nil
+	}
+
+	duplicatesJSON, err := json.Marshal(inputs)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal duplicates: %w", err)
+	}
+
+	prompt := resolveDuplicateEarningsPrompt(tournamentName, string(duplicatesJSON))
+
+	resp, err := c.client.Responses.New(ctx, responses.ResponseNewParams{
+		Model: c.model,
+		Text: responses.ResponseTextConfigParam{
+			Format: responses.ResponseFormatTextConfigUnionParam{
+				OfJSONSchema: &responses.ResponseFormatTextJSONSchemaConfigParam{
+					Name:   "duplicate_earnings_response",
+					Strict: openai.Bool(true),
+					Type:   "json_schema",
+					Schema: duplicateEarningsResponseSchema(),
+				},
+			},
+		},
+		Input: responses.ResponseNewParamsInputUnion{
+			OfString: openai.String(prompt),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve duplicate earnings: %w", err)
+	}
+
+	var result DuplicateEarningsResponse
+	if err := json.Unmarshal([]byte(resp.OutputText()), &result); err != nil {
+		return nil, fmt.Errorf("failed to parse duplicate earnings response: %w", err)
+	}
+
+	resolved := make(map[string]int)
+	for _, r := range result.Results {
+		resolved[r.GolferName] = r.Earnings
+	}
+
+	c.logger.Debug("resolved duplicate earnings", "resolved", len(resolved))
+	return resolved, nil
+}
+
+func duplicateEarningsResponseSchema() map[string]any {
+	return map[string]any{
+		"type": "object",
+		"properties": map[string]any{
+			"results": map[string]any{
+				"type":        "array",
+				"description": "Resolved earnings for each golfer",
+				"items": map[string]any{
+					"type": "object",
+					"properties": map[string]any{
+						"golfer_name": map[string]any{
+							"type":        "string",
+							"description": "The golfer name from the input",
+						},
+						"earnings": map[string]any{
+							"type":        "integer",
+							"description": "The correct prize money earned in USD",
+						},
+					},
+					"required":             []string{"golfer_name", "earnings"},
+					"additionalProperties": false,
+				},
+			},
+		},
+		"required":             []string{"results"},
+		"additionalProperties": false,
+	}
 }

@@ -60,3 +60,20 @@ Return ALL players who earned prize money in the tournament. For each player, re
 
 If the content does not contain earnings data or the tournament results are not available, return an empty entries array.`, tournamentName, content)
 }
+
+func resolveDuplicateEarningsPrompt(tournamentName, duplicatesJSON string) string {
+	return fmt.Sprintf(`You are a golf earnings disambiguation agent. For each golfer below, multiple earnings matches were found in scraped content. Determine which one is the actual tournament earnings.
+
+Tournament: %s
+
+Duplicates (each golfer has multiple candidate earnings with surrounding context):
+%s
+
+For each golfer, select the correct earnings value. Look for:
+- Actual prize money tables (e.g., "$1,638,000.00" in a results table)
+- NOT conversational amounts (e.g., "earns $1.26" meaning $1.26 million in shorthand)
+- NOT betting odds or predictions
+- The larger, more precise value is usually correct (e.g., $1,638,000 over $1)
+
+Return the golfer name and their correct earnings.`, tournamentName, duplicatesJSON)
+}
