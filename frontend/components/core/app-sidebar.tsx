@@ -19,6 +19,7 @@ import { useActiveTournament, useTournaments } from "@/features/tournaments/quer
 import type { Tournament } from "@/features/tournaments/types";
 import { useCurrentUser } from "@/features/users/queries";
 import { CalendarIcon, ChevronRightIcon, SettingsIcon, TrophyIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
@@ -83,20 +84,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+          <SidebarMenuItem className="w-full flex items-center justify-center">
               <Link href="/">
-                <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <TrophyIcon className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">
-                    GreenRats <span className="font-normal text-muted-foreground">Beta</span>
-                  </span>
-                  <span className="truncate text-xs">Golf Pick&apos;em</span>
-                </div>
+                <Image
+                  src="/assets/logo.png"
+                  alt="GreenRats"
+                  width={220}
+                  height={83}
+                  className="group-data-[collapsible=icon]:hidden"
+                />
+                <Image
+                  src="/assets/logo_square.png"
+                  alt="GreenRats"
+                  width={32}
+                  height={32}
+                  className="hidden group-data-[collapsible=icon]:block"
+                />
               </Link>
-            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
