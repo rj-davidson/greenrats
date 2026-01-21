@@ -108,7 +108,7 @@ function CompactRow({ tournament, leagueId, variant }: LeagueTournamentCardProps
 function FullCard({ tournament, leagueId, variant }: LeagueTournamentCardProps) {
   return (
     <Link href={`/leagues/${leagueId}/tournaments/${tournament.id}`}>
-    <Card className="border-primary/50 shadow-sm transition-colors hover:bg-muted/50 border-2">
+    <Card className="border-2 border-primary/50 shadow-sm transition-colors hover:bg-muted/50">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base font-semibold">{tournament.name}</CardTitle>
           {getStatusBadge(variant)}

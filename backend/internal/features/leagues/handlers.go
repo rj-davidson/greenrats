@@ -31,6 +31,8 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Get("/", h.ListUserLeagues)
 	group.Get("/:id", h.GetByID)
 	group.Get("/:id/tournaments", h.GetLeagueTournaments)
+	group.Get("/:id/commissioner-actions", h.GetCommissionerActions)
+	group.Get("/:id/members", h.GetLeagueMembers)
 	group.Post("/join", h.JoinLeague)
 	group.Post("/:id/regenerate-code", h.RegenerateJoinCode)
 	group.Patch("/:id/joining", h.SetJoiningEnabled)
@@ -253,6 +255,63 @@ func (h *Handler) SetJoiningEnabled(c *fiber.Ctx) error {
 	return c.JSON(SetJoiningEnabledResponse{League: *league})
 }
 
+func (h *Handler) GetCommissionerActions(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	leagueID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid league id",
+		})
+	}
+
+	resp, err := h.service.GetCommissionerActions(c.UserContext(), leagueID, userID)
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.JSON(resp)
+}
+
+func (h *Handler) GetLeagueMembers(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	leagueID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid league id",
+		})
+	}
+
+	var tournamentID *uuid.UUID
+	if tournamentIDStr := c.Query("tournament_id"); tournamentIDStr != "" {
+		id, err := uuid.FromString(tournamentIDStr)
+		if err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid tournament_id",
+			})
+		}
+		tournamentID = &id
+	}
+
+	resp, err := h.service.GetLeagueMembers(c.UserContext(), leagueID, userID, tournamentID)
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.JSON(resp)
+}
+
 func (h *Handler) handleServiceError(c *fiber.Ctx, err error) error {
 	switch {
 	case errors.Is(err, ErrLeagueNotFound):
@@ -278,6 +337,10 @@ func (h *Handler) handleServiceError(c *fiber.Ctx, err error) error {
 	case errors.Is(err, ErrNotCommissioner):
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"error": "only the commissioner can perform this action",
+		})
+	case errors.Is(err, ErrNotMember):
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "you are not a member of this league",
 		})
 	default:
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

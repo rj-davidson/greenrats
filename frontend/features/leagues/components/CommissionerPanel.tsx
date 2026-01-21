@@ -2,6 +2,7 @@
 
 import { useRegenerateJoinCode, useSetJoiningEnabled } from "@/features/leagues/queries";
 import type { League } from "@/features/leagues/types";
+import { PickManagement } from "@/features/leagues/components/PickManagement";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -66,7 +67,7 @@ export function CommissionerPanel({ league }: CommissionerPanelProps) {
   }
 
   return (
-    <>
+    <div className="space-y-6">
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center gap-2">
@@ -119,6 +120,8 @@ export function CommissionerPanel({ league }: CommissionerPanelProps) {
         </CardContent>
       </Card>
 
+      <PickManagement leagueId={league.id} />
+
       <Dialog open={confirmRegenerateOpen} onOpenChange={setConfirmRegenerateOpen}>
         <DialogContent>
           <DialogHeader>
@@ -138,6 +141,6 @@ export function CommissionerPanel({ league }: CommissionerPanelProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

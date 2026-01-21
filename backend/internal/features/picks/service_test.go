@@ -599,7 +599,7 @@ func TestService_OverridePick(t *testing.T) {
 		require.ErrorIs(t, err, ErrNotCommissioner)
 	})
 
-	t.Run("returns error when tournament completed", func(t *testing.T) {
+	t.Run("commissioner overrides pick for completed tournament", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
 		service := NewService(db)
@@ -618,13 +618,97 @@ func TestService_OverridePick(t *testing.T) {
 
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
-		_, err := service.OverridePick(ctx, OverridePickParams{
+		updated, err := service.OverridePick(ctx, OverridePickParams{
 			LeagueID:       league.ID,
 			PickID:         pick.ID,
 			NewGolferID:    golfer2.ID,
 			CommissionerID: owner.ID,
 		})
 
-		require.ErrorIs(t, err, ErrTournamentCompleted)
+		require.NoError(t, err)
+		assert.Equal(t, golfer2.ID, updated.GolferID)
+	})
+}
+
+func TestService_GetAvailableGolfersForUserOverride(t *testing.T) {
+	t.Run("returns available golfers for target user", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+		golfers := factory.CreateGolfers(5)
+		factory.CreateTournamentField(tourn, golfers)
+
+		resp, err := service.GetAvailableGolfersForUserOverride(ctx, AvailableGolfersForUserParams{
+			CommissionerID: owner.ID,
+			TargetUserID:   user.ID,
+			LeagueID:       league.ID,
+			TournamentID:   tourn.ID,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, 5, resp.Total)
+	})
+
+	t.Run("marks golfers used by target user", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn1 := factory.CreateCompletedTournament()
+		tourn2 := factory.CreateUpcomingTournament(2)
+
+		golfer := factory.CreateGolfer()
+		factory.CreateTournamentEntry(tourn1, golfer)
+		factory.CreateTournamentEntry(tourn2, golfer)
+
+		factory.CreatePick(user, tourn1, golfer, league)
+
+		resp, err := service.GetAvailableGolfersForUserOverride(ctx, AvailableGolfersForUserParams{
+			CommissionerID: owner.ID,
+			TargetUserID:   user.ID,
+			LeagueID:       league.ID,
+			TournamentID:   tourn2.ID,
+		})
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, resp.Total)
+		assert.True(t, resp.Golfers[0].IsUsed)
+	})
+
+	t.Run("returns error when not commissioner", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(2)
+
+		_, err := service.GetAvailableGolfersForUserOverride(ctx, AvailableGolfersForUserParams{
+			CommissionerID: user.ID,
+			TargetUserID:   user.ID,
+			LeagueID:       league.ID,
+			TournamentID:   tourn.ID,
+		})
+
+		require.ErrorIs(t, err, ErrNotCommissioner)
 	})
 }

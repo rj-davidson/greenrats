@@ -486,6 +486,126 @@ func generateJoinCode() (string, error) {
 	return string(code), nil
 }
 
+var ErrNotMember = errors.New("user is not a member of this league")
+
+func (s *Service) GetCommissionerActions(ctx context.Context, leagueID, userID uuid.UUID) (*CommissionerActionsResponse, error) {
+	isMember, err := s.db.LeagueMembership.Query().
+		Where(
+			leaguemembership.HasLeagueWith(league.IDEQ(leagueID)),
+			leaguemembership.HasUserWith(user.IDEQ(userID)),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check membership: %w", err)
+	}
+	if !isMember {
+		return nil, ErrNotMember
+	}
+
+	actions, err := s.db.CommissionerAction.Query().
+		Where(commissioneraction.HasLeagueWith(league.IDEQ(leagueID))).
+		WithCommissioner().
+		WithAffectedUser().
+		Order(ent.Desc(commissioneraction.FieldCreatedAt)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get commissioner actions: %w", err)
+	}
+
+	result := make([]CommissionerAction, 0, len(actions))
+	for _, a := range actions {
+		action := CommissionerAction{
+			ID:          a.ID,
+			ActionType:  string(a.ActionType),
+			Description: a.Description,
+			Metadata:    a.Metadata,
+			CreatedAt:   a.CreatedAt,
+		}
+
+		if a.Edges.Commissioner != nil {
+			action.CommissionerID = a.Edges.Commissioner.ID
+			if a.Edges.Commissioner.DisplayName != nil {
+				action.CommissionerName = *a.Edges.Commissioner.DisplayName
+			}
+		}
+
+		if a.Edges.AffectedUser != nil {
+			action.AffectedUserID = a.Edges.AffectedUser.ID
+			if a.Edges.AffectedUser.DisplayName != nil {
+				action.AffectedUserName = *a.Edges.AffectedUser.DisplayName
+			}
+		}
+
+		result = append(result, action)
+	}
+
+	return &CommissionerActionsResponse{
+		Actions: result,
+		Total:   len(result),
+	}, nil
+}
+
+func (s *Service) GetLeagueMembers(ctx context.Context, leagueID, userID uuid.UUID, tournamentID *uuid.UUID) (*LeagueMembersResponse, error) {
+	isOwner, err := s.isLeagueOwner(ctx, leagueID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !isOwner {
+		return nil, ErrNotCommissioner
+	}
+
+	memberships, err := s.db.LeagueMembership.Query().
+		Where(leaguemembership.HasLeagueWith(league.IDEQ(leagueID))).
+		WithUser().
+		Order(ent.Asc(leaguemembership.FieldJoinedAt)).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get league members: %w", err)
+	}
+
+	result := make([]LeagueMember, 0, len(memberships))
+	for _, m := range memberships {
+		if m.Edges.User == nil {
+			continue
+		}
+		u := m.Edges.User
+
+		member := LeagueMember{
+			ID:       u.ID,
+			Role:     string(m.Role),
+			JoinedAt: m.JoinedAt,
+		}
+		if u.DisplayName != nil {
+			member.DisplayName = *u.DisplayName
+		}
+
+		if tournamentID != nil {
+			userPick, err := s.db.Pick.Query().
+				Where(
+					pick.HasLeagueWith(league.IDEQ(leagueID)),
+					pick.HasTournamentWith(tournament.IDEQ(*tournamentID)),
+					pick.HasUserWith(user.IDEQ(u.ID)),
+				).
+				WithGolfer().
+				Only(ctx)
+			if err == nil && userPick.Edges.Golfer != nil {
+				member.Pick = &MemberPick{
+					ID:         userPick.ID,
+					GolferID:   userPick.Edges.Golfer.ID,
+					GolferName: userPick.Edges.Golfer.Name,
+				}
+			}
+		}
+
+		result = append(result, member)
+	}
+
+	return &LeagueMembersResponse{
+		Members: result,
+		Total:   len(result),
+	}, nil
+}
+
 func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uuid.UUID) (*ListLeagueTournamentsResponse, error) {
 	entLeague, err := s.db.League.
 		Query().

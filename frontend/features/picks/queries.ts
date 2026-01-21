@@ -24,6 +24,12 @@ export const buildLeaguePicksKey = (leagueId: string, tournamentId: string) =>
 export const buildAvailableGolfersKey = (leagueId: string, tournamentId: string) =>
   [QueryKey.PICKS, "available-golfers", leagueId, tournamentId] as const;
 
+export const buildAvailableGolfersForUserKey = (
+  leagueId: string,
+  tournamentId: string,
+  userId: string,
+) => [QueryKey.PICKS, "available-golfers-for-user", leagueId, tournamentId, userId] as const;
+
 export const buildPickWindowKey = (tournamentId: string) =>
   [QueryKey.PICKS, "pick-window", tournamentId] as const;
 
@@ -99,6 +105,29 @@ export function useAvailableGolfers(leagueId: string, tournamentId: string) {
   return useQuery(buildGetAvailableGolfersQueryOptions(leagueId, tournamentId));
 }
 
+export function buildGetAvailableGolfersForUserQueryOptions(
+  leagueId: string,
+  tournamentId: string,
+  userId: string,
+  requestor: Requestor = makeClientRequest,
+) {
+  return queryOptions<AvailableGolfersResponse>({
+    queryKey: buildAvailableGolfersForUserKey(leagueId, tournamentId, userId),
+    queryFn: () =>
+      requestor.get<AvailableGolfersResponse>(
+        `/api/v1/leagues/${leagueId}/available-golfers-for-user`,
+        {
+          params: { tournament_id: tournamentId, user_id: userId },
+        },
+      ),
+    enabled: !!leagueId && !!tournamentId && !!userId,
+  });
+}
+
+export function useAvailableGolfersForUser(leagueId: string, tournamentId: string, userId: string) {
+  return useQuery(buildGetAvailableGolfersForUserQueryOptions(leagueId, tournamentId, userId));
+}
+
 export function usePickWindow(tournamentId: string) {
   return useQuery(buildGetPickWindowQueryOptions(tournamentId));
 }
@@ -134,14 +163,23 @@ export function useOverridePick() {
       leagueId: string;
       pickId: string;
       golferId: string;
+      tournamentId?: string;
     }) => {
       return makeClientRequest.put<OverridePickResponse>(
         `/api/v1/leagues/${leagueId}/picks/${pickId}`,
         { golfer_id: golferId },
       );
     },
-    onSuccess: (_data, { leagueId }) => {
+    onSuccess: (_data, { leagueId, tournamentId }) => {
       void queryClient.invalidateQueries({ queryKey: [QueryKey.PICKS, "league", leagueId] });
+      void queryClient.invalidateQueries({
+        queryKey: [QueryKey.LEAGUES, "commissioner-actions", leagueId],
+      });
+      if (tournamentId) {
+        void queryClient.invalidateQueries({
+          queryKey: [QueryKey.LEAGUES, "members", leagueId, tournamentId],
+        });
+      }
     },
   });
 }

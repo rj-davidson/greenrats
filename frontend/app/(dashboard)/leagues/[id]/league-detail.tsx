@@ -4,8 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/ta
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { LeagueLeaderboard } from "@/features/leaderboards/components";
 import {
-  ActionLog,
   CommissionerPanel,
+  LeagueActivity,
   LeagueMonogram,
   LeagueTournamentList,
 } from "@/features/leagues/components";
@@ -71,6 +71,7 @@ export function LeagueDetail({ id }: LeagueDetailProps) {
         <TabsList>
           <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
           <TabsTrigger value="standings">Standings</TabsTrigger>
+          <TabsTrigger value="activity">Activity</TabsTrigger>
           {isOwner && <TabsTrigger value="manage">Manage</TabsTrigger>}
         </TabsList>
 
@@ -82,10 +83,13 @@ export function LeagueDetail({ id }: LeagueDetailProps) {
           <LeagueLeaderboard leagueId={id} />
         </TabsContent>
 
+        <TabsContent value="activity">
+          <LeagueActivity leagueId={id} />
+        </TabsContent>
+
         {isOwner && (
           <TabsContent value="manage" className="space-y-6">
             <CommissionerPanel league={league} />
-            <ActionLog leagueId={id} />
           </TabsContent>
         )}
       </Tabs>

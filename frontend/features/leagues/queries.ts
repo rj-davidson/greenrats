@@ -5,6 +5,7 @@ import type {
   GetLeagueResponse,
   JoinLeagueRequest,
   JoinLeagueResponse,
+  LeagueMembersResponse,
   ListLeagueTournamentsResponse,
   ListUserLeaguesResponse,
   RegenerateCodeResponse,
@@ -25,6 +26,9 @@ export const buildCommissionerActionsKey = (leagueId: string) =>
 
 export const buildLeagueTournamentsKey = (leagueId: string) =>
   [QueryKey.LEAGUES, "tournaments", leagueId] as const;
+
+export const buildLeagueMembersKey = (leagueId: string, tournamentId?: string) =>
+  [QueryKey.LEAGUES, "members", leagueId, tournamentId] as const;
 
 export function buildGetUserLeaguesQueryOptions(requestor: Requestor = makeClientRequest) {
   return queryOptions<ListUserLeaguesResponse>({
@@ -81,6 +85,26 @@ export function useCommissionerActions(leagueId: string) {
 
 export function useLeagueTournaments(leagueId: string) {
   return useQuery(buildGetLeagueTournamentsQueryOptions(leagueId));
+}
+
+export function buildGetLeagueMembersQueryOptions(
+  leagueId: string,
+  tournamentId?: string,
+  requestor: Requestor = makeClientRequest,
+) {
+  const url = tournamentId
+    ? `/api/v1/leagues/${leagueId}/members?tournament_id=${tournamentId}`
+    : `/api/v1/leagues/${leagueId}/members`;
+
+  return queryOptions<LeagueMembersResponse>({
+    queryKey: buildLeagueMembersKey(leagueId, tournamentId),
+    queryFn: () => requestor.get<LeagueMembersResponse>(url),
+    enabled: !!leagueId,
+  });
+}
+
+export function useLeagueMembers(leagueId: string, tournamentId?: string) {
+  return useQuery(buildGetLeagueMembersQueryOptions(leagueId, tournamentId));
 }
 
 export function useCreateLeague() {

@@ -138,3 +138,28 @@ export const listLeagueTournamentsResponseSchema = z.object({
 });
 
 export type ListLeagueTournamentsResponse = z.infer<typeof listLeagueTournamentsResponseSchema>;
+
+export const memberPickSchema = z.object({
+  id: z.string(),
+  golfer_id: z.string(),
+  golfer_name: z.string(),
+});
+
+export type MemberPick = z.infer<typeof memberPickSchema>;
+
+export const leagueMemberSchema = z.object({
+  id: z.string(),
+  display_name: z.string(),
+  role: leagueRoleSchema,
+  joined_at: z.string(),
+  pick: memberPickSchema.optional(),
+});
+
+export type LeagueMember = z.infer<typeof leagueMemberSchema>;
+
+export const leagueMembersResponseSchema = z.object({
+  members: z.array(leagueMemberSchema),
+  total: z.number(),
+});
+
+export type LeagueMembersResponse = z.infer<typeof leagueMembersResponseSchema>;

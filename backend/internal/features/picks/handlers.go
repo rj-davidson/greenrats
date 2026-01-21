@@ -28,6 +28,7 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 func (h *Handler) RegisterLeagueRoutes(group fiber.Router) {
 	group.Get("/:id/picks", h.GetLeaguePicks)
 	group.Get("/:id/available-golfers", h.GetAvailableGolfers)
+	group.Get("/:id/available-golfers-for-user", h.GetAvailableGolfersForUser)
 	group.Put("/:id/picks/:pickId", h.OverridePick)
 }
 
@@ -209,6 +210,62 @@ func (h *Handler) GetPickWindow(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(status)
+}
+
+func (h *Handler) GetAvailableGolfersForUser(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	leagueID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid league id",
+		})
+	}
+
+	tournamentIDStr := c.Query("tournament_id")
+	if tournamentIDStr == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "tournament_id query parameter is required",
+		})
+	}
+
+	tournamentID, err := uuid.FromString(tournamentIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tournament_id",
+		})
+	}
+
+	targetUserIDStr := c.Query("user_id")
+	if targetUserIDStr == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "user_id query parameter is required",
+		})
+	}
+
+	targetUserID, err := uuid.FromString(targetUserIDStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user_id",
+		})
+	}
+
+	resp, err := h.service.GetAvailableGolfersForUserOverride(c.UserContext(), AvailableGolfersForUserParams{
+		CommissionerID: userID,
+		TargetUserID:   targetUserID,
+		LeagueID:       leagueID,
+		TournamentID:   tournamentID,
+	})
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.JSON(resp)
 }
 
 func (h *Handler) OverridePick(c *fiber.Ctx) error {

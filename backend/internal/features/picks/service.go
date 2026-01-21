@@ -409,6 +409,99 @@ func (s *Service) GetAvailableGolfers(ctx context.Context, userID, leagueID, tou
 	}, nil
 }
 
+type AvailableGolfersForUserParams struct {
+	CommissionerID uuid.UUID
+	TargetUserID   uuid.UUID
+	LeagueID       uuid.UUID
+	TournamentID   uuid.UUID
+}
+
+func (s *Service) GetAvailableGolfersForUserOverride(ctx context.Context, params AvailableGolfersForUserParams) (*AvailableGolfersResponse, error) {
+	isOwner, err := s.isLeagueOwner(ctx, params.LeagueID, params.CommissionerID)
+	if err != nil {
+		return nil, err
+	}
+	if !isOwner {
+		return nil, ErrNotCommissioner
+	}
+
+	tournamentExists, err := s.db.Tournament.Query().
+		Where(tournament.IDEQ(params.TournamentID)).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check tournament: %w", err)
+	}
+	if !tournamentExists {
+		return nil, ErrTournamentNotFound
+	}
+
+	entries, err := s.db.TournamentEntry.Query().
+		Where(tournamententry.HasTournamentWith(tournament.IDEQ(params.TournamentID))).
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tournament entries: %w", err)
+	}
+
+	usedGolfers := make(map[uuid.UUID]usedGolferInfo)
+	usedPicks, err := s.db.Pick.Query().
+		Where(
+			pick.HasUserWith(user.IDEQ(params.TargetUserID)),
+			pick.HasLeagueWith(league.IDEQ(params.LeagueID)),
+			pick.HasTournamentWith(tournament.IDNEQ(params.TournamentID)),
+		).
+		WithGolfer().
+		WithTournament().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get used picks: %w", err)
+	}
+	for _, p := range usedPicks {
+		if p.Edges.Golfer != nil && p.Edges.Tournament != nil {
+			usedGolfers[p.Edges.Golfer.ID] = usedGolferInfo{
+				TournamentID:   p.Edges.Tournament.ID,
+				TournamentName: p.Edges.Tournament.Name,
+			}
+		}
+	}
+
+	golfers := make([]AvailableGolfer, 0)
+	for _, entry := range entries {
+		if entry.Edges.Golfer == nil {
+			continue
+		}
+		g := entry.Edges.Golfer
+
+		ag := AvailableGolfer{
+			ID:          g.ID,
+			Name:        g.Name,
+			CountryCode: g.CountryCode,
+		}
+		if g.Owgr != nil {
+			ag.OWGR = *g.Owgr
+		}
+		if g.Country != nil {
+			ag.Country = *g.Country
+		}
+		if g.ImageURL != nil {
+			ag.ImageURL = *g.ImageURL
+		}
+
+		if info, used := usedGolfers[g.ID]; used {
+			ag.IsUsed = true
+			ag.UsedForTournamentID = &info.TournamentID
+			ag.UsedForTournament = info.TournamentName
+		}
+
+		golfers = append(golfers, ag)
+	}
+
+	return &AvailableGolfersResponse{
+		Golfers: golfers,
+		Total:   len(golfers),
+	}, nil
+}
+
 type OverridePickParams struct {
 	LeagueID       uuid.UUID
 	PickID         uuid.UUID
@@ -445,10 +538,6 @@ func (s *Service) OverridePick(ctx context.Context, params OverridePickParams) (
 		return nil, ErrTournamentNotFound
 	}
 	tournamentEnt := pickEnt.Edges.Tournament
-
-	if tournamentEnt.Status == tournament.StatusCompleted {
-		return nil, ErrTournamentCompleted
-	}
 
 	newGolferEnt, err := s.db.Golfer.Query().
 		Where(golfer.IDEQ(params.NewGolferID)).
@@ -507,9 +596,12 @@ func (s *Service) OverridePick(ctx context.Context, params OverridePickParams) (
 	}
 
 	metadata := map[string]any{
-		"new_golfer_id":   params.NewGolferID.String(),
-		"new_golfer_name": newGolferEnt.Name,
-		"pick_user_id":    pickUserID.String(),
+		"new_golfer_id":     params.NewGolferID.String(),
+		"new_golfer_name":   newGolferEnt.Name,
+		"pick_user_id":      pickUserID.String(),
+		"tournament_id":     tournamentEnt.ID.String(),
+		"tournament_name":   tournamentEnt.Name,
+		"tournament_status": string(tournamentEnt.Status),
 	}
 	if pickEnt.Edges.Golfer != nil {
 		metadata["old_golfer_id"] = pickEnt.Edges.Golfer.ID.String()

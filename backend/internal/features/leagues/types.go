@@ -84,3 +84,39 @@ type ListLeagueTournamentsResponse struct {
 	Tournaments []LeagueTournament `json:"tournaments"`
 	Total       int                `json:"total"`
 }
+
+type CommissionerAction struct {
+	ID               uuid.UUID      `json:"id"`
+	ActionType       string         `json:"action_type"`
+	Description      string         `json:"description"`
+	Metadata         map[string]any `json:"metadata,omitempty"`
+	CreatedAt        time.Time      `json:"created_at"`
+	CommissionerID   uuid.UUID      `json:"commissioner_id,omitempty"`
+	CommissionerName string         `json:"commissioner_name,omitempty"`
+	AffectedUserID   uuid.UUID      `json:"affected_user_id,omitempty"`
+	AffectedUserName string         `json:"affected_user_name,omitempty"`
+}
+
+type CommissionerActionsResponse struct {
+	Actions []CommissionerAction `json:"actions"`
+	Total   int                  `json:"total"`
+}
+
+type MemberPick struct {
+	ID         uuid.UUID `json:"id"`
+	GolferID   uuid.UUID `json:"golfer_id"`
+	GolferName string    `json:"golfer_name"`
+}
+
+type LeagueMember struct {
+	ID          uuid.UUID   `json:"id"`
+	DisplayName string      `json:"display_name"`
+	Role        string      `json:"role"`
+	JoinedAt    time.Time   `json:"joined_at"`
+	Pick        *MemberPick `json:"pick,omitempty"`
+}
+
+type LeagueMembersResponse struct {
+	Members []LeagueMember `json:"members"`
+	Total   int            `json:"total"`
+}

@@ -346,3 +346,107 @@ func TestService_GetLeagueTournaments(t *testing.T) {
 		require.ErrorIs(t, err, ErrLeagueNotFound)
 	})
 }
+
+func TestService_GetCommissionerActions(t *testing.T) {
+	t.Run("returns actions for league members", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+
+		service.RegenerateJoinCode(ctx, league.ID, owner.ID)
+		service.SetJoiningEnabled(ctx, league.ID, owner.ID, false)
+
+		resp, err := service.GetCommissionerActions(ctx, league.ID, member.ID)
+
+		require.NoError(t, err)
+		assert.Equal(t, 2, resp.Total)
+	})
+
+	t.Run("returns error when not member", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		nonMember := factory.CreateUser()
+
+		_, err := service.GetCommissionerActions(ctx, league.ID, nonMember.ID)
+
+		require.ErrorIs(t, err, ErrNotMember)
+	})
+}
+
+func TestService_GetLeagueMembers(t *testing.T) {
+	t.Run("returns all league members", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+
+		resp, err := service.GetLeagueMembers(ctx, league.ID, owner.ID, nil)
+
+		require.NoError(t, err)
+		assert.Equal(t, 2, resp.Total)
+	})
+
+	t.Run("includes pick for tournament when provided", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+
+		tourn := factory.CreateCompletedTournament()
+		golfer := factory.CreateGolfer()
+		factory.CreatePick(member, tourn, golfer, league)
+
+		resp, err := service.GetLeagueMembers(ctx, league.ID, owner.ID, &tourn.ID)
+
+		require.NoError(t, err)
+		require.Equal(t, 2, resp.Total)
+
+		var memberResp *LeagueMember
+		for i := range resp.Members {
+			if resp.Members[i].ID == member.ID {
+				memberResp = &resp.Members[i]
+				break
+			}
+		}
+		require.NotNil(t, memberResp)
+		require.NotNil(t, memberResp.Pick)
+		assert.Equal(t, golfer.ID, memberResp.Pick.GolferID)
+	})
+
+	t.Run("returns error when not commissioner", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+
+		_, err := service.GetLeagueMembers(ctx, league.ID, member.ID, nil)
+
+		require.ErrorIs(t, err, ErrNotCommissioner)
+	})
+}
