@@ -162,7 +162,6 @@ export function PickMaker({ leagueId, tournamentId, currentPick, onPickSuccess }
           ) : (
             <GolferSelector
               golfers={golfersData?.golfers ?? []}
-              selectedGolferId={selectedGolfer?.id}
               onSelect={handleSelectGolfer}
               isLoading={golfersLoading}
             />

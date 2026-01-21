@@ -1,25 +1,20 @@
 "use client";
 
 import type { AvailableGolfer } from "@/features/picks/types";
-import { GolferCard } from "@/features/picks/components/GolferCard";
+import { GolferTableRow } from "@/features/picks/components/GolferTableRow";
 import { Input } from "@/components/shadcn/input";
 import { Skeleton } from "@/components/shadcn/skeleton";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/shadcn/table";
 import { SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 
 interface GolferSelectorProps {
   golfers: AvailableGolfer[];
-  selectedGolferId?: string;
   onSelect: (golfer: AvailableGolfer) => void;
   isLoading?: boolean;
 }
 
-export function GolferSelector({
-  golfers,
-  selectedGolferId,
-  onSelect,
-  isLoading,
-}: GolferSelectorProps) {
+export function GolferSelector({ golfers, onSelect, isLoading }: GolferSelectorProps) {
   const [search, setSearch] = useState("");
 
   const filteredGolfers = useMemo(() => {
@@ -53,17 +48,15 @@ export function GolferSelector({
     return (
       <div className="space-y-3">
         <Skeleton className="h-9 w-full" />
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Skeleton key={i} className="h-16 w-full" />
-        ))}
+        <Skeleton className="h-6 w-48" />
+        <div className="space-y-1">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <Skeleton key={i} className="h-12 w-full" />
+          ))}
+        </div>
       </div>
     );
   }
-
-  const handleSelect = (golfer: AvailableGolfer) => {
-    if (golfer.is_used) return;
-    onSelect(golfer);
-  };
 
   return (
     <div className="space-y-3">
@@ -79,26 +72,27 @@ export function GolferSelector({
       <div className="text-sm text-muted-foreground">
         {availableCount} of {golfers.length} golfer{golfers.length !== 1 ? "s" : ""} available
       </div>
-      <div className="max-h-96 space-y-2 overflow-y-auto pr-1">
+      <div className="max-h-96 overflow-y-auto">
         {sortedGolfers.length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">
             {search ? "No golfers match your search" : "No golfers available"}
           </div>
         ) : (
-          sortedGolfers.map((golfer) => (
-            <GolferCard
-              key={golfer.id}
-              golfer={golfer}
-              selected={golfer.id === selectedGolferId}
-              onClick={() => handleSelect(golfer)}
-              disabled={golfer.is_used}
-              disabledReason={
-                golfer.is_used && golfer.used_for_tournament
-                  ? `Used for ${golfer.used_for_tournament}`
-                  : undefined
-              }
-            />
-          ))
+          <Table>
+            <TableHeader className="sticky top-0 bg-background">
+              <TableRow>
+                <TableHead>Golfer</TableHead>
+                <TableHead className="hidden md:table-cell">Country</TableHead>
+                <TableHead className="text-right">OWGR</TableHead>
+                <TableHead className="text-right">Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedGolfers.map((golfer) => (
+                <GolferTableRow key={golfer.id} golfer={golfer} onSelect={onSelect} />
+              ))}
+            </TableBody>
+          </Table>
         )}
       </div>
     </div>
