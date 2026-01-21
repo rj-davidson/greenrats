@@ -73,7 +73,7 @@ function StatusBadge({ status }: { status: string }) {
     case "upcoming":
       return <Badge variant="outline">Upcoming</Badge>;
     case "completed":
-      return <Badge variant="secondary">Completed</Badge>;
+      return <Badge variant="secondary">Final</Badge>;
     default:
       return null;
   }

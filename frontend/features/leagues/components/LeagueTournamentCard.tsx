@@ -5,10 +5,14 @@ import { Badge } from "@/components/shadcn/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/card";
 import { CalendarIcon, CheckCircle2Icon, UsersIcon } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+
+export type TournamentCardVariant = "live" | "next" | "upcoming" | "final";
 
 interface LeagueTournamentCardProps {
   tournament: LeagueTournament;
   leagueId: string;
+  variant: TournamentCardVariant;
 }
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -22,30 +26,92 @@ function formatDateRange(startDate: string, endDate: string): string {
   return `${start.toLocaleDateString("en-US", options)} - ${end.toLocaleDateString("en-US", options)}`;
 }
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "in_progress":
+function formatEarnings(earnings: number): string {
+  if (earnings >= 1_000_000) {
+    return `$${(earnings / 1_000_000).toFixed(2)}M`;
+  }
+  if (earnings >= 1_000) {
+    return `$${(earnings / 1_000).toFixed(0)}K`;
+  }
+  return `$${earnings.toLocaleString()}`;
+}
+
+function getStatusBadge(variant: TournamentCardVariant, compact = false) {
+  const size = compact ? "text-xs px-1.5 py-0" : "";
+  switch (variant) {
+    case "live":
       return (
-        <Badge variant="destructive" className="animate-pulse">
+        <Badge variant="destructive" className={cn("animate-pulse", size)}>
           LIVE
         </Badge>
       );
-    case "completed":
-      return <Badge variant="secondary">Completed</Badge>;
+    case "next":
+      return (
+        <Badge variant="outline" className={cn("border-primary text-primary", size)}>
+          Up Next
+        </Badge>
+      );
     case "upcoming":
-      return <Badge variant="outline">Upcoming</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
+      return (
+        <Badge variant="outline" className={size}>
+          Upcoming
+        </Badge>
+      );
+    case "final":
+      return (
+        <Badge variant="secondary" className={size}>
+          Final
+        </Badge>
+      );
   }
 }
 
-export function LeagueTournamentCard({ tournament, leagueId }: LeagueTournamentCardProps) {
+function CompactRow({ tournament, leagueId, variant }: LeagueTournamentCardProps) {
+  const isMuted = variant === "upcoming";
+
   return (
     <Link href={`/leagues/${leagueId}/tournaments/${tournament.id}`}>
-      <Card className="transition-colors hover:bg-muted/50">
+      <div
+        className={cn(
+          "flex flex-col gap-1 rounded-md border px-3 py-2 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:gap-3",
+          isMuted && "opacity-60",
+        )}
+      >
+        <div className="flex items-center justify-between gap-2 sm:contents">
+          <span className="truncate text-sm sm:min-w-0 sm:flex-1">{tournament.name}</span>
+          <div className="sm:order-last">{getStatusBadge(variant, true)}</div>
+        </div>
+
+        <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground sm:contents">
+          <span className="sm:w-28 sm:shrink-0">
+            {formatDateRange(tournament.start_date, tournament.end_date)}
+          </span>
+          <div className="shrink-0 sm:ml-auto">
+            {tournament.has_user_pick ? (
+              <div className="flex items-center gap-1 text-green-600">
+                <CheckCircle2Icon className="size-3" />
+                <span>{tournament.golfer_name}</span>
+                {variant === "final" && tournament.golfer_earnings !== undefined && tournament.golfer_earnings > 0 && (
+                  <span className="font-medium">{formatEarnings(tournament.golfer_earnings)}</span>
+                )}
+              </div>
+            ) : variant === "upcoming" ? (
+              <span>No pick</span>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function FullCard({ tournament, leagueId, variant }: LeagueTournamentCardProps) {
+  return (
+    <Link href={`/leagues/${leagueId}/tournaments/${tournament.id}`}>
+    <Card className="border-primary/50 shadow-sm transition-colors hover:bg-muted/50 border-2">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-base font-medium">{tournament.name}</CardTitle>
-          {getStatusBadge(tournament.status)}
+          <CardTitle className="text-base font-semibold">{tournament.name}</CardTitle>
+          {getStatusBadge(variant)}
         </CardHeader>
         <CardContent className="space-y-2">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -60,14 +126,24 @@ export function LeagueTournamentCard({ tournament, leagueId }: LeagueTournamentC
             {tournament.has_user_pick ? (
               <div className="flex items-center gap-1.5 text-sm text-green-600">
                 <CheckCircle2Icon className="size-4" />
-                {tournament.golfer_name || "Pick made"}
+                <span>{tournament.golfer_name || "Pick made"}</span>
               </div>
-            ) : tournament.status === "upcoming" ? (
+            ) : (
               <span className="text-sm text-muted-foreground">No pick yet</span>
-            ) : null}
+            )}
           </div>
         </CardContent>
       </Card>
     </Link>
   );
+}
+
+export function LeagueTournamentCard(props: LeagueTournamentCardProps) {
+  const isCompact = props.variant === "final" || props.variant === "upcoming";
+
+  if (isCompact) {
+    return <CompactRow {...props} />;
+  }
+
+  return <FullCard {...props} />;
 }

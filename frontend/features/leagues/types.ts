@@ -126,6 +126,7 @@ export const leagueTournamentSchema = z.object({
   has_user_pick: z.boolean(),
   user_pick_id: z.string().optional(),
   golfer_name: z.string().optional(),
+  golfer_earnings: z.number().optional(),
   pick_count: z.number(),
 });
 

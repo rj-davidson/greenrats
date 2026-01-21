@@ -70,7 +70,7 @@ export function LeagueDetail({ id }: LeagueDetailProps) {
       <Tabs defaultValue="tournaments" className="space-y-6">
         <TabsList>
           <TabsTrigger value="tournaments">Tournaments</TabsTrigger>
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
+          <TabsTrigger value="standings">Standings</TabsTrigger>
           {isOwner && <TabsTrigger value="manage">Manage</TabsTrigger>}
         </TabsList>
 
@@ -78,7 +78,7 @@ export function LeagueDetail({ id }: LeagueDetailProps) {
           <LeagueTournamentList leagueId={id} />
         </TabsContent>
 
-        <TabsContent value="leaderboard">
+        <TabsContent value="standings">
           <LeagueLeaderboard leagueId={id} />
         </TabsContent>
 

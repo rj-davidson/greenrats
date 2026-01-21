@@ -110,7 +110,12 @@ func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, 
 			return nil, fmt.Errorf("API error fetching tournaments: %s", resp.Status())
 		}
 
-		allTournaments = append(allTournaments, response.Data...)
+		for _, tournament := range response.Data {
+			if tournament.ID > 42 {
+				continue
+			}
+			allTournaments = append(allTournaments, tournament)
+		}
 		c.logger.Debug("fetched tournament page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {

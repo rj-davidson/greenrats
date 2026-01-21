@@ -42,7 +42,7 @@ function getStatusLabel(status: TournamentStatus): string {
     case "active":
       return "Live";
     case "completed":
-      return "Completed";
+      return "Final";
     case "upcoming":
     default:
       return "Upcoming";

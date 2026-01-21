@@ -13,10 +13,12 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -538,6 +540,17 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 			lt.UserPickID = userPick.ID
 			if userPick.Edges.Golfer != nil {
 				lt.GolferName = userPick.Edges.Golfer.Name
+
+				entry, entryErr := s.db.TournamentEntry.
+					Query().
+					Where(
+						tournamententry.HasTournamentWith(tournament.IDEQ(t.ID)),
+						tournamententry.HasGolferWith(golfer.IDEQ(userPick.Edges.Golfer.ID)),
+					).
+					Only(ctx)
+				if entryErr == nil {
+					lt.GolferEarnings = entry.Earnings
+				}
 			}
 		}
 

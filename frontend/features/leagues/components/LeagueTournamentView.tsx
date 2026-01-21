@@ -37,7 +37,7 @@ function getStatusBadge(status: string) {
         </Badge>
       );
     case "completed":
-      return <Badge variant="secondary">Completed</Badge>;
+      return <Badge variant="secondary">Final</Badge>;
     case "upcoming":
       return <Badge variant="outline">Upcoming</Badge>;
     default:
