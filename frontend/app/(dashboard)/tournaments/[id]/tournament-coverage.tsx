@@ -2,7 +2,7 @@
 
 import { Badge } from "@/components/shadcn/badge";
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
-import { LeaderboardTable } from "@/features/tournaments/components";
+import { LeaderboardTable, UserPicksByLeague } from "@/features/tournaments/components";
 import { useTournament } from "@/features/tournaments/queries";
 import { useEffect } from "react";
 
@@ -58,6 +58,7 @@ export function TournamentCoverage({ id }: TournamentCoverageProps) {
           {tournament.venue || tournament.course || "Tournament coverage coming soon"}
         </p>
       </div>
+      <UserPicksByLeague tournamentId={id} />
       <div>
         <h2 className="mb-4 text-xl font-semibold">Leaderboard</h2>
         <LeaderboardTable tournamentId={id} />
