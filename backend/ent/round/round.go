@@ -31,6 +31,8 @@ const (
 	EdgeTournamentEntry = "tournament_entry"
 	// EdgeHoleScores holds the string denoting the hole_scores edge name in mutations.
 	EdgeHoleScores = "hole_scores"
+	// EdgeCourse holds the string denoting the course edge name in mutations.
+	EdgeCourse = "course"
 	// Table holds the table name of the round in the database.
 	Table = "rounds"
 	// TournamentEntryTable is the table that holds the tournament_entry relation/edge.
@@ -47,6 +49,13 @@ const (
 	HoleScoresInverseTable = "hole_scores"
 	// HoleScoresColumn is the table column denoting the hole_scores relation/edge.
 	HoleScoresColumn = "round_hole_scores"
+	// CourseTable is the table that holds the course relation/edge.
+	CourseTable = "rounds"
+	// CourseInverseTable is the table name for the Course entity.
+	// It exists in this package in order to avoid circular dependency with the "course" package.
+	CourseInverseTable = "courses"
+	// CourseColumn is the table column denoting the course relation/edge.
+	CourseColumn = "course_rounds"
 )
 
 // Columns holds all SQL columns for round fields.
@@ -63,6 +72,7 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "rounds"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
+	"course_rounds",
 	"tournament_entry_rounds",
 }
 
@@ -152,6 +162,13 @@ func ByHoleScores(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newHoleScoresStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByCourseField orders the results by course field.
+func ByCourseField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCourseStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newTournamentEntryStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -164,5 +181,12 @@ func newHoleScoresStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(HoleScoresInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, HoleScoresTable, HoleScoresColumn),
+	)
+}
+func newCourseStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CourseInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, CourseTable, CourseColumn),
 	)
 }

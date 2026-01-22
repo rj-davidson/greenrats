@@ -785,6 +785,9 @@ type CourseMutation struct {
 	tournaments        map[uuid.UUID]struct{}
 	removedtournaments map[uuid.UUID]struct{}
 	clearedtournaments bool
+	rounds             map[uuid.UUID]struct{}
+	removedrounds      map[uuid.UUID]struct{}
+	clearedrounds      bool
 	done               bool
 	oldValue           func(context.Context) (*Course, error)
 	predicates         []predicate.Course
@@ -1516,6 +1519,60 @@ func (m *CourseMutation) ResetTournaments() {
 	m.removedtournaments = nil
 }
 
+// AddRoundIDs adds the "rounds" edge to the Round entity by ids.
+func (m *CourseMutation) AddRoundIDs(ids ...uuid.UUID) {
+	if m.rounds == nil {
+		m.rounds = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.rounds[ids[i]] = struct{}{}
+	}
+}
+
+// ClearRounds clears the "rounds" edge to the Round entity.
+func (m *CourseMutation) ClearRounds() {
+	m.clearedrounds = true
+}
+
+// RoundsCleared reports if the "rounds" edge to the Round entity was cleared.
+func (m *CourseMutation) RoundsCleared() bool {
+	return m.clearedrounds
+}
+
+// RemoveRoundIDs removes the "rounds" edge to the Round entity by IDs.
+func (m *CourseMutation) RemoveRoundIDs(ids ...uuid.UUID) {
+	if m.removedrounds == nil {
+		m.removedrounds = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.rounds, ids[i])
+		m.removedrounds[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedRounds returns the removed IDs of the "rounds" edge to the Round entity.
+func (m *CourseMutation) RemovedRoundsIDs() (ids []uuid.UUID) {
+	for id := range m.removedrounds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// RoundsIDs returns the "rounds" edge IDs in the mutation.
+func (m *CourseMutation) RoundsIDs() (ids []uuid.UUID) {
+	for id := range m.rounds {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetRounds resets all changes to the "rounds" edge.
+func (m *CourseMutation) ResetRounds() {
+	m.rounds = nil
+	m.clearedrounds = false
+	m.removedrounds = nil
+}
+
 // Where appends a list predicates to the CourseMutation builder.
 func (m *CourseMutation) Where(ps ...predicate.Course) {
 	m.predicates = append(m.predicates, ps...)
@@ -1886,12 +1943,15 @@ func (m *CourseMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CourseMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.holes != nil {
 		edges = append(edges, course.EdgeHoles)
 	}
 	if m.tournaments != nil {
 		edges = append(edges, course.EdgeTournaments)
+	}
+	if m.rounds != nil {
+		edges = append(edges, course.EdgeRounds)
 	}
 	return edges
 }
@@ -1912,18 +1972,27 @@ func (m *CourseMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case course.EdgeRounds:
+		ids := make([]ent.Value, 0, len(m.rounds))
+		for id := range m.rounds {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CourseMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedholes != nil {
 		edges = append(edges, course.EdgeHoles)
 	}
 	if m.removedtournaments != nil {
 		edges = append(edges, course.EdgeTournaments)
+	}
+	if m.removedrounds != nil {
+		edges = append(edges, course.EdgeRounds)
 	}
 	return edges
 }
@@ -1944,18 +2013,27 @@ func (m *CourseMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case course.EdgeRounds:
+		ids := make([]ent.Value, 0, len(m.removedrounds))
+		for id := range m.removedrounds {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CourseMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedholes {
 		edges = append(edges, course.EdgeHoles)
 	}
 	if m.clearedtournaments {
 		edges = append(edges, course.EdgeTournaments)
+	}
+	if m.clearedrounds {
+		edges = append(edges, course.EdgeRounds)
 	}
 	return edges
 }
@@ -1968,6 +2046,8 @@ func (m *CourseMutation) EdgeCleared(name string) bool {
 		return m.clearedholes
 	case course.EdgeTournaments:
 		return m.clearedtournaments
+	case course.EdgeRounds:
+		return m.clearedrounds
 	}
 	return false
 }
@@ -1989,6 +2069,9 @@ func (m *CourseMutation) ResetEdge(name string) error {
 		return nil
 	case course.EdgeTournaments:
 		m.ResetTournaments()
+		return nil
+	case course.EdgeRounds:
+		m.ResetRounds()
 		return nil
 	}
 	return fmt.Errorf("unknown Course edge %s", name)
@@ -9380,6 +9463,8 @@ type RoundMutation struct {
 	hole_scores             map[uuid.UUID]struct{}
 	removedhole_scores      map[uuid.UUID]struct{}
 	clearedhole_scores      bool
+	course                  *uuid.UUID
+	clearedcourse           bool
 	done                    bool
 	oldValue                func(context.Context) (*Round, error)
 	predicates              []predicate.Round
@@ -9899,6 +9984,45 @@ func (m *RoundMutation) ResetHoleScores() {
 	m.removedhole_scores = nil
 }
 
+// SetCourseID sets the "course" edge to the Course entity by id.
+func (m *RoundMutation) SetCourseID(id uuid.UUID) {
+	m.course = &id
+}
+
+// ClearCourse clears the "course" edge to the Course entity.
+func (m *RoundMutation) ClearCourse() {
+	m.clearedcourse = true
+}
+
+// CourseCleared reports if the "course" edge to the Course entity was cleared.
+func (m *RoundMutation) CourseCleared() bool {
+	return m.clearedcourse
+}
+
+// CourseID returns the "course" edge ID in the mutation.
+func (m *RoundMutation) CourseID() (id uuid.UUID, exists bool) {
+	if m.course != nil {
+		return *m.course, true
+	}
+	return
+}
+
+// CourseIDs returns the "course" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CourseID instead. It exists only for internal usage by the builders.
+func (m *RoundMutation) CourseIDs() (ids []uuid.UUID) {
+	if id := m.course; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCourse resets all changes to the "course" edge.
+func (m *RoundMutation) ResetCourse() {
+	m.course = nil
+	m.clearedcourse = false
+}
+
 // Where appends a list predicates to the RoundMutation builder.
 func (m *RoundMutation) Where(ps ...predicate.Round) {
 	m.predicates = append(m.predicates, ps...)
@@ -10177,12 +10301,15 @@ func (m *RoundMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *RoundMutation) AddedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.tournament_entry != nil {
 		edges = append(edges, round.EdgeTournamentEntry)
 	}
 	if m.hole_scores != nil {
 		edges = append(edges, round.EdgeHoleScores)
+	}
+	if m.course != nil {
+		edges = append(edges, round.EdgeCourse)
 	}
 	return edges
 }
@@ -10201,13 +10328,17 @@ func (m *RoundMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case round.EdgeCourse:
+		if id := m.course; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *RoundMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.removedhole_scores != nil {
 		edges = append(edges, round.EdgeHoleScores)
 	}
@@ -10230,12 +10361,15 @@ func (m *RoundMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *RoundMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 2)
+	edges := make([]string, 0, 3)
 	if m.clearedtournament_entry {
 		edges = append(edges, round.EdgeTournamentEntry)
 	}
 	if m.clearedhole_scores {
 		edges = append(edges, round.EdgeHoleScores)
+	}
+	if m.clearedcourse {
+		edges = append(edges, round.EdgeCourse)
 	}
 	return edges
 }
@@ -10248,6 +10382,8 @@ func (m *RoundMutation) EdgeCleared(name string) bool {
 		return m.clearedtournament_entry
 	case round.EdgeHoleScores:
 		return m.clearedhole_scores
+	case round.EdgeCourse:
+		return m.clearedcourse
 	}
 	return false
 }
@@ -10258,6 +10394,9 @@ func (m *RoundMutation) ClearEdge(name string) error {
 	switch name {
 	case round.EdgeTournamentEntry:
 		m.ClearTournamentEntry()
+		return nil
+	case round.EdgeCourse:
+		m.ClearCourse()
 		return nil
 	}
 	return fmt.Errorf("unknown Round unique edge %s", name)
@@ -10272,6 +10411,9 @@ func (m *RoundMutation) ResetEdge(name string) error {
 		return nil
 	case round.EdgeHoleScores:
 		m.ResetHoleScores()
+		return nil
+	case round.EdgeCourse:
+		m.ResetCourse()
 		return nil
 	}
 	return fmt.Errorf("unknown Round edge %s", name)

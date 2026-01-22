@@ -50,9 +50,11 @@ type CourseEdges struct {
 	Holes []*CourseHole `json:"holes,omitempty"`
 	// Tournaments holds the value of the tournaments edge.
 	Tournaments []*Tournament `json:"tournaments,omitempty"`
+	// Rounds holds the value of the rounds edge.
+	Rounds []*Round `json:"rounds,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // HolesOrErr returns the Holes value or an error if the edge
@@ -71,6 +73,15 @@ func (e CourseEdges) TournamentsOrErr() ([]*Tournament, error) {
 		return e.Tournaments, nil
 	}
 	return nil, &NotLoadedError{edge: "tournaments"}
+}
+
+// RoundsOrErr returns the Rounds value or an error if the edge
+// was not loaded in eager-loading.
+func (e CourseEdges) RoundsOrErr() ([]*Round, error) {
+	if e.loadedTypes[2] {
+		return e.Rounds, nil
+	}
+	return nil, &NotLoadedError{edge: "rounds"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -195,6 +206,11 @@ func (_m *Course) QueryHoles() *CourseHoleQuery {
 // QueryTournaments queries the "tournaments" edge of the Course entity.
 func (_m *Course) QueryTournaments() *TournamentQuery {
 	return NewCourseClient(_m.config).QueryTournaments(_m)
+}
+
+// QueryRounds queries the "rounds" edge of the Course entity.
+func (_m *Course) QueryRounds() *RoundQuery {
+	return NewCourseClient(_m.config).QueryRounds(_m)
 }
 
 // Update returns a builder for updating this Course.

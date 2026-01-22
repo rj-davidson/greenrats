@@ -47,6 +47,9 @@ func (Round) Edges() []ent.Edge {
 			Unique().
 			Required(),
 		edge.To("hole_scores", HoleScore.Type),
+		edge.From("course", Course.Type).
+			Ref("rounds").
+			Unique(),
 	}
 }
 

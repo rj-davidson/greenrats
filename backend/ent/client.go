@@ -651,6 +651,22 @@ func (c *CourseClient) QueryTournaments(_m *Course) *TournamentQuery {
 	return query
 }
 
+// QueryRounds queries the rounds edge of a Course.
+func (c *CourseClient) QueryRounds(_m *Course) *RoundQuery {
+	query := (&RoundClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(course.Table, course.FieldID, id),
+			sqlgraph.To(round.Table, round.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, course.RoundsTable, course.RoundsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *CourseClient) Hooks() []Hook {
 	return c.hooks.Course
@@ -2241,6 +2257,22 @@ func (c *RoundClient) QueryHoleScores(_m *Round) *HoleScoreQuery {
 			sqlgraph.From(round.Table, round.FieldID, id),
 			sqlgraph.To(holescore.Table, holescore.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, round.HoleScoresTable, round.HoleScoresColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCourse queries the course edge of a Round.
+func (c *RoundClient) QueryCourse(_m *Round) *CourseQuery {
+	query := (&CourseClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(round.Table, round.FieldID, id),
+			sqlgraph.To(course.Table, course.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, round.CourseTable, round.CourseColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil

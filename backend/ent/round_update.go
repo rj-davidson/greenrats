@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/holescore"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/round"
@@ -158,6 +159,25 @@ func (_u *RoundUpdate) AddHoleScores(v ...*HoleScore) *RoundUpdate {
 	return _u.AddHoleScoreIDs(ids...)
 }
 
+// SetCourseID sets the "course" edge to the Course entity by ID.
+func (_u *RoundUpdate) SetCourseID(id uuid.UUID) *RoundUpdate {
+	_u.mutation.SetCourseID(id)
+	return _u
+}
+
+// SetNillableCourseID sets the "course" edge to the Course entity by ID if the given value is not nil.
+func (_u *RoundUpdate) SetNillableCourseID(id *uuid.UUID) *RoundUpdate {
+	if id != nil {
+		_u = _u.SetCourseID(*id)
+	}
+	return _u
+}
+
+// SetCourse sets the "course" edge to the Course entity.
+func (_u *RoundUpdate) SetCourse(v *Course) *RoundUpdate {
+	return _u.SetCourseID(v.ID)
+}
+
 // Mutation returns the RoundMutation object of the builder.
 func (_u *RoundUpdate) Mutation() *RoundMutation {
 	return _u.mutation
@@ -188,6 +208,12 @@ func (_u *RoundUpdate) RemoveHoleScores(v ...*HoleScore) *RoundUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveHoleScoreIDs(ids...)
+}
+
+// ClearCourse clears the "course" edge to the Course entity.
+func (_u *RoundUpdate) ClearCourse() *RoundUpdate {
+	_u.mutation.ClearCourse()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -358,6 +384,35 @@ func (_u *RoundUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.CourseCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   round.CourseTable,
+			Columns: []string{round.CourseColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CourseIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   round.CourseTable,
+			Columns: []string{round.CourseColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{round.Label}
@@ -505,6 +560,25 @@ func (_u *RoundUpdateOne) AddHoleScores(v ...*HoleScore) *RoundUpdateOne {
 	return _u.AddHoleScoreIDs(ids...)
 }
 
+// SetCourseID sets the "course" edge to the Course entity by ID.
+func (_u *RoundUpdateOne) SetCourseID(id uuid.UUID) *RoundUpdateOne {
+	_u.mutation.SetCourseID(id)
+	return _u
+}
+
+// SetNillableCourseID sets the "course" edge to the Course entity by ID if the given value is not nil.
+func (_u *RoundUpdateOne) SetNillableCourseID(id *uuid.UUID) *RoundUpdateOne {
+	if id != nil {
+		_u = _u.SetCourseID(*id)
+	}
+	return _u
+}
+
+// SetCourse sets the "course" edge to the Course entity.
+func (_u *RoundUpdateOne) SetCourse(v *Course) *RoundUpdateOne {
+	return _u.SetCourseID(v.ID)
+}
+
 // Mutation returns the RoundMutation object of the builder.
 func (_u *RoundUpdateOne) Mutation() *RoundMutation {
 	return _u.mutation
@@ -535,6 +609,12 @@ func (_u *RoundUpdateOne) RemoveHoleScores(v ...*HoleScore) *RoundUpdateOne {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveHoleScoreIDs(ids...)
+}
+
+// ClearCourse clears the "course" edge to the Course entity.
+func (_u *RoundUpdateOne) ClearCourse() *RoundUpdateOne {
+	_u.mutation.ClearCourse()
+	return _u
 }
 
 // Where appends a list predicates to the RoundUpdate builder.
@@ -728,6 +808,35 @@ func (_u *RoundUpdateOne) sqlSave(ctx context.Context) (_node *Round, err error)
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(holescore.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CourseCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   round.CourseTable,
+			Columns: []string{round.CourseColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CourseIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   round.CourseTable,
+			Columns: []string{round.CourseColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

@@ -76,8 +76,10 @@ CREATE TABLE "rounds" (
   "score" bigint NULL,
   "par_relative_score" bigint NULL,
   "tee_time" timestamptz NULL,
+  "course_rounds" uuid NULL,
   "tournament_entry_rounds" uuid NOT NULL,
   PRIMARY KEY ("id"),
+  CONSTRAINT "rounds_courses_rounds" FOREIGN KEY ("course_rounds") REFERENCES "courses" ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
   CONSTRAINT "rounds_tournament_entries_rounds" FOREIGN KEY ("tournament_entry_rounds") REFERENCES "tournament_entries" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 -- Create index "round_round_number_tournament_entry_rounds" to table: "rounds"

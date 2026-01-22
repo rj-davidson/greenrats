@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/holescore"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
@@ -137,6 +138,25 @@ func (_c *RoundCreate) AddHoleScores(v ...*HoleScore) *RoundCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddHoleScoreIDs(ids...)
+}
+
+// SetCourseID sets the "course" edge to the Course entity by ID.
+func (_c *RoundCreate) SetCourseID(id uuid.UUID) *RoundCreate {
+	_c.mutation.SetCourseID(id)
+	return _c
+}
+
+// SetNillableCourseID sets the "course" edge to the Course entity by ID if the given value is not nil.
+func (_c *RoundCreate) SetNillableCourseID(id *uuid.UUID) *RoundCreate {
+	if id != nil {
+		_c = _c.SetCourseID(*id)
+	}
+	return _c
+}
+
+// SetCourse sets the "course" edge to the Course entity.
+func (_c *RoundCreate) SetCourse(v *Course) *RoundCreate {
+	return _c.SetCourseID(v.ID)
 }
 
 // Mutation returns the RoundMutation object of the builder.
@@ -297,6 +317,23 @@ func (_c *RoundCreate) createSpec() (*Round, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.CourseIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   round.CourseTable,
+			Columns: []string{round.CourseColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.course_rounds = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

@@ -16,6 +16,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/coursehole"
 	"github.com/rj-davidson/greenrats/ent/predicate"
+	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
@@ -28,6 +29,7 @@ type CourseQuery struct {
 	predicates      []predicate.Course
 	withHoles       *CourseHoleQuery
 	withTournaments *TournamentQuery
+	withRounds      *RoundQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -101,6 +103,28 @@ func (_q *CourseQuery) QueryTournaments() *TournamentQuery {
 			sqlgraph.From(course.Table, course.FieldID, selector),
 			sqlgraph.To(tournament.Table, tournament.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, course.TournamentsTable, course.TournamentsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRounds chains the current query on the "rounds" edge.
+func (_q *CourseQuery) QueryRounds() *RoundQuery {
+	query := (&RoundClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(course.Table, course.FieldID, selector),
+			sqlgraph.To(round.Table, round.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, course.RoundsTable, course.RoundsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -302,6 +326,7 @@ func (_q *CourseQuery) Clone() *CourseQuery {
 		predicates:      append([]predicate.Course{}, _q.predicates...),
 		withHoles:       _q.withHoles.Clone(),
 		withTournaments: _q.withTournaments.Clone(),
+		withRounds:      _q.withRounds.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -327,6 +352,17 @@ func (_q *CourseQuery) WithTournaments(opts ...func(*TournamentQuery)) *CourseQu
 		opt(query)
 	}
 	_q.withTournaments = query
+	return _q
+}
+
+// WithRounds tells the query-builder to eager-load the nodes that are connected to
+// the "rounds" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *CourseQuery) WithRounds(opts ...func(*RoundQuery)) *CourseQuery {
+	query := (&RoundClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withRounds = query
 	return _q
 }
 
@@ -408,9 +444,10 @@ func (_q *CourseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cours
 	var (
 		nodes       = []*Course{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			_q.withHoles != nil,
 			_q.withTournaments != nil,
+			_q.withRounds != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,6 +479,13 @@ func (_q *CourseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cours
 		if err := _q.loadTournaments(ctx, query, nodes,
 			func(n *Course) { n.Edges.Tournaments = []*Tournament{} },
 			func(n *Course, e *Tournament) { n.Edges.Tournaments = append(n.Edges.Tournaments, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withRounds; query != nil {
+		if err := _q.loadRounds(ctx, query, nodes,
+			func(n *Course) { n.Edges.Rounds = []*Round{} },
+			func(n *Course, e *Round) { n.Edges.Rounds = append(n.Edges.Rounds, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -505,6 +549,37 @@ func (_q *CourseQuery) loadTournaments(ctx context.Context, query *TournamentQue
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "course_tournaments" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *CourseQuery) loadRounds(ctx context.Context, query *RoundQuery, nodes []*Course, init func(*Course), assign func(*Course, *Round)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Course)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.Round(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(course.RoundsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.course_rounds
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "course_rounds" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "course_rounds" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

@@ -372,6 +372,7 @@ var (
 		{Name: "score", Type: field.TypeInt, Nullable: true},
 		{Name: "par_relative_score", Type: field.TypeInt, Nullable: true},
 		{Name: "tee_time", Type: field.TypeTime, Nullable: true},
+		{Name: "course_rounds", Type: field.TypeUUID, Nullable: true},
 		{Name: "tournament_entry_rounds", Type: field.TypeUUID},
 	}
 	// RoundsTable holds the schema information for the "rounds" table.
@@ -381,8 +382,14 @@ var (
 		PrimaryKey: []*schema.Column{RoundsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "rounds_tournament_entries_rounds",
+				Symbol:     "rounds_courses_rounds",
 				Columns:    []*schema.Column{RoundsColumns[7]},
+				RefColumns: []*schema.Column{CoursesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "rounds_tournament_entries_rounds",
+				Columns:    []*schema.Column{RoundsColumns[8]},
 				RefColumns: []*schema.Column{TournamentEntriesColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -391,7 +398,7 @@ var (
 			{
 				Name:    "round_round_number_tournament_entry_rounds",
 				Unique:  true,
-				Columns: []*schema.Column{RoundsColumns[3], RoundsColumns[7]},
+				Columns: []*schema.Column{RoundsColumns[3], RoundsColumns[8]},
 			},
 		},
 	}
@@ -578,7 +585,8 @@ func init() {
 	PicksTable.ForeignKeys[2].RefTable = SeasonsTable
 	PicksTable.ForeignKeys[3].RefTable = TournamentsTable
 	PicksTable.ForeignKeys[4].RefTable = UsersTable
-	RoundsTable.ForeignKeys[0].RefTable = TournamentEntriesTable
+	RoundsTable.ForeignKeys[0].RefTable = CoursesTable
+	RoundsTable.ForeignKeys[1].RefTable = TournamentEntriesTable
 	TournamentsTable.ForeignKeys[0].RefTable = CoursesTable
 	TournamentsTable.ForeignKeys[1].RefTable = SeasonsTable
 	TournamentsTable.ForeignKeys[2].RefTable = GolfersTable

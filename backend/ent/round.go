@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
@@ -34,6 +35,7 @@ type Round struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoundQuery when eager-loading is set.
 	Edges                   RoundEdges `json:"edges"`
+	course_rounds           *uuid.UUID
 	tournament_entry_rounds *uuid.UUID
 	selectValues            sql.SelectValues
 }
@@ -44,9 +46,11 @@ type RoundEdges struct {
 	TournamentEntry *TournamentEntry `json:"tournament_entry,omitempty"`
 	// HoleScores holds the value of the hole_scores edge.
 	HoleScores []*HoleScore `json:"hole_scores,omitempty"`
+	// Course holds the value of the course edge.
+	Course *Course `json:"course,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // TournamentEntryOrErr returns the TournamentEntry value or an error if the edge
@@ -69,6 +73,17 @@ func (e RoundEdges) HoleScoresOrErr() ([]*HoleScore, error) {
 	return nil, &NotLoadedError{edge: "hole_scores"}
 }
 
+// CourseOrErr returns the Course value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e RoundEdges) CourseOrErr() (*Course, error) {
+	if e.Course != nil {
+		return e.Course, nil
+	} else if e.loadedTypes[2] {
+		return nil, &NotFoundError{label: course.Label}
+	}
+	return nil, &NotLoadedError{edge: "course"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Round) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -80,7 +95,9 @@ func (*Round) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case round.FieldID:
 			values[i] = new(uuid.UUID)
-		case round.ForeignKeys[0]: // tournament_entry_rounds
+		case round.ForeignKeys[0]: // course_rounds
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case round.ForeignKeys[1]: // tournament_entry_rounds
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -144,6 +161,13 @@ func (_m *Round) assignValues(columns []string, values []any) error {
 			}
 		case round.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field course_rounds", values[i])
+			} else if value.Valid {
+				_m.course_rounds = new(uuid.UUID)
+				*_m.course_rounds = *value.S.(*uuid.UUID)
+			}
+		case round.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field tournament_entry_rounds", values[i])
 			} else if value.Valid {
 				_m.tournament_entry_rounds = new(uuid.UUID)
@@ -170,6 +194,11 @@ func (_m *Round) QueryTournamentEntry() *TournamentEntryQuery {
 // QueryHoleScores queries the "hole_scores" edge of the Round entity.
 func (_m *Round) QueryHoleScores() *HoleScoreQuery {
 	return NewRoundClient(_m.config).QueryHoleScores(_m)
+}
+
+// QueryCourse queries the "course" edge of the Round entity.
+func (_m *Round) QueryCourse() *CourseQuery {
+	return NewRoundClient(_m.config).QueryCourse(_m)
 }
 
 // Update returns a builder for updating this Round.
