@@ -66,11 +66,6 @@ func UpdatedAt(v time.Time) predicate.Golfer {
 	return predicate.Golfer(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// ScratchgolfID applies equality check predicate on the "scratchgolf_id" field. It's identical to ScratchgolfIDEQ.
-func ScratchgolfID(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldEQ(FieldScratchgolfID, v))
-}
-
 // BdlID applies equality check predicate on the "bdl_id" field. It's identical to BdlIDEQ.
 func BdlID(v int) predicate.Golfer {
 	return predicate.Golfer(sql.FieldEQ(FieldBdlID, v))
@@ -194,81 +189,6 @@ func UpdatedAtLT(v time.Time) predicate.Golfer {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Golfer {
 	return predicate.Golfer(sql.FieldLTE(FieldUpdatedAt, v))
-}
-
-// ScratchgolfIDEQ applies the EQ predicate on the "scratchgolf_id" field.
-func ScratchgolfIDEQ(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldEQ(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDNEQ applies the NEQ predicate on the "scratchgolf_id" field.
-func ScratchgolfIDNEQ(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldNEQ(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDIn applies the In predicate on the "scratchgolf_id" field.
-func ScratchgolfIDIn(vs ...string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldIn(FieldScratchgolfID, vs...))
-}
-
-// ScratchgolfIDNotIn applies the NotIn predicate on the "scratchgolf_id" field.
-func ScratchgolfIDNotIn(vs ...string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldNotIn(FieldScratchgolfID, vs...))
-}
-
-// ScratchgolfIDGT applies the GT predicate on the "scratchgolf_id" field.
-func ScratchgolfIDGT(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldGT(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDGTE applies the GTE predicate on the "scratchgolf_id" field.
-func ScratchgolfIDGTE(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldGTE(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDLT applies the LT predicate on the "scratchgolf_id" field.
-func ScratchgolfIDLT(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldLT(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDLTE applies the LTE predicate on the "scratchgolf_id" field.
-func ScratchgolfIDLTE(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldLTE(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDContains applies the Contains predicate on the "scratchgolf_id" field.
-func ScratchgolfIDContains(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldContains(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDHasPrefix applies the HasPrefix predicate on the "scratchgolf_id" field.
-func ScratchgolfIDHasPrefix(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldHasPrefix(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDHasSuffix applies the HasSuffix predicate on the "scratchgolf_id" field.
-func ScratchgolfIDHasSuffix(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldHasSuffix(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDIsNil applies the IsNil predicate on the "scratchgolf_id" field.
-func ScratchgolfIDIsNil() predicate.Golfer {
-	return predicate.Golfer(sql.FieldIsNull(FieldScratchgolfID))
-}
-
-// ScratchgolfIDNotNil applies the NotNil predicate on the "scratchgolf_id" field.
-func ScratchgolfIDNotNil() predicate.Golfer {
-	return predicate.Golfer(sql.FieldNotNull(FieldScratchgolfID))
-}
-
-// ScratchgolfIDEqualFold applies the EqualFold predicate on the "scratchgolf_id" field.
-func ScratchgolfIDEqualFold(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldEqualFold(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDContainsFold applies the ContainsFold predicate on the "scratchgolf_id" field.
-func ScratchgolfIDContainsFold(v string) predicate.Golfer {
-	return predicate.Golfer(sql.FieldContainsFold(FieldScratchgolfID, v))
 }
 
 // BdlIDEQ applies the EQ predicate on the "bdl_id" field.

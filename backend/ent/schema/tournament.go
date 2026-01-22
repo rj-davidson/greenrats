@@ -22,11 +22,6 @@ func (Tournament) Mixin() []ent.Mixin {
 // Fields of the Tournament.
 func (Tournament) Fields() []ent.Field {
 	return []ent.Field{
-		field.String("scratchgolf_id").
-			Optional().
-			Nillable().
-			Unique().
-			Comment("Live Golf Data API ID (string)"),
 		field.Int("bdl_id").
 			Optional().
 			Nillable().

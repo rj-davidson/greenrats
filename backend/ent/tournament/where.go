@@ -66,11 +66,6 @@ func UpdatedAt(v time.Time) predicate.Tournament {
 	return predicate.Tournament(sql.FieldEQ(FieldUpdatedAt, v))
 }
 
-// ScratchgolfID applies equality check predicate on the "scratchgolf_id" field. It's identical to ScratchgolfIDEQ.
-func ScratchgolfID(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldEQ(FieldScratchgolfID, v))
-}
-
 // BdlID applies equality check predicate on the "bdl_id" field. It's identical to BdlIDEQ.
 func BdlID(v int) predicate.Tournament {
 	return predicate.Tournament(sql.FieldEQ(FieldBdlID, v))
@@ -194,81 +189,6 @@ func UpdatedAtLT(v time.Time) predicate.Tournament {
 // UpdatedAtLTE applies the LTE predicate on the "updated_at" field.
 func UpdatedAtLTE(v time.Time) predicate.Tournament {
 	return predicate.Tournament(sql.FieldLTE(FieldUpdatedAt, v))
-}
-
-// ScratchgolfIDEQ applies the EQ predicate on the "scratchgolf_id" field.
-func ScratchgolfIDEQ(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldEQ(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDNEQ applies the NEQ predicate on the "scratchgolf_id" field.
-func ScratchgolfIDNEQ(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldNEQ(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDIn applies the In predicate on the "scratchgolf_id" field.
-func ScratchgolfIDIn(vs ...string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldIn(FieldScratchgolfID, vs...))
-}
-
-// ScratchgolfIDNotIn applies the NotIn predicate on the "scratchgolf_id" field.
-func ScratchgolfIDNotIn(vs ...string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldNotIn(FieldScratchgolfID, vs...))
-}
-
-// ScratchgolfIDGT applies the GT predicate on the "scratchgolf_id" field.
-func ScratchgolfIDGT(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldGT(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDGTE applies the GTE predicate on the "scratchgolf_id" field.
-func ScratchgolfIDGTE(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldGTE(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDLT applies the LT predicate on the "scratchgolf_id" field.
-func ScratchgolfIDLT(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldLT(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDLTE applies the LTE predicate on the "scratchgolf_id" field.
-func ScratchgolfIDLTE(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldLTE(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDContains applies the Contains predicate on the "scratchgolf_id" field.
-func ScratchgolfIDContains(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldContains(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDHasPrefix applies the HasPrefix predicate on the "scratchgolf_id" field.
-func ScratchgolfIDHasPrefix(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldHasPrefix(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDHasSuffix applies the HasSuffix predicate on the "scratchgolf_id" field.
-func ScratchgolfIDHasSuffix(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldHasSuffix(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDIsNil applies the IsNil predicate on the "scratchgolf_id" field.
-func ScratchgolfIDIsNil() predicate.Tournament {
-	return predicate.Tournament(sql.FieldIsNull(FieldScratchgolfID))
-}
-
-// ScratchgolfIDNotNil applies the NotNil predicate on the "scratchgolf_id" field.
-func ScratchgolfIDNotNil() predicate.Tournament {
-	return predicate.Tournament(sql.FieldNotNull(FieldScratchgolfID))
-}
-
-// ScratchgolfIDEqualFold applies the EqualFold predicate on the "scratchgolf_id" field.
-func ScratchgolfIDEqualFold(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldEqualFold(FieldScratchgolfID, v))
-}
-
-// ScratchgolfIDContainsFold applies the ContainsFold predicate on the "scratchgolf_id" field.
-func ScratchgolfIDContainsFold(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldContainsFold(FieldScratchgolfID, v))
 }
 
 // BdlIDEQ applies the EQ predicate on the "bdl_id" field.

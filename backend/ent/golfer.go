@@ -22,8 +22,6 @@ type Golfer struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// Live Golf Data API ID (string)
-	ScratchgolfID *string `json:"scratchgolf_id,omitempty"`
 	// BallDontLie API ID (int)
 	BdlID *int `json:"bdl_id,omitempty"`
 	// FirstName holds the value of the "first_name" field.
@@ -86,7 +84,7 @@ func (*Golfer) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullBool)
 		case golfer.FieldBdlID, golfer.FieldOwgr:
 			values[i] = new(sql.NullInt64)
-		case golfer.FieldScratchgolfID, golfer.FieldFirstName, golfer.FieldLastName, golfer.FieldName, golfer.FieldCountry, golfer.FieldCountryCode, golfer.FieldImageURL:
+		case golfer.FieldFirstName, golfer.FieldLastName, golfer.FieldName, golfer.FieldCountry, golfer.FieldCountryCode, golfer.FieldImageURL:
 			values[i] = new(sql.NullString)
 		case golfer.FieldCreatedAt, golfer.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -124,13 +122,6 @@ func (_m *Golfer) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
-			}
-		case golfer.FieldScratchgolfID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field scratchgolf_id", values[i])
-			} else if value.Valid {
-				_m.ScratchgolfID = new(string)
-				*_m.ScratchgolfID = value.String
 			}
 		case golfer.FieldBdlID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -243,11 +234,6 @@ func (_m *Golfer) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	if v := _m.ScratchgolfID; v != nil {
-		builder.WriteString("scratchgolf_id=")
-		builder.WriteString(*v)
-	}
 	builder.WriteString(", ")
 	if v := _m.BdlID; v != nil {
 		builder.WriteString("bdl_id=")

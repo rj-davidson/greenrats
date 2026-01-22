@@ -18,7 +18,6 @@ func TestLoad_Defaults(t *testing.T) {
 
 	assert.Equal(t, 8000, cfg.Port)
 	assert.Equal(t, "development", cfg.Env)
-	assert.Equal(t, "https://live-golf-data.p.rapidapi.com", cfg.LiveGolfDataBaseURL)
 	assert.Equal(t, "https://api.balldontlie.io", cfg.BallDontLieBaseURL)
 }
 

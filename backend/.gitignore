@@ -4,6 +4,9 @@
 
 # Binary outputs
 bin/
+/api
+/ingest
+/scratch
 *.exe
 *.exe~
 *.dll

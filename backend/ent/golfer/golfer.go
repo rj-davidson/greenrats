@@ -19,8 +19,6 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldScratchgolfID holds the string denoting the scratchgolf_id field in the database.
-	FieldScratchgolfID = "scratchgolf_id"
 	// FieldBdlID holds the string denoting the bdl_id field in the database.
 	FieldBdlID = "bdl_id"
 	// FieldFirstName holds the string denoting the first_name field in the database.
@@ -66,7 +64,6 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-	FieldScratchgolfID,
 	FieldBdlID,
 	FieldFirstName,
 	FieldLastName,
@@ -121,11 +118,6 @@ func ByCreatedAt(opts ...sql.OrderTermOption) OrderOption {
 // ByUpdatedAt orders the results by the updated_at field.
 func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
-}
-
-// ByScratchgolfID orders the results by the scratchgolf_id field.
-func ByScratchgolfID(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldScratchgolfID, opts...).ToFunc()
 }
 
 // ByBdlID orders the results by the bdl_id field.

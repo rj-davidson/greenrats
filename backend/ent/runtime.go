@@ -71,15 +71,15 @@ func init() {
 	// golfer.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	golfer.UpdateDefaultUpdatedAt = golferDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// golferDescName is the schema descriptor for name field.
-	golferDescName := golferFields[4].Descriptor()
+	golferDescName := golferFields[3].Descriptor()
 	// golfer.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	golfer.NameValidator = golferDescName.Validators[0].(func(string) error)
 	// golferDescCountryCode is the schema descriptor for country_code field.
-	golferDescCountryCode := golferFields[6].Descriptor()
+	golferDescCountryCode := golferFields[5].Descriptor()
 	// golfer.DefaultCountryCode holds the default value on creation for the country_code field.
 	golfer.DefaultCountryCode = golferDescCountryCode.Default.(string)
 	// golferDescActive is the schema descriptor for active field.
-	golferDescActive := golferFields[8].Descriptor()
+	golferDescActive := golferFields[7].Descriptor()
 	// golfer.DefaultActive holds the default value on creation for the active field.
 	golfer.DefaultActive = golferDescActive.Default.(bool)
 	// golferDescID is the schema descriptor for id field.
@@ -200,7 +200,7 @@ func init() {
 	// tournament.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	tournament.UpdateDefaultUpdatedAt = tournamentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// tournamentDescName is the schema descriptor for name field.
-	tournamentDescName := tournamentFields[3].Descriptor()
+	tournamentDescName := tournamentFields[2].Descriptor()
 	// tournament.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	tournament.NameValidator = tournamentDescName.Validators[0].(func(string) error)
 	// tournamentDescID is the schema descriptor for id field.

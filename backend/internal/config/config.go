@@ -17,11 +17,9 @@ type Config struct {
 	WorkOSAPIKey   string `mapstructure:"WORKOS_API_KEY"`
 	WorkOSClientID string `mapstructure:"WORKOS_CLIENT_ID"`
 
-	LiveGolfDataAPIKey  string `mapstructure:"LIVE_GOLF_DATA_API_KEY"`
-	LiveGolfDataBaseURL string `mapstructure:"LIVE_GOLF_DATA_BASE_URL"`
-	BallDontLieAPIKey   string `mapstructure:"BALL_DONT_LIE_API_KEY"`
-	BallDontLieBaseURL  string `mapstructure:"BALL_DONT_LIE_BASE_URL"`
-	PGATourAPIKey       string `mapstructure:"PGA_TOUR_API_KEY"`
+	BallDontLieAPIKey  string `mapstructure:"BALL_DONT_LIE_API_KEY"`
+	BallDontLieBaseURL string `mapstructure:"BALL_DONT_LIE_BASE_URL"`
+	PGATourAPIKey      string `mapstructure:"PGA_TOUR_API_KEY"`
 
 	SentryDSN string `mapstructure:"SENTRY_DSN"`
 
@@ -48,8 +46,6 @@ func Load() (*Config, error) {
 	v.SetDefault("DATABASE_URL", "")
 	v.SetDefault("WORKOS_API_KEY", "")
 	v.SetDefault("WORKOS_CLIENT_ID", "")
-	v.SetDefault("LIVE_GOLF_DATA_API_KEY", "")
-	v.SetDefault("LIVE_GOLF_DATA_BASE_URL", "https://live-golf-data.p.rapidapi.com")
 	v.SetDefault("BALL_DONT_LIE_API_KEY", "")
 	v.SetDefault("BALL_DONT_LIE_BASE_URL", "https://api.balldontlie.io")
 	v.SetDefault("PGA_TOUR_API_KEY", "")
@@ -78,8 +74,6 @@ func Load() (*Config, error) {
 	_ = v.BindEnv("DATABASE_URL")
 	_ = v.BindEnv("WORKOS_API_KEY")
 	_ = v.BindEnv("WORKOS_CLIENT_ID")
-	_ = v.BindEnv("LIVE_GOLF_DATA_API_KEY")
-	_ = v.BindEnv("LIVE_GOLF_DATA_BASE_URL")
 	_ = v.BindEnv("BALL_DONT_LIE_API_KEY")
 	_ = v.BindEnv("BALL_DONT_LIE_BASE_URL")
 	_ = v.BindEnv("PGA_TOUR_API_KEY")

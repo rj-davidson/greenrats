@@ -45,7 +45,6 @@ git commit -m "Initialize monorepo structure"
         leaderboards/.gitkeep
         users/.gitkeep
       external/
-        livegolfdata/.gitkeep
         balldontlie/.gitkeep
     ent/.gitkeep
     migrations/.gitkeep
@@ -56,8 +55,6 @@ git commit -m "Initialize monorepo structure"
   DATABASE_URL=postgres://postgres:postgres@localhost:5432/greenrats?sslmode=disable
   WORKOS_CLIENT_ID=
   WORKOS_API_KEY=
-  LIVE_GOLF_DATA_API_KEY=
-  LIVE_GOLF_DATA_BASE_URL=https://live-golf-data.p.rapidapi.com
   BALL_DONT_LIE_API_KEY=
   ```
 - [ ] Create `/backend/.gitignore` for Go-specific ignores (bin/, .env, etc.)
@@ -230,9 +227,6 @@ git commit -m "Add API service entrypoint"
   - Initialize Ent client
   - Set up scheduled goroutines for data collection
   - Handle graceful shutdown
-- [ ] Create `/backend/internal/external/livegolfdata/client.go`:
-  - Create Resty client wrapper
-  - Define placeholder methods for API calls
 - [ ] Create `/backend/internal/external/balldontlie/client.go`:
   - Create Resty client wrapper
   - Define placeholder methods for API calls

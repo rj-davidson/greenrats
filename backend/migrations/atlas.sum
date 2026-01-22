@@ -1,4 +1,4 @@
-h1:hRzkzskz2wE2RG9+TjZCopLX96+Zy4YCWpqyfOE1nys=
+h1:Ye0F8K5WLEkiV7zIhDIGh+JLzPghNU5nUFAugJeCFko=
 20260118200158_initial_schema.sql h1:KvQhUcBGBFSs0g4IyK8YfA4ZvrwufF9ZnRYRQ2tcddM=
 20260119002952_add_commissioner_actions.sql h1:rnmc1DsMriHSZWL0XyJm6g03oNAJdIgYO5uSJ5rXu6U=
 20260119003132_add_joining_enabled.sql h1:XOROavo0HwabE3qO8Jb9Y9CTObP3ryXUgdfOBZ3MPCA=
@@ -7,3 +7,4 @@ h1:hRzkzskz2wE2RG9+TjZCopLX96+Zy4YCWpqyfOE1nys=
 20260120224259_add_user_is_admin.sql h1:Uin36FGq1Vha6tgJtMcmKm6dCrvIoNlVHIZJcdiPkpc=
 20260122031341_add_field_entry_columns.sql h1:0OiXhWh2/snmK4HBKB2iLNzta+08kzSZOk9G6RHjYi0=
 20260122031530_add_pga_tour_id.sql h1:NPkT+2oealX0wbCjrOUKEV5LXYBcfguCjxuRINZrGD4=
+20260122053637_remove_scratchgolf_id.sql h1:XArSrtIorRdrRZlPApnEWs06jBdLOvqikyZo+GHuT/Y=

@@ -52,20 +52,6 @@ func (_c *TournamentCreate) SetNillableUpdatedAt(v *time.Time) *TournamentCreate
 	return _c
 }
 
-// SetScratchgolfID sets the "scratchgolf_id" field.
-func (_c *TournamentCreate) SetScratchgolfID(v string) *TournamentCreate {
-	_c.mutation.SetScratchgolfID(v)
-	return _c
-}
-
-// SetNillableScratchgolfID sets the "scratchgolf_id" field if the given value is not nil.
-func (_c *TournamentCreate) SetNillableScratchgolfID(v *string) *TournamentCreate {
-	if v != nil {
-		_c.SetScratchgolfID(*v)
-	}
-	return _c
-}
-
 // SetBdlID sets the "bdl_id" field.
 func (_c *TournamentCreate) SetBdlID(v int) *TournamentCreate {
 	_c.mutation.SetBdlID(v)
@@ -361,10 +347,6 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(tournament.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
-	}
-	if value, ok := _c.mutation.ScratchgolfID(); ok {
-		_spec.SetField(tournament.FieldScratchgolfID, field.TypeString, value)
-		_node.ScratchgolfID = &value
 	}
 	if value, ok := _c.mutation.BdlID(); ok {
 		_spec.SetField(tournament.FieldBdlID, field.TypeInt, value)

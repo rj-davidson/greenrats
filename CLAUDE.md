@@ -108,8 +108,7 @@ bun remove <package-name>                  # Remove dependency
 - **Authentication**: WorkOS JWT validation
 
 **External Data Sources**:
-- **Scratch Golf API**: Tournament and golfer data
-- **BallDontLie.io**: Additional golf statistics
+- **BallDontLie.io**: Golf statistics and tournament data
 
 **Directory Layout**:
 ```
@@ -135,7 +134,6 @@ backend/
       leaderboards/            # Earnings calculations, rankings
       users/                   # User profiles
     external/                  # External API clients
-      livegolfdata/            # Live Golf Data API client
       balldontlie/             # BallDontLie.io client
   ent/
     schema/                    # Ent schema definitions

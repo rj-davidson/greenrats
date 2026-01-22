@@ -22,8 +22,6 @@ type Tournament struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// Live Golf Data API ID (string)
-	ScratchgolfID *string `json:"scratchgolf_id,omitempty"`
 	// BallDontLie API ID (int)
 	BdlID *int `json:"bdl_id,omitempty"`
 	// PGA Tour tournament ID (e.g., R2025002)
@@ -97,7 +95,7 @@ func (*Tournament) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case tournament.FieldBdlID, tournament.FieldSeasonYear, tournament.FieldPurse:
 			values[i] = new(sql.NullInt64)
-		case tournament.FieldScratchgolfID, tournament.FieldPgaTourID, tournament.FieldName, tournament.FieldStatus, tournament.FieldCourse, tournament.FieldLocation:
+		case tournament.FieldPgaTourID, tournament.FieldName, tournament.FieldStatus, tournament.FieldCourse, tournament.FieldLocation:
 			values[i] = new(sql.NullString)
 		case tournament.FieldCreatedAt, tournament.FieldUpdatedAt, tournament.FieldStartDate, tournament.FieldEndDate:
 			values[i] = new(sql.NullTime)
@@ -135,13 +133,6 @@ func (_m *Tournament) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
-			}
-		case tournament.FieldScratchgolfID:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field scratchgolf_id", values[i])
-			} else if value.Valid {
-				_m.ScratchgolfID = new(string)
-				*_m.ScratchgolfID = value.String
 			}
 		case tournament.FieldBdlID:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -264,11 +255,6 @@ func (_m *Tournament) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("updated_at=")
 	builder.WriteString(_m.UpdatedAt.Format(time.ANSIC))
-	builder.WriteString(", ")
-	if v := _m.ScratchgolfID; v != nil {
-		builder.WriteString("scratchgolf_id=")
-		builder.WriteString(*v)
-	}
 	builder.WriteString(", ")
 	if v := _m.BdlID; v != nil {
 		builder.WriteString("bdl_id=")

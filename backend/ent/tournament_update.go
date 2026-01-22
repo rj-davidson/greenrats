@@ -38,26 +38,6 @@ func (_u *TournamentUpdate) SetUpdatedAt(v time.Time) *TournamentUpdate {
 	return _u
 }
 
-// SetScratchgolfID sets the "scratchgolf_id" field.
-func (_u *TournamentUpdate) SetScratchgolfID(v string) *TournamentUpdate {
-	_u.mutation.SetScratchgolfID(v)
-	return _u
-}
-
-// SetNillableScratchgolfID sets the "scratchgolf_id" field if the given value is not nil.
-func (_u *TournamentUpdate) SetNillableScratchgolfID(v *string) *TournamentUpdate {
-	if v != nil {
-		_u.SetScratchgolfID(*v)
-	}
-	return _u
-}
-
-// ClearScratchgolfID clears the value of the "scratchgolf_id" field.
-func (_u *TournamentUpdate) ClearScratchgolfID() *TournamentUpdate {
-	_u.mutation.ClearScratchgolfID()
-	return _u
-}
-
 // SetBdlID sets the "bdl_id" field.
 func (_u *TournamentUpdate) SetBdlID(v int) *TournamentUpdate {
 	_u.mutation.ResetBdlID()
@@ -428,12 +408,6 @@ func (_u *TournamentUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(tournament.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := _u.mutation.ScratchgolfID(); ok {
-		_spec.SetField(tournament.FieldScratchgolfID, field.TypeString, value)
-	}
-	if _u.mutation.ScratchgolfIDCleared() {
-		_spec.ClearField(tournament.FieldScratchgolfID, field.TypeString)
-	}
 	if value, ok := _u.mutation.BdlID(); ok {
 		_spec.SetField(tournament.FieldBdlID, field.TypeInt, value)
 	}
@@ -646,26 +620,6 @@ type TournamentUpdateOne struct {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *TournamentUpdateOne) SetUpdatedAt(v time.Time) *TournamentUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetScratchgolfID sets the "scratchgolf_id" field.
-func (_u *TournamentUpdateOne) SetScratchgolfID(v string) *TournamentUpdateOne {
-	_u.mutation.SetScratchgolfID(v)
-	return _u
-}
-
-// SetNillableScratchgolfID sets the "scratchgolf_id" field if the given value is not nil.
-func (_u *TournamentUpdateOne) SetNillableScratchgolfID(v *string) *TournamentUpdateOne {
-	if v != nil {
-		_u.SetScratchgolfID(*v)
-	}
-	return _u
-}
-
-// ClearScratchgolfID clears the value of the "scratchgolf_id" field.
-func (_u *TournamentUpdateOne) ClearScratchgolfID() *TournamentUpdateOne {
-	_u.mutation.ClearScratchgolfID()
 	return _u
 }
 
@@ -1068,12 +1022,6 @@ func (_u *TournamentUpdateOne) sqlSave(ctx context.Context) (_node *Tournament, 
 	}
 	if value, ok := _u.mutation.UpdatedAt(); ok {
 		_spec.SetField(tournament.FieldUpdatedAt, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.ScratchgolfID(); ok {
-		_spec.SetField(tournament.FieldScratchgolfID, field.TypeString, value)
-	}
-	if _u.mutation.ScratchgolfIDCleared() {
-		_spec.ClearField(tournament.FieldScratchgolfID, field.TypeString)
 	}
 	if value, ok := _u.mutation.BdlID(); ok {
 		_spec.SetField(tournament.FieldBdlID, field.TypeInt, value)

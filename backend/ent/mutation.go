@@ -1326,7 +1326,6 @@ type GolferMutation struct {
 	id             *uuid.UUID
 	created_at     *time.Time
 	updated_at     *time.Time
-	scratchgolf_id *string
 	bdl_id         *int
 	addbdl_id      *int
 	first_name     *string
@@ -1524,55 +1523,6 @@ func (m *GolferMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err err
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *GolferMutation) ResetUpdatedAt() {
 	m.updated_at = nil
-}
-
-// SetScratchgolfID sets the "scratchgolf_id" field.
-func (m *GolferMutation) SetScratchgolfID(s string) {
-	m.scratchgolf_id = &s
-}
-
-// ScratchgolfID returns the value of the "scratchgolf_id" field in the mutation.
-func (m *GolferMutation) ScratchgolfID() (r string, exists bool) {
-	v := m.scratchgolf_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldScratchgolfID returns the old "scratchgolf_id" field's value of the Golfer entity.
-// If the Golfer object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *GolferMutation) OldScratchgolfID(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldScratchgolfID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldScratchgolfID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldScratchgolfID: %w", err)
-	}
-	return oldValue.ScratchgolfID, nil
-}
-
-// ClearScratchgolfID clears the value of the "scratchgolf_id" field.
-func (m *GolferMutation) ClearScratchgolfID() {
-	m.scratchgolf_id = nil
-	m.clearedFields[golfer.FieldScratchgolfID] = struct{}{}
-}
-
-// ScratchgolfIDCleared returns if the "scratchgolf_id" field was cleared in this mutation.
-func (m *GolferMutation) ScratchgolfIDCleared() bool {
-	_, ok := m.clearedFields[golfer.FieldScratchgolfID]
-	return ok
-}
-
-// ResetScratchgolfID resets all changes to the "scratchgolf_id" field.
-func (m *GolferMutation) ResetScratchgolfID() {
-	m.scratchgolf_id = nil
-	delete(m.clearedFields, golfer.FieldScratchgolfID)
 }
 
 // SetBdlID sets the "bdl_id" field.
@@ -2161,15 +2111,12 @@ func (m *GolferMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *GolferMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 11)
 	if m.created_at != nil {
 		fields = append(fields, golfer.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, golfer.FieldUpdatedAt)
-	}
-	if m.scratchgolf_id != nil {
-		fields = append(fields, golfer.FieldScratchgolfID)
 	}
 	if m.bdl_id != nil {
 		fields = append(fields, golfer.FieldBdlID)
@@ -2210,8 +2157,6 @@ func (m *GolferMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case golfer.FieldUpdatedAt:
 		return m.UpdatedAt()
-	case golfer.FieldScratchgolfID:
-		return m.ScratchgolfID()
 	case golfer.FieldBdlID:
 		return m.BdlID()
 	case golfer.FieldFirstName:
@@ -2243,8 +2188,6 @@ func (m *GolferMutation) OldField(ctx context.Context, name string) (ent.Value, 
 		return m.OldCreatedAt(ctx)
 	case golfer.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
-	case golfer.FieldScratchgolfID:
-		return m.OldScratchgolfID(ctx)
 	case golfer.FieldBdlID:
 		return m.OldBdlID(ctx)
 	case golfer.FieldFirstName:
@@ -2285,13 +2228,6 @@ func (m *GolferMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
-		return nil
-	case golfer.FieldScratchgolfID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetScratchgolfID(v)
 		return nil
 	case golfer.FieldBdlID:
 		v, ok := value.(int)
@@ -2413,9 +2349,6 @@ func (m *GolferMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *GolferMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(golfer.FieldScratchgolfID) {
-		fields = append(fields, golfer.FieldScratchgolfID)
-	}
 	if m.FieldCleared(golfer.FieldBdlID) {
 		fields = append(fields, golfer.FieldBdlID)
 	}
@@ -2448,9 +2381,6 @@ func (m *GolferMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *GolferMutation) ClearField(name string) error {
 	switch name {
-	case golfer.FieldScratchgolfID:
-		m.ClearScratchgolfID()
-		return nil
 	case golfer.FieldBdlID:
 		m.ClearBdlID()
 		return nil
@@ -2482,9 +2412,6 @@ func (m *GolferMutation) ResetField(name string) error {
 		return nil
 	case golfer.FieldUpdatedAt:
 		m.ResetUpdatedAt()
-		return nil
-	case golfer.FieldScratchgolfID:
-		m.ResetScratchgolfID()
 		return nil
 	case golfer.FieldBdlID:
 		m.ResetBdlID()
@@ -5454,7 +5381,6 @@ type TournamentMutation struct {
 	id                     *uuid.UUID
 	created_at             *time.Time
 	updated_at             *time.Time
-	scratchgolf_id         *string
 	bdl_id                 *int
 	addbdl_id              *int
 	pga_tour_id            *string
@@ -5657,55 +5583,6 @@ func (m *TournamentMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err
 // ResetUpdatedAt resets all changes to the "updated_at" field.
 func (m *TournamentMutation) ResetUpdatedAt() {
 	m.updated_at = nil
-}
-
-// SetScratchgolfID sets the "scratchgolf_id" field.
-func (m *TournamentMutation) SetScratchgolfID(s string) {
-	m.scratchgolf_id = &s
-}
-
-// ScratchgolfID returns the value of the "scratchgolf_id" field in the mutation.
-func (m *TournamentMutation) ScratchgolfID() (r string, exists bool) {
-	v := m.scratchgolf_id
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldScratchgolfID returns the old "scratchgolf_id" field's value of the Tournament entity.
-// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TournamentMutation) OldScratchgolfID(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldScratchgolfID is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldScratchgolfID requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldScratchgolfID: %w", err)
-	}
-	return oldValue.ScratchgolfID, nil
-}
-
-// ClearScratchgolfID clears the value of the "scratchgolf_id" field.
-func (m *TournamentMutation) ClearScratchgolfID() {
-	m.scratchgolf_id = nil
-	m.clearedFields[tournament.FieldScratchgolfID] = struct{}{}
-}
-
-// ScratchgolfIDCleared returns if the "scratchgolf_id" field was cleared in this mutation.
-func (m *TournamentMutation) ScratchgolfIDCleared() bool {
-	_, ok := m.clearedFields[tournament.FieldScratchgolfID]
-	return ok
-}
-
-// ResetScratchgolfID resets all changes to the "scratchgolf_id" field.
-func (m *TournamentMutation) ResetScratchgolfID() {
-	m.scratchgolf_id = nil
-	delete(m.clearedFields, tournament.FieldScratchgolfID)
 }
 
 // SetBdlID sets the "bdl_id" field.
@@ -6391,15 +6268,12 @@ func (m *TournamentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TournamentMutation) Fields() []string {
-	fields := make([]string, 0, 13)
+	fields := make([]string, 0, 12)
 	if m.created_at != nil {
 		fields = append(fields, tournament.FieldCreatedAt)
 	}
 	if m.updated_at != nil {
 		fields = append(fields, tournament.FieldUpdatedAt)
-	}
-	if m.scratchgolf_id != nil {
-		fields = append(fields, tournament.FieldScratchgolfID)
 	}
 	if m.bdl_id != nil {
 		fields = append(fields, tournament.FieldBdlID)
@@ -6443,8 +6317,6 @@ func (m *TournamentMutation) Field(name string) (ent.Value, bool) {
 		return m.CreatedAt()
 	case tournament.FieldUpdatedAt:
 		return m.UpdatedAt()
-	case tournament.FieldScratchgolfID:
-		return m.ScratchgolfID()
 	case tournament.FieldBdlID:
 		return m.BdlID()
 	case tournament.FieldPgaTourID:
@@ -6478,8 +6350,6 @@ func (m *TournamentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldCreatedAt(ctx)
 	case tournament.FieldUpdatedAt:
 		return m.OldUpdatedAt(ctx)
-	case tournament.FieldScratchgolfID:
-		return m.OldScratchgolfID(ctx)
 	case tournament.FieldBdlID:
 		return m.OldBdlID(ctx)
 	case tournament.FieldPgaTourID:
@@ -6522,13 +6392,6 @@ func (m *TournamentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetUpdatedAt(v)
-		return nil
-	case tournament.FieldScratchgolfID:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetScratchgolfID(v)
 		return nil
 	case tournament.FieldBdlID:
 		v, ok := value.(int)
@@ -6669,9 +6532,6 @@ func (m *TournamentMutation) AddField(name string, value ent.Value) error {
 // mutation.
 func (m *TournamentMutation) ClearedFields() []string {
 	var fields []string
-	if m.FieldCleared(tournament.FieldScratchgolfID) {
-		fields = append(fields, tournament.FieldScratchgolfID)
-	}
 	if m.FieldCleared(tournament.FieldBdlID) {
 		fields = append(fields, tournament.FieldBdlID)
 	}
@@ -6701,9 +6561,6 @@ func (m *TournamentMutation) FieldCleared(name string) bool {
 // error if the field is not defined in the schema.
 func (m *TournamentMutation) ClearField(name string) error {
 	switch name {
-	case tournament.FieldScratchgolfID:
-		m.ClearScratchgolfID()
-		return nil
 	case tournament.FieldBdlID:
 		m.ClearBdlID()
 		return nil
@@ -6732,9 +6589,6 @@ func (m *TournamentMutation) ResetField(name string) error {
 		return nil
 	case tournament.FieldUpdatedAt:
 		m.ResetUpdatedAt()
-		return nil
-	case tournament.FieldScratchgolfID:
-		m.ResetScratchgolfID()
 		return nil
 	case tournament.FieldBdlID:
 		m.ResetBdlID()
