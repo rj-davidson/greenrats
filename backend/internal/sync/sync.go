@@ -11,7 +11,13 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/course"
+	"github.com/rj-davidson/greenrats/ent/coursehole"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/golferseason"
+	"github.com/rj-davidson/greenrats/ent/holescore"
+	"github.com/rj-davidson/greenrats/ent/round"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
@@ -420,4 +426,355 @@ func ParseEndDate(endDateStr *string, startDate time.Time) time.Time {
 	}
 
 	return startDate.AddDate(0, 0, 4).Add(6 * time.Hour)
+}
+
+func (s *Service) UpsertCourse(ctx context.Context, c *balldontlie.Course) (*ent.Course, error) {
+	existing, err := s.db.Course.Query().
+		Where(course.BdlID(c.ID)).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		builder := s.db.Course.Create().
+			SetBdlID(c.ID).
+			SetName(c.Name)
+
+		if c.Par != nil {
+			builder.SetPar(*c.Par)
+		}
+		if c.Yardage != nil && *c.Yardage != "" {
+			if yardage, err := strconv.Atoi(*c.Yardage); err == nil {
+				builder.SetYardage(yardage)
+			}
+		}
+		if c.City != nil {
+			builder.SetCity(*c.City)
+		}
+		if c.State != nil {
+			builder.SetState(*c.State)
+		}
+		if c.Country != nil {
+			builder.SetCountry(*c.Country)
+		}
+
+		created, err := builder.Save(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create course: %w", err)
+		}
+		s.logger.Debug("created course", "name", c.Name)
+		return created, nil
+
+	case err != nil:
+		return nil, fmt.Errorf("failed to query course: %w", err)
+
+	default:
+		updater := existing.Update().
+			SetName(c.Name)
+
+		if c.Par != nil {
+			updater.SetPar(*c.Par)
+		}
+		if c.Yardage != nil && *c.Yardage != "" {
+			if yardage, err := strconv.Atoi(*c.Yardage); err == nil {
+				updater.SetYardage(yardage)
+			}
+		}
+		if c.City != nil {
+			updater.SetCity(*c.City)
+		}
+		if c.State != nil {
+			updater.SetState(*c.State)
+		}
+		if c.Country != nil {
+			updater.SetCountry(*c.Country)
+		}
+
+		updated, err := updater.Save(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update course: %w", err)
+		}
+		return updated, nil
+	}
+}
+
+func (s *Service) UpsertCourseHole(ctx context.Context, courseID uuid.UUID, h *balldontlie.CourseHole) error {
+	existing, err := s.db.CourseHole.Query().
+		Where(
+			coursehole.HasCourseWith(course.IDEQ(courseID)),
+			coursehole.HoleNumberEQ(h.HoleNumber),
+		).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		builder := s.db.CourseHole.Create().
+			SetCourseID(courseID).
+			SetHoleNumber(h.HoleNumber).
+			SetPar(h.Par)
+
+		if h.Yardage != nil {
+			builder.SetYardage(*h.Yardage)
+		}
+
+		_, err := builder.Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create course hole: %w", err)
+		}
+
+	case err != nil:
+		return fmt.Errorf("failed to query course hole: %w", err)
+
+	default:
+		updater := existing.Update().
+			SetPar(h.Par)
+
+		if h.Yardage != nil {
+			updater.SetYardage(*h.Yardage)
+		}
+
+		_, err := updater.Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update course hole: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) UpsertRound(ctx context.Context, entryID uuid.UUID, r *balldontlie.PlayerRoundResult) (*ent.Round, error) {
+	existing, err := s.db.Round.Query().
+		Where(
+			round.HasTournamentEntryWith(tournamententry.IDEQ(entryID)),
+			round.RoundNumberEQ(r.RoundNumber),
+		).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		builder := s.db.Round.Create().
+			SetTournamentEntryID(entryID).
+			SetRoundNumber(r.RoundNumber)
+
+		if r.Score != nil {
+			builder.SetScore(*r.Score)
+		}
+		if r.ParRelativeScore != nil {
+			builder.SetParRelativeScore(*r.ParRelativeScore)
+		}
+
+		created, err := builder.Save(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create round: %w", err)
+		}
+		return created, nil
+
+	case err != nil:
+		return nil, fmt.Errorf("failed to query round: %w", err)
+
+	default:
+		updater := existing.Update()
+
+		if r.Score != nil {
+			updater.SetScore(*r.Score)
+		}
+		if r.ParRelativeScore != nil {
+			updater.SetParRelativeScore(*r.ParRelativeScore)
+		}
+
+		updated, err := updater.Save(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to update round: %w", err)
+		}
+		return updated, nil
+	}
+}
+
+func (s *Service) UpsertHoleScore(ctx context.Context, roundID uuid.UUID, h *balldontlie.PlayerScorecard) error {
+	existing, err := s.db.HoleScore.Query().
+		Where(
+			holescore.HasRoundWith(round.IDEQ(roundID)),
+			holescore.HoleNumberEQ(h.HoleNumber),
+		).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		builder := s.db.HoleScore.Create().
+			SetRoundID(roundID).
+			SetHoleNumber(h.HoleNumber).
+			SetPar(h.Par)
+
+		if h.Score != nil {
+			builder.SetScore(*h.Score)
+		}
+
+		_, err := builder.Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create hole score: %w", err)
+		}
+
+	case err != nil:
+		return fmt.Errorf("failed to query hole score: %w", err)
+
+	default:
+		updater := existing.Update().
+			SetPar(h.Par)
+
+		if h.Score != nil {
+			updater.SetScore(*h.Score)
+		}
+
+		_, err := updater.Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update hole score: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) UpsertGolferSeasonStat(ctx context.Context, golferID, seasonID uuid.UUID, stat *balldontlie.PlayerSeasonStat) error {
+	existing, err := s.db.GolferSeason.Query().
+		Where(
+			golferseason.HasGolferWith(golfer.IDEQ(golferID)),
+			golferseason.HasSeasonWith(season.IDEQ(seasonID)),
+		).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		builder := s.db.GolferSeason.Create().
+			SetGolferID(golferID).
+			SetSeasonID(seasonID).
+			SetLastSyncedAt(time.Now())
+
+		applyStatToGolferSeason(builder, stat)
+
+		_, err := builder.Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create golfer season: %w", err)
+		}
+
+	case err != nil:
+		return fmt.Errorf("failed to query golfer season: %w", err)
+
+	default:
+		updater := existing.Update().
+			SetLastSyncedAt(time.Now())
+
+		applyStatToGolferSeasonUpdate(updater, stat)
+
+		_, err := updater.Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update golfer season: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func applyStatToGolferSeason(builder *ent.GolferSeasonCreate, stat *balldontlie.PlayerSeasonStat) {
+	if stat.StatValue == nil {
+		return
+	}
+
+	switch stat.StatName {
+	case "Scoring Average":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetScoringAvg(v)
+		}
+	case "Top 10 Finishes":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetTop10s(int(v))
+		}
+	case "Cuts Made":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetCutsMade(int(v))
+		}
+	case "Events Played":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetEventsPlayed(int(v))
+		}
+	case "Wins":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetWins(int(v))
+		}
+	case "Official Money":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetEarnings(int(v))
+		}
+	case "Driving Distance":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetDrivingDistance(v)
+		}
+	case "Driving Accuracy Percentage":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetDrivingAccuracy(v)
+		}
+	case "Greens in Regulation Percentage":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetGirPct(v)
+		}
+	case "Putting Average":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetPuttingAvg(v)
+		}
+	case "Scrambling":
+		if v, ok := stat.StatValue.(float64); ok {
+			builder.SetScramblingPct(v)
+		}
+	}
+}
+
+func applyStatToGolferSeasonUpdate(updater *ent.GolferSeasonUpdateOne, stat *balldontlie.PlayerSeasonStat) {
+	if stat.StatValue == nil {
+		return
+	}
+
+	switch stat.StatName {
+	case "Scoring Average":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetScoringAvg(v)
+		}
+	case "Top 10 Finishes":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetTop10s(int(v))
+		}
+	case "Cuts Made":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetCutsMade(int(v))
+		}
+	case "Events Played":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetEventsPlayed(int(v))
+		}
+	case "Wins":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetWins(int(v))
+		}
+	case "Official Money":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetEarnings(int(v))
+		}
+	case "Driving Distance":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetDrivingDistance(v)
+		}
+	case "Driving Accuracy Percentage":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetDrivingAccuracy(v)
+		}
+	case "Greens in Regulation Percentage":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetGirPct(v)
+		}
+	case "Putting Average":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetPuttingAvg(v)
+		}
+	case "Scrambling":
+		if v, ok := stat.StatValue.(float64); ok {
+			updater.SetScramblingPct(v)
+		}
+	}
 }
