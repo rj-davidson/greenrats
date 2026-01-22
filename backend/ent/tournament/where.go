@@ -76,6 +76,11 @@ func BdlID(v int) predicate.Tournament {
 	return predicate.Tournament(sql.FieldEQ(FieldBdlID, v))
 }
 
+// PgaTourID applies equality check predicate on the "pga_tour_id" field. It's identical to PgaTourIDEQ.
+func PgaTourID(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldPgaTourID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.Tournament {
 	return predicate.Tournament(sql.FieldEQ(FieldName, v))
@@ -314,6 +319,81 @@ func BdlIDIsNil() predicate.Tournament {
 // BdlIDNotNil applies the NotNil predicate on the "bdl_id" field.
 func BdlIDNotNil() predicate.Tournament {
 	return predicate.Tournament(sql.FieldNotNull(FieldBdlID))
+}
+
+// PgaTourIDEQ applies the EQ predicate on the "pga_tour_id" field.
+func PgaTourIDEQ(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEQ(FieldPgaTourID, v))
+}
+
+// PgaTourIDNEQ applies the NEQ predicate on the "pga_tour_id" field.
+func PgaTourIDNEQ(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNEQ(FieldPgaTourID, v))
+}
+
+// PgaTourIDIn applies the In predicate on the "pga_tour_id" field.
+func PgaTourIDIn(vs ...string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldIn(FieldPgaTourID, vs...))
+}
+
+// PgaTourIDNotIn applies the NotIn predicate on the "pga_tour_id" field.
+func PgaTourIDNotIn(vs ...string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotIn(FieldPgaTourID, vs...))
+}
+
+// PgaTourIDGT applies the GT predicate on the "pga_tour_id" field.
+func PgaTourIDGT(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGT(FieldPgaTourID, v))
+}
+
+// PgaTourIDGTE applies the GTE predicate on the "pga_tour_id" field.
+func PgaTourIDGTE(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldGTE(FieldPgaTourID, v))
+}
+
+// PgaTourIDLT applies the LT predicate on the "pga_tour_id" field.
+func PgaTourIDLT(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLT(FieldPgaTourID, v))
+}
+
+// PgaTourIDLTE applies the LTE predicate on the "pga_tour_id" field.
+func PgaTourIDLTE(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldLTE(FieldPgaTourID, v))
+}
+
+// PgaTourIDContains applies the Contains predicate on the "pga_tour_id" field.
+func PgaTourIDContains(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldContains(FieldPgaTourID, v))
+}
+
+// PgaTourIDHasPrefix applies the HasPrefix predicate on the "pga_tour_id" field.
+func PgaTourIDHasPrefix(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldHasPrefix(FieldPgaTourID, v))
+}
+
+// PgaTourIDHasSuffix applies the HasSuffix predicate on the "pga_tour_id" field.
+func PgaTourIDHasSuffix(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldHasSuffix(FieldPgaTourID, v))
+}
+
+// PgaTourIDIsNil applies the IsNil predicate on the "pga_tour_id" field.
+func PgaTourIDIsNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldIsNull(FieldPgaTourID))
+}
+
+// PgaTourIDNotNil applies the NotNil predicate on the "pga_tour_id" field.
+func PgaTourIDNotNil() predicate.Tournament {
+	return predicate.Tournament(sql.FieldNotNull(FieldPgaTourID))
+}
+
+// PgaTourIDEqualFold applies the EqualFold predicate on the "pga_tour_id" field.
+func PgaTourIDEqualFold(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldEqualFold(FieldPgaTourID, v))
+}
+
+// PgaTourIDContainsFold applies the ContainsFold predicate on the "pga_tour_id" field.
+func PgaTourIDContainsFold(v string) predicate.Tournament {
+	return predicate.Tournament(sql.FieldContainsFold(FieldPgaTourID, v))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

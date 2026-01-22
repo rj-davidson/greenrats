@@ -29,6 +29,9 @@ import (
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
+	"github.com/rj-davidson/greenrats/internal/external/pgatour"
+	"github.com/rj-davidson/greenrats/internal/external/scrapedo"
+	"github.com/rj-davidson/greenrats/internal/features/fields"
 )
 
 // Sync intervals based on cost optimization plan:
@@ -36,20 +39,25 @@ import (
 // - Leaderboards: Hourly during active tournaments via BallDontLie
 // - Players: Weekly via BallDontLie
 // - Earnings: Every 6 hours via BallDontLie (included in tournament results)
+// - Fields: Twice daily (12 hours) for upcoming tournaments
 const (
 	tournamentSyncInterval  = 24 * time.Hour
 	leaderboardSyncInterval = 1 * time.Hour
 	playerSyncInterval      = 7 * 24 * time.Hour // Weekly
 	reminderCheckInterval   = 1 * time.Hour      // Check for pick reminders
 	earningsCheckInterval   = 6 * time.Hour      // Check for earnings to sync
+	fieldSyncInterval       = 12 * time.Hour     // Sync fields for upcoming tournaments
 )
 
 type Ingester struct {
-	db          *ent.Client
-	config      *config.Config
-	ballDontLie *balldontlie.Client
-	email       *email.Client
-	logger      *slog.Logger
+	db            *ent.Client
+	config        *config.Config
+	ballDontLie   *balldontlie.Client
+	pgatourClient *pgatour.Client
+	fieldsService *fields.Service
+	majorScraper  *fields.MajorScraper
+	email         *email.Client
+	logger        *slog.Logger
 }
 
 func main() {
@@ -94,13 +102,20 @@ func run() error {
 
 	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, logger)
 	emailClient := email.New(cfg)
+	pgatourClient := pgatour.New(cfg.PGATourAPIKey, logger)
+	scrapeDoClient := scrapedo.New(cfg.ScrapeDoAPIKey, logger)
+	fieldsService := fields.NewService(db, pgatourClient, logger)
+	majorScraper := fields.NewMajorScraper(scrapeDoClient, logger)
 
 	ingester := &Ingester{
-		db:          db,
-		config:      cfg,
-		ballDontLie: bdlClient,
-		email:       emailClient,
-		logger:      logger,
+		db:            db,
+		config:        cfg,
+		ballDontLie:   bdlClient,
+		pgatourClient: pgatourClient,
+		fieldsService: fieldsService,
+		majorScraper:  majorScraper,
+		email:         emailClient,
+		logger:        logger,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -109,8 +124,8 @@ func run() error {
 	go ingester.runScheduledJobs(ctx)
 
 	log.Println("GreenRats Ingest Service started")
-	log.Printf("Sync intervals: tournaments=%v, leaderboards=%v, players=%v",
-		tournamentSyncInterval, leaderboardSyncInterval, playerSyncInterval)
+	log.Printf("Sync intervals: tournaments=%v, leaderboards=%v, players=%v, fields=%v",
+		tournamentSyncInterval, leaderboardSyncInterval, playerSyncInterval, fieldSyncInterval)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
@@ -146,6 +161,10 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 	earningsTicker := time.NewTicker(earningsCheckInterval)
 	defer earningsTicker.Stop()
 
+	// Field sync - twice daily for upcoming tournaments
+	fieldTicker := time.NewTicker(fieldSyncInterval)
+	defer fieldTicker.Stop()
+
 	// Run initial syncs only if data is stale
 	log.Println("Checking for required initial syncs...")
 	if i.shouldSync(ctx, "tournaments", tournamentSyncInterval) {
@@ -168,6 +187,11 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 	} else {
 		log.Println("Skipping earnings sync (data is fresh)")
 	}
+	if i.shouldSync(ctx, "fields", fieldSyncInterval) {
+		i.syncFields(ctx)
+	} else {
+		log.Println("Skipping field sync (data is fresh)")
+	}
 	i.sendPickReminders(ctx)
 
 	for {
@@ -182,6 +206,8 @@ func (i *Ingester) runScheduledJobs(ctx context.Context) {
 			i.syncPlayers(ctx)
 		case <-earningsTicker.C:
 			i.syncEarnings(ctx)
+		case <-fieldTicker.C:
+			i.syncFields(ctx)
 		case <-reminderTicker.C:
 			i.sendPickReminders(ctx)
 		}
@@ -713,6 +739,76 @@ func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament)
 			tournamententry.EarningsGT(0),
 		).
 		Exist(ctx)
+}
+
+func (i *Ingester) syncFields(ctx context.Context) {
+	log.Println("Checking for tournaments needing field sync...")
+
+	now := time.Now().UTC()
+	windowStart := now
+	windowEnd := now.Add(7 * 24 * time.Hour)
+
+	tournaments, err := i.db.Tournament.Query().
+		Where(
+			tournament.StatusEQ(tournament.StatusUpcoming),
+			tournament.StartDateGTE(windowStart),
+			tournament.StartDateLTE(windowEnd),
+		).
+		All(ctx)
+	if err != nil {
+		log.Printf("failed to query upcoming tournaments: %v", err)
+		i.captureJobError("sync_fields", err)
+		return
+	}
+
+	if len(tournaments) == 0 {
+		log.Println("No upcoming tournaments in sync window")
+		i.recordSync(ctx, "fields")
+		return
+	}
+
+	for _, t := range tournaments {
+		if t.PgaTourID == nil || *t.PgaTourID == "" {
+			log.Printf("Tournament %s has no PGA Tour ID, skipping field sync", t.Name)
+			continue
+		}
+
+		hasField, err := i.tournamentHasField(ctx, t)
+		if err != nil {
+			log.Printf("failed to check field for tournament %s: %v", t.Name, err)
+			i.captureJobError("sync_fields", err)
+			continue
+		}
+
+		if hasField {
+			log.Printf("Tournament %s already has field data, skipping", t.Name)
+			continue
+		}
+
+		log.Printf("Syncing field for tournament: %s", t.Name)
+		result, err := i.fieldsService.SyncTournamentField(ctx, t.ID)
+		if err != nil {
+			log.Printf("failed to sync field for tournament %s: %v", t.Name, err)
+			i.captureJobError("sync_fields", err)
+			continue
+		}
+
+		log.Printf("Field sync for %s: total=%d, matched=%d, new=%d, updated=%d",
+			t.Name, result.TotalPlayers, result.MatchedPlayers, result.NewEntries, result.UpdatedEntries)
+	}
+
+	i.recordSync(ctx, "fields")
+	log.Println("Field sync completed")
+}
+
+func (i *Ingester) tournamentHasField(ctx context.Context, t *ent.Tournament) (bool, error) {
+	count, err := i.db.TournamentEntry.Query().
+		Where(tournamententry.HasTournamentWith(tournament.IDEQ(t.ID))).
+		Count(ctx)
+	if err != nil {
+		return false, err
+	}
+	return count >= 50, nil
 }
 
 func (i *Ingester) sendPickReminders(ctx context.Context) {

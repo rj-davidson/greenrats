@@ -101,6 +101,21 @@ func Thru(v int) predicate.TournamentEntry {
 	return predicate.TournamentEntry(sql.FieldEQ(FieldThru, v))
 }
 
+// Qualifier applies equality check predicate on the "qualifier" field. It's identical to QualifierEQ.
+func Qualifier(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEQ(FieldQualifier, v))
+}
+
+// OwgrAtEntry applies equality check predicate on the "owgr_at_entry" field. It's identical to OwgrAtEntryEQ.
+func OwgrAtEntry(v int) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEQ(FieldOwgrAtEntry, v))
+}
+
+// IsAmateur applies equality check predicate on the "is_amateur" field. It's identical to IsAmateurEQ.
+func IsAmateur(v bool) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEQ(FieldIsAmateur, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.TournamentEntry {
 	return predicate.TournamentEntry(sql.FieldEQ(FieldCreatedAt, v))
@@ -449,6 +464,161 @@ func ThruLT(v int) predicate.TournamentEntry {
 // ThruLTE applies the LTE predicate on the "thru" field.
 func ThruLTE(v int) predicate.TournamentEntry {
 	return predicate.TournamentEntry(sql.FieldLTE(FieldThru, v))
+}
+
+// EntryStatusEQ applies the EQ predicate on the "entry_status" field.
+func EntryStatusEQ(v EntryStatus) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEQ(FieldEntryStatus, v))
+}
+
+// EntryStatusNEQ applies the NEQ predicate on the "entry_status" field.
+func EntryStatusNEQ(v EntryStatus) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNEQ(FieldEntryStatus, v))
+}
+
+// EntryStatusIn applies the In predicate on the "entry_status" field.
+func EntryStatusIn(vs ...EntryStatus) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldIn(FieldEntryStatus, vs...))
+}
+
+// EntryStatusNotIn applies the NotIn predicate on the "entry_status" field.
+func EntryStatusNotIn(vs ...EntryStatus) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNotIn(FieldEntryStatus, vs...))
+}
+
+// QualifierEQ applies the EQ predicate on the "qualifier" field.
+func QualifierEQ(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEQ(FieldQualifier, v))
+}
+
+// QualifierNEQ applies the NEQ predicate on the "qualifier" field.
+func QualifierNEQ(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNEQ(FieldQualifier, v))
+}
+
+// QualifierIn applies the In predicate on the "qualifier" field.
+func QualifierIn(vs ...string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldIn(FieldQualifier, vs...))
+}
+
+// QualifierNotIn applies the NotIn predicate on the "qualifier" field.
+func QualifierNotIn(vs ...string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNotIn(FieldQualifier, vs...))
+}
+
+// QualifierGT applies the GT predicate on the "qualifier" field.
+func QualifierGT(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldGT(FieldQualifier, v))
+}
+
+// QualifierGTE applies the GTE predicate on the "qualifier" field.
+func QualifierGTE(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldGTE(FieldQualifier, v))
+}
+
+// QualifierLT applies the LT predicate on the "qualifier" field.
+func QualifierLT(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldLT(FieldQualifier, v))
+}
+
+// QualifierLTE applies the LTE predicate on the "qualifier" field.
+func QualifierLTE(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldLTE(FieldQualifier, v))
+}
+
+// QualifierContains applies the Contains predicate on the "qualifier" field.
+func QualifierContains(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldContains(FieldQualifier, v))
+}
+
+// QualifierHasPrefix applies the HasPrefix predicate on the "qualifier" field.
+func QualifierHasPrefix(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldHasPrefix(FieldQualifier, v))
+}
+
+// QualifierHasSuffix applies the HasSuffix predicate on the "qualifier" field.
+func QualifierHasSuffix(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldHasSuffix(FieldQualifier, v))
+}
+
+// QualifierIsNil applies the IsNil predicate on the "qualifier" field.
+func QualifierIsNil() predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldIsNull(FieldQualifier))
+}
+
+// QualifierNotNil applies the NotNil predicate on the "qualifier" field.
+func QualifierNotNil() predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNotNull(FieldQualifier))
+}
+
+// QualifierEqualFold applies the EqualFold predicate on the "qualifier" field.
+func QualifierEqualFold(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEqualFold(FieldQualifier, v))
+}
+
+// QualifierContainsFold applies the ContainsFold predicate on the "qualifier" field.
+func QualifierContainsFold(v string) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldContainsFold(FieldQualifier, v))
+}
+
+// OwgrAtEntryEQ applies the EQ predicate on the "owgr_at_entry" field.
+func OwgrAtEntryEQ(v int) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEQ(FieldOwgrAtEntry, v))
+}
+
+// OwgrAtEntryNEQ applies the NEQ predicate on the "owgr_at_entry" field.
+func OwgrAtEntryNEQ(v int) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNEQ(FieldOwgrAtEntry, v))
+}
+
+// OwgrAtEntryIn applies the In predicate on the "owgr_at_entry" field.
+func OwgrAtEntryIn(vs ...int) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldIn(FieldOwgrAtEntry, vs...))
+}
+
+// OwgrAtEntryNotIn applies the NotIn predicate on the "owgr_at_entry" field.
+func OwgrAtEntryNotIn(vs ...int) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNotIn(FieldOwgrAtEntry, vs...))
+}
+
+// OwgrAtEntryGT applies the GT predicate on the "owgr_at_entry" field.
+func OwgrAtEntryGT(v int) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldGT(FieldOwgrAtEntry, v))
+}
+
+// OwgrAtEntryGTE applies the GTE predicate on the "owgr_at_entry" field.
+func OwgrAtEntryGTE(v int) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldGTE(FieldOwgrAtEntry, v))
+}
+
+// OwgrAtEntryLT applies the LT predicate on the "owgr_at_entry" field.
+func OwgrAtEntryLT(v int) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldLT(FieldOwgrAtEntry, v))
+}
+
+// OwgrAtEntryLTE applies the LTE predicate on the "owgr_at_entry" field.
+func OwgrAtEntryLTE(v int) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldLTE(FieldOwgrAtEntry, v))
+}
+
+// OwgrAtEntryIsNil applies the IsNil predicate on the "owgr_at_entry" field.
+func OwgrAtEntryIsNil() predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldIsNull(FieldOwgrAtEntry))
+}
+
+// OwgrAtEntryNotNil applies the NotNil predicate on the "owgr_at_entry" field.
+func OwgrAtEntryNotNil() predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNotNull(FieldOwgrAtEntry))
+}
+
+// IsAmateurEQ applies the EQ predicate on the "is_amateur" field.
+func IsAmateurEQ(v bool) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldEQ(FieldIsAmateur, v))
+}
+
+// IsAmateurNEQ applies the NEQ predicate on the "is_amateur" field.
+func IsAmateurNEQ(v bool) predicate.TournamentEntry {
+	return predicate.TournamentEntry(sql.FieldNEQ(FieldIsAmateur, v))
 }
 
 // HasTournament applies the HasEdge predicate on the "tournament" edge.

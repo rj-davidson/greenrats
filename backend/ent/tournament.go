@@ -26,6 +26,8 @@ type Tournament struct {
 	ScratchgolfID *string `json:"scratchgolf_id,omitempty"`
 	// BallDontLie API ID (int)
 	BdlID *int `json:"bdl_id,omitempty"`
+	// PGA Tour tournament ID (e.g., R2025002)
+	PgaTourID *string `json:"pga_tour_id,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
 	// StartDate holds the value of the "start_date" field.
@@ -95,7 +97,7 @@ func (*Tournament) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case tournament.FieldBdlID, tournament.FieldSeasonYear, tournament.FieldPurse:
 			values[i] = new(sql.NullInt64)
-		case tournament.FieldScratchgolfID, tournament.FieldName, tournament.FieldStatus, tournament.FieldCourse, tournament.FieldLocation:
+		case tournament.FieldScratchgolfID, tournament.FieldPgaTourID, tournament.FieldName, tournament.FieldStatus, tournament.FieldCourse, tournament.FieldLocation:
 			values[i] = new(sql.NullString)
 		case tournament.FieldCreatedAt, tournament.FieldUpdatedAt, tournament.FieldStartDate, tournament.FieldEndDate:
 			values[i] = new(sql.NullTime)
@@ -147,6 +149,13 @@ func (_m *Tournament) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.BdlID = new(int)
 				*_m.BdlID = int(value.Int64)
+			}
+		case tournament.FieldPgaTourID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field pga_tour_id", values[i])
+			} else if value.Valid {
+				_m.PgaTourID = new(string)
+				*_m.PgaTourID = value.String
 			}
 		case tournament.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -264,6 +273,11 @@ func (_m *Tournament) String() string {
 	if v := _m.BdlID; v != nil {
 		builder.WriteString("bdl_id=")
 		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.PgaTourID; v != nil {
+		builder.WriteString("pga_tour_id=")
+		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")
 	builder.WriteString("name=")

@@ -24,6 +24,8 @@ const (
 	FieldScratchgolfID = "scratchgolf_id"
 	// FieldBdlID holds the string denoting the bdl_id field in the database.
 	FieldBdlID = "bdl_id"
+	// FieldPgaTourID holds the string denoting the pga_tour_id field in the database.
+	FieldPgaTourID = "pga_tour_id"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
 	// FieldStartDate holds the string denoting the start_date field in the database.
@@ -78,6 +80,7 @@ var Columns = []string{
 	FieldUpdatedAt,
 	FieldScratchgolfID,
 	FieldBdlID,
+	FieldPgaTourID,
 	FieldName,
 	FieldStartDate,
 	FieldEndDate,
@@ -164,6 +167,11 @@ func ByScratchgolfID(opts ...sql.OrderTermOption) OrderOption {
 // ByBdlID orders the results by the bdl_id field.
 func ByBdlID(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldBdlID, opts...).ToFunc()
+}
+
+// ByPgaTourID orders the results by the pga_tour_id field.
+func ByPgaTourID(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPgaTourID, opts...).ToFunc()
 }
 
 // ByName orders the results by the name field.

@@ -40,6 +40,14 @@ type TournamentEntry struct {
 	CurrentRound int `json:"current_round,omitempty"`
 	// Holes completed in current round
 	Thru int `json:"thru,omitempty"`
+	// Field entry status (confirmed, alternate, withdrawn, pending)
+	EntryStatus tournamententry.EntryStatus `json:"entry_status,omitempty"`
+	// Qualification category (e.g., 'winner', 'exemption', 'sponsor')
+	Qualifier *string `json:"qualifier,omitempty"`
+	// Official World Golf Ranking at time of field entry
+	OwgrAtEntry *int `json:"owgr_at_entry,omitempty"`
+	// True if golfer is playing as an amateur
+	IsAmateur bool `json:"is_amateur,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TournamentEntryQuery when eager-loading is set.
 	Edges              TournamentEntryEdges `json:"edges"`
@@ -86,11 +94,11 @@ func (*TournamentEntry) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tournamententry.FieldCut:
+		case tournamententry.FieldCut, tournamententry.FieldIsAmateur:
 			values[i] = new(sql.NullBool)
-		case tournamententry.FieldPosition, tournamententry.FieldScore, tournamententry.FieldTotalStrokes, tournamententry.FieldEarnings, tournamententry.FieldCurrentRound, tournamententry.FieldThru:
+		case tournamententry.FieldPosition, tournamententry.FieldScore, tournamententry.FieldTotalStrokes, tournamententry.FieldEarnings, tournamententry.FieldCurrentRound, tournamententry.FieldThru, tournamententry.FieldOwgrAtEntry:
 			values[i] = new(sql.NullInt64)
-		case tournamententry.FieldStatus:
+		case tournamententry.FieldStatus, tournamententry.FieldEntryStatus, tournamententry.FieldQualifier:
 			values[i] = new(sql.NullString)
 		case tournamententry.FieldCreatedAt, tournamententry.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -181,6 +189,32 @@ func (_m *TournamentEntry) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Thru = int(value.Int64)
 			}
+		case tournamententry.FieldEntryStatus:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field entry_status", values[i])
+			} else if value.Valid {
+				_m.EntryStatus = tournamententry.EntryStatus(value.String)
+			}
+		case tournamententry.FieldQualifier:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field qualifier", values[i])
+			} else if value.Valid {
+				_m.Qualifier = new(string)
+				*_m.Qualifier = value.String
+			}
+		case tournamententry.FieldOwgrAtEntry:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field owgr_at_entry", values[i])
+			} else if value.Valid {
+				_m.OwgrAtEntry = new(int)
+				*_m.OwgrAtEntry = int(value.Int64)
+			}
+		case tournamententry.FieldIsAmateur:
+			if value, ok := values[i].(*sql.NullBool); !ok {
+				return fmt.Errorf("unexpected type %T for field is_amateur", values[i])
+			} else if value.Valid {
+				_m.IsAmateur = value.Bool
+			}
 		case tournamententry.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field golfer_entries", values[i])
@@ -270,6 +304,22 @@ func (_m *TournamentEntry) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("thru=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Thru))
+	builder.WriteString(", ")
+	builder.WriteString("entry_status=")
+	builder.WriteString(fmt.Sprintf("%v", _m.EntryStatus))
+	builder.WriteString(", ")
+	if v := _m.Qualifier; v != nil {
+		builder.WriteString("qualifier=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.OwgrAtEntry; v != nil {
+		builder.WriteString("owgr_at_entry=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	builder.WriteString("is_amateur=")
+	builder.WriteString(fmt.Sprintf("%v", _m.IsAmateur))
 	builder.WriteByte(')')
 	return builder.String()
 }

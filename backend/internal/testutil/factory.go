@@ -142,6 +142,12 @@ func WithPurse(purse int) TournamentOption {
 	}
 }
 
+func WithPgaTourID(id string) TournamentOption {
+	return func(tc *ent.TournamentCreate) {
+		tc.SetPgaTourID(id)
+	}
+}
+
 func (f *Factory) CreateTournament(opts ...TournamentOption) *ent.Tournament {
 	f.t.Helper()
 
@@ -388,6 +394,30 @@ func WithEarnings(earnings int) TournamentEntryOption {
 func WithEntryStatus(status tournamententry.Status) TournamentEntryOption {
 	return func(tec *ent.TournamentEntryCreate) {
 		tec.SetStatus(status)
+	}
+}
+
+func WithEntryStatusEnum(status tournamententry.EntryStatus) TournamentEntryOption {
+	return func(tec *ent.TournamentEntryCreate) {
+		tec.SetEntryStatus(status)
+	}
+}
+
+func WithQualifier(q string) TournamentEntryOption {
+	return func(tec *ent.TournamentEntryCreate) {
+		tec.SetQualifier(q)
+	}
+}
+
+func WithOwgrAtEntry(owgr int) TournamentEntryOption {
+	return func(tec *ent.TournamentEntryCreate) {
+		tec.SetOwgrAtEntry(owgr)
+	}
+}
+
+func WithIsAmateur(amateur bool) TournamentEntryOption {
+	return func(tec *ent.TournamentEntryCreate) {
+		tec.SetIsAmateur(amateur)
 	}
 }
 

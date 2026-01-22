@@ -200,7 +200,7 @@ func init() {
 	// tournament.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	tournament.UpdateDefaultUpdatedAt = tournamentDescUpdatedAt.UpdateDefault.(func() time.Time)
 	// tournamentDescName is the schema descriptor for name field.
-	tournamentDescName := tournamentFields[2].Descriptor()
+	tournamentDescName := tournamentFields[3].Descriptor()
 	// tournament.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	tournament.NameValidator = tournamentDescName.Validators[0].(func(string) error)
 	// tournamentDescID is the schema descriptor for id field.
@@ -252,6 +252,10 @@ func init() {
 	tournamententryDescThru := tournamententryFields[7].Descriptor()
 	// tournamententry.DefaultThru holds the default value on creation for the thru field.
 	tournamententry.DefaultThru = tournamententryDescThru.Default.(int)
+	// tournamententryDescIsAmateur is the schema descriptor for is_amateur field.
+	tournamententryDescIsAmateur := tournamententryFields[11].Descriptor()
+	// tournamententry.DefaultIsAmateur holds the default value on creation for the is_amateur field.
+	tournamententry.DefaultIsAmateur = tournamententryDescIsAmateur.Default.(bool)
 	// tournamententryDescID is the schema descriptor for id field.
 	tournamententryDescID := tournamententryMixinFields0[0].Descriptor()
 	// tournamententry.DefaultID holds the default value on creation for the id field.

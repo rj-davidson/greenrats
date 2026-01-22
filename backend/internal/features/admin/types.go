@@ -48,3 +48,32 @@ type ListTournamentsResponse struct {
 type TriggerResponse struct {
 	Message string `json:"message"`
 }
+
+type FieldEntryResponse struct {
+	ID          uuid.UUID `json:"id"`
+	GolferID    uuid.UUID `json:"golfer_id"`
+	GolferName  string    `json:"golfer_name"`
+	CountryCode string    `json:"country_code"`
+	EntryStatus string    `json:"entry_status"`
+	Qualifier   *string   `json:"qualifier"`
+	OWGRAtEntry *int      `json:"owgr_at_entry"`
+	IsAmateur   bool      `json:"is_amateur"`
+}
+
+type ListFieldResponse struct {
+	Entries []FieldEntryResponse `json:"entries"`
+	Total   int                  `json:"total"`
+}
+
+type AddFieldEntryRequest struct {
+	GolferID    uuid.UUID `json:"golfer_id" validate:"required"`
+	EntryStatus string    `json:"entry_status"`
+	Qualifier   *string   `json:"qualifier"`
+}
+
+type UpdateFieldEntryRequest struct {
+	EntryStatus *string `json:"entry_status"`
+	Qualifier   *string `json:"qualifier"`
+	OWGRAtEntry *int    `json:"owgr_at_entry"`
+	IsAmateur   *bool   `json:"is_amateur"`
+}

@@ -5457,6 +5457,7 @@ type TournamentMutation struct {
 	scratchgolf_id         *string
 	bdl_id                 *int
 	addbdl_id              *int
+	pga_tour_id            *string
 	name                   *string
 	start_date             *time.Time
 	end_date               *time.Time
@@ -5775,6 +5776,55 @@ func (m *TournamentMutation) ResetBdlID() {
 	m.bdl_id = nil
 	m.addbdl_id = nil
 	delete(m.clearedFields, tournament.FieldBdlID)
+}
+
+// SetPgaTourID sets the "pga_tour_id" field.
+func (m *TournamentMutation) SetPgaTourID(s string) {
+	m.pga_tour_id = &s
+}
+
+// PgaTourID returns the value of the "pga_tour_id" field in the mutation.
+func (m *TournamentMutation) PgaTourID() (r string, exists bool) {
+	v := m.pga_tour_id
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPgaTourID returns the old "pga_tour_id" field's value of the Tournament entity.
+// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentMutation) OldPgaTourID(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPgaTourID is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPgaTourID requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPgaTourID: %w", err)
+	}
+	return oldValue.PgaTourID, nil
+}
+
+// ClearPgaTourID clears the value of the "pga_tour_id" field.
+func (m *TournamentMutation) ClearPgaTourID() {
+	m.pga_tour_id = nil
+	m.clearedFields[tournament.FieldPgaTourID] = struct{}{}
+}
+
+// PgaTourIDCleared returns if the "pga_tour_id" field was cleared in this mutation.
+func (m *TournamentMutation) PgaTourIDCleared() bool {
+	_, ok := m.clearedFields[tournament.FieldPgaTourID]
+	return ok
+}
+
+// ResetPgaTourID resets all changes to the "pga_tour_id" field.
+func (m *TournamentMutation) ResetPgaTourID() {
+	m.pga_tour_id = nil
+	delete(m.clearedFields, tournament.FieldPgaTourID)
 }
 
 // SetName sets the "name" field.
@@ -6341,7 +6391,7 @@ func (m *TournamentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TournamentMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 13)
 	if m.created_at != nil {
 		fields = append(fields, tournament.FieldCreatedAt)
 	}
@@ -6353,6 +6403,9 @@ func (m *TournamentMutation) Fields() []string {
 	}
 	if m.bdl_id != nil {
 		fields = append(fields, tournament.FieldBdlID)
+	}
+	if m.pga_tour_id != nil {
+		fields = append(fields, tournament.FieldPgaTourID)
 	}
 	if m.name != nil {
 		fields = append(fields, tournament.FieldName)
@@ -6394,6 +6447,8 @@ func (m *TournamentMutation) Field(name string) (ent.Value, bool) {
 		return m.ScratchgolfID()
 	case tournament.FieldBdlID:
 		return m.BdlID()
+	case tournament.FieldPgaTourID:
+		return m.PgaTourID()
 	case tournament.FieldName:
 		return m.Name()
 	case tournament.FieldStartDate:
@@ -6427,6 +6482,8 @@ func (m *TournamentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldScratchgolfID(ctx)
 	case tournament.FieldBdlID:
 		return m.OldBdlID(ctx)
+	case tournament.FieldPgaTourID:
+		return m.OldPgaTourID(ctx)
 	case tournament.FieldName:
 		return m.OldName(ctx)
 	case tournament.FieldStartDate:
@@ -6479,6 +6536,13 @@ func (m *TournamentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetBdlID(v)
+		return nil
+	case tournament.FieldPgaTourID:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPgaTourID(v)
 		return nil
 	case tournament.FieldName:
 		v, ok := value.(string)
@@ -6611,6 +6675,9 @@ func (m *TournamentMutation) ClearedFields() []string {
 	if m.FieldCleared(tournament.FieldBdlID) {
 		fields = append(fields, tournament.FieldBdlID)
 	}
+	if m.FieldCleared(tournament.FieldPgaTourID) {
+		fields = append(fields, tournament.FieldPgaTourID)
+	}
 	if m.FieldCleared(tournament.FieldCourse) {
 		fields = append(fields, tournament.FieldCourse)
 	}
@@ -6640,6 +6707,9 @@ func (m *TournamentMutation) ClearField(name string) error {
 	case tournament.FieldBdlID:
 		m.ClearBdlID()
 		return nil
+	case tournament.FieldPgaTourID:
+		m.ClearPgaTourID()
+		return nil
 	case tournament.FieldCourse:
 		m.ClearCourse()
 		return nil
@@ -6668,6 +6738,9 @@ func (m *TournamentMutation) ResetField(name string) error {
 		return nil
 	case tournament.FieldBdlID:
 		m.ResetBdlID()
+		return nil
+	case tournament.FieldPgaTourID:
+		m.ResetPgaTourID()
 		return nil
 	case tournament.FieldName:
 		m.ResetName()
@@ -6855,6 +6928,11 @@ type TournamentEntryMutation struct {
 	addcurrent_round  *int
 	thru              *int
 	addthru           *int
+	entry_status      *tournamententry.EntryStatus
+	qualifier         *string
+	owgr_at_entry     *int
+	addowgr_at_entry  *int
+	is_amateur        *bool
 	clearedFields     map[string]struct{}
 	tournament        *uuid.UUID
 	clearedtournament bool
@@ -7449,6 +7527,197 @@ func (m *TournamentEntryMutation) ResetThru() {
 	m.addthru = nil
 }
 
+// SetEntryStatus sets the "entry_status" field.
+func (m *TournamentEntryMutation) SetEntryStatus(ts tournamententry.EntryStatus) {
+	m.entry_status = &ts
+}
+
+// EntryStatus returns the value of the "entry_status" field in the mutation.
+func (m *TournamentEntryMutation) EntryStatus() (r tournamententry.EntryStatus, exists bool) {
+	v := m.entry_status
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldEntryStatus returns the old "entry_status" field's value of the TournamentEntry entity.
+// If the TournamentEntry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentEntryMutation) OldEntryStatus(ctx context.Context) (v tournamententry.EntryStatus, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldEntryStatus is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldEntryStatus requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldEntryStatus: %w", err)
+	}
+	return oldValue.EntryStatus, nil
+}
+
+// ResetEntryStatus resets all changes to the "entry_status" field.
+func (m *TournamentEntryMutation) ResetEntryStatus() {
+	m.entry_status = nil
+}
+
+// SetQualifier sets the "qualifier" field.
+func (m *TournamentEntryMutation) SetQualifier(s string) {
+	m.qualifier = &s
+}
+
+// Qualifier returns the value of the "qualifier" field in the mutation.
+func (m *TournamentEntryMutation) Qualifier() (r string, exists bool) {
+	v := m.qualifier
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldQualifier returns the old "qualifier" field's value of the TournamentEntry entity.
+// If the TournamentEntry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentEntryMutation) OldQualifier(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldQualifier is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldQualifier requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldQualifier: %w", err)
+	}
+	return oldValue.Qualifier, nil
+}
+
+// ClearQualifier clears the value of the "qualifier" field.
+func (m *TournamentEntryMutation) ClearQualifier() {
+	m.qualifier = nil
+	m.clearedFields[tournamententry.FieldQualifier] = struct{}{}
+}
+
+// QualifierCleared returns if the "qualifier" field was cleared in this mutation.
+func (m *TournamentEntryMutation) QualifierCleared() bool {
+	_, ok := m.clearedFields[tournamententry.FieldQualifier]
+	return ok
+}
+
+// ResetQualifier resets all changes to the "qualifier" field.
+func (m *TournamentEntryMutation) ResetQualifier() {
+	m.qualifier = nil
+	delete(m.clearedFields, tournamententry.FieldQualifier)
+}
+
+// SetOwgrAtEntry sets the "owgr_at_entry" field.
+func (m *TournamentEntryMutation) SetOwgrAtEntry(i int) {
+	m.owgr_at_entry = &i
+	m.addowgr_at_entry = nil
+}
+
+// OwgrAtEntry returns the value of the "owgr_at_entry" field in the mutation.
+func (m *TournamentEntryMutation) OwgrAtEntry() (r int, exists bool) {
+	v := m.owgr_at_entry
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldOwgrAtEntry returns the old "owgr_at_entry" field's value of the TournamentEntry entity.
+// If the TournamentEntry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentEntryMutation) OldOwgrAtEntry(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldOwgrAtEntry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldOwgrAtEntry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldOwgrAtEntry: %w", err)
+	}
+	return oldValue.OwgrAtEntry, nil
+}
+
+// AddOwgrAtEntry adds i to the "owgr_at_entry" field.
+func (m *TournamentEntryMutation) AddOwgrAtEntry(i int) {
+	if m.addowgr_at_entry != nil {
+		*m.addowgr_at_entry += i
+	} else {
+		m.addowgr_at_entry = &i
+	}
+}
+
+// AddedOwgrAtEntry returns the value that was added to the "owgr_at_entry" field in this mutation.
+func (m *TournamentEntryMutation) AddedOwgrAtEntry() (r int, exists bool) {
+	v := m.addowgr_at_entry
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearOwgrAtEntry clears the value of the "owgr_at_entry" field.
+func (m *TournamentEntryMutation) ClearOwgrAtEntry() {
+	m.owgr_at_entry = nil
+	m.addowgr_at_entry = nil
+	m.clearedFields[tournamententry.FieldOwgrAtEntry] = struct{}{}
+}
+
+// OwgrAtEntryCleared returns if the "owgr_at_entry" field was cleared in this mutation.
+func (m *TournamentEntryMutation) OwgrAtEntryCleared() bool {
+	_, ok := m.clearedFields[tournamententry.FieldOwgrAtEntry]
+	return ok
+}
+
+// ResetOwgrAtEntry resets all changes to the "owgr_at_entry" field.
+func (m *TournamentEntryMutation) ResetOwgrAtEntry() {
+	m.owgr_at_entry = nil
+	m.addowgr_at_entry = nil
+	delete(m.clearedFields, tournamententry.FieldOwgrAtEntry)
+}
+
+// SetIsAmateur sets the "is_amateur" field.
+func (m *TournamentEntryMutation) SetIsAmateur(b bool) {
+	m.is_amateur = &b
+}
+
+// IsAmateur returns the value of the "is_amateur" field in the mutation.
+func (m *TournamentEntryMutation) IsAmateur() (r bool, exists bool) {
+	v := m.is_amateur
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldIsAmateur returns the old "is_amateur" field's value of the TournamentEntry entity.
+// If the TournamentEntry object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentEntryMutation) OldIsAmateur(ctx context.Context) (v bool, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldIsAmateur is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldIsAmateur requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldIsAmateur: %w", err)
+	}
+	return oldValue.IsAmateur, nil
+}
+
+// ResetIsAmateur resets all changes to the "is_amateur" field.
+func (m *TournamentEntryMutation) ResetIsAmateur() {
+	m.is_amateur = nil
+}
+
 // SetTournamentID sets the "tournament" edge to the Tournament entity by id.
 func (m *TournamentEntryMutation) SetTournamentID(id uuid.UUID) {
 	m.tournament = &id
@@ -7561,7 +7830,7 @@ func (m *TournamentEntryMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TournamentEntryMutation) Fields() []string {
-	fields := make([]string, 0, 10)
+	fields := make([]string, 0, 14)
 	if m.created_at != nil {
 		fields = append(fields, tournamententry.FieldCreatedAt)
 	}
@@ -7592,6 +7861,18 @@ func (m *TournamentEntryMutation) Fields() []string {
 	if m.thru != nil {
 		fields = append(fields, tournamententry.FieldThru)
 	}
+	if m.entry_status != nil {
+		fields = append(fields, tournamententry.FieldEntryStatus)
+	}
+	if m.qualifier != nil {
+		fields = append(fields, tournamententry.FieldQualifier)
+	}
+	if m.owgr_at_entry != nil {
+		fields = append(fields, tournamententry.FieldOwgrAtEntry)
+	}
+	if m.is_amateur != nil {
+		fields = append(fields, tournamententry.FieldIsAmateur)
+	}
 	return fields
 }
 
@@ -7620,6 +7901,14 @@ func (m *TournamentEntryMutation) Field(name string) (ent.Value, bool) {
 		return m.CurrentRound()
 	case tournamententry.FieldThru:
 		return m.Thru()
+	case tournamententry.FieldEntryStatus:
+		return m.EntryStatus()
+	case tournamententry.FieldQualifier:
+		return m.Qualifier()
+	case tournamententry.FieldOwgrAtEntry:
+		return m.OwgrAtEntry()
+	case tournamententry.FieldIsAmateur:
+		return m.IsAmateur()
 	}
 	return nil, false
 }
@@ -7649,6 +7938,14 @@ func (m *TournamentEntryMutation) OldField(ctx context.Context, name string) (en
 		return m.OldCurrentRound(ctx)
 	case tournamententry.FieldThru:
 		return m.OldThru(ctx)
+	case tournamententry.FieldEntryStatus:
+		return m.OldEntryStatus(ctx)
+	case tournamententry.FieldQualifier:
+		return m.OldQualifier(ctx)
+	case tournamententry.FieldOwgrAtEntry:
+		return m.OldOwgrAtEntry(ctx)
+	case tournamententry.FieldIsAmateur:
+		return m.OldIsAmateur(ctx)
 	}
 	return nil, fmt.Errorf("unknown TournamentEntry field %s", name)
 }
@@ -7728,6 +8025,34 @@ func (m *TournamentEntryMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetThru(v)
 		return nil
+	case tournamententry.FieldEntryStatus:
+		v, ok := value.(tournamententry.EntryStatus)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetEntryStatus(v)
+		return nil
+	case tournamententry.FieldQualifier:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetQualifier(v)
+		return nil
+	case tournamententry.FieldOwgrAtEntry:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetOwgrAtEntry(v)
+		return nil
+	case tournamententry.FieldIsAmateur:
+		v, ok := value.(bool)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetIsAmateur(v)
+		return nil
 	}
 	return fmt.Errorf("unknown TournamentEntry field %s", name)
 }
@@ -7754,6 +8079,9 @@ func (m *TournamentEntryMutation) AddedFields() []string {
 	if m.addthru != nil {
 		fields = append(fields, tournamententry.FieldThru)
 	}
+	if m.addowgr_at_entry != nil {
+		fields = append(fields, tournamententry.FieldOwgrAtEntry)
+	}
 	return fields
 }
 
@@ -7774,6 +8102,8 @@ func (m *TournamentEntryMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedCurrentRound()
 	case tournamententry.FieldThru:
 		return m.AddedThru()
+	case tournamententry.FieldOwgrAtEntry:
+		return m.AddedOwgrAtEntry()
 	}
 	return nil, false
 }
@@ -7825,6 +8155,13 @@ func (m *TournamentEntryMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddThru(v)
 		return nil
+	case tournamententry.FieldOwgrAtEntry:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddOwgrAtEntry(v)
+		return nil
 	}
 	return fmt.Errorf("unknown TournamentEntry numeric field %s", name)
 }
@@ -7832,7 +8169,14 @@ func (m *TournamentEntryMutation) AddField(name string, value ent.Value) error {
 // ClearedFields returns all nullable fields that were cleared during this
 // mutation.
 func (m *TournamentEntryMutation) ClearedFields() []string {
-	return nil
+	var fields []string
+	if m.FieldCleared(tournamententry.FieldQualifier) {
+		fields = append(fields, tournamententry.FieldQualifier)
+	}
+	if m.FieldCleared(tournamententry.FieldOwgrAtEntry) {
+		fields = append(fields, tournamententry.FieldOwgrAtEntry)
+	}
+	return fields
 }
 
 // FieldCleared returns a boolean indicating if a field with the given name was
@@ -7845,6 +8189,14 @@ func (m *TournamentEntryMutation) FieldCleared(name string) bool {
 // ClearField clears the value of the field with the given name. It returns an
 // error if the field is not defined in the schema.
 func (m *TournamentEntryMutation) ClearField(name string) error {
+	switch name {
+	case tournamententry.FieldQualifier:
+		m.ClearQualifier()
+		return nil
+	case tournamententry.FieldOwgrAtEntry:
+		m.ClearOwgrAtEntry()
+		return nil
+	}
 	return fmt.Errorf("unknown TournamentEntry nullable field %s", name)
 }
 
@@ -7881,6 +8233,18 @@ func (m *TournamentEntryMutation) ResetField(name string) error {
 		return nil
 	case tournamententry.FieldThru:
 		m.ResetThru()
+		return nil
+	case tournamententry.FieldEntryStatus:
+		m.ResetEntryStatus()
+		return nil
+	case tournamententry.FieldQualifier:
+		m.ResetQualifier()
+		return nil
+	case tournamententry.FieldOwgrAtEntry:
+		m.ResetOwgrAtEntry()
+		return nil
+	case tournamententry.FieldIsAmateur:
+		m.ResetIsAmateur()
 		return nil
 	}
 	return fmt.Errorf("unknown TournamentEntry field %s", name)

@@ -246,6 +246,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "scratchgolf_id", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "bdl_id", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "pga_tour_id", Type: field.TypeString, Unique: true, Nullable: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "start_date", Type: field.TypeTime},
 		{Name: "end_date", Type: field.TypeTime},
@@ -274,6 +275,10 @@ var (
 		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "active", "withdrawn", "finished"}, Default: "pending"},
 		{Name: "current_round", Type: field.TypeInt, Default: 0},
 		{Name: "thru", Type: field.TypeInt, Default: 0},
+		{Name: "entry_status", Type: field.TypeEnum, Enums: []string{"confirmed", "alternate", "withdrawn", "pending"}, Default: "confirmed"},
+		{Name: "qualifier", Type: field.TypeString, Nullable: true},
+		{Name: "owgr_at_entry", Type: field.TypeInt, Nullable: true},
+		{Name: "is_amateur", Type: field.TypeBool, Default: false},
 		{Name: "golfer_entries", Type: field.TypeUUID},
 		{Name: "tournament_entries", Type: field.TypeUUID},
 	}
@@ -285,13 +290,13 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "tournament_entries_golfers_entries",
-				Columns:    []*schema.Column{TournamentEntriesColumns[11]},
+				Columns:    []*schema.Column{TournamentEntriesColumns[15]},
 				RefColumns: []*schema.Column{GolfersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "tournament_entries_tournaments_entries",
-				Columns:    []*schema.Column{TournamentEntriesColumns[12]},
+				Columns:    []*schema.Column{TournamentEntriesColumns[16]},
 				RefColumns: []*schema.Column{TournamentsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -300,7 +305,7 @@ var (
 			{
 				Name:    "tournamententry_tournament_entries_golfer_entries",
 				Unique:  true,
-				Columns: []*schema.Column{TournamentEntriesColumns[12], TournamentEntriesColumns[11]},
+				Columns: []*schema.Column{TournamentEntriesColumns[16], TournamentEntriesColumns[15]},
 			},
 		},
 	}

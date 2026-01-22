@@ -85,6 +85,26 @@ func (_u *TournamentUpdate) ClearBdlID() *TournamentUpdate {
 	return _u
 }
 
+// SetPgaTourID sets the "pga_tour_id" field.
+func (_u *TournamentUpdate) SetPgaTourID(v string) *TournamentUpdate {
+	_u.mutation.SetPgaTourID(v)
+	return _u
+}
+
+// SetNillablePgaTourID sets the "pga_tour_id" field if the given value is not nil.
+func (_u *TournamentUpdate) SetNillablePgaTourID(v *string) *TournamentUpdate {
+	if v != nil {
+		_u.SetPgaTourID(*v)
+	}
+	return _u
+}
+
+// ClearPgaTourID clears the value of the "pga_tour_id" field.
+func (_u *TournamentUpdate) ClearPgaTourID() *TournamentUpdate {
+	_u.mutation.ClearPgaTourID()
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *TournamentUpdate) SetName(v string) *TournamentUpdate {
 	_u.mutation.SetName(v)
@@ -423,6 +443,12 @@ func (_u *TournamentUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	if _u.mutation.BdlIDCleared() {
 		_spec.ClearField(tournament.FieldBdlID, field.TypeInt)
 	}
+	if value, ok := _u.mutation.PgaTourID(); ok {
+		_spec.SetField(tournament.FieldPgaTourID, field.TypeString, value)
+	}
+	if _u.mutation.PgaTourIDCleared() {
+		_spec.ClearField(tournament.FieldPgaTourID, field.TypeString)
+	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(tournament.FieldName, field.TypeString, value)
 	}
@@ -667,6 +693,26 @@ func (_u *TournamentUpdateOne) AddBdlID(v int) *TournamentUpdateOne {
 // ClearBdlID clears the value of the "bdl_id" field.
 func (_u *TournamentUpdateOne) ClearBdlID() *TournamentUpdateOne {
 	_u.mutation.ClearBdlID()
+	return _u
+}
+
+// SetPgaTourID sets the "pga_tour_id" field.
+func (_u *TournamentUpdateOne) SetPgaTourID(v string) *TournamentUpdateOne {
+	_u.mutation.SetPgaTourID(v)
+	return _u
+}
+
+// SetNillablePgaTourID sets the "pga_tour_id" field if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillablePgaTourID(v *string) *TournamentUpdateOne {
+	if v != nil {
+		_u.SetPgaTourID(*v)
+	}
+	return _u
+}
+
+// ClearPgaTourID clears the value of the "pga_tour_id" field.
+func (_u *TournamentUpdateOne) ClearPgaTourID() *TournamentUpdateOne {
+	_u.mutation.ClearPgaTourID()
 	return _u
 }
 
@@ -1037,6 +1083,12 @@ func (_u *TournamentUpdateOne) sqlSave(ctx context.Context) (_node *Tournament, 
 	}
 	if _u.mutation.BdlIDCleared() {
 		_spec.ClearField(tournament.FieldBdlID, field.TypeInt)
+	}
+	if value, ok := _u.mutation.PgaTourID(); ok {
+		_spec.SetField(tournament.FieldPgaTourID, field.TypeString, value)
+	}
+	if _u.mutation.PgaTourIDCleared() {
+		_spec.ClearField(tournament.FieldPgaTourID, field.TypeString)
 	}
 	if value, ok := _u.mutation.Name(); ok {
 		_spec.SetField(tournament.FieldName, field.TypeString, value)

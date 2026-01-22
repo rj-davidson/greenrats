@@ -29,11 +29,17 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Delete("/leagues/:id", h.DeleteLeague)
 	group.Get("/tournaments", h.ListTournaments)
 
+	group.Get("/tournaments/:id/field", h.ListTournamentField)
+	group.Post("/tournaments/:id/field", h.AddFieldEntry)
+	group.Put("/tournaments/:id/field/:entryId", h.UpdateFieldEntry)
+	group.Delete("/tournaments/:id/field/:entryId", h.DeleteFieldEntry)
+
 	automations := group.Group("/automations")
 	automations.Post("/sync-tournaments", h.SyncTournaments)
 	automations.Post("/sync-players", h.SyncPlayers)
 	automations.Post("/sync-leaderboard/:tournamentId", h.SyncLeaderboard)
 	automations.Post("/sync-earnings/:tournamentId", h.SyncEarnings)
+	automations.Post("/sync-field/:tournamentId", h.SyncField)
 }
 
 func (h *Handler) ListUsers(c *fiber.Ctx) error {
@@ -159,5 +165,136 @@ func (h *Handler) SyncEarnings(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusAccepted).JSON(TriggerResponse{
 		Message: "Earnings sync started",
+	})
+}
+
+func (h *Handler) ListTournamentField(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	id, err := uuid.FromString(idParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tournament id",
+		})
+	}
+
+	resp, err := h.service.ListTournamentField(c.UserContext(), id)
+	if err != nil {
+		h.logger.Error("failed to list tournament field", "error", err, "tournament_id", id)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to list tournament field",
+		})
+	}
+	return c.JSON(resp)
+}
+
+func (h *Handler) AddFieldEntry(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	id, err := uuid.FromString(idParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tournament id",
+		})
+	}
+
+	var req AddFieldEntryRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	resp, err := h.service.AddFieldEntry(c.UserContext(), id, &req)
+	if errors.Is(err, ErrTournamentNotFound) {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "tournament not found",
+		})
+	}
+	if errors.Is(err, ErrGolferNotFound) {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "golfer not found",
+		})
+	}
+	if err != nil {
+		h.logger.Error("failed to add field entry", "error", err, "tournament_id", id)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to add field entry",
+		})
+	}
+	return c.Status(fiber.StatusCreated).JSON(resp)
+}
+
+func (h *Handler) UpdateFieldEntry(c *fiber.Ctx) error {
+	entryIdParam := c.Params("entryId")
+	entryId, err := uuid.FromString(entryIdParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid entry id",
+		})
+	}
+
+	var req UpdateFieldEntryRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	resp, err := h.service.UpdateFieldEntry(c.UserContext(), entryId, &req)
+	if errors.Is(err, ErrEntryNotFound) {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "entry not found",
+		})
+	}
+	if err != nil {
+		h.logger.Error("failed to update field entry", "error", err, "entry_id", entryId)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to update field entry",
+		})
+	}
+	return c.JSON(resp)
+}
+
+func (h *Handler) DeleteFieldEntry(c *fiber.Ctx) error {
+	entryIdParam := c.Params("entryId")
+	entryId, err := uuid.FromString(entryIdParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid entry id",
+		})
+	}
+
+	err = h.service.DeleteFieldEntry(c.UserContext(), entryId)
+	if errors.Is(err, ErrEntryNotFound) {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "entry not found",
+		})
+	}
+	if err != nil {
+		h.logger.Error("failed to delete field entry", "error", err, "entry_id", entryId)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to delete field entry",
+		})
+	}
+	return c.Status(fiber.StatusNoContent).Send(nil)
+}
+
+func (h *Handler) SyncField(c *fiber.Ctx) error {
+	idParam := c.Params("tournamentId")
+	id, err := uuid.FromString(idParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid tournament id",
+		})
+	}
+
+	go func() {
+		ctx := context.Background()
+		if err := h.ingestService.SyncField(ctx, id); err != nil {
+			h.logger.Error("field sync failed", "error", err, "tournament_id", id)
+		}
+	}()
+
+	return c.Status(fiber.StatusAccepted).JSON(TriggerResponse{
+		Message: "Field sync started",
 	})
 }

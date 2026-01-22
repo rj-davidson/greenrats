@@ -50,6 +50,21 @@ func (TournamentEntry) Fields() []ent.Field {
 		field.Int("thru").
 			Default(0).
 			Comment("Holes completed in current round"),
+		field.Enum("entry_status").
+			Values("confirmed", "alternate", "withdrawn", "pending").
+			Default("confirmed").
+			Comment("Field entry status (confirmed, alternate, withdrawn, pending)"),
+		field.String("qualifier").
+			Optional().
+			Nillable().
+			Comment("Qualification category (e.g., 'winner', 'exemption', 'sponsor')"),
+		field.Int("owgr_at_entry").
+			Optional().
+			Nillable().
+			Comment("Official World Golf Ranking at time of field entry"),
+		field.Bool("is_amateur").
+			Default(false).
+			Comment("True if golfer is playing as an amateur"),
 	}
 }
 

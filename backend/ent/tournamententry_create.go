@@ -163,6 +163,62 @@ func (_c *TournamentEntryCreate) SetNillableThru(v *int) *TournamentEntryCreate 
 	return _c
 }
 
+// SetEntryStatus sets the "entry_status" field.
+func (_c *TournamentEntryCreate) SetEntryStatus(v tournamententry.EntryStatus) *TournamentEntryCreate {
+	_c.mutation.SetEntryStatus(v)
+	return _c
+}
+
+// SetNillableEntryStatus sets the "entry_status" field if the given value is not nil.
+func (_c *TournamentEntryCreate) SetNillableEntryStatus(v *tournamententry.EntryStatus) *TournamentEntryCreate {
+	if v != nil {
+		_c.SetEntryStatus(*v)
+	}
+	return _c
+}
+
+// SetQualifier sets the "qualifier" field.
+func (_c *TournamentEntryCreate) SetQualifier(v string) *TournamentEntryCreate {
+	_c.mutation.SetQualifier(v)
+	return _c
+}
+
+// SetNillableQualifier sets the "qualifier" field if the given value is not nil.
+func (_c *TournamentEntryCreate) SetNillableQualifier(v *string) *TournamentEntryCreate {
+	if v != nil {
+		_c.SetQualifier(*v)
+	}
+	return _c
+}
+
+// SetOwgrAtEntry sets the "owgr_at_entry" field.
+func (_c *TournamentEntryCreate) SetOwgrAtEntry(v int) *TournamentEntryCreate {
+	_c.mutation.SetOwgrAtEntry(v)
+	return _c
+}
+
+// SetNillableOwgrAtEntry sets the "owgr_at_entry" field if the given value is not nil.
+func (_c *TournamentEntryCreate) SetNillableOwgrAtEntry(v *int) *TournamentEntryCreate {
+	if v != nil {
+		_c.SetOwgrAtEntry(*v)
+	}
+	return _c
+}
+
+// SetIsAmateur sets the "is_amateur" field.
+func (_c *TournamentEntryCreate) SetIsAmateur(v bool) *TournamentEntryCreate {
+	_c.mutation.SetIsAmateur(v)
+	return _c
+}
+
+// SetNillableIsAmateur sets the "is_amateur" field if the given value is not nil.
+func (_c *TournamentEntryCreate) SetNillableIsAmateur(v *bool) *TournamentEntryCreate {
+	if v != nil {
+		_c.SetIsAmateur(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *TournamentEntryCreate) SetID(v uuid.UUID) *TournamentEntryCreate {
 	_c.mutation.SetID(v)
@@ -274,6 +330,14 @@ func (_c *TournamentEntryCreate) defaults() {
 		v := tournamententry.DefaultThru
 		_c.mutation.SetThru(v)
 	}
+	if _, ok := _c.mutation.EntryStatus(); !ok {
+		v := tournamententry.DefaultEntryStatus
+		_c.mutation.SetEntryStatus(v)
+	}
+	if _, ok := _c.mutation.IsAmateur(); !ok {
+		v := tournamententry.DefaultIsAmateur
+		_c.mutation.SetIsAmateur(v)
+	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := tournamententry.DefaultID()
 		_c.mutation.SetID(v)
@@ -316,6 +380,17 @@ func (_c *TournamentEntryCreate) check() error {
 	}
 	if _, ok := _c.mutation.Thru(); !ok {
 		return &ValidationError{Name: "thru", err: errors.New(`ent: missing required field "TournamentEntry.thru"`)}
+	}
+	if _, ok := _c.mutation.EntryStatus(); !ok {
+		return &ValidationError{Name: "entry_status", err: errors.New(`ent: missing required field "TournamentEntry.entry_status"`)}
+	}
+	if v, ok := _c.mutation.EntryStatus(); ok {
+		if err := tournamententry.EntryStatusValidator(v); err != nil {
+			return &ValidationError{Name: "entry_status", err: fmt.Errorf(`ent: validator failed for field "TournamentEntry.entry_status": %w`, err)}
+		}
+	}
+	if _, ok := _c.mutation.IsAmateur(); !ok {
+		return &ValidationError{Name: "is_amateur", err: errors.New(`ent: missing required field "TournamentEntry.is_amateur"`)}
 	}
 	if len(_c.mutation.TournamentIDs()) == 0 {
 		return &ValidationError{Name: "tournament", err: errors.New(`ent: missing required edge "TournamentEntry.tournament"`)}
@@ -397,6 +472,22 @@ func (_c *TournamentEntryCreate) createSpec() (*TournamentEntry, *sqlgraph.Creat
 	if value, ok := _c.mutation.Thru(); ok {
 		_spec.SetField(tournamententry.FieldThru, field.TypeInt, value)
 		_node.Thru = value
+	}
+	if value, ok := _c.mutation.EntryStatus(); ok {
+		_spec.SetField(tournamententry.FieldEntryStatus, field.TypeEnum, value)
+		_node.EntryStatus = value
+	}
+	if value, ok := _c.mutation.Qualifier(); ok {
+		_spec.SetField(tournamententry.FieldQualifier, field.TypeString, value)
+		_node.Qualifier = &value
+	}
+	if value, ok := _c.mutation.OwgrAtEntry(); ok {
+		_spec.SetField(tournamententry.FieldOwgrAtEntry, field.TypeInt, value)
+		_node.OwgrAtEntry = &value
+	}
+	if value, ok := _c.mutation.IsAmateur(); ok {
+		_spec.SetField(tournamententry.FieldIsAmateur, field.TypeBool, value)
+		_node.IsAmateur = value
 	}
 	if nodes := _c.mutation.TournamentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

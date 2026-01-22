@@ -19,25 +19,30 @@ import (
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/exa"
 	"github.com/rj-davidson/greenrats/internal/external/openai"
+	"github.com/rj-davidson/greenrats/internal/external/pgatour"
 	"github.com/rj-davidson/greenrats/internal/external/scrapedo"
+	"github.com/rj-davidson/greenrats/internal/features/fields"
 	"github.com/rj-davidson/greenrats/internal/features/golfers"
 )
 
 type IngestService struct {
-	db          *ent.Client
-	config      *config.Config
-	ballDontLie *balldontlie.Client
-	exa         *exa.Client
-	openai      *openai.Client
-	scrapedo    *scrapedo.Client
-	golfers     *golfers.Service
-	logger      *slog.Logger
+	db            *ent.Client
+	config        *config.Config
+	ballDontLie   *balldontlie.Client
+	pgatourClient *pgatour.Client
+	fieldsService *fields.Service
+	exa           *exa.Client
+	openai        *openai.Client
+	scrapedo      *scrapedo.Client
+	golfers       *golfers.Service
+	logger        *slog.Logger
 }
 
 func NewIngestService(
 	db *ent.Client,
 	cfg *config.Config,
 	ballDontLie *balldontlie.Client,
+	pgatourClient *pgatour.Client,
 	exaClient *exa.Client,
 	openaiClient *openai.Client,
 	scrapeDoClient *scrapedo.Client,
@@ -45,14 +50,16 @@ func NewIngestService(
 	logger *slog.Logger,
 ) *IngestService {
 	return &IngestService{
-		db:          db,
-		config:      cfg,
-		ballDontLie: ballDontLie,
-		exa:         exaClient,
-		openai:      openaiClient,
-		scrapedo:    scrapeDoClient,
-		golfers:     golfersSvc,
-		logger:      logger,
+		db:            db,
+		config:        cfg,
+		ballDontLie:   ballDontLie,
+		pgatourClient: pgatourClient,
+		fieldsService: fields.NewService(db, pgatourClient, logger),
+		exa:           exaClient,
+		openai:        openaiClient,
+		scrapedo:      scrapeDoClient,
+		golfers:       golfersSvc,
+		logger:        logger,
 	}
 }
 
@@ -219,6 +226,23 @@ func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID
 	}
 
 	s.logger.Info("earnings sync completed", "tournament", t.Name, "updated", updated)
+	return nil
+}
+
+func (s *IngestService) SyncField(ctx context.Context, tournamentID uuid.UUID) error {
+	result, err := s.fieldsService.SyncTournamentField(ctx, tournamentID)
+	if err != nil {
+		return err
+	}
+
+	s.logger.Info("field sync completed",
+		"tournament", result.TournamentName,
+		"total", result.TotalPlayers,
+		"matched", result.MatchedPlayers,
+		"new", result.NewEntries,
+		"updated", result.UpdatedEntries,
+	)
+
 	return nil
 }
 

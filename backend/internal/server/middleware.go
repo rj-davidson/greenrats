@@ -38,7 +38,6 @@ func (s *Server) setupMiddleware() {
 		EnableStackTrace: s.config.IsDevelopment(),
 	}))
 
-	// CORS middleware
 	s.app.Use(cors.New(cors.Config{
 		AllowOrigins:     s.corsOrigins(),
 		AllowMethods:     "GET,POST,PUT,PATCH,DELETE,OPTIONS",

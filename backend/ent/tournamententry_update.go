@@ -191,6 +191,81 @@ func (_u *TournamentEntryUpdate) AddThru(v int) *TournamentEntryUpdate {
 	return _u
 }
 
+// SetEntryStatus sets the "entry_status" field.
+func (_u *TournamentEntryUpdate) SetEntryStatus(v tournamententry.EntryStatus) *TournamentEntryUpdate {
+	_u.mutation.SetEntryStatus(v)
+	return _u
+}
+
+// SetNillableEntryStatus sets the "entry_status" field if the given value is not nil.
+func (_u *TournamentEntryUpdate) SetNillableEntryStatus(v *tournamententry.EntryStatus) *TournamentEntryUpdate {
+	if v != nil {
+		_u.SetEntryStatus(*v)
+	}
+	return _u
+}
+
+// SetQualifier sets the "qualifier" field.
+func (_u *TournamentEntryUpdate) SetQualifier(v string) *TournamentEntryUpdate {
+	_u.mutation.SetQualifier(v)
+	return _u
+}
+
+// SetNillableQualifier sets the "qualifier" field if the given value is not nil.
+func (_u *TournamentEntryUpdate) SetNillableQualifier(v *string) *TournamentEntryUpdate {
+	if v != nil {
+		_u.SetQualifier(*v)
+	}
+	return _u
+}
+
+// ClearQualifier clears the value of the "qualifier" field.
+func (_u *TournamentEntryUpdate) ClearQualifier() *TournamentEntryUpdate {
+	_u.mutation.ClearQualifier()
+	return _u
+}
+
+// SetOwgrAtEntry sets the "owgr_at_entry" field.
+func (_u *TournamentEntryUpdate) SetOwgrAtEntry(v int) *TournamentEntryUpdate {
+	_u.mutation.ResetOwgrAtEntry()
+	_u.mutation.SetOwgrAtEntry(v)
+	return _u
+}
+
+// SetNillableOwgrAtEntry sets the "owgr_at_entry" field if the given value is not nil.
+func (_u *TournamentEntryUpdate) SetNillableOwgrAtEntry(v *int) *TournamentEntryUpdate {
+	if v != nil {
+		_u.SetOwgrAtEntry(*v)
+	}
+	return _u
+}
+
+// AddOwgrAtEntry adds value to the "owgr_at_entry" field.
+func (_u *TournamentEntryUpdate) AddOwgrAtEntry(v int) *TournamentEntryUpdate {
+	_u.mutation.AddOwgrAtEntry(v)
+	return _u
+}
+
+// ClearOwgrAtEntry clears the value of the "owgr_at_entry" field.
+func (_u *TournamentEntryUpdate) ClearOwgrAtEntry() *TournamentEntryUpdate {
+	_u.mutation.ClearOwgrAtEntry()
+	return _u
+}
+
+// SetIsAmateur sets the "is_amateur" field.
+func (_u *TournamentEntryUpdate) SetIsAmateur(v bool) *TournamentEntryUpdate {
+	_u.mutation.SetIsAmateur(v)
+	return _u
+}
+
+// SetNillableIsAmateur sets the "is_amateur" field if the given value is not nil.
+func (_u *TournamentEntryUpdate) SetNillableIsAmateur(v *bool) *TournamentEntryUpdate {
+	if v != nil {
+		_u.SetIsAmateur(*v)
+	}
+	return _u
+}
+
 // SetTournamentID sets the "tournament" edge to the Tournament entity by ID.
 func (_u *TournamentEntryUpdate) SetTournamentID(id uuid.UUID) *TournamentEntryUpdate {
 	_u.mutation.SetTournamentID(id)
@@ -273,6 +348,11 @@ func (_u *TournamentEntryUpdate) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "TournamentEntry.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.EntryStatus(); ok {
+		if err := tournamententry.EntryStatusValidator(v); err != nil {
+			return &ValidationError{Name: "entry_status", err: fmt.Errorf(`ent: validator failed for field "TournamentEntry.entry_status": %w`, err)}
+		}
+	}
 	if _u.mutation.TournamentCleared() && len(_u.mutation.TournamentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "TournamentEntry.tournament"`)
 	}
@@ -338,6 +418,27 @@ func (_u *TournamentEntryUpdate) sqlSave(ctx context.Context) (_node int, err er
 	}
 	if value, ok := _u.mutation.AddedThru(); ok {
 		_spec.AddField(tournamententry.FieldThru, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.EntryStatus(); ok {
+		_spec.SetField(tournamententry.FieldEntryStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Qualifier(); ok {
+		_spec.SetField(tournamententry.FieldQualifier, field.TypeString, value)
+	}
+	if _u.mutation.QualifierCleared() {
+		_spec.ClearField(tournamententry.FieldQualifier, field.TypeString)
+	}
+	if value, ok := _u.mutation.OwgrAtEntry(); ok {
+		_spec.SetField(tournamententry.FieldOwgrAtEntry, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedOwgrAtEntry(); ok {
+		_spec.AddField(tournamententry.FieldOwgrAtEntry, field.TypeInt, value)
+	}
+	if _u.mutation.OwgrAtEntryCleared() {
+		_spec.ClearField(tournamententry.FieldOwgrAtEntry, field.TypeInt)
+	}
+	if value, ok := _u.mutation.IsAmateur(); ok {
+		_spec.SetField(tournamententry.FieldIsAmateur, field.TypeBool, value)
 	}
 	if _u.mutation.TournamentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -577,6 +678,81 @@ func (_u *TournamentEntryUpdateOne) AddThru(v int) *TournamentEntryUpdateOne {
 	return _u
 }
 
+// SetEntryStatus sets the "entry_status" field.
+func (_u *TournamentEntryUpdateOne) SetEntryStatus(v tournamententry.EntryStatus) *TournamentEntryUpdateOne {
+	_u.mutation.SetEntryStatus(v)
+	return _u
+}
+
+// SetNillableEntryStatus sets the "entry_status" field if the given value is not nil.
+func (_u *TournamentEntryUpdateOne) SetNillableEntryStatus(v *tournamententry.EntryStatus) *TournamentEntryUpdateOne {
+	if v != nil {
+		_u.SetEntryStatus(*v)
+	}
+	return _u
+}
+
+// SetQualifier sets the "qualifier" field.
+func (_u *TournamentEntryUpdateOne) SetQualifier(v string) *TournamentEntryUpdateOne {
+	_u.mutation.SetQualifier(v)
+	return _u
+}
+
+// SetNillableQualifier sets the "qualifier" field if the given value is not nil.
+func (_u *TournamentEntryUpdateOne) SetNillableQualifier(v *string) *TournamentEntryUpdateOne {
+	if v != nil {
+		_u.SetQualifier(*v)
+	}
+	return _u
+}
+
+// ClearQualifier clears the value of the "qualifier" field.
+func (_u *TournamentEntryUpdateOne) ClearQualifier() *TournamentEntryUpdateOne {
+	_u.mutation.ClearQualifier()
+	return _u
+}
+
+// SetOwgrAtEntry sets the "owgr_at_entry" field.
+func (_u *TournamentEntryUpdateOne) SetOwgrAtEntry(v int) *TournamentEntryUpdateOne {
+	_u.mutation.ResetOwgrAtEntry()
+	_u.mutation.SetOwgrAtEntry(v)
+	return _u
+}
+
+// SetNillableOwgrAtEntry sets the "owgr_at_entry" field if the given value is not nil.
+func (_u *TournamentEntryUpdateOne) SetNillableOwgrAtEntry(v *int) *TournamentEntryUpdateOne {
+	if v != nil {
+		_u.SetOwgrAtEntry(*v)
+	}
+	return _u
+}
+
+// AddOwgrAtEntry adds value to the "owgr_at_entry" field.
+func (_u *TournamentEntryUpdateOne) AddOwgrAtEntry(v int) *TournamentEntryUpdateOne {
+	_u.mutation.AddOwgrAtEntry(v)
+	return _u
+}
+
+// ClearOwgrAtEntry clears the value of the "owgr_at_entry" field.
+func (_u *TournamentEntryUpdateOne) ClearOwgrAtEntry() *TournamentEntryUpdateOne {
+	_u.mutation.ClearOwgrAtEntry()
+	return _u
+}
+
+// SetIsAmateur sets the "is_amateur" field.
+func (_u *TournamentEntryUpdateOne) SetIsAmateur(v bool) *TournamentEntryUpdateOne {
+	_u.mutation.SetIsAmateur(v)
+	return _u
+}
+
+// SetNillableIsAmateur sets the "is_amateur" field if the given value is not nil.
+func (_u *TournamentEntryUpdateOne) SetNillableIsAmateur(v *bool) *TournamentEntryUpdateOne {
+	if v != nil {
+		_u.SetIsAmateur(*v)
+	}
+	return _u
+}
+
 // SetTournamentID sets the "tournament" edge to the Tournament entity by ID.
 func (_u *TournamentEntryUpdateOne) SetTournamentID(id uuid.UUID) *TournamentEntryUpdateOne {
 	_u.mutation.SetTournamentID(id)
@@ -672,6 +848,11 @@ func (_u *TournamentEntryUpdateOne) check() error {
 			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "TournamentEntry.status": %w`, err)}
 		}
 	}
+	if v, ok := _u.mutation.EntryStatus(); ok {
+		if err := tournamententry.EntryStatusValidator(v); err != nil {
+			return &ValidationError{Name: "entry_status", err: fmt.Errorf(`ent: validator failed for field "TournamentEntry.entry_status": %w`, err)}
+		}
+	}
 	if _u.mutation.TournamentCleared() && len(_u.mutation.TournamentIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "TournamentEntry.tournament"`)
 	}
@@ -754,6 +935,27 @@ func (_u *TournamentEntryUpdateOne) sqlSave(ctx context.Context) (_node *Tournam
 	}
 	if value, ok := _u.mutation.AddedThru(); ok {
 		_spec.AddField(tournamententry.FieldThru, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.EntryStatus(); ok {
+		_spec.SetField(tournamententry.FieldEntryStatus, field.TypeEnum, value)
+	}
+	if value, ok := _u.mutation.Qualifier(); ok {
+		_spec.SetField(tournamententry.FieldQualifier, field.TypeString, value)
+	}
+	if _u.mutation.QualifierCleared() {
+		_spec.ClearField(tournamententry.FieldQualifier, field.TypeString)
+	}
+	if value, ok := _u.mutation.OwgrAtEntry(); ok {
+		_spec.SetField(tournamententry.FieldOwgrAtEntry, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedOwgrAtEntry(); ok {
+		_spec.AddField(tournamententry.FieldOwgrAtEntry, field.TypeInt, value)
+	}
+	if _u.mutation.OwgrAtEntryCleared() {
+		_spec.ClearField(tournamententry.FieldOwgrAtEntry, field.TypeInt)
+	}
+	if value, ok := _u.mutation.IsAmateur(); ok {
+		_spec.SetField(tournamententry.FieldIsAmateur, field.TypeBool, value)
 	}
 	if _u.mutation.TournamentCleared() {
 		edge := &sqlgraph.EdgeSpec{

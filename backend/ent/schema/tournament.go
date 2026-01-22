@@ -32,6 +32,11 @@ func (Tournament) Fields() []ent.Field {
 			Nillable().
 			Unique().
 			Comment("BallDontLie API ID (int)"),
+		field.String("pga_tour_id").
+			Optional().
+			Nillable().
+			Unique().
+			Comment("PGA Tour tournament ID (e.g., R2025002)"),
 		field.String("name").
 			NotEmpty(),
 		field.Time("start_date"),

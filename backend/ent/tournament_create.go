@@ -80,6 +80,20 @@ func (_c *TournamentCreate) SetNillableBdlID(v *int) *TournamentCreate {
 	return _c
 }
 
+// SetPgaTourID sets the "pga_tour_id" field.
+func (_c *TournamentCreate) SetPgaTourID(v string) *TournamentCreate {
+	_c.mutation.SetPgaTourID(v)
+	return _c
+}
+
+// SetNillablePgaTourID sets the "pga_tour_id" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillablePgaTourID(v *string) *TournamentCreate {
+	if v != nil {
+		_c.SetPgaTourID(*v)
+	}
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *TournamentCreate) SetName(v string) *TournamentCreate {
 	_c.mutation.SetName(v)
@@ -355,6 +369,10 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.BdlID(); ok {
 		_spec.SetField(tournament.FieldBdlID, field.TypeInt, value)
 		_node.BdlID = &value
+	}
+	if value, ok := _c.mutation.PgaTourID(); ok {
+		_spec.SetField(tournament.FieldPgaTourID, field.TypeString, value)
+		_node.PgaTourID = &value
 	}
 	if value, ok := _c.mutation.Name(); ok {
 		_spec.SetField(tournament.FieldName, field.TypeString, value)

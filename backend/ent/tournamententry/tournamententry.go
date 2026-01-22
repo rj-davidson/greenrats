@@ -36,6 +36,14 @@ const (
 	FieldCurrentRound = "current_round"
 	// FieldThru holds the string denoting the thru field in the database.
 	FieldThru = "thru"
+	// FieldEntryStatus holds the string denoting the entry_status field in the database.
+	FieldEntryStatus = "entry_status"
+	// FieldQualifier holds the string denoting the qualifier field in the database.
+	FieldQualifier = "qualifier"
+	// FieldOwgrAtEntry holds the string denoting the owgr_at_entry field in the database.
+	FieldOwgrAtEntry = "owgr_at_entry"
+	// FieldIsAmateur holds the string denoting the is_amateur field in the database.
+	FieldIsAmateur = "is_amateur"
 	// EdgeTournament holds the string denoting the tournament edge name in mutations.
 	EdgeTournament = "tournament"
 	// EdgeGolfer holds the string denoting the golfer edge name in mutations.
@@ -71,6 +79,10 @@ var Columns = []string{
 	FieldStatus,
 	FieldCurrentRound,
 	FieldThru,
+	FieldEntryStatus,
+	FieldQualifier,
+	FieldOwgrAtEntry,
+	FieldIsAmateur,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "tournament_entries"
@@ -116,6 +128,8 @@ var (
 	DefaultCurrentRound int
 	// DefaultThru holds the default value on creation for the "thru" field.
 	DefaultThru int
+	// DefaultIsAmateur holds the default value on creation for the "is_amateur" field.
+	DefaultIsAmateur bool
 	// DefaultID holds the default value on creation for the "id" field.
 	DefaultID func() uuid.UUID
 )
@@ -145,6 +159,34 @@ func StatusValidator(s Status) error {
 		return nil
 	default:
 		return fmt.Errorf("tournamententry: invalid enum value for status field: %q", s)
+	}
+}
+
+// EntryStatus defines the type for the "entry_status" enum field.
+type EntryStatus string
+
+// EntryStatusConfirmed is the default value of the EntryStatus enum.
+const DefaultEntryStatus = EntryStatusConfirmed
+
+// EntryStatus values.
+const (
+	EntryStatusConfirmed EntryStatus = "confirmed"
+	EntryStatusAlternate EntryStatus = "alternate"
+	EntryStatusWithdrawn EntryStatus = "withdrawn"
+	EntryStatusPending   EntryStatus = "pending"
+)
+
+func (es EntryStatus) String() string {
+	return string(es)
+}
+
+// EntryStatusValidator is a validator for the "entry_status" field enum values. It is called by the builders before save.
+func EntryStatusValidator(es EntryStatus) error {
+	switch es {
+	case EntryStatusConfirmed, EntryStatusAlternate, EntryStatusWithdrawn, EntryStatusPending:
+		return nil
+	default:
+		return fmt.Errorf("tournamententry: invalid enum value for entry_status field: %q", es)
 	}
 }
 
@@ -204,6 +246,26 @@ func ByCurrentRound(opts ...sql.OrderTermOption) OrderOption {
 // ByThru orders the results by the thru field.
 func ByThru(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldThru, opts...).ToFunc()
+}
+
+// ByEntryStatus orders the results by the entry_status field.
+func ByEntryStatus(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEntryStatus, opts...).ToFunc()
+}
+
+// ByQualifier orders the results by the qualifier field.
+func ByQualifier(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldQualifier, opts...).ToFunc()
+}
+
+// ByOwgrAtEntry orders the results by the owgr_at_entry field.
+func ByOwgrAtEntry(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldOwgrAtEntry, opts...).ToFunc()
+}
+
+// ByIsAmateur orders the results by the is_amateur field.
+func ByIsAmateur(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldIsAmateur, opts...).ToFunc()
 }
 
 // ByTournamentField orders the results by tournament field.
