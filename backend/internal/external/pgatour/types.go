@@ -7,16 +7,34 @@ type GraphQLRequest struct {
 }
 
 type GraphQLResponse struct {
-	Data   *FieldData     `json:"data,omitempty"`
+	Data   *ResponseData  `json:"data,omitempty"`
 	Errors []GraphQLError `json:"errors,omitempty"`
+}
+
+type ResponseData struct {
+	Field    *Field    `json:"field,omitempty"`
+	Schedule *Schedule `json:"schedule,omitempty"`
 }
 
 type GraphQLError struct {
 	Message string `json:"message"`
 }
 
-type FieldData struct {
-	Field *Field `json:"field,omitempty"`
+type Schedule struct {
+	Completed []ScheduleMonth `json:"completed"`
+	Upcoming  []ScheduleMonth `json:"upcoming"`
+}
+
+type ScheduleMonth struct {
+	Month       string               `json:"month"`
+	Year        string               `json:"year"`
+	Tournaments []ScheduleTournament `json:"tournaments"`
+}
+
+type ScheduleTournament struct {
+	ID             string `json:"id"`
+	TournamentName string `json:"tournamentName"`
+	StartDate      int64  `json:"startDate"`
 }
 
 type Field struct {

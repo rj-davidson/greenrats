@@ -70,7 +70,7 @@ func TestGetTournamentField_Success(t *testing.T) {
 		assert.Equal(t, "R2025001", req.Variables["id"])
 
 		response := GraphQLResponse{
-			Data: &FieldData{
+			Data: &ResponseData{
 				Field: &Field{
 					TournamentName: "The Sentry",
 					ID:             "R2025001",
@@ -124,7 +124,7 @@ func TestGetTournamentField_Success(t *testing.T) {
 func TestGetTournamentField_EmptyField(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := GraphQLResponse{
-			Data: &FieldData{
+			Data: &ResponseData{
 				Field: nil,
 			},
 		}
@@ -205,7 +205,7 @@ func TestGetTournamentField_HTTPError(t *testing.T) {
 func TestGetTournamentField_Amateur(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		response := GraphQLResponse{
-			Data: &FieldData{
+			Data: &ResponseData{
 				Field: &Field{
 					TournamentName: "Masters",
 					ID:             "R2025001",

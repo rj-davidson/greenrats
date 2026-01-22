@@ -373,6 +373,10 @@ func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tourname
 			SetStatus(status).
 			SetSeasonYear(t.Season)
 
+		if pgaTourID := pgatour.GetPGATourID(t.ID); pgaTourID != "" {
+			builder.SetPgaTourID(pgaTourID)
+		}
+
 		if t.CourseName != nil && *t.CourseName != "" {
 			builder.SetCourse(*t.CourseName)
 		}
@@ -411,6 +415,12 @@ func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tourname
 		if t.Purse != nil && *t.Purse != "" {
 			if purse, err := strconv.Atoi(*t.Purse); err == nil && purse > 0 {
 				updater.SetPurse(purse)
+			}
+		}
+
+		if existing.PgaTourID == nil || *existing.PgaTourID == "" {
+			if pgaTourID := pgatour.GetPGATourID(t.ID); pgaTourID != "" {
+				updater.SetPgaTourID(pgaTourID)
 			}
 		}
 

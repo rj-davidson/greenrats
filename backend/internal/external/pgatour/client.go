@@ -27,6 +27,31 @@ query Field($id: ID!) {
 }
 `
 
+const scheduleQuery = `
+query Schedule($tourCode: String!, $year: String!) {
+  schedule(tourCode: $tourCode, year: $year) {
+    completed {
+      month
+      year
+      tournaments {
+        id
+        tournamentName
+        startDate
+      }
+    }
+    upcoming {
+      month
+      year
+      tournaments {
+        id
+        tournamentName
+        startDate
+      }
+    }
+  }
+}
+`
+
 type Client struct {
 	client  *resty.Client
 	limiter *rate.Limiter
@@ -111,4 +136,56 @@ func (c *Client) GetTournamentField(ctx context.Context, tournamentID string) ([
 
 	c.logger.Info("tournament field fetch complete", "tournament_id", tournamentID, "player_count", len(entries))
 	return entries, nil
+}
+
+func (c *Client) GetSchedule(ctx context.Context, year string) ([]ScheduleTournament, error) {
+	c.logger.Info("fetching PGA Tour schedule", "year", year)
+
+	if err := c.wait(ctx); err != nil {
+		return nil, fmt.Errorf("rate limiter: %w", err)
+	}
+
+	req := GraphQLRequest{
+		Query:         scheduleQuery,
+		OperationName: "Schedule",
+		Variables: map[string]any{
+			"tourCode": "R",
+			"year":     year,
+		},
+	}
+
+	var response GraphQLResponse
+
+	resp, err := c.client.R().
+		SetContext(ctx).
+		SetBody(req).
+		SetResult(&response).
+		Post("")
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch schedule: %w", err)
+	}
+
+	if resp.IsError() {
+		return nil, fmt.Errorf("API error fetching schedule: %s", resp.Status())
+	}
+
+	if len(response.Errors) > 0 {
+		return nil, fmt.Errorf("GraphQL error: %s", response.Errors[0].Message)
+	}
+
+	if response.Data == nil || response.Data.Schedule == nil {
+		c.logger.Debug("no schedule data returned", "year", year)
+		return nil, nil
+	}
+
+	var all []ScheduleTournament
+	for _, month := range response.Data.Schedule.Completed {
+		all = append(all, month.Tournaments...)
+	}
+	for _, month := range response.Data.Schedule.Upcoming {
+		all = append(all, month.Tournaments...)
+	}
+
+	c.logger.Info("schedule fetch complete", "year", year, "total_tournaments", len(all))
+	return all, nil
 }
