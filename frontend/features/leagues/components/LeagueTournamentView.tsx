@@ -132,7 +132,7 @@ export function LeagueTournamentView({
           {tournament.status === "upcoming" && (
             <PickMaker
               leagueId={leagueId}
-              tournamentId={tournamentId}
+              tournament={tournament}
               currentPick={currentUserPick}
             />
           )}

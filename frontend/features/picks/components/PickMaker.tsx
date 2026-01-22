@@ -1,14 +1,11 @@
 "use client";
 
-import {
-  useAvailableGolfers,
-  useCreatePick,
-  usePickWindow,
-  useUpdatePick,
-} from "@/features/picks/queries";
+import { useAvailableGolfers, useCreatePick, useUpdatePick } from "@/features/picks/queries";
 import type { AvailableGolfer, Pick } from "@/features/picks/types";
 import { GolferSelector } from "@/features/picks/components/GolferSelector";
 import { PickConfirmDialog } from "@/features/picks/components/PickConfirmDialog";
+import { getPickWindowState, formatPickWindowDate } from "@/features/picks/utils";
+import type { Tournament } from "@/features/tournaments/types";
 import { Badge } from "@/components/shadcn/badge";
 import {
   Card,
@@ -17,41 +14,31 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card";
-import { Skeleton } from "@/components/shadcn/skeleton";
 import { CalendarIcon, ClockIcon, LockIcon, UserIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
 interface PickMakerProps {
   leagueId: string;
-  tournamentId: string;
+  tournament: Tournament;
   currentPick?: Pick;
   onPickSuccess?: () => void;
 }
 
-function formatDate(dateString: string) {
-  return new Date(dateString).toLocaleDateString("en-US", {
-    weekday: "short",
-    month: "short",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-}
-
-export function PickMaker({ leagueId, tournamentId, currentPick, onPickSuccess }: PickMakerProps) {
+export function PickMaker({ leagueId, tournament, currentPick, onPickSuccess }: PickMakerProps) {
   const [selectedGolfer, setSelectedGolfer] = useState<AvailableGolfer | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const { data: pickWindow, isLoading: windowLoading } = usePickWindow(tournamentId);
   const { data: golfersData, isLoading: golfersLoading } = useAvailableGolfers(
     leagueId,
-    tournamentId,
+    tournament.id,
   );
   const createPick = useCreatePick();
   const updatePick = useUpdatePick();
 
   const isChanging = !!currentPick;
+  const pickWindowState = getPickWindowState(tournament);
+  const isWindowOpen = pickWindowState === "open";
 
   const handleSelectGolfer = (golfer: AvailableGolfer) => {
     setSelectedGolfer(golfer);
@@ -67,12 +54,12 @@ export function PickMaker({ leagueId, tournamentId, currentPick, onPickSuccess }
           pickId: currentPick.id,
           golferId: selectedGolfer.id,
           leagueId,
-          tournamentId,
+          tournamentId: tournament.id,
         });
         toast.success(`Successfully changed pick to ${selectedGolfer.name}!`);
       } else {
         await createPick.mutateAsync({
-          tournament_id: tournamentId,
+          tournament_id: tournament.id,
           golfer_id: selectedGolfer.id,
           league_id: leagueId,
         });
@@ -86,31 +73,12 @@ export function PickMaker({ leagueId, tournamentId, currentPick, onPickSuccess }
     }
   };
 
-  if (windowLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-64" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!pickWindow) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-muted-foreground">Unable to load pick window information.</p>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  const isWindowOpen = pickWindow.is_open;
+  const getClosedReason = (): string => {
+    if (pickWindowState === "not_open" && tournament.pick_window_opens_at) {
+      return `Pick window opens ${formatPickWindowDate(tournament.pick_window_opens_at)}`;
+    }
+    return "Pick window is closed";
+  };
 
   return (
     <>
@@ -141,23 +109,23 @@ export function PickMaker({ leagueId, tournamentId, currentPick, onPickSuccess }
             </div>
           )}
 
-          <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <CalendarIcon className="size-4" />
-              <span>Opens: {formatDate(pickWindow.opens_at)}</span>
+          {tournament.pick_window_opens_at && tournament.pick_window_closes_at && (
+            <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <CalendarIcon className="size-4" />
+                <span>Opens: {formatPickWindowDate(tournament.pick_window_opens_at)}</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <ClockIcon className="size-4" />
+                <span>Closes: {formatPickWindowDate(tournament.pick_window_closes_at)}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <ClockIcon className="size-4" />
-              <span>Closes: {formatDate(pickWindow.closes_at)}</span>
-            </div>
-          </div>
+          )}
 
           {!isWindowOpen ? (
             <div className="flex flex-col items-center justify-center rounded-lg bg-muted/50 py-12">
               <LockIcon className="mb-3 size-10 text-muted-foreground" />
-              <p className="text-center text-muted-foreground">
-                {pickWindow.reason || "Pick window is closed"}
-              </p>
+              <p className="text-center text-muted-foreground">{getClosedReason()}</p>
             </div>
           ) : (
             <GolferSelector
@@ -171,7 +139,7 @@ export function PickMaker({ leagueId, tournamentId, currentPick, onPickSuccess }
 
       <PickConfirmDialog
         golfer={selectedGolfer}
-        tournamentName={pickWindow.tournament_name}
+        tournamentName={tournament.name}
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         onConfirm={handleConfirmPick}

@@ -11,6 +11,8 @@ export const tournamentSchema = z.object({
   venue: z.string().optional(),
   course: z.string().optional(),
   purse: z.number().optional(),
+  pick_window_opens_at: z.string().optional(),
+  pick_window_closes_at: z.string().optional(),
 });
 
 export const listTournamentsResponseSchema = z.object({

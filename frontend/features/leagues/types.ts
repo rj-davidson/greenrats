@@ -128,6 +128,8 @@ export const leagueTournamentSchema = z.object({
   golfer_name: z.string().optional(),
   golfer_earnings: z.number().optional(),
   pick_count: z.number(),
+  pick_window_opens_at: z.string().optional(),
+  pick_window_closes_at: z.string().optional(),
 });
 
 export type LeagueTournament = z.infer<typeof leagueTournamentSchema>;

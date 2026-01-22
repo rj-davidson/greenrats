@@ -5,7 +5,6 @@ import type {
   CreatePickResponse,
   ListPicksResponse,
   OverridePickResponse,
-  PickWindowStatus,
 } from "@/features/picks/types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
@@ -30,9 +29,6 @@ export const buildAvailableGolfersForUserKey = (
   tournamentId: string,
   userId: string,
 ) => [QueryKey.PICKS, "available-golfers-for-user", leagueId, tournamentId, userId] as const;
-
-export const buildPickWindowKey = (tournamentId: string) =>
-  [QueryKey.PICKS, "pick-window", tournamentId] as const;
 
 export function buildGetUserPicksQueryOptions(
   leagueId?: string,
@@ -82,18 +78,6 @@ export function buildGetAvailableGolfersQueryOptions(
   });
 }
 
-export function buildGetPickWindowQueryOptions(
-  tournamentId: string,
-  requestor: Requestor = makeClientRequest,
-) {
-  return queryOptions<PickWindowStatus>({
-    queryKey: buildPickWindowKey(tournamentId),
-    queryFn: () =>
-      requestor.get<PickWindowStatus>(`/api/v1/tournaments/${tournamentId}/pick-window`),
-    enabled: !!tournamentId,
-  });
-}
-
 export function useUserPicks(leagueId?: string, seasonYear?: number) {
   return useQuery(buildGetUserPicksQueryOptions(leagueId, seasonYear));
 }
@@ -127,10 +111,6 @@ export function buildGetAvailableGolfersForUserQueryOptions(
 
 export function useAvailableGolfersForUser(leagueId: string, tournamentId: string, userId: string) {
   return useQuery(buildGetAvailableGolfersForUserQueryOptions(leagueId, tournamentId, userId));
-}
-
-export function usePickWindow(tournamentId: string) {
-  return useQuery(buildGetPickWindowQueryOptions(tournamentId));
 }
 
 export function useCreatePick() {

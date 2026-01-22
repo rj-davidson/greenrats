@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 
 interface LeaderboardTableProps {
   tournamentId: string;
+  limit?: number;
 }
 
 function formatScore(score: number): string {
@@ -85,7 +86,7 @@ function LeaderboardSkeleton() {
   );
 }
 
-export function LeaderboardTable({ tournamentId }: LeaderboardTableProps) {
+export function LeaderboardTable({ tournamentId, limit }: LeaderboardTableProps) {
   const { data, isLoading, error } = useLeaderboard(tournamentId);
 
   if (isLoading) {
@@ -108,6 +109,7 @@ export function LeaderboardTable({ tournamentId }: LeaderboardTableProps) {
     );
   }
 
+  const entries = limit ? data.entries.slice(0, limit) : data.entries;
   const showEarnings = data.entries.some((entry) => entry.earnings > 0);
 
   return (
@@ -123,7 +125,7 @@ export function LeaderboardTable({ tournamentId }: LeaderboardTableProps) {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {data.entries.map((entry) => (
+        {entries.map((entry) => (
           <LeaderboardRow key={entry.golfer_id} entry={entry} showEarnings={showEarnings} />
         ))}
       </TableBody>

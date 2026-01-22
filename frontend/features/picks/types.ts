@@ -38,17 +38,6 @@ export const listPicksResponseSchema = z.object({
 
 export type ListPicksResponse = z.infer<typeof listPicksResponseSchema>;
 
-export const pickWindowStatusSchema = z.object({
-  tournament_id: z.string(),
-  tournament_name: z.string(),
-  is_open: z.boolean(),
-  opens_at: z.string(),
-  closes_at: z.string(),
-  reason: z.string().optional(),
-});
-
-export type PickWindowStatus = z.infer<typeof pickWindowStatusSchema>;
-
 export const availableGolferSchema = z.object({
   id: z.string(),
   name: z.string(),

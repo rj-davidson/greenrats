@@ -1,9 +1,10 @@
 "use client";
 
 import type { LeagueTournament } from "@/features/leagues/types";
+import { formatPickWindowDate } from "@/features/picks/utils";
 import { Badge } from "@/components/shadcn/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/card";
-import { CalendarIcon, CheckCircle2Icon, UsersIcon } from "lucide-react";
+import { CalendarIcon, CheckCircle2Icon, ClockIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -106,9 +107,14 @@ function CompactRow({ tournament, leagueId, variant }: LeagueTournamentCardProps
 }
 
 function FullCard({ tournament, leagueId, variant }: LeagueTournamentCardProps) {
+  const showPickWindow =
+    (variant === "next" || variant === "upcoming") &&
+    tournament.pick_window_opens_at &&
+    tournament.pick_window_closes_at;
+
   return (
     <Link href={`/leagues/${leagueId}/tournaments/${tournament.id}`}>
-    <Card className="border-2 border-primary/50 shadow-sm transition-colors hover:bg-muted/50">
+      <Card className="border-2 border-primary/50 shadow-sm transition-colors hover:bg-muted/50">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base font-semibold">{tournament.name}</CardTitle>
           {getStatusBadge(variant)}
@@ -118,6 +124,15 @@ function FullCard({ tournament, leagueId, variant }: LeagueTournamentCardProps) 
             <CalendarIcon className="size-4" />
             {formatDateRange(tournament.start_date, tournament.end_date)}
           </div>
+          {showPickWindow && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <ClockIcon className="size-4" />
+              <span>
+                Picks: {formatPickWindowDate(tournament.pick_window_opens_at!)} -{" "}
+                {formatPickWindowDate(tournament.pick_window_closes_at!)}
+              </span>
+            </div>
+          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <UsersIcon className="size-4" />

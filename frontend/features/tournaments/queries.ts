@@ -93,3 +93,39 @@ export function useActiveTournament() {
 export function useLeaderboard(id: string) {
   return useQuery(buildGetLeaderboardQueryOptions(id));
 }
+
+export function useCurrentTournament() {
+  const { data: activeData, isLoading: activeLoading } = useActiveTournament();
+  const { data: completedData, isLoading: completedLoading } = useTournaments({
+    status: "completed",
+    limit: 2,
+  });
+  const { data: upcomingData, isLoading: upcomingLoading } = useTournaments({
+    status: "upcoming",
+    limit: 1,
+  });
+
+  const isLoading = activeLoading || completedLoading || upcomingLoading;
+
+  const tournament = (() => {
+    if (activeData?.tournament) {
+      return activeData.tournament;
+    }
+
+    const now = new Date();
+    const recentCompleted = completedData?.tournaments.find((t) => {
+      const endPlusOne = new Date(t.end_date);
+      endPlusOne.setDate(endPlusOne.getDate() + 1);
+      endPlusOne.setHours(23, 59, 59, 999);
+      return now <= endPlusOne;
+    });
+
+    if (recentCompleted) {
+      return recentCompleted;
+    }
+
+    return upcomingData?.tournaments[0] ?? null;
+  })();
+
+  return { tournament, isLoading };
+}

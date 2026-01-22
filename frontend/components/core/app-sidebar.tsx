@@ -27,7 +27,11 @@ import { useMemo } from "react";
 const MAX_SIDEBAR_LEAGUES = 6;
 
 function LiveDot() {
-  return <span className="size-2 animate-pulse rounded-full bg-primary" />;
+  return (
+    <span className="flex size-4 items-center justify-center">
+      <span className="size-2 animate-pulse rounded-full bg-primary" />
+    </span>
+  );
 }
 
 function TournamentIcon({ status }: { status: Tournament["status"] }) {
@@ -85,22 +89,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex w-full items-center justify-center">
-              <Link href="/">
-                <Image
-                  src="/assets/logo.png"
-                  alt="GreenRats"
-                  width={220}
-                  height={83}
-                  className="group-data-[collapsible=icon]:hidden"
-                />
-                <Image
-                  src="/assets/logo_square.png"
-                  alt="GreenRats"
-                  width={32}
-                  height={32}
-                  className="hidden group-data-[collapsible=icon]:block"
-                />
-              </Link>
+            <Link href="/">
+              <Image
+                src="/assets/logo.png"
+                alt="GreenRats"
+                width={220}
+                height={83}
+                className="group-data-[collapsible=icon]:hidden"
+              />
+              <Image
+                src="/assets/logo_square.png"
+                alt="GreenRats"
+                width={32}
+                height={32}
+                className="hidden group-data-[collapsible=icon]:block"
+              />
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

@@ -9,9 +9,10 @@ import {
   CardTitle,
 } from "@/components/shadcn/card";
 import { Skeleton } from "@/components/shadcn/skeleton";
+import { formatPickWindowDate } from "@/features/picks/utils";
 import { useTournaments } from "@/features/tournaments/queries";
 import type { Tournament, TournamentStatus } from "@/features/tournaments/types";
-import { CalendarIcon, MapPinIcon } from "lucide-react";
+import { CalendarIcon, ClockIcon, MapPinIcon } from "lucide-react";
 
 function formatDateRange(startDate: string, endDate: string): string {
   const start = new Date(startDate);
@@ -51,6 +52,10 @@ function getStatusLabel(status: TournamentStatus): string {
 
 function TournamentCard({ tournament }: { tournament: Tournament }) {
   const venue = tournament.venue || tournament.course;
+  const showPickWindow =
+    tournament.status === "upcoming" &&
+    tournament.pick_window_opens_at &&
+    tournament.pick_window_closes_at;
 
   return (
     <Card>
@@ -66,7 +71,7 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           {formatDateRange(tournament.start_date, tournament.end_date)}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-1">
         {venue && (
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
             <MapPinIcon className="size-3" />
@@ -74,9 +79,18 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
           </p>
         )}
         {tournament.purse && (
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-sm text-muted-foreground">
             Purse: ${tournament.purse.toLocaleString()}
           </p>
+        )}
+        {showPickWindow && (
+          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+            <ClockIcon className="size-3" />
+            <span>
+              Picks: {formatPickWindowDate(tournament.pick_window_opens_at!)} -{" "}
+              {formatPickWindowDate(tournament.pick_window_closes_at!)}
+            </span>
+          </div>
         )}
       </CardContent>
     </Card>
