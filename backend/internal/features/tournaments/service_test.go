@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
@@ -235,12 +234,11 @@ func TestTournamentToDTO(t *testing.T) {
 		factory := testutil.NewFactory(t, db)
 		ctx := context.Background()
 
-		tourn := factory.CreateTournament(
+		tourn := factory.CreateActiveTournament(
 			testutil.WithTournamentName("Test Open"),
 			testutil.WithCourse("Augusta National"),
 			testutil.WithLocation("Augusta, GA"),
 			testutil.WithPurse(20000000),
-			testutil.WithTournamentStatus(tournament.StatusActive),
 		)
 
 		entTourn, _ := db.Tournament.Get(ctx, tourn.ID)

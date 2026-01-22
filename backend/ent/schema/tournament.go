@@ -36,9 +36,6 @@ func (Tournament) Fields() []ent.Field {
 			NotEmpty(),
 		field.Time("start_date"),
 		field.Time("end_date"),
-		field.Enum("status").
-			Values("upcoming", "active", "completed").
-			Default("upcoming"),
 		field.Int("season_year"),
 		field.String("course").
 			Optional().

@@ -14,6 +14,10 @@ import (
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
+func upcomingStartDate() time.Time {
+	return time.Now().AddDate(0, 0, 7)
+}
+
 func TestTournamentSync_SetsPGATourID(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -25,13 +29,13 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 	t.Run("creates tournament with PGA Tour ID from mapping", func(t *testing.T) {
 		bdlID := 8
 		expectedPGAID := "R2026002"
+		startDate := upcomingStartDate()
 
 		created, err := db.Tournament.Create().
 			SetBdlID(bdlID).
 			SetName("The American Express").
-			SetStartDate(time.Now()).
-			SetEndDate(time.Now().Add(4 * 24 * time.Hour)).
-			SetStatus(tournament.StatusUpcoming).
+			SetStartDate(startDate).
+			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
 			SetNillablePgaTourID(getPGATourIDPtr(bdlID)).
 			Save(ctx)
@@ -43,13 +47,13 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 
 	t.Run("creates tournament without PGA Tour ID when not in mapping", func(t *testing.T) {
 		bdlID := 9999
+		startDate := upcomingStartDate()
 
 		created, err := db.Tournament.Create().
 			SetBdlID(bdlID).
 			SetName("Unknown Tournament").
-			SetStartDate(time.Now()).
-			SetEndDate(time.Now().Add(4 * 24 * time.Hour)).
-			SetStatus(tournament.StatusUpcoming).
+			SetStartDate(startDate).
+			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
 			SetNillablePgaTourID(getPGATourIDPtr(bdlID)).
 			Save(ctx)
@@ -61,13 +65,13 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 	t.Run("updates tournament with PGA Tour ID when missing", func(t *testing.T) {
 		bdlID := 10
 		expectedPGAID := "R2026003"
+		startDate := upcomingStartDate()
 
 		existing, err := db.Tournament.Create().
 			SetBdlID(bdlID).
 			SetName("WM Phoenix Open").
-			SetStartDate(time.Now()).
-			SetEndDate(time.Now().Add(4 * 24 * time.Hour)).
-			SetStatus(tournament.StatusUpcoming).
+			SetStartDate(startDate).
+			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
 			Save(ctx)
 		require.NoError(t, err)
@@ -85,13 +89,13 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 	t.Run("does not overwrite existing PGA Tour ID", func(t *testing.T) {
 		bdlID := 11
 		manualPGAID := "MANUAL123"
+		startDate := upcomingStartDate()
 
 		existing, err := db.Tournament.Create().
 			SetBdlID(bdlID).
 			SetName("AT&T Pebble Beach Pro-Am").
-			SetStartDate(time.Now()).
-			SetEndDate(time.Now().Add(4 * 24 * time.Hour)).
-			SetStatus(tournament.StatusUpcoming).
+			SetStartDate(startDate).
+			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
 			SetPgaTourID(manualPGAID).
 			Save(ctx)
@@ -126,12 +130,12 @@ func upsertTournament(ctx context.Context, db *ent.Client, bdlID int, name strin
 		Only(ctx)
 
 	if ent.IsNotFound(err) {
+		startDate := upcomingStartDate()
 		builder := db.Tournament.Create().
 			SetBdlID(bdlID).
 			SetName(name).
-			SetStartDate(time.Now()).
-			SetEndDate(time.Now().Add(4 * 24 * time.Hour)).
-			SetStatus(tournament.StatusUpcoming).
+			SetStartDate(startDate).
+			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026)
 
 		if pgaTourID := pgatour.GetPGATourID(bdlID); pgaTourID != "" {
@@ -175,13 +179,13 @@ func TestUpsertTournament(t *testing.T) {
 
 	t.Run("upsert updates existing without PGA Tour ID", func(t *testing.T) {
 		bdlID := 20
+		startDate := upcomingStartDate()
 
 		_, err := db.Tournament.Create().
 			SetBdlID(bdlID).
 			SetName("Masters Tournament").
-			SetStartDate(time.Now()).
-			SetEndDate(time.Now().Add(4 * 24 * time.Hour)).
-			SetStatus(tournament.StatusUpcoming).
+			SetStartDate(startDate).
+			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
 			Save(ctx)
 		require.NoError(t, err)
@@ -196,13 +200,13 @@ func TestUpsertTournament(t *testing.T) {
 	t.Run("upsert preserves manually set PGA Tour ID", func(t *testing.T) {
 		bdlID := 31
 		manualID := "CUSTOM_US_OPEN"
+		startDate := upcomingStartDate()
 
 		_, err := db.Tournament.Create().
 			SetBdlID(bdlID).
 			SetName("U.S. Open").
-			SetStartDate(time.Now()).
-			SetEndDate(time.Now().Add(4 * 24 * time.Hour)).
-			SetStatus(tournament.StatusUpcoming).
+			SetStartDate(startDate).
+			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
 			SetPgaTourID(manualID).
 			Save(ctx)

@@ -3,7 +3,6 @@
 package tournament
 
 import (
-	"fmt"
 	"time"
 
 	"entgo.io/ent/dialect/sql"
@@ -30,8 +29,6 @@ const (
 	FieldStartDate = "start_date"
 	// FieldEndDate holds the string denoting the end_date field in the database.
 	FieldEndDate = "end_date"
-	// FieldStatus holds the string denoting the status field in the database.
-	FieldStatus = "status"
 	// FieldSeasonYear holds the string denoting the season_year field in the database.
 	FieldSeasonYear = "season_year"
 	// FieldCourse holds the string denoting the course field in the database.
@@ -102,7 +99,6 @@ var Columns = []string{
 	FieldName,
 	FieldStartDate,
 	FieldEndDate,
-	FieldStatus,
 	FieldSeasonYear,
 	FieldCourse,
 	FieldLocation,
@@ -149,33 +145,6 @@ var (
 	DefaultID func() uuid.UUID
 )
 
-// Status defines the type for the "status" enum field.
-type Status string
-
-// StatusUpcoming is the default value of the Status enum.
-const DefaultStatus = StatusUpcoming
-
-// Status values.
-const (
-	StatusUpcoming  Status = "upcoming"
-	StatusActive    Status = "active"
-	StatusCompleted Status = "completed"
-)
-
-func (s Status) String() string {
-	return string(s)
-}
-
-// StatusValidator is a validator for the "status" field enum values. It is called by the builders before save.
-func StatusValidator(s Status) error {
-	switch s {
-	case StatusUpcoming, StatusActive, StatusCompleted:
-		return nil
-	default:
-		return fmt.Errorf("tournament: invalid enum value for status field: %q", s)
-	}
-}
-
 // OrderOption defines the ordering options for the Tournament queries.
 type OrderOption func(*sql.Selector)
 
@@ -217,11 +186,6 @@ func ByStartDate(opts ...sql.OrderTermOption) OrderOption {
 // ByEndDate orders the results by the end_date field.
 func ByEndDate(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldEndDate, opts...).ToFunc()
-}
-
-// ByStatus orders the results by the status field.
-func ByStatus(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldStatus, opts...).ToFunc()
 }
 
 // BySeasonYear orders the results by the season_year field.

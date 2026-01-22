@@ -35,10 +35,9 @@ func NewService(db *ent.Client, googlemaps *googlemaps.Client, logger *slog.Logg
 }
 
 type TournamentUpsertResult struct {
-	Created        bool
-	PreviousStatus tournament.Status
-	CurrentStatus  tournament.Status
-	Tournament     *ent.Tournament
+	Created         bool
+	BecameCompleted bool
+	Tournament      *ent.Tournament
 }
 
 func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournament) (*TournamentUpsertResult, error) {
@@ -48,14 +47,6 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 	}
 
 	endDate := ParseEndDate(t.EndDate, startDate)
-
-	now := time.Now().UTC()
-	status := tournament.StatusUpcoming
-	if now.After(endDate) {
-		status = tournament.StatusCompleted
-	} else if now.After(startDate) || now.Equal(startDate) {
-		status = tournament.StatusActive
-	}
 
 	city := StringPtrValue(t.City)
 	state := StringPtrValue(t.State)
@@ -80,7 +71,7 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 		Where(tournament.BdlID(t.ID)).
 		Only(ctx)
 
-	result := &TournamentUpsertResult{CurrentStatus: status}
+	result := &TournamentUpsertResult{}
 
 	switch {
 	case ent.IsNotFound(err):
@@ -89,7 +80,6 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 			SetName(t.Name).
 			SetStartDate(startDate).
 			SetEndDate(endDate).
-			SetStatus(status).
 			SetSeasonYear(t.Season)
 
 		if pgaTourID := pgatour.GetPGATourID(t.ID); pgaTourID != "" {
@@ -138,13 +128,21 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 		return nil, fmt.Errorf("failed to query tournament: %w", err)
 
 	default:
-		result.PreviousStatus = existing.Status
+		hadChampion := existing.Edges.Champion != nil
+		if !hadChampion {
+			existingWithChampion, err := s.db.Tournament.Query().
+				Where(tournament.IDEQ(existing.ID)).
+				WithChampion().
+				Only(ctx)
+			if err == nil {
+				hadChampion = existingWithChampion.Edges.Champion != nil
+			}
+		}
 
 		updater := existing.Update().
 			SetName(t.Name).
 			SetStartDate(startDate).
-			SetEndDate(endDate).
-			SetStatus(status)
+			SetEndDate(endDate)
 
 		if t.CourseName != nil && *t.CourseName != "" {
 			updater.SetCourse(*t.CourseName)
@@ -191,7 +189,12 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 			return nil, fmt.Errorf("failed to update tournament: %w", err)
 		}
 		result.Tournament = updated
-		s.logger.Debug("updated tournament", "name", t.Name, "status", status)
+
+		if championID != nil && !hadChampion {
+			result.BecameCompleted = true
+		}
+
+		s.logger.Debug("updated tournament", "name", t.Name)
 	}
 
 	return result, nil

@@ -248,7 +248,6 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "start_date", Type: field.TypeTime},
 		{Name: "end_date", Type: field.TypeTime},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"upcoming", "active", "completed"}, Default: "upcoming"},
 		{Name: "season_year", Type: field.TypeInt},
 		{Name: "course", Type: field.TypeString, Nullable: true},
 		{Name: "location", Type: field.TypeString, Nullable: true},
@@ -269,7 +268,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "tournaments_golfers_champion",
-				Columns:    []*schema.Column{TournamentsColumns[19]},
+				Columns:    []*schema.Column{TournamentsColumns[18]},
 				RefColumns: []*schema.Column{GolfersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

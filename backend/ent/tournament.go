@@ -33,8 +33,6 @@ type Tournament struct {
 	StartDate time.Time `json:"start_date,omitempty"`
 	// EndDate holds the value of the "end_date" field.
 	EndDate time.Time `json:"end_date,omitempty"`
-	// Status holds the value of the "status" field.
-	Status tournament.Status `json:"status,omitempty"`
 	// SeasonYear holds the value of the "season_year" field.
 	SeasonYear int `json:"season_year,omitempty"`
 	// Course holds the value of the "course" field.
@@ -122,7 +120,7 @@ func (*Tournament) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case tournament.FieldBdlID, tournament.FieldSeasonYear, tournament.FieldPurse:
 			values[i] = new(sql.NullInt64)
-		case tournament.FieldPgaTourID, tournament.FieldName, tournament.FieldStatus, tournament.FieldCourse, tournament.FieldLocation, tournament.FieldCity, tournament.FieldState, tournament.FieldCountry, tournament.FieldTimezone:
+		case tournament.FieldPgaTourID, tournament.FieldName, tournament.FieldCourse, tournament.FieldLocation, tournament.FieldCity, tournament.FieldState, tournament.FieldCountry, tournament.FieldTimezone:
 			values[i] = new(sql.NullString)
 		case tournament.FieldCreatedAt, tournament.FieldUpdatedAt, tournament.FieldStartDate, tournament.FieldEndDate, tournament.FieldPickWindowOpensAt, tournament.FieldPickWindowClosesAt:
 			values[i] = new(sql.NullTime)
@@ -194,12 +192,6 @@ func (_m *Tournament) assignValues(columns []string, values []any) error {
 				return fmt.Errorf("unexpected type %T for field end_date", values[i])
 			} else if value.Valid {
 				_m.EndDate = value.Time
-			}
-		case tournament.FieldStatus:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field status", values[i])
-			} else if value.Valid {
-				_m.Status = tournament.Status(value.String)
 			}
 		case tournament.FieldSeasonYear:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
@@ -357,9 +349,6 @@ func (_m *Tournament) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("end_date=")
 	builder.WriteString(_m.EndDate.Format(time.ANSIC))
-	builder.WriteString(", ")
-	builder.WriteString("status=")
-	builder.WriteString(fmt.Sprintf("%v", _m.Status))
 	builder.WriteString(", ")
 	builder.WriteString("season_year=")
 	builder.WriteString(fmt.Sprintf("%v", _m.SeasonYear))

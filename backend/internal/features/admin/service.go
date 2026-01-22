@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -94,17 +95,20 @@ func (s *Service) DeleteLeague(ctx context.Context, id uuid.UUID) error {
 func (s *Service) ListTournaments(ctx context.Context) (*ListTournamentsResponse, error) {
 	tournaments, err := s.db.Tournament.Query().
 		Order(ent.Desc(tournament.FieldStartDate)).
+		WithChampion().
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query tournaments: %w", err)
 	}
 
+	now := time.Now().UTC()
 	result := make([]AdminTournament, len(tournaments))
 	for i, t := range tournaments {
+		status := deriveAdminTournamentStatus(t, now)
 		result[i] = AdminTournament{
 			ID:        t.ID,
 			Name:      t.Name,
-			Status:    string(t.Status),
+			Status:    status,
 			StartDate: t.StartDate,
 			EndDate:   t.EndDate,
 		}
@@ -114,6 +118,17 @@ func (s *Service) ListTournaments(ctx context.Context) (*ListTournamentsResponse
 		Tournaments: result,
 		Total:       len(result),
 	}, nil
+}
+
+func deriveAdminTournamentStatus(t *ent.Tournament, now time.Time) string {
+	if t.Edges.Champion != nil {
+		return "completed"
+	}
+
+	if t.PickWindowClosesAt != nil && now.After(*t.PickWindowClosesAt) {
+		return "active"
+	}
+	return "upcoming"
 }
 
 var ErrTournamentNotFound = errors.New("tournament not found")

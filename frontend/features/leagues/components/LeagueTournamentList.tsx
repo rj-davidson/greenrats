@@ -11,7 +11,7 @@ interface LeagueTournamentListProps {
 }
 
 function getVariant(tournament: LeagueTournament, firstUpcomingId: string | null): TournamentCardVariant {
-  if (tournament.status === "in_progress") {
+  if (tournament.status === "active") {
     return "live";
   }
   if (tournament.status === "completed") {

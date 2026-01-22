@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
@@ -86,7 +85,7 @@ func TestService_Create(t *testing.T) {
 			LeagueID:     league.ID,
 		})
 
-		require.ErrorIs(t, err, ErrTournamentNotUpcoming)
+		require.ErrorIs(t, err, ErrPickWindowClosed)
 	})
 
 	t.Run("returns error when pick window closed", func(t *testing.T) {
@@ -286,7 +285,7 @@ func TestService_CanMakePick(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.False(t, status.IsOpen)
-		assert.Equal(t, "tournament has already started", status.Reason)
+		assert.Equal(t, "pick window has closed", status.Reason)
 	})
 
 	t.Run("returns error when tournament not found", func(t *testing.T) {
@@ -487,10 +486,7 @@ func TestService_UpdateUserPick(t *testing.T) {
 		user := factory.CreateUser()
 		factory.AddUserToLeague(user, league)
 
-		tourn := factory.CreateTournament(
-			testutil.WithStartDate(time.Now().AddDate(0, 0, 2)),
-			testutil.WithTournamentStatus(tournament.StatusActive),
-		)
+		tourn := factory.CreateActiveTournament()
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
 		factory.CreateTournamentEntry(tourn, golfer1)
@@ -504,7 +500,7 @@ func TestService_UpdateUserPick(t *testing.T) {
 			NewGolferID: golfer2.ID,
 		})
 
-		require.ErrorIs(t, err, ErrTournamentNotUpcoming)
+		require.ErrorIs(t, err, ErrPickWindowClosed)
 	})
 
 	t.Run("returns error when golfer already used", func(t *testing.T) {

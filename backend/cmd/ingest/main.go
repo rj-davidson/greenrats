@@ -286,8 +286,8 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 		if result.Created {
 			log.Printf("Created tournament: %s", tournaments[idx].Name)
 		} else {
-			log.Printf("Updated tournament: %s (status: %s)", tournaments[idx].Name, result.CurrentStatus)
-			if result.PreviousStatus != tournament.StatusCompleted && result.CurrentStatus == tournament.StatusCompleted {
+			log.Printf("Updated tournament: %s", tournaments[idx].Name)
+			if result.BecameCompleted {
 				i.sendTournamentResultsEmails(ctx, result.Tournament)
 			}
 		}
@@ -324,8 +324,12 @@ func (i *Ingester) syncPlayers(ctx context.Context) {
 func (i *Ingester) syncLeaderboards(ctx context.Context) {
 	log.Println("Checking for active tournament leaderboards...")
 
+	now := time.Now().UTC()
 	tournaments, err := i.db.Tournament.Query().
-		Where(tournament.StatusEQ(tournament.StatusActive)).
+		Where(
+			tournament.Not(tournament.HasChampion()),
+			tournament.PickWindowClosesAtLT(now),
+		).
 		All(ctx)
 	if err != nil {
 		log.Printf("failed to query active tournaments: %v", err)
@@ -383,7 +387,7 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 
 	tournaments, err := i.db.Tournament.Query().
 		Where(
-			tournament.StatusEQ(tournament.StatusCompleted),
+			tournament.HasChampion(),
 			tournament.SeasonYearGTE(currentYear-1),
 		).
 		All(ctx)
@@ -445,13 +449,12 @@ func (i *Ingester) syncFields(ctx context.Context) {
 	log.Println("Checking for tournaments needing field sync...")
 
 	now := time.Now().UTC()
-	windowStart := now
 	windowEnd := now.Add(7 * 24 * time.Hour)
 
 	tournaments, err := i.db.Tournament.Query().
 		Where(
-			tournament.StatusEQ(tournament.StatusUpcoming),
-			tournament.StartDateGTE(windowStart),
+			tournament.Not(tournament.HasChampion()),
+			tournament.PickWindowClosesAtGTE(now),
 			tournament.StartDateLTE(windowEnd),
 		).
 		All(ctx)
@@ -520,9 +523,9 @@ func (i *Ingester) sendPickReminders(ctx context.Context) {
 
 	tournaments, err := i.db.Tournament.Query().
 		Where(
-			tournament.StatusEQ(tournament.StatusUpcoming),
-			tournament.StartDateGTE(reminderWindowStart),
-			tournament.StartDateLTE(reminderWindowEnd),
+			tournament.Not(tournament.HasChampion()),
+			tournament.PickWindowClosesAtGTE(reminderWindowStart),
+			tournament.PickWindowClosesAtLTE(reminderWindowEnd),
 		).
 		All(ctx)
 	if err != nil {
@@ -639,7 +642,12 @@ func (i *Ingester) sendPickReminderEmail(ctx context.Context, u *ent.User, l *en
 		displayName = *u.DisplayName
 	}
 
-	deadline := t.StartDate.Format("Monday, January 2 at 3:04 PM MST")
+	deadline := ""
+	if t.PickWindowClosesAt != nil {
+		deadline = t.PickWindowClosesAt.Format("Monday, January 2 at 3:04 PM MST")
+	} else {
+		deadline = t.StartDate.Format("Monday, January 2 at 3:04 PM MST")
+	}
 
 	data := email.PickReminderData{
 		DisplayName:    displayName,

@@ -140,7 +140,7 @@ func (s *Service) ListUserLeagues(ctx context.Context, userID uuid.UUID) (*ListU
 			Where(
 				pick.HasUserWith(user.IDEQ(userID)),
 				pick.HasLeagueWith(league.IDEQ(l.ID)),
-				pick.HasTournamentWith(tournament.StatusEQ(tournament.StatusCompleted)),
+				pick.HasTournamentWith(tournament.HasChampion()),
 			).
 			WithGolfer().
 			WithTournament().
@@ -157,16 +157,20 @@ func (s *Service) ListUserLeagues(ctx context.Context, userID uuid.UUID) (*ListU
 			Query().
 			Where(
 				tournament.SeasonYearEQ(l.SeasonYear),
-				tournament.StatusEQ(tournament.StatusUpcoming),
-				tournament.StartDateGT(now),
+				tournament.Not(tournament.HasChampion()),
+				tournament.PickWindowClosesAtGTE(now),
 			).
-			Order(tournament.ByStartDate()).
+			Order(tournament.ByPickWindowClosesAt()).
 			First(ctx)
 		if err == nil {
+			deadline := nextTournament.StartDate
+			if nextTournament.PickWindowClosesAt != nil {
+				deadline = *nextTournament.PickWindowClosesAt
+			}
 			leagueResp.NextDeadline = &NextDeadline{
 				TournamentID:   nextTournament.ID,
 				TournamentName: nextTournament.Name,
-				Deadline:       nextTournament.StartDate,
+				Deadline:       deadline,
 			}
 		}
 
@@ -622,19 +626,22 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 		Query().
 		Where(tournament.SeasonYearEQ(entLeague.SeasonYear)).
 		Order(tournament.ByStartDate()).
+		WithChampion().
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query tournaments: %w", err)
 	}
 
+	now := time.Now().UTC()
 	result := make([]LeagueTournament, 0, len(tournaments))
 	for _, t := range tournaments {
+		status := deriveLeagueTournamentStatus(t, now)
 		lt := LeagueTournament{
 			ID:        t.ID,
 			Name:      t.Name,
 			StartDate: t.StartDate,
 			EndDate:   t.EndDate,
-			Status:    string(t.Status),
+			Status:    status,
 		}
 
 		pickCount, _ := s.db.Pick.
@@ -681,4 +688,15 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 		Tournaments: result,
 		Total:       len(result),
 	}, nil
+}
+
+func deriveLeagueTournamentStatus(t *ent.Tournament, now time.Time) string {
+	if t.Edges.Champion != nil {
+		return "completed"
+	}
+
+	if t.PickWindowClosesAt != nil && now.After(*t.PickWindowClosesAt) {
+		return "active"
+	}
+	return "upcoming"
 }

@@ -158,7 +158,6 @@ func (s *Service) IsDisplayNameAvailable(ctx context.Context, displayName string
 
 func (s *Service) GetPendingActions(ctx context.Context, userID uuid.UUID) (*PendingActionsResponse, error) {
 	now := time.Now().UTC()
-	pickWindowDays := 3
 
 	memberships, err := s.db.LeagueMembership.
 		Query().
@@ -171,7 +170,13 @@ func (s *Service) GetPendingActions(ctx context.Context, userID uuid.UUID) (*Pen
 
 	upcomingTournaments, err := s.db.Tournament.
 		Query().
-		Where(tournament.StatusEQ(tournament.StatusUpcoming)).
+		Where(
+			tournament.Not(tournament.HasChampion()),
+			tournament.Or(
+				tournament.PickWindowClosesAtGTE(now),
+				tournament.PickWindowClosesAtIsNil(),
+			),
+		).
 		Order(tournament.ByStartDate()).
 		All(ctx)
 	if err != nil {
@@ -191,8 +196,10 @@ func (s *Service) GetPendingActions(ctx context.Context, userID uuid.UUID) (*Pen
 				continue
 			}
 
-			windowOpens := t.StartDate.AddDate(0, 0, -pickWindowDays)
-			if now.Before(windowOpens) || now.After(t.StartDate) {
+			if t.PickWindowOpensAt == nil || t.PickWindowClosesAt == nil {
+				continue
+			}
+			if now.Before(*t.PickWindowOpensAt) || now.After(*t.PickWindowClosesAt) {
 				continue
 			}
 
@@ -216,7 +223,7 @@ func (s *Service) GetPendingActions(ctx context.Context, userID uuid.UUID) (*Pen
 				LeagueName:     l.Name,
 				TournamentID:   t.ID,
 				TournamentName: t.Name,
-				PickDeadline:   t.StartDate,
+				PickDeadline:   *t.PickWindowClosesAt,
 			})
 		}
 	}
@@ -230,7 +237,7 @@ func (s *Service) GetPendingActions(ctx context.Context, userID uuid.UUID) (*Pen
 				Name:      t.Name,
 				StartDate: t.StartDate,
 				EndDate:   t.EndDate,
-				Status:    string(t.Status),
+				Status:    "upcoming",
 			})
 		}
 	}

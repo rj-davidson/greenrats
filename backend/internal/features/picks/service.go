@@ -62,10 +62,6 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*Pick, error
 		return nil, fmt.Errorf("failed to get tournament: %w", err)
 	}
 
-	if tournamentEnt.Status != tournament.StatusUpcoming {
-		return nil, ErrTournamentNotUpcoming
-	}
-
 	windowStatus := s.getPickWindowStatus(tournamentEnt)
 	if !windowStatus.IsOpen {
 		return nil, ErrPickWindowClosed
@@ -282,12 +278,11 @@ func (s *Service) CreatePickForUser(ctx context.Context, params CreatePickForUse
 	}
 
 	metadata := map[string]any{
-		"golfer_id":         params.GolferID.String(),
-		"golfer_name":       golferEnt.Name,
-		"pick_user_id":      params.TargetUserID.String(),
-		"tournament_id":     tournamentEnt.ID.String(),
-		"tournament_name":   tournamentEnt.Name,
-		"tournament_status": string(tournamentEnt.Status),
+		"golfer_id":       params.GolferID.String(),
+		"golfer_name":     golferEnt.Name,
+		"pick_user_id":    params.TargetUserID.String(),
+		"tournament_id":   tournamentEnt.ID.String(),
+		"tournament_name": tournamentEnt.Name,
 	}
 
 	_, err = s.db.CommissionerAction.
@@ -384,6 +379,7 @@ func (s *Service) GetLeaguePicks(ctx context.Context, leagueID, tournamentID uui
 
 	tournamentEnt, err := s.db.Tournament.Query().
 		Where(tournament.IDEQ(tournamentID)).
+		WithChampion().
 		Only(ctx)
 	if err != nil && !ent.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to get tournament: %w", err)
@@ -412,16 +408,20 @@ func (s *Service) GetLeaguePicks(ctx context.Context, leagueID, tournamentID uui
 			item.GolferID = p.Edges.Golfer.ID
 			item.GolferName = p.Edges.Golfer.Name
 
-			if tournamentEnt != nil && tournamentEnt.Status != tournament.StatusUpcoming {
-				entry, err := s.db.TournamentEntry.Query().
-					Where(
-						tournamententry.HasTournamentWith(tournament.IDEQ(tournamentID)),
-						tournamententry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
-					).
-					Only(ctx)
-				if err == nil {
-					item.GolferPosition = entry.Position
-					item.GolferEarnings = entry.Earnings
+			if tournamentEnt != nil {
+				hasChampion := tournamentEnt.Edges.Champion != nil
+				status := deriveTournamentStatus(tournamentEnt, hasChampion)
+				if status != "upcoming" {
+					entry, err := s.db.TournamentEntry.Query().
+						Where(
+							tournamententry.HasTournamentWith(tournament.IDEQ(tournamentID)),
+							tournamententry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
+						).
+						Only(ctx)
+					if err == nil {
+						item.GolferPosition = entry.Position
+						item.GolferEarnings = entry.Earnings
+					}
 				}
 			}
 		}
@@ -470,9 +470,6 @@ func (s *Service) getPickWindowStatus(t *ent.Tournament) PickWindowStatus {
 	}
 
 	switch {
-	case t.Status != tournament.StatusUpcoming:
-		status.IsOpen = false
-		status.Reason = "tournament has already started"
 	case now.Before(opensAt):
 		status.IsOpen = false
 		status.Reason = "pick window not yet open"
@@ -756,12 +753,11 @@ func (s *Service) OverridePick(ctx context.Context, params OverridePickParams) (
 	}
 
 	metadata := map[string]any{
-		"new_golfer_id":     params.NewGolferID.String(),
-		"new_golfer_name":   newGolferEnt.Name,
-		"pick_user_id":      pickUserID.String(),
-		"tournament_id":     tournamentEnt.ID.String(),
-		"tournament_name":   tournamentEnt.Name,
-		"tournament_status": string(tournamentEnt.Status),
+		"new_golfer_id":   params.NewGolferID.String(),
+		"new_golfer_name": newGolferEnt.Name,
+		"pick_user_id":    pickUserID.String(),
+		"tournament_id":   tournamentEnt.ID.String(),
+		"tournament_name": tournamentEnt.Name,
 	}
 	if pickEnt.Edges.Golfer != nil {
 		metadata["old_golfer_id"] = pickEnt.Edges.Golfer.ID.String()
@@ -847,10 +843,6 @@ func (s *Service) UpdateUserPick(ctx context.Context, params UpdatePickParams) (
 	}
 	tournamentEnt := pickEnt.Edges.Tournament
 
-	if tournamentEnt.Status != tournament.StatusUpcoming {
-		return nil, ErrTournamentNotUpcoming
-	}
-
 	windowStatus := s.getPickWindowStatus(tournamentEnt)
 	if !windowStatus.IsOpen {
 		return nil, ErrPickWindowClosed
@@ -918,4 +910,16 @@ func (s *Service) UpdateUserPick(ctx context.Context, params UpdatePickParams) (
 		TournamentName: tournamentEnt.Name,
 		GolferName:     newGolferEnt.Name,
 	}, nil
+}
+
+func deriveTournamentStatus(t *ent.Tournament, hasChampion bool) string {
+	if hasChampion {
+		return "completed"
+	}
+
+	now := time.Now().UTC()
+	if t.PickWindowClosesAt != nil && now.After(*t.PickWindowClosesAt) {
+		return "active"
+	}
+	return "upcoming"
 }

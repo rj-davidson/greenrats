@@ -5387,7 +5387,6 @@ type TournamentMutation struct {
 	name                   *string
 	start_date             *time.Time
 	end_date               *time.Time
-	status                 *tournament.Status
 	season_year            *int
 	addseason_year         *int
 	course                 *string
@@ -5818,42 +5817,6 @@ func (m *TournamentMutation) OldEndDate(ctx context.Context) (v time.Time, err e
 // ResetEndDate resets all changes to the "end_date" field.
 func (m *TournamentMutation) ResetEndDate() {
 	m.end_date = nil
-}
-
-// SetStatus sets the "status" field.
-func (m *TournamentMutation) SetStatus(t tournament.Status) {
-	m.status = &t
-}
-
-// Status returns the value of the "status" field in the mutation.
-func (m *TournamentMutation) Status() (r tournament.Status, exists bool) {
-	v := m.status
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldStatus returns the old "status" field's value of the Tournament entity.
-// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TournamentMutation) OldStatus(ctx context.Context) (v tournament.Status, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldStatus is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldStatus requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldStatus: %w", err)
-	}
-	return oldValue.Status, nil
-}
-
-// ResetStatus resets all changes to the "status" field.
-func (m *TournamentMutation) ResetStatus() {
-	m.status = nil
 }
 
 // SetSeasonYear sets the "season_year" field.
@@ -6609,7 +6572,7 @@ func (m *TournamentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TournamentMutation) Fields() []string {
-	fields := make([]string, 0, 18)
+	fields := make([]string, 0, 17)
 	if m.created_at != nil {
 		fields = append(fields, tournament.FieldCreatedAt)
 	}
@@ -6630,9 +6593,6 @@ func (m *TournamentMutation) Fields() []string {
 	}
 	if m.end_date != nil {
 		fields = append(fields, tournament.FieldEndDate)
-	}
-	if m.status != nil {
-		fields = append(fields, tournament.FieldStatus)
 	}
 	if m.season_year != nil {
 		fields = append(fields, tournament.FieldSeasonYear)
@@ -6686,8 +6646,6 @@ func (m *TournamentMutation) Field(name string) (ent.Value, bool) {
 		return m.StartDate()
 	case tournament.FieldEndDate:
 		return m.EndDate()
-	case tournament.FieldStatus:
-		return m.Status()
 	case tournament.FieldSeasonYear:
 		return m.SeasonYear()
 	case tournament.FieldCourse:
@@ -6731,8 +6689,6 @@ func (m *TournamentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldStartDate(ctx)
 	case tournament.FieldEndDate:
 		return m.OldEndDate(ctx)
-	case tournament.FieldStatus:
-		return m.OldStatus(ctx)
 	case tournament.FieldSeasonYear:
 		return m.OldSeasonYear(ctx)
 	case tournament.FieldCourse:
@@ -6810,13 +6766,6 @@ func (m *TournamentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetEndDate(v)
-		return nil
-	case tournament.FieldStatus:
-		v, ok := value.(tournament.Status)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetStatus(v)
 		return nil
 	case tournament.FieldSeasonYear:
 		v, ok := value.(int)
@@ -7065,9 +7014,6 @@ func (m *TournamentMutation) ResetField(name string) error {
 		return nil
 	case tournament.FieldEndDate:
 		m.ResetEndDate()
-		return nil
-	case tournament.FieldStatus:
-		m.ResetStatus()
 		return nil
 	case tournament.FieldSeasonYear:
 		m.ResetSeasonYear()

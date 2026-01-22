@@ -8,6 +8,7 @@ import {
   LeagueActivity,
   LeagueMonogram,
   LeagueTournamentList,
+  PickWindowAlert,
 } from "@/features/leagues/components";
 import { useLeague } from "@/features/leagues/queries";
 import { useEffect } from "react";
@@ -66,6 +67,8 @@ export function LeagueDetail({ id }: LeagueDetailProps) {
           </p>
         </div>
       </div>
+
+      <PickWindowAlert leagueId={id} />
 
       <Tabs defaultValue="tournaments" className="space-y-6">
         <TabsList>

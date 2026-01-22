@@ -11,7 +11,6 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
-	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
@@ -112,9 +111,9 @@ func WithEndDate(t time.Time) TournamentOption {
 	}
 }
 
-func WithTournamentStatus(status tournament.Status) TournamentOption {
+func WithChampion(golferID uuid.UUID) TournamentOption {
 	return func(tc *ent.TournamentCreate) {
-		tc.SetStatus(status)
+		tc.SetChampionID(golferID)
 	}
 }
 
@@ -153,15 +152,18 @@ func (f *Factory) CreateTournament(opts ...TournamentOption) *ent.Tournament {
 
 	startDate := time.Now().AddDate(0, 0, 7)
 	endDate := startDate.AddDate(0, 0, 4)
+	pickWindowOpens := startDate.AddDate(0, 0, -3)
+	pickWindowCloses := startDate.Add(-1 * time.Hour)
 
 	create := f.db.Tournament.Create().
 		SetName(gofakeit.Company() + " Championship").
 		SetStartDate(startDate).
 		SetEndDate(endDate).
-		SetStatus(tournament.StatusUpcoming).
 		SetSeasonYear(time.Now().Year()).
 		SetCourse(gofakeit.City() + " Golf Club").
-		SetLocation(gofakeit.City() + ", " + gofakeit.StateAbr())
+		SetLocation(gofakeit.City() + ", " + gofakeit.StateAbr()).
+		SetPickWindowOpensAt(pickWindowOpens).
+		SetPickWindowClosesAt(pickWindowCloses)
 
 	for _, opt := range opts {
 		opt(create)
@@ -174,14 +176,22 @@ func (f *Factory) CreateTournament(opts ...TournamentOption) *ent.Tournament {
 	return t
 }
 
+func WithPickWindow(opens, closes time.Time) TournamentOption {
+	return func(tc *ent.TournamentCreate) {
+		tc.SetPickWindowOpensAt(opens)
+		tc.SetPickWindowClosesAt(closes)
+	}
+}
+
 func (f *Factory) CreateUpcomingTournament(daysFromNow int, opts ...TournamentOption) *ent.Tournament {
 	f.t.Helper()
 
 	startDate := time.Now().AddDate(0, 0, daysFromNow)
+	pickWindowCloses := startDate.Add(-1 * time.Hour)
 	allOpts := append([]TournamentOption{
 		WithStartDate(startDate),
 		WithEndDate(startDate.AddDate(0, 0, 4)),
-		WithTournamentStatus(tournament.StatusUpcoming),
+		WithPickWindow(startDate.AddDate(0, 0, -3), pickWindowCloses),
 	}, opts...)
 
 	return f.CreateTournament(allOpts...)
@@ -191,10 +201,11 @@ func (f *Factory) CreateActiveTournament(opts ...TournamentOption) *ent.Tourname
 	f.t.Helper()
 
 	startDate := time.Now().AddDate(0, 0, -1)
+	pickWindowCloses := time.Now().AddDate(0, 0, -2)
 	allOpts := append([]TournamentOption{
 		WithStartDate(startDate),
 		WithEndDate(startDate.AddDate(0, 0, 4)),
-		WithTournamentStatus(tournament.StatusActive),
+		WithPickWindow(startDate.AddDate(0, 0, -3), pickWindowCloses),
 	}, opts...)
 
 	return f.CreateTournament(allOpts...)
@@ -203,11 +214,15 @@ func (f *Factory) CreateActiveTournament(opts ...TournamentOption) *ent.Tourname
 func (f *Factory) CreateCompletedTournament(opts ...TournamentOption) *ent.Tournament {
 	f.t.Helper()
 
+	champion := f.CreateGolfer()
+
 	startDate := time.Now().AddDate(0, 0, -10)
+	pickWindowCloses := time.Now().AddDate(0, 0, -11)
 	allOpts := append([]TournamentOption{
 		WithStartDate(startDate),
 		WithEndDate(startDate.AddDate(0, 0, 4)),
-		WithTournamentStatus(tournament.StatusCompleted),
+		WithPickWindow(startDate.AddDate(0, 0, -3), pickWindowCloses),
+		WithChampion(champion.ID),
 	}, opts...)
 
 	return f.CreateTournament(allOpts...)

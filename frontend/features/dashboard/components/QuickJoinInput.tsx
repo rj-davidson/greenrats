@@ -1,8 +1,8 @@
 "use client";
 
-import { Button } from "@/components/shadcn/button";
-import { Input } from "@/components/shadcn/input";
+import { InputGroup, InputGroupButton, InputGroupInput } from "@/components/shadcn/input-group";
 import { useJoinLeague } from "@/features/leagues/queries";
+import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -34,18 +34,23 @@ export function QuickJoinInput() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2">
-      <Input
-        type="text"
-        placeholder="Enter code"
-        value={code}
-        onChange={(e) => setCode(e.target.value.toUpperCase())}
-        className="w-28 font-mono uppercase"
-        maxLength={6}
-      />
-      <Button type="submit" size="sm" disabled={!code.trim() || joinLeague.isPending}>
-        {joinLeague.isPending ? "Joining..." : "Join"}
-      </Button>
+    <form onSubmit={handleSubmit}>
+      <InputGroup className="w-fit">
+        <InputGroupInput
+          type="text"
+          placeholder="League code"
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          className="w-28"
+          maxLength={6}
+        />
+        <InputGroupButton
+          type="submit"
+          disabled={!code.trim() || joinLeague.isPending}
+        >
+          <ArrowRight className="size-4" />
+        </InputGroupButton>
+      </InputGroup>
     </form>
   );
 }

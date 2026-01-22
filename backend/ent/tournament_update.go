@@ -128,20 +128,6 @@ func (_u *TournamentUpdate) SetNillableEndDate(v *time.Time) *TournamentUpdate {
 	return _u
 }
 
-// SetStatus sets the "status" field.
-func (_u *TournamentUpdate) SetStatus(v tournament.Status) *TournamentUpdate {
-	_u.mutation.SetStatus(v)
-	return _u
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *TournamentUpdate) SetNillableStatus(v *tournament.Status) *TournamentUpdate {
-	if v != nil {
-		_u.SetStatus(*v)
-	}
-	return _u
-}
-
 // SetSeasonYear sets the "season_year" field.
 func (_u *TournamentUpdate) SetSeasonYear(v int) *TournamentUpdate {
 	_u.mutation.ResetSeasonYear()
@@ -531,11 +517,6 @@ func (_u *TournamentUpdate) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Tournament.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Status(); ok {
-		if err := tournament.StatusValidator(v); err != nil {
-			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Tournament.status": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -577,9 +558,6 @@ func (_u *TournamentUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if value, ok := _u.mutation.EndDate(); ok {
 		_spec.SetField(tournament.FieldEndDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Status(); ok {
-		_spec.SetField(tournament.FieldStatus, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.SeasonYear(); ok {
 		_spec.SetField(tournament.FieldSeasonYear, field.TypeInt, value)
@@ -919,20 +897,6 @@ func (_u *TournamentUpdateOne) SetEndDate(v time.Time) *TournamentUpdateOne {
 func (_u *TournamentUpdateOne) SetNillableEndDate(v *time.Time) *TournamentUpdateOne {
 	if v != nil {
 		_u.SetEndDate(*v)
-	}
-	return _u
-}
-
-// SetStatus sets the "status" field.
-func (_u *TournamentUpdateOne) SetStatus(v tournament.Status) *TournamentUpdateOne {
-	_u.mutation.SetStatus(v)
-	return _u
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (_u *TournamentUpdateOne) SetNillableStatus(v *tournament.Status) *TournamentUpdateOne {
-	if v != nil {
-		_u.SetStatus(*v)
 	}
 	return _u
 }
@@ -1339,11 +1303,6 @@ func (_u *TournamentUpdateOne) check() error {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Tournament.name": %w`, err)}
 		}
 	}
-	if v, ok := _u.mutation.Status(); ok {
-		if err := tournament.StatusValidator(v); err != nil {
-			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Tournament.status": %w`, err)}
-		}
-	}
 	return nil
 }
 
@@ -1402,9 +1361,6 @@ func (_u *TournamentUpdateOne) sqlSave(ctx context.Context) (_node *Tournament, 
 	}
 	if value, ok := _u.mutation.EndDate(); ok {
 		_spec.SetField(tournament.FieldEndDate, field.TypeTime, value)
-	}
-	if value, ok := _u.mutation.Status(); ok {
-		_spec.SetField(tournament.FieldStatus, field.TypeEnum, value)
 	}
 	if value, ok := _u.mutation.SeasonYear(); ok {
 		_spec.SetField(tournament.FieldSeasonYear, field.TypeInt, value)

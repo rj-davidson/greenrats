@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -29,8 +30,25 @@ func (s *Service) List(ctx context.Context, req ListTournamentsRequest) (*ListTo
 		query = query.Where(tournament.SeasonYear(req.Season))
 	}
 
+	now := time.Now().UTC()
 	if req.Status != "" {
-		query = query.Where(tournament.StatusEQ(tournament.Status(req.Status)))
+		switch DerivedStatus(req.Status) {
+		case StatusCompleted:
+			query = query.Where(tournament.HasChampion())
+		case StatusActive:
+			query = query.Where(
+				tournament.Not(tournament.HasChampion()),
+				tournament.PickWindowClosesAtLT(now),
+			)
+		case StatusUpcoming:
+			query = query.Where(
+				tournament.Not(tournament.HasChampion()),
+				tournament.Or(
+					tournament.PickWindowClosesAtGTE(now),
+					tournament.PickWindowClosesAtIsNil(),
+				),
+			)
+		}
 	}
 
 	total, err := query.Clone().Count(ctx)
@@ -91,8 +109,12 @@ func (s *Service) GetByID(ctx context.Context, id string) (*Tournament, error) {
 
 // GetActive returns the currently active tournament.
 func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
+	now := time.Now().UTC()
 	t, err := s.db.Tournament.Query().
-		Where(tournament.StatusEQ(tournament.StatusActive)).
+		Where(
+			tournament.Not(tournament.HasChampion()),
+			tournament.PickWindowClosesAtLT(now),
+		).
 		Order(ent.Asc(tournament.FieldStartDate)).
 		WithChampion().
 		First(ctx)
@@ -214,12 +236,15 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboar
 }
 
 func toTournament(t *ent.Tournament) Tournament {
+	hasChampion := t.Edges.Champion != nil
+	status := DeriveStatus(t, hasChampion)
+
 	result := Tournament{
 		ID:                 t.ID.String(),
 		Name:               t.Name,
 		StartDate:          t.StartDate,
 		EndDate:            t.EndDate,
-		Status:             string(t.Status),
+		Status:             string(status),
 		PickWindowOpensAt:  t.PickWindowOpensAt,
 		PickWindowClosesAt: t.PickWindowClosesAt,
 	}
@@ -245,7 +270,7 @@ func toTournament(t *ent.Tournament) Tournament {
 	if t.Timezone != nil {
 		result.Timezone = *t.Timezone
 	}
-	if t.Edges.Champion != nil {
+	if hasChampion {
 		result.ChampionID = t.Edges.Champion.ID.String()
 		result.ChampionName = t.Edges.Champion.Name
 	}

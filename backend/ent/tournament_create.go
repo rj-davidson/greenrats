@@ -99,20 +99,6 @@ func (_c *TournamentCreate) SetEndDate(v time.Time) *TournamentCreate {
 	return _c
 }
 
-// SetStatus sets the "status" field.
-func (_c *TournamentCreate) SetStatus(v tournament.Status) *TournamentCreate {
-	_c.mutation.SetStatus(v)
-	return _c
-}
-
-// SetNillableStatus sets the "status" field if the given value is not nil.
-func (_c *TournamentCreate) SetNillableStatus(v *tournament.Status) *TournamentCreate {
-	if v != nil {
-		_c.SetStatus(*v)
-	}
-	return _c
-}
-
 // SetSeasonYear sets the "season_year" field.
 func (_c *TournamentCreate) SetSeasonYear(v int) *TournamentCreate {
 	_c.mutation.SetSeasonYear(v)
@@ -366,10 +352,6 @@ func (_c *TournamentCreate) defaults() {
 		v := tournament.DefaultUpdatedAt()
 		_c.mutation.SetUpdatedAt(v)
 	}
-	if _, ok := _c.mutation.Status(); !ok {
-		v := tournament.DefaultStatus
-		_c.mutation.SetStatus(v)
-	}
 	if _, ok := _c.mutation.ID(); !ok {
 		v := tournament.DefaultID()
 		_c.mutation.SetID(v)
@@ -397,14 +379,6 @@ func (_c *TournamentCreate) check() error {
 	}
 	if _, ok := _c.mutation.EndDate(); !ok {
 		return &ValidationError{Name: "end_date", err: errors.New(`ent: missing required field "Tournament.end_date"`)}
-	}
-	if _, ok := _c.mutation.Status(); !ok {
-		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Tournament.status"`)}
-	}
-	if v, ok := _c.mutation.Status(); ok {
-		if err := tournament.StatusValidator(v); err != nil {
-			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Tournament.status": %w`, err)}
-		}
 	}
 	if _, ok := _c.mutation.SeasonYear(); !ok {
 		return &ValidationError{Name: "season_year", err: errors.New(`ent: missing required field "Tournament.season_year"`)}
@@ -471,10 +445,6 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.EndDate(); ok {
 		_spec.SetField(tournament.FieldEndDate, field.TypeTime, value)
 		_node.EndDate = value
-	}
-	if value, ok := _c.mutation.Status(); ok {
-		_spec.SetField(tournament.FieldStatus, field.TypeEnum, value)
-		_node.Status = value
 	}
 	if value, ok := _c.mutation.SeasonYear(); ok {
 		_spec.SetField(tournament.FieldSeasonYear, field.TypeInt, value)
