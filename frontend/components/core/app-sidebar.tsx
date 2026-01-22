@@ -47,21 +47,37 @@ function TournamentIcon({ status }: { status: Tournament["status"] }) {
 
 function useSidebarTournaments() {
   const { data: activeData, isLoading: activeLoading } = useActiveTournament();
-  const { data: upcomingData, isLoading: upcomingLoading } = useTournaments({
-    status: "upcoming",
-    limit: 1,
-  });
   const { data: completedData, isLoading: completedLoading } = useTournaments({
     status: "completed",
     limit: 1,
   });
+  const { data: upcomingData, isLoading: upcomingLoading } = useTournaments({
+    status: "upcoming",
+    limit: 2,
+  });
 
-  const isLoading = activeLoading || upcomingLoading || completedLoading;
+  const isLoading = activeLoading || completedLoading || upcomingLoading;
 
-  const currentTournament = activeData?.tournament ?? upcomingData?.tournaments[0] ?? null;
+  const activeTournament = activeData?.tournament ?? null;
   const recentCompleted = completedData?.tournaments[0] ?? null;
+  const upcomingTournaments = upcomingData?.tournaments ?? [];
 
-  return { currentTournament, recentCompleted, isLoading };
+  const tournaments: Tournament[] = [];
+
+  if (recentCompleted) {
+    tournaments.push(recentCompleted);
+  }
+
+  if (activeTournament) {
+    tournaments.push(activeTournament);
+  }
+
+  for (const upcoming of upcomingTournaments) {
+    if (tournaments.length >= 3) break;
+    tournaments.push(upcoming);
+  }
+
+  return { tournaments, isLoading };
 }
 
 function useSidebarLeagues() {
@@ -80,7 +96,7 @@ function useSidebarLeagues() {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
-  const { currentTournament, recentCompleted } = useSidebarTournaments();
+  const { tournaments } = useSidebarTournaments();
   const { leagues, hasMore } = useSidebarLeagues();
   const { data: user } = useCurrentUser();
 
@@ -109,39 +125,25 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {(currentTournament || recentCompleted) && (
+        {tournaments.length > 0 && (
           <SidebarGroup>
-            <SidebarGroupLabel>Upcoming</SidebarGroupLabel>
+            <SidebarGroupLabel>Tournaments</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {currentTournament && (
-                  <SidebarMenuItem>
+                {tournaments.map((tournament) => (
+                  <SidebarMenuItem key={tournament.id}>
                     <SidebarMenuButton
                       asChild
-                      isActive={pathname === `/tournaments/${currentTournament.id}`}
-                      tooltip={currentTournament.name}
+                      isActive={pathname === `/tournaments/${tournament.id}`}
+                      tooltip={tournament.name}
                     >
-                      <Link href={`/tournaments/${currentTournament.id}`}>
-                        <TournamentIcon status={currentTournament.status} />
-                        <span className="truncate">{currentTournament.name}</span>
+                      <Link href={`/tournaments/${tournament.id}`}>
+                        <TournamentIcon status={tournament.status} />
+                        <span className="truncate">{tournament.name}</span>
                       </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                )}
-                {recentCompleted && recentCompleted.id !== currentTournament?.id && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={pathname === `/tournaments/${recentCompleted.id}`}
-                      tooltip={recentCompleted.name}
-                    >
-                      <Link href={`/tournaments/${recentCompleted.id}`}>
-                        <TournamentIcon status={recentCompleted.status} />
-                        <span className="truncate">{recentCompleted.name}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
+                ))}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
