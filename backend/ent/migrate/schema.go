@@ -250,7 +250,6 @@ var (
 		{Name: "end_date", Type: field.TypeTime},
 		{Name: "season_year", Type: field.TypeInt},
 		{Name: "course", Type: field.TypeString, Nullable: true},
-		{Name: "location", Type: field.TypeString, Nullable: true},
 		{Name: "city", Type: field.TypeString, Nullable: true},
 		{Name: "state", Type: field.TypeString, Nullable: true},
 		{Name: "country", Type: field.TypeString, Nullable: true},
@@ -268,7 +267,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "tournaments_golfers_champion",
-				Columns:    []*schema.Column{TournamentsColumns[18]},
+				Columns:    []*schema.Column{TournamentsColumns[17]},
 				RefColumns: []*schema.Column{GolfersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},

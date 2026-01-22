@@ -40,10 +40,6 @@ func (Tournament) Fields() []ent.Field {
 		field.String("course").
 			Optional().
 			Nillable(),
-		field.String("location").
-			Optional().
-			Nillable().
-			Comment("Deprecated: use city/state/country instead"),
 		field.String("city").
 			Optional().
 			Nillable(),

@@ -51,7 +51,10 @@ function getStatusLabel(status: TournamentStatus): string {
 }
 
 function TournamentCard({ tournament }: { tournament: Tournament }) {
-  const venue = tournament.venue || tournament.course;
+  const location =
+    tournament.city && tournament.state
+      ? `${tournament.city}, ${tournament.state}`
+      : tournament.course;
   const showPickWindow =
     tournament.status === "upcoming" &&
     tournament.pick_window_opens_at &&
@@ -72,10 +75,10 @@ function TournamentCard({ tournament }: { tournament: Tournament }) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-1">
-        {venue && (
+        {location && (
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
             <MapPinIcon className="size-3" />
-            {venue}
+            {location}
           </p>
         )}
         {tournament.purse && (

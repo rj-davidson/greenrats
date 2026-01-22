@@ -33,8 +33,6 @@ const (
 	FieldSeasonYear = "season_year"
 	// FieldCourse holds the string denoting the course field in the database.
 	FieldCourse = "course"
-	// FieldLocation holds the string denoting the location field in the database.
-	FieldLocation = "location"
 	// FieldCity holds the string denoting the city field in the database.
 	FieldCity = "city"
 	// FieldState holds the string denoting the state field in the database.
@@ -101,7 +99,6 @@ var Columns = []string{
 	FieldEndDate,
 	FieldSeasonYear,
 	FieldCourse,
-	FieldLocation,
 	FieldCity,
 	FieldState,
 	FieldCountry,
@@ -196,11 +193,6 @@ func BySeasonYear(opts ...sql.OrderTermOption) OrderOption {
 // ByCourse orders the results by the course field.
 func ByCourse(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCourse, opts...).ToFunc()
-}
-
-// ByLocation orders the results by the location field.
-func ByLocation(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldLocation, opts...).ToFunc()
 }
 
 // ByCity orders the results by the city field.

@@ -55,7 +55,9 @@ export function TournamentCoverage({ id }: TournamentCoverageProps) {
           <StatusBadge status={tournament.status} />
         </div>
         <p className="text-muted-foreground">
-          {tournament.venue || tournament.course || "Tournament coverage coming soon"}
+          {tournament.city && tournament.state
+            ? `${tournament.city}, ${tournament.state}`
+            : tournament.course || "Tournament coverage coming soon"}
         </p>
       </div>
       <UserPicksByLeague tournamentId={id} />

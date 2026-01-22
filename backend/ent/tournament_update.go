@@ -169,26 +169,6 @@ func (_u *TournamentUpdate) ClearCourse() *TournamentUpdate {
 	return _u
 }
 
-// SetLocation sets the "location" field.
-func (_u *TournamentUpdate) SetLocation(v string) *TournamentUpdate {
-	_u.mutation.SetLocation(v)
-	return _u
-}
-
-// SetNillableLocation sets the "location" field if the given value is not nil.
-func (_u *TournamentUpdate) SetNillableLocation(v *string) *TournamentUpdate {
-	if v != nil {
-		_u.SetLocation(*v)
-	}
-	return _u
-}
-
-// ClearLocation clears the value of the "location" field.
-func (_u *TournamentUpdate) ClearLocation() *TournamentUpdate {
-	_u.mutation.ClearLocation()
-	return _u
-}
-
 // SetCity sets the "city" field.
 func (_u *TournamentUpdate) SetCity(v string) *TournamentUpdate {
 	_u.mutation.SetCity(v)
@@ -571,12 +551,6 @@ func (_u *TournamentUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	if _u.mutation.CourseCleared() {
 		_spec.ClearField(tournament.FieldCourse, field.TypeString)
 	}
-	if value, ok := _u.mutation.Location(); ok {
-		_spec.SetField(tournament.FieldLocation, field.TypeString, value)
-	}
-	if _u.mutation.LocationCleared() {
-		_spec.ClearField(tournament.FieldLocation, field.TypeString)
-	}
 	if value, ok := _u.mutation.City(); ok {
 		_spec.SetField(tournament.FieldCity, field.TypeString, value)
 	}
@@ -939,26 +913,6 @@ func (_u *TournamentUpdateOne) SetNillableCourse(v *string) *TournamentUpdateOne
 // ClearCourse clears the value of the "course" field.
 func (_u *TournamentUpdateOne) ClearCourse() *TournamentUpdateOne {
 	_u.mutation.ClearCourse()
-	return _u
-}
-
-// SetLocation sets the "location" field.
-func (_u *TournamentUpdateOne) SetLocation(v string) *TournamentUpdateOne {
-	_u.mutation.SetLocation(v)
-	return _u
-}
-
-// SetNillableLocation sets the "location" field if the given value is not nil.
-func (_u *TournamentUpdateOne) SetNillableLocation(v *string) *TournamentUpdateOne {
-	if v != nil {
-		_u.SetLocation(*v)
-	}
-	return _u
-}
-
-// ClearLocation clears the value of the "location" field.
-func (_u *TournamentUpdateOne) ClearLocation() *TournamentUpdateOne {
-	_u.mutation.ClearLocation()
 	return _u
 }
 
@@ -1373,12 +1327,6 @@ func (_u *TournamentUpdateOne) sqlSave(ctx context.Context) (_node *Tournament, 
 	}
 	if _u.mutation.CourseCleared() {
 		_spec.ClearField(tournament.FieldCourse, field.TypeString)
-	}
-	if value, ok := _u.mutation.Location(); ok {
-		_spec.SetField(tournament.FieldLocation, field.TypeString, value)
-	}
-	if _u.mutation.LocationCleared() {
-		_spec.ClearField(tournament.FieldLocation, field.TypeString)
 	}
 	if value, ok := _u.mutation.City(); ok {
 		_spec.SetField(tournament.FieldCity, field.TypeString, value)

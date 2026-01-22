@@ -119,9 +119,9 @@ function TournamentDetails({ tournament }: { tournament: Tournament }) {
         </DetailItem>
       )}
 
-      {tournament.venue && (
+      {tournament.city && tournament.state && (
         <DetailItem icon={MapPinIcon} label="Location">
-          {tournament.venue}
+          {tournament.city}, {tournament.state}
         </DetailItem>
       )}
 

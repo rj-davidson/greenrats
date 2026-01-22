@@ -129,12 +129,6 @@ func WithCourse(course string) TournamentOption {
 	}
 }
 
-func WithLocation(location string) TournamentOption {
-	return func(tc *ent.TournamentCreate) {
-		tc.SetLocation(location)
-	}
-}
-
 func WithPurse(purse int) TournamentOption {
 	return func(tc *ent.TournamentCreate) {
 		tc.SetPurse(purse)
@@ -161,7 +155,6 @@ func (f *Factory) CreateTournament(opts ...TournamentOption) *ent.Tournament {
 		SetEndDate(endDate).
 		SetSeasonYear(time.Now().Year()).
 		SetCourse(gofakeit.City() + " Golf Club").
-		SetLocation(gofakeit.City() + ", " + gofakeit.StateAbr()).
 		SetPickWindowOpensAt(pickWindowOpens).
 		SetPickWindowClosesAt(pickWindowCloses)
 

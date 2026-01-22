@@ -249,9 +249,6 @@ func toTournament(t *ent.Tournament) Tournament {
 		PickWindowClosesAt: t.PickWindowClosesAt,
 	}
 
-	if t.Location != nil { //nolint:staticcheck // backward compatibility
-		result.Venue = *t.Location //nolint:staticcheck // backward compatibility
-	}
 	if t.Course != nil {
 		result.Course = *t.Course
 	}

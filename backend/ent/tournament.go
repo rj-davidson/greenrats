@@ -37,8 +37,6 @@ type Tournament struct {
 	SeasonYear int `json:"season_year,omitempty"`
 	// Course holds the value of the "course" field.
 	Course *string `json:"course,omitempty"`
-	// Deprecated: use city/state/country instead
-	Location *string `json:"location,omitempty"`
 	// City holds the value of the "city" field.
 	City *string `json:"city,omitempty"`
 	// State holds the value of the "state" field.
@@ -120,7 +118,7 @@ func (*Tournament) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case tournament.FieldBdlID, tournament.FieldSeasonYear, tournament.FieldPurse:
 			values[i] = new(sql.NullInt64)
-		case tournament.FieldPgaTourID, tournament.FieldName, tournament.FieldCourse, tournament.FieldLocation, tournament.FieldCity, tournament.FieldState, tournament.FieldCountry, tournament.FieldTimezone:
+		case tournament.FieldPgaTourID, tournament.FieldName, tournament.FieldCourse, tournament.FieldCity, tournament.FieldState, tournament.FieldCountry, tournament.FieldTimezone:
 			values[i] = new(sql.NullString)
 		case tournament.FieldCreatedAt, tournament.FieldUpdatedAt, tournament.FieldStartDate, tournament.FieldEndDate, tournament.FieldPickWindowOpensAt, tournament.FieldPickWindowClosesAt:
 			values[i] = new(sql.NullTime)
@@ -205,13 +203,6 @@ func (_m *Tournament) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.Course = new(string)
 				*_m.Course = value.String
-			}
-		case tournament.FieldLocation:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field location", values[i])
-			} else if value.Valid {
-				_m.Location = new(string)
-				*_m.Location = value.String
 			}
 		case tournament.FieldCity:
 			if value, ok := values[i].(*sql.NullString); !ok {
@@ -355,11 +346,6 @@ func (_m *Tournament) String() string {
 	builder.WriteString(", ")
 	if v := _m.Course; v != nil {
 		builder.WriteString("course=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	if v := _m.Location; v != nil {
-		builder.WriteString("location=")
 		builder.WriteString(*v)
 	}
 	builder.WriteString(", ")

@@ -1,4 +1,4 @@
-h1:xLh4ljD1bXhWZi8H40VGKttDJFEWIjuD4TqpNd6/Jys=
+h1:ONkbXn4xvdo/ebL/ButnnuaAtnmKrywDrbEaKTHLL+s=
 20260118200158_initial_schema.sql h1:KvQhUcBGBFSs0g4IyK8YfA4ZvrwufF9ZnRYRQ2tcddM=
 20260119002952_add_commissioner_actions.sql h1:rnmc1DsMriHSZWL0XyJm6g03oNAJdIgYO5uSJ5rXu6U=
 20260119003132_add_joining_enabled.sql h1:XOROavo0HwabE3qO8Jb9Y9CTObP3ryXUgdfOBZ3MPCA=
@@ -10,3 +10,4 @@ h1:xLh4ljD1bXhWZi8H40VGKttDJFEWIjuD4TqpNd6/Jys=
 20260122053637_remove_scratchgolf_id.sql h1:XArSrtIorRdrRZlPApnEWs06jBdLOvqikyZo+GHuT/Y=
 20260122070717_add_tournament_timezone_fields.sql h1:xLP4js9vFP8FITfPpj8dpUXfVrIU3GbqUC75uyubtuA=
 20260122085052_remove_tournament_status.sql h1:vZSq+YHERZD5IHg6V+iTW3EGLxZaLY6qevbiRV9hx7c=
+20260122092204_remove_tournament_location.sql h1:0/M2bzsLtFfZds3KGf+dTh0W82tVqrIbengMrrEod0w=

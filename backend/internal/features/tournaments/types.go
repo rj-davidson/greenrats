@@ -17,7 +17,6 @@ type Tournament struct {
 	StartDate          time.Time  `json:"start_date"`
 	EndDate            time.Time  `json:"end_date"`
 	Status             string     `json:"status"` // upcoming, active, completed
-	Venue              string     `json:"venue,omitempty"`
 	Course             string     `json:"course,omitempty"`
 	Purse              float64    `json:"purse,omitempty"`
 	City               string     `json:"city,omitempty"`

@@ -8,11 +8,16 @@ export const tournamentSchema = z.object({
   start_date: z.string(),
   end_date: z.string(),
   status: tournamentStatusSchema,
-  venue: z.string().optional(),
   course: z.string().optional(),
   purse: z.number().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  timezone: z.string().optional(),
   pick_window_opens_at: z.string().optional(),
   pick_window_closes_at: z.string().optional(),
+  champion_id: z.string().optional(),
+  champion_name: z.string().optional(),
 });
 
 export const listTournamentsResponseSchema = z.object({

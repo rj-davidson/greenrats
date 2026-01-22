@@ -101,11 +101,6 @@ func Course(v string) predicate.Tournament {
 	return predicate.Tournament(sql.FieldEQ(FieldCourse, v))
 }
 
-// Location applies equality check predicate on the "location" field. It's identical to LocationEQ.
-func Location(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldEQ(FieldLocation, v))
-}
-
 // City applies equality check predicate on the "city" field. It's identical to CityEQ.
 func City(v string) predicate.Tournament {
 	return predicate.Tournament(sql.FieldEQ(FieldCity, v))
@@ -604,81 +599,6 @@ func CourseEqualFold(v string) predicate.Tournament {
 // CourseContainsFold applies the ContainsFold predicate on the "course" field.
 func CourseContainsFold(v string) predicate.Tournament {
 	return predicate.Tournament(sql.FieldContainsFold(FieldCourse, v))
-}
-
-// LocationEQ applies the EQ predicate on the "location" field.
-func LocationEQ(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldEQ(FieldLocation, v))
-}
-
-// LocationNEQ applies the NEQ predicate on the "location" field.
-func LocationNEQ(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldNEQ(FieldLocation, v))
-}
-
-// LocationIn applies the In predicate on the "location" field.
-func LocationIn(vs ...string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldIn(FieldLocation, vs...))
-}
-
-// LocationNotIn applies the NotIn predicate on the "location" field.
-func LocationNotIn(vs ...string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldNotIn(FieldLocation, vs...))
-}
-
-// LocationGT applies the GT predicate on the "location" field.
-func LocationGT(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldGT(FieldLocation, v))
-}
-
-// LocationGTE applies the GTE predicate on the "location" field.
-func LocationGTE(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldGTE(FieldLocation, v))
-}
-
-// LocationLT applies the LT predicate on the "location" field.
-func LocationLT(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldLT(FieldLocation, v))
-}
-
-// LocationLTE applies the LTE predicate on the "location" field.
-func LocationLTE(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldLTE(FieldLocation, v))
-}
-
-// LocationContains applies the Contains predicate on the "location" field.
-func LocationContains(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldContains(FieldLocation, v))
-}
-
-// LocationHasPrefix applies the HasPrefix predicate on the "location" field.
-func LocationHasPrefix(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldHasPrefix(FieldLocation, v))
-}
-
-// LocationHasSuffix applies the HasSuffix predicate on the "location" field.
-func LocationHasSuffix(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldHasSuffix(FieldLocation, v))
-}
-
-// LocationIsNil applies the IsNil predicate on the "location" field.
-func LocationIsNil() predicate.Tournament {
-	return predicate.Tournament(sql.FieldIsNull(FieldLocation))
-}
-
-// LocationNotNil applies the NotNil predicate on the "location" field.
-func LocationNotNil() predicate.Tournament {
-	return predicate.Tournament(sql.FieldNotNull(FieldLocation))
-}
-
-// LocationEqualFold applies the EqualFold predicate on the "location" field.
-func LocationEqualFold(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldEqualFold(FieldLocation, v))
-}
-
-// LocationContainsFold applies the ContainsFold predicate on the "location" field.
-func LocationContainsFold(v string) predicate.Tournament {
-	return predicate.Tournament(sql.FieldContainsFold(FieldLocation, v))
 }
 
 // CityEQ applies the EQ predicate on the "city" field.

@@ -119,20 +119,6 @@ func (_c *TournamentCreate) SetNillableCourse(v *string) *TournamentCreate {
 	return _c
 }
 
-// SetLocation sets the "location" field.
-func (_c *TournamentCreate) SetLocation(v string) *TournamentCreate {
-	_c.mutation.SetLocation(v)
-	return _c
-}
-
-// SetNillableLocation sets the "location" field if the given value is not nil.
-func (_c *TournamentCreate) SetNillableLocation(v *string) *TournamentCreate {
-	if v != nil {
-		_c.SetLocation(*v)
-	}
-	return _c
-}
-
 // SetCity sets the "city" field.
 func (_c *TournamentCreate) SetCity(v string) *TournamentCreate {
 	_c.mutation.SetCity(v)
@@ -453,10 +439,6 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Course(); ok {
 		_spec.SetField(tournament.FieldCourse, field.TypeString, value)
 		_node.Course = &value
-	}
-	if value, ok := _c.mutation.Location(); ok {
-		_spec.SetField(tournament.FieldLocation, field.TypeString, value)
-		_node.Location = &value
 	}
 	if value, ok := _c.mutation.City(); ok {
 		_spec.SetField(tournament.FieldCity, field.TypeString, value)

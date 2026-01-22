@@ -5390,7 +5390,6 @@ type TournamentMutation struct {
 	season_year            *int
 	addseason_year         *int
 	course                 *string
-	location               *string
 	city                   *string
 	state                  *string
 	country                *string
@@ -5922,55 +5921,6 @@ func (m *TournamentMutation) CourseCleared() bool {
 func (m *TournamentMutation) ResetCourse() {
 	m.course = nil
 	delete(m.clearedFields, tournament.FieldCourse)
-}
-
-// SetLocation sets the "location" field.
-func (m *TournamentMutation) SetLocation(s string) {
-	m.location = &s
-}
-
-// Location returns the value of the "location" field in the mutation.
-func (m *TournamentMutation) Location() (r string, exists bool) {
-	v := m.location
-	if v == nil {
-		return
-	}
-	return *v, true
-}
-
-// OldLocation returns the old "location" field's value of the Tournament entity.
-// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
-// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
-func (m *TournamentMutation) OldLocation(ctx context.Context) (v *string, err error) {
-	if !m.op.Is(OpUpdateOne) {
-		return v, errors.New("OldLocation is only allowed on UpdateOne operations")
-	}
-	if m.id == nil || m.oldValue == nil {
-		return v, errors.New("OldLocation requires an ID field in the mutation")
-	}
-	oldValue, err := m.oldValue(ctx)
-	if err != nil {
-		return v, fmt.Errorf("querying old value for OldLocation: %w", err)
-	}
-	return oldValue.Location, nil
-}
-
-// ClearLocation clears the value of the "location" field.
-func (m *TournamentMutation) ClearLocation() {
-	m.location = nil
-	m.clearedFields[tournament.FieldLocation] = struct{}{}
-}
-
-// LocationCleared returns if the "location" field was cleared in this mutation.
-func (m *TournamentMutation) LocationCleared() bool {
-	_, ok := m.clearedFields[tournament.FieldLocation]
-	return ok
-}
-
-// ResetLocation resets all changes to the "location" field.
-func (m *TournamentMutation) ResetLocation() {
-	m.location = nil
-	delete(m.clearedFields, tournament.FieldLocation)
 }
 
 // SetCity sets the "city" field.
@@ -6572,7 +6522,7 @@ func (m *TournamentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TournamentMutation) Fields() []string {
-	fields := make([]string, 0, 17)
+	fields := make([]string, 0, 16)
 	if m.created_at != nil {
 		fields = append(fields, tournament.FieldCreatedAt)
 	}
@@ -6599,9 +6549,6 @@ func (m *TournamentMutation) Fields() []string {
 	}
 	if m.course != nil {
 		fields = append(fields, tournament.FieldCourse)
-	}
-	if m.location != nil {
-		fields = append(fields, tournament.FieldLocation)
 	}
 	if m.city != nil {
 		fields = append(fields, tournament.FieldCity)
@@ -6650,8 +6597,6 @@ func (m *TournamentMutation) Field(name string) (ent.Value, bool) {
 		return m.SeasonYear()
 	case tournament.FieldCourse:
 		return m.Course()
-	case tournament.FieldLocation:
-		return m.Location()
 	case tournament.FieldCity:
 		return m.City()
 	case tournament.FieldState:
@@ -6693,8 +6638,6 @@ func (m *TournamentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldSeasonYear(ctx)
 	case tournament.FieldCourse:
 		return m.OldCourse(ctx)
-	case tournament.FieldLocation:
-		return m.OldLocation(ctx)
 	case tournament.FieldCity:
 		return m.OldCity(ctx)
 	case tournament.FieldState:
@@ -6780,13 +6723,6 @@ func (m *TournamentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetCourse(v)
-		return nil
-	case tournament.FieldLocation:
-		v, ok := value.(string)
-		if !ok {
-			return fmt.Errorf("unexpected type %T for field %s", value, name)
-		}
-		m.SetLocation(v)
 		return nil
 	case tournament.FieldCity:
 		v, ok := value.(string)
@@ -6915,9 +6851,6 @@ func (m *TournamentMutation) ClearedFields() []string {
 	if m.FieldCleared(tournament.FieldCourse) {
 		fields = append(fields, tournament.FieldCourse)
 	}
-	if m.FieldCleared(tournament.FieldLocation) {
-		fields = append(fields, tournament.FieldLocation)
-	}
 	if m.FieldCleared(tournament.FieldCity) {
 		fields = append(fields, tournament.FieldCity)
 	}
@@ -6961,9 +6894,6 @@ func (m *TournamentMutation) ClearField(name string) error {
 		return nil
 	case tournament.FieldCourse:
 		m.ClearCourse()
-		return nil
-	case tournament.FieldLocation:
-		m.ClearLocation()
 		return nil
 	case tournament.FieldCity:
 		m.ClearCity()
@@ -7020,9 +6950,6 @@ func (m *TournamentMutation) ResetField(name string) error {
 		return nil
 	case tournament.FieldCourse:
 		m.ResetCourse()
-		return nil
-	case tournament.FieldLocation:
-		m.ResetLocation()
 		return nil
 	case tournament.FieldCity:
 		m.ResetCity()
