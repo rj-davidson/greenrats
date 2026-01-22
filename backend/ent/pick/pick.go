@@ -27,6 +27,8 @@ const (
 	EdgeGolfer = "golfer"
 	// EdgeLeague holds the string denoting the league edge name in mutations.
 	EdgeLeague = "league"
+	// EdgeSeason holds the string denoting the season edge name in mutations.
+	EdgeSeason = "season"
 	// Table holds the table name of the pick in the database.
 	Table = "picks"
 	// UserTable is the table that holds the user relation/edge.
@@ -57,6 +59,13 @@ const (
 	LeagueInverseTable = "leagues"
 	// LeagueColumn is the table column denoting the league relation/edge.
 	LeagueColumn = "league_picks"
+	// SeasonTable is the table that holds the season relation/edge.
+	SeasonTable = "picks"
+	// SeasonInverseTable is the table name for the Season entity.
+	// It exists in this package in order to avoid circular dependency with the "season" package.
+	SeasonInverseTable = "seasons"
+	// SeasonColumn is the table column denoting the season relation/edge.
+	SeasonColumn = "season_picks"
 )
 
 // Columns holds all SQL columns for pick fields.
@@ -71,6 +80,7 @@ var Columns = []string{
 var ForeignKeys = []string{
 	"golfer_picks",
 	"league_picks",
+	"season_picks",
 	"tournament_picks",
 	"user_picks",
 }
@@ -142,6 +152,13 @@ func ByLeagueField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newLeagueStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// BySeasonField orders the results by season field.
+func BySeasonField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSeasonStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newUserStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -168,5 +185,12 @@ func newLeagueStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(LeagueInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, LeagueTable, LeagueColumn),
+	)
+}
+func newSeasonStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SeasonInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, SeasonTable, SeasonColumn),
 	)
 }

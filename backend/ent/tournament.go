@@ -10,7 +10,9 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
@@ -54,6 +56,8 @@ type Tournament struct {
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TournamentQuery when eager-loading is set.
 	Edges               TournamentEdges `json:"edges"`
+	course_tournaments  *uuid.UUID
+	season_tournaments  *uuid.UUID
 	tournament_champion *uuid.UUID
 	selectValues        sql.SelectValues
 }
@@ -68,9 +72,13 @@ type TournamentEdges struct {
 	EmailReminders []*EmailReminder `json:"email_reminders,omitempty"`
 	// Champion holds the value of the champion edge.
 	Champion *Golfer `json:"champion,omitempty"`
+	// Season holds the value of the season edge.
+	Season *Season `json:"season,omitempty"`
+	// CourseRef holds the value of the course_ref edge.
+	CourseRef *Course `json:"course_ref,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [6]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -111,6 +119,28 @@ func (e TournamentEdges) ChampionOrErr() (*Golfer, error) {
 	return nil, &NotLoadedError{edge: "champion"}
 }
 
+// SeasonOrErr returns the Season value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TournamentEdges) SeasonOrErr() (*Season, error) {
+	if e.Season != nil {
+		return e.Season, nil
+	} else if e.loadedTypes[4] {
+		return nil, &NotFoundError{label: season.Label}
+	}
+	return nil, &NotLoadedError{edge: "season"}
+}
+
+// CourseRefOrErr returns the CourseRef value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TournamentEdges) CourseRefOrErr() (*Course, error) {
+	if e.CourseRef != nil {
+		return e.CourseRef, nil
+	} else if e.loadedTypes[5] {
+		return nil, &NotFoundError{label: course.Label}
+	}
+	return nil, &NotLoadedError{edge: "course_ref"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Tournament) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -124,7 +154,11 @@ func (*Tournament) scanValues(columns []string) ([]any, error) {
 			values[i] = new(sql.NullTime)
 		case tournament.FieldID:
 			values[i] = new(uuid.UUID)
-		case tournament.ForeignKeys[0]: // tournament_champion
+		case tournament.ForeignKeys[0]: // course_tournaments
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case tournament.ForeignKeys[1]: // season_tournaments
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case tournament.ForeignKeys[2]: // tournament_champion
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -255,6 +289,20 @@ func (_m *Tournament) assignValues(columns []string, values []any) error {
 			}
 		case tournament.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field course_tournaments", values[i])
+			} else if value.Valid {
+				_m.course_tournaments = new(uuid.UUID)
+				*_m.course_tournaments = *value.S.(*uuid.UUID)
+			}
+		case tournament.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field season_tournaments", values[i])
+			} else if value.Valid {
+				_m.season_tournaments = new(uuid.UUID)
+				*_m.season_tournaments = *value.S.(*uuid.UUID)
+			}
+		case tournament.ForeignKeys[2]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field tournament_champion", values[i])
 			} else if value.Valid {
 				_m.tournament_champion = new(uuid.UUID)
@@ -291,6 +339,16 @@ func (_m *Tournament) QueryEmailReminders() *EmailReminderQuery {
 // QueryChampion queries the "champion" edge of the Tournament entity.
 func (_m *Tournament) QueryChampion() *GolferQuery {
 	return NewTournamentClient(_m.config).QueryChampion(_m)
+}
+
+// QuerySeason queries the "season" edge of the Tournament entity.
+func (_m *Tournament) QuerySeason() *SeasonQuery {
+	return NewTournamentClient(_m.config).QuerySeason(_m)
+}
+
+// QueryCourseRef queries the "course_ref" edge of the Tournament entity.
+func (_m *Tournament) QueryCourseRef() *CourseQuery {
+	return NewTournamentClient(_m.config).QueryCourseRef(_m)
 }
 
 // Update returns a builder for updating this Tournament.

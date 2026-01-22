@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/golferseason"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
@@ -213,6 +214,21 @@ func (_c *GolferCreate) AddEntries(v ...*TournamentEntry) *GolferCreate {
 	return _c.AddEntryIDs(ids...)
 }
 
+// AddSeasonIDs adds the "seasons" edge to the GolferSeason entity by IDs.
+func (_c *GolferCreate) AddSeasonIDs(ids ...uuid.UUID) *GolferCreate {
+	_c.mutation.AddSeasonIDs(ids...)
+	return _c
+}
+
+// AddSeasons adds the "seasons" edges to the GolferSeason entity.
+func (_c *GolferCreate) AddSeasons(v ...*GolferSeason) *GolferCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddSeasonIDs(ids...)
+}
+
 // Mutation returns the GolferMutation object of the builder.
 func (_c *GolferCreate) Mutation() *GolferMutation {
 	return _c.mutation
@@ -396,6 +412,22 @@ func (_c *GolferCreate) createSpec() (*Golfer, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SeasonsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.SeasonsTable,
+			Columns: []string{golfer.SeasonsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golferseason.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

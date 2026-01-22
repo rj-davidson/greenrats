@@ -48,6 +48,8 @@ const (
 	EdgeTournament = "tournament"
 	// EdgeGolfer holds the string denoting the golfer edge name in mutations.
 	EdgeGolfer = "golfer"
+	// EdgeRounds holds the string denoting the rounds edge name in mutations.
+	EdgeRounds = "rounds"
 	// Table holds the table name of the tournamententry in the database.
 	Table = "tournament_entries"
 	// TournamentTable is the table that holds the tournament relation/edge.
@@ -64,6 +66,13 @@ const (
 	GolferInverseTable = "golfers"
 	// GolferColumn is the table column denoting the golfer relation/edge.
 	GolferColumn = "golfer_entries"
+	// RoundsTable is the table that holds the rounds relation/edge.
+	RoundsTable = "rounds"
+	// RoundsInverseTable is the table name for the Round entity.
+	// It exists in this package in order to avoid circular dependency with the "round" package.
+	RoundsInverseTable = "rounds"
+	// RoundsColumn is the table column denoting the rounds relation/edge.
+	RoundsColumn = "tournament_entry_rounds"
 )
 
 // Columns holds all SQL columns for tournamententry fields.
@@ -281,6 +290,20 @@ func ByGolferField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newGolferStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// ByRoundsCount orders the results by rounds count.
+func ByRoundsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRoundsStep(), opts...)
+	}
+}
+
+// ByRounds orders the results by rounds terms.
+func ByRounds(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRoundsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newTournamentStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -293,5 +316,12 @@ func newGolferStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(GolferInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, GolferTable, GolferColumn),
+	)
+}
+func newRoundsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RoundsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RoundsTable, RoundsColumn),
 	)
 }

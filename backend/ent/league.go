@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/league"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -35,6 +36,7 @@ type League struct {
 	// The values are being populated by the LeagueQuery when eager-loading is set.
 	Edges             LeagueEdges `json:"edges"`
 	league_created_by *uuid.UUID
+	season_leagues    *uuid.UUID
 	selectValues      sql.SelectValues
 }
 
@@ -50,9 +52,11 @@ type LeagueEdges struct {
 	CommissionerActions []*CommissionerAction `json:"commissioner_actions,omitempty"`
 	// EmailReminders holds the value of the email_reminders edge.
 	EmailReminders []*EmailReminder `json:"email_reminders,omitempty"`
+	// Season holds the value of the season edge.
+	Season *Season `json:"season,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [5]bool
+	loadedTypes [6]bool
 }
 
 // CreatedByOrErr returns the CreatedBy value or an error if the edge
@@ -102,6 +106,17 @@ func (e LeagueEdges) EmailRemindersOrErr() ([]*EmailReminder, error) {
 	return nil, &NotLoadedError{edge: "email_reminders"}
 }
 
+// SeasonOrErr returns the Season value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LeagueEdges) SeasonOrErr() (*Season, error) {
+	if e.Season != nil {
+		return e.Season, nil
+	} else if e.loadedTypes[5] {
+		return nil, &NotFoundError{label: season.Label}
+	}
+	return nil, &NotLoadedError{edge: "season"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*League) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -118,6 +133,8 @@ func (*League) scanValues(columns []string) ([]any, error) {
 		case league.FieldID:
 			values[i] = new(uuid.UUID)
 		case league.ForeignKeys[0]: // league_created_by
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case league.ForeignKeys[1]: // season_leagues
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -183,6 +200,13 @@ func (_m *League) assignValues(columns []string, values []any) error {
 				_m.league_created_by = new(uuid.UUID)
 				*_m.league_created_by = *value.S.(*uuid.UUID)
 			}
+		case league.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field season_leagues", values[i])
+			} else if value.Valid {
+				_m.season_leagues = new(uuid.UUID)
+				*_m.season_leagues = *value.S.(*uuid.UUID)
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -219,6 +243,11 @@ func (_m *League) QueryCommissionerActions() *CommissionerActionQuery {
 // QueryEmailReminders queries the "email_reminders" edge of the League entity.
 func (_m *League) QueryEmailReminders() *EmailReminderQuery {
 	return NewLeagueClient(_m.config).QueryEmailReminders(_m)
+}
+
+// QuerySeason queries the "season" edge of the League entity.
+func (_m *League) QuerySeason() *SeasonQuery {
+	return NewLeagueClient(_m.config).QuerySeason(_m)
 }
 
 // Update returns a builder for updating this League.

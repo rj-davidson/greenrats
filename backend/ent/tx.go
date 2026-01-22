@@ -14,16 +14,28 @@ type Tx struct {
 	config
 	// CommissionerAction is the client for interacting with the CommissionerAction builders.
 	CommissionerAction *CommissionerActionClient
+	// Course is the client for interacting with the Course builders.
+	Course *CourseClient
+	// CourseHole is the client for interacting with the CourseHole builders.
+	CourseHole *CourseHoleClient
 	// EmailReminder is the client for interacting with the EmailReminder builders.
 	EmailReminder *EmailReminderClient
 	// Golfer is the client for interacting with the Golfer builders.
 	Golfer *GolferClient
+	// GolferSeason is the client for interacting with the GolferSeason builders.
+	GolferSeason *GolferSeasonClient
+	// HoleScore is the client for interacting with the HoleScore builders.
+	HoleScore *HoleScoreClient
 	// League is the client for interacting with the League builders.
 	League *LeagueClient
 	// LeagueMembership is the client for interacting with the LeagueMembership builders.
 	LeagueMembership *LeagueMembershipClient
 	// Pick is the client for interacting with the Pick builders.
 	Pick *PickClient
+	// Round is the client for interacting with the Round builders.
+	Round *RoundClient
+	// Season is the client for interacting with the Season builders.
+	Season *SeasonClient
 	// SyncStatus is the client for interacting with the SyncStatus builders.
 	SyncStatus *SyncStatusClient
 	// Tournament is the client for interacting with the Tournament builders.
@@ -164,11 +176,17 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.CommissionerAction = NewCommissionerActionClient(tx.config)
+	tx.Course = NewCourseClient(tx.config)
+	tx.CourseHole = NewCourseHoleClient(tx.config)
 	tx.EmailReminder = NewEmailReminderClient(tx.config)
 	tx.Golfer = NewGolferClient(tx.config)
+	tx.GolferSeason = NewGolferSeasonClient(tx.config)
+	tx.HoleScore = NewHoleScoreClient(tx.config)
 	tx.League = NewLeagueClient(tx.config)
 	tx.LeagueMembership = NewLeagueMembershipClient(tx.config)
 	tx.Pick = NewPickClient(tx.config)
+	tx.Round = NewRoundClient(tx.config)
+	tx.Season = NewSeasonClient(tx.config)
 	tx.SyncStatus = NewSyncStatusClient(tx.config)
 	tx.Tournament = NewTournamentClient(tx.config)
 	tx.TournamentEntry = NewTournamentEntryClient(tx.config)

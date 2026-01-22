@@ -9,11 +9,23 @@ import (
 // CommissionerAction is the predicate function for commissioneraction builders.
 type CommissionerAction func(*sql.Selector)
 
+// Course is the predicate function for course builders.
+type Course func(*sql.Selector)
+
+// CourseHole is the predicate function for coursehole builders.
+type CourseHole func(*sql.Selector)
+
 // EmailReminder is the predicate function for emailreminder builders.
 type EmailReminder func(*sql.Selector)
 
 // Golfer is the predicate function for golfer builders.
 type Golfer func(*sql.Selector)
+
+// GolferSeason is the predicate function for golferseason builders.
+type GolferSeason func(*sql.Selector)
+
+// HoleScore is the predicate function for holescore builders.
+type HoleScore func(*sql.Selector)
 
 // League is the predicate function for league builders.
 type League func(*sql.Selector)
@@ -23,6 +35,12 @@ type LeagueMembership func(*sql.Selector)
 
 // Pick is the predicate function for pick builders.
 type Pick func(*sql.Selector)
+
+// Round is the predicate function for round builders.
+type Round func(*sql.Selector)
+
+// Season is the predicate function for season builders.
+type Season func(*sql.Selector)
 
 // SyncStatus is the predicate function for syncstatus builders.
 type SyncStatus func(*sql.Selector)

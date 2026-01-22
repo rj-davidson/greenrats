@@ -21,6 +21,30 @@ func (f CommissionerActionFunc) Mutate(ctx context.Context, m ent.Mutation) (ent
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CommissionerActionMutation", m)
 }
 
+// The CourseFunc type is an adapter to allow the use of ordinary
+// function as Course mutator.
+type CourseFunc func(context.Context, *ent.CourseMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CourseFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CourseMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CourseMutation", m)
+}
+
+// The CourseHoleFunc type is an adapter to allow the use of ordinary
+// function as CourseHole mutator.
+type CourseHoleFunc func(context.Context, *ent.CourseHoleMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f CourseHoleFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.CourseHoleMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.CourseHoleMutation", m)
+}
+
 // The EmailReminderFunc type is an adapter to allow the use of ordinary
 // function as EmailReminder mutator.
 type EmailReminderFunc func(context.Context, *ent.EmailReminderMutation) (ent.Value, error)
@@ -43,6 +67,30 @@ func (f GolferFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, erro
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GolferMutation", m)
+}
+
+// The GolferSeasonFunc type is an adapter to allow the use of ordinary
+// function as GolferSeason mutator.
+type GolferSeasonFunc func(context.Context, *ent.GolferSeasonMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f GolferSeasonFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.GolferSeasonMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.GolferSeasonMutation", m)
+}
+
+// The HoleScoreFunc type is an adapter to allow the use of ordinary
+// function as HoleScore mutator.
+type HoleScoreFunc func(context.Context, *ent.HoleScoreMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f HoleScoreFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.HoleScoreMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.HoleScoreMutation", m)
 }
 
 // The LeagueFunc type is an adapter to allow the use of ordinary
@@ -79,6 +127,30 @@ func (f PickFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PickMutation", m)
+}
+
+// The RoundFunc type is an adapter to allow the use of ordinary
+// function as Round mutator.
+type RoundFunc func(context.Context, *ent.RoundMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f RoundFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.RoundMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.RoundMutation", m)
+}
+
+// The SeasonFunc type is an adapter to allow the use of ordinary
+// function as Season mutator.
+type SeasonFunc func(context.Context, *ent.SeasonMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f SeasonFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.SeasonMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.SeasonMutation", m)
 }
 
 // The SyncStatusFunc type is an adapter to allow the use of ordinary

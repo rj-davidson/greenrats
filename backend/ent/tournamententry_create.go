@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
@@ -253,6 +254,21 @@ func (_c *TournamentEntryCreate) SetGolferID(id uuid.UUID) *TournamentEntryCreat
 // SetGolfer sets the "golfer" edge to the Golfer entity.
 func (_c *TournamentEntryCreate) SetGolfer(v *Golfer) *TournamentEntryCreate {
 	return _c.SetGolferID(v.ID)
+}
+
+// AddRoundIDs adds the "rounds" edge to the Round entity by IDs.
+func (_c *TournamentEntryCreate) AddRoundIDs(ids ...uuid.UUID) *TournamentEntryCreate {
+	_c.mutation.AddRoundIDs(ids...)
+	return _c
+}
+
+// AddRounds adds the "rounds" edges to the Round entity.
+func (_c *TournamentEntryCreate) AddRounds(v ...*Round) *TournamentEntryCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddRoundIDs(ids...)
 }
 
 // Mutation returns the TournamentEntryMutation object of the builder.
@@ -521,6 +537,22 @@ func (_c *TournamentEntryCreate) createSpec() (*TournamentEntry, *sqlgraph.Creat
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.golfer_entries = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.RoundsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournamententry.RoundsTable,
+			Columns: []string{tournamententry.RoundsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(round.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

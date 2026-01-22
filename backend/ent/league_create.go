@@ -16,6 +16,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -169,6 +170,25 @@ func (_c *LeagueCreate) AddEmailReminders(v ...*EmailReminder) *LeagueCreate {
 		ids[i] = v[i].ID
 	}
 	return _c.AddEmailReminderIDs(ids...)
+}
+
+// SetSeasonID sets the "season" edge to the Season entity by ID.
+func (_c *LeagueCreate) SetSeasonID(id uuid.UUID) *LeagueCreate {
+	_c.mutation.SetSeasonID(id)
+	return _c
+}
+
+// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
+func (_c *LeagueCreate) SetNillableSeasonID(id *uuid.UUID) *LeagueCreate {
+	if id != nil {
+		_c = _c.SetSeasonID(*id)
+	}
+	return _c
+}
+
+// SetSeason sets the "season" edge to the Season entity.
+func (_c *LeagueCreate) SetSeason(v *Season) *LeagueCreate {
+	return _c.SetSeasonID(v.ID)
 }
 
 // Mutation returns the LeagueMutation object of the builder.
@@ -395,6 +415,23 @@ func (_c *LeagueCreate) createSpec() (*League, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SeasonIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   league.SeasonTable,
+			Columns: []string{league.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.season_leagues = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

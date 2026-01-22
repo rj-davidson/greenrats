@@ -13,6 +13,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
@@ -31,6 +32,7 @@ type Pick struct {
 	Edges            PickEdges `json:"edges"`
 	golfer_picks     *uuid.UUID
 	league_picks     *uuid.UUID
+	season_picks     *uuid.UUID
 	tournament_picks *uuid.UUID
 	user_picks       *uuid.UUID
 	selectValues     sql.SelectValues
@@ -46,9 +48,11 @@ type PickEdges struct {
 	Golfer *Golfer `json:"golfer,omitempty"`
 	// League holds the value of the league edge.
 	League *League `json:"league,omitempty"`
+	// Season holds the value of the season edge.
+	Season *Season `json:"season,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -95,6 +99,17 @@ func (e PickEdges) LeagueOrErr() (*League, error) {
 	return nil, &NotLoadedError{edge: "league"}
 }
 
+// SeasonOrErr returns the Season value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e PickEdges) SeasonOrErr() (*Season, error) {
+	if e.Season != nil {
+		return e.Season, nil
+	} else if e.loadedTypes[4] {
+		return nil, &NotFoundError{label: season.Label}
+	}
+	return nil, &NotLoadedError{edge: "season"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Pick) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -110,9 +125,11 @@ func (*Pick) scanValues(columns []string) ([]any, error) {
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		case pick.ForeignKeys[1]: // league_picks
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case pick.ForeignKeys[2]: // tournament_picks
+		case pick.ForeignKeys[2]: // season_picks
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case pick.ForeignKeys[3]: // user_picks
+		case pick.ForeignKeys[3]: // tournament_picks
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case pick.ForeignKeys[4]: // user_picks
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -163,12 +180,19 @@ func (_m *Pick) assignValues(columns []string, values []any) error {
 			}
 		case pick.ForeignKeys[2]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field season_picks", values[i])
+			} else if value.Valid {
+				_m.season_picks = new(uuid.UUID)
+				*_m.season_picks = *value.S.(*uuid.UUID)
+			}
+		case pick.ForeignKeys[3]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field tournament_picks", values[i])
 			} else if value.Valid {
 				_m.tournament_picks = new(uuid.UUID)
 				*_m.tournament_picks = *value.S.(*uuid.UUID)
 			}
-		case pick.ForeignKeys[3]:
+		case pick.ForeignKeys[4]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
 				return fmt.Errorf("unexpected type %T for field user_picks", values[i])
 			} else if value.Valid {
@@ -206,6 +230,11 @@ func (_m *Pick) QueryGolfer() *GolferQuery {
 // QueryLeague queries the "league" edge of the Pick entity.
 func (_m *Pick) QueryLeague() *LeagueQuery {
 	return NewPickClient(_m.config).QueryLeague(_m)
+}
+
+// QuerySeason queries the "season" edge of the Pick entity.
+func (_m *Pick) QuerySeason() *SeasonQuery {
+	return NewPickClient(_m.config).QuerySeason(_m)
 }
 
 // Update returns a builder for updating this Pick.

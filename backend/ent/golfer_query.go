@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/golferseason"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
@@ -28,6 +29,7 @@ type GolferQuery struct {
 	predicates  []predicate.Golfer
 	withPicks   *PickQuery
 	withEntries *TournamentEntryQuery
+	withSeasons *GolferSeasonQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -101,6 +103,28 @@ func (_q *GolferQuery) QueryEntries() *TournamentEntryQuery {
 			sqlgraph.From(golfer.Table, golfer.FieldID, selector),
 			sqlgraph.To(tournamententry.Table, tournamententry.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, golfer.EntriesTable, golfer.EntriesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySeasons chains the current query on the "seasons" edge.
+func (_q *GolferQuery) QuerySeasons() *GolferSeasonQuery {
+	query := (&GolferSeasonClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(golfer.Table, golfer.FieldID, selector),
+			sqlgraph.To(golferseason.Table, golferseason.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, golfer.SeasonsTable, golfer.SeasonsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -302,6 +326,7 @@ func (_q *GolferQuery) Clone() *GolferQuery {
 		predicates:  append([]predicate.Golfer{}, _q.predicates...),
 		withPicks:   _q.withPicks.Clone(),
 		withEntries: _q.withEntries.Clone(),
+		withSeasons: _q.withSeasons.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -327,6 +352,17 @@ func (_q *GolferQuery) WithEntries(opts ...func(*TournamentEntryQuery)) *GolferQ
 		opt(query)
 	}
 	_q.withEntries = query
+	return _q
+}
+
+// WithSeasons tells the query-builder to eager-load the nodes that are connected to
+// the "seasons" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *GolferQuery) WithSeasons(opts ...func(*GolferSeasonQuery)) *GolferQuery {
+	query := (&GolferSeasonClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSeasons = query
 	return _q
 }
 
@@ -408,9 +444,10 @@ func (_q *GolferQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Golfe
 	var (
 		nodes       = []*Golfer{}
 		_spec       = _q.querySpec()
-		loadedTypes = [2]bool{
+		loadedTypes = [3]bool{
 			_q.withPicks != nil,
 			_q.withEntries != nil,
+			_q.withSeasons != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -442,6 +479,13 @@ func (_q *GolferQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Golfe
 		if err := _q.loadEntries(ctx, query, nodes,
 			func(n *Golfer) { n.Edges.Entries = []*TournamentEntry{} },
 			func(n *Golfer, e *TournamentEntry) { n.Edges.Entries = append(n.Edges.Entries, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSeasons; query != nil {
+		if err := _q.loadSeasons(ctx, query, nodes,
+			func(n *Golfer) { n.Edges.Seasons = []*GolferSeason{} },
+			func(n *Golfer, e *GolferSeason) { n.Edges.Seasons = append(n.Edges.Seasons, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -505,6 +549,37 @@ func (_q *GolferQuery) loadEntries(ctx context.Context, query *TournamentEntryQu
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "golfer_entries" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *GolferQuery) loadSeasons(ctx context.Context, query *GolferSeasonQuery, nodes []*Golfer, init func(*Golfer), assign func(*Golfer, *GolferSeason)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Golfer)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.GolferSeason(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(golfer.SeasonsColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.golfer_seasons
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "golfer_seasons" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "golfer_seasons" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

@@ -79,6 +79,7 @@ func (TournamentEntry) Edges() []ent.Edge {
 			Ref("entries").
 			Unique().
 			Required(),
+		edge.To("rounds", Round.Type),
 	}
 }
 

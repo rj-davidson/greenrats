@@ -45,6 +45,55 @@ var (
 			},
 		},
 	}
+	// CoursesColumns holds the columns for the "courses" table.
+	CoursesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "bdl_id", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "pga_tour_id", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "par", Type: field.TypeInt, Nullable: true},
+		{Name: "yardage", Type: field.TypeInt, Nullable: true},
+		{Name: "city", Type: field.TypeString, Nullable: true},
+		{Name: "state", Type: field.TypeString, Nullable: true},
+		{Name: "country", Type: field.TypeString, Nullable: true},
+	}
+	// CoursesTable holds the schema information for the "courses" table.
+	CoursesTable = &schema.Table{
+		Name:       "courses",
+		Columns:    CoursesColumns,
+		PrimaryKey: []*schema.Column{CoursesColumns[0]},
+	}
+	// CourseHolesColumns holds the columns for the "course_holes" table.
+	CourseHolesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "hole_number", Type: field.TypeInt},
+		{Name: "par", Type: field.TypeInt},
+		{Name: "yardage", Type: field.TypeInt, Nullable: true},
+		{Name: "course_holes", Type: field.TypeUUID},
+	}
+	// CourseHolesTable holds the schema information for the "course_holes" table.
+	CourseHolesTable = &schema.Table{
+		Name:       "course_holes",
+		Columns:    CourseHolesColumns,
+		PrimaryKey: []*schema.Column{CourseHolesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "course_holes_courses_holes",
+				Columns:    []*schema.Column{CourseHolesColumns[4]},
+				RefColumns: []*schema.Column{CoursesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "coursehole_hole_number_course_holes",
+				Unique:  true,
+				Columns: []*schema.Column{CourseHolesColumns[1], CourseHolesColumns[4]},
+			},
+		},
+	}
 	// EmailRemindersColumns holds the columns for the "email_reminders" table.
 	EmailRemindersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -108,6 +157,82 @@ var (
 		Columns:    GolfersColumns,
 		PrimaryKey: []*schema.Column{GolfersColumns[0]},
 	}
+	// GolferSeasonsColumns holds the columns for the "golfer_seasons" table.
+	GolferSeasonsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "scoring_avg", Type: field.TypeFloat64, Nullable: true},
+		{Name: "top_10s", Type: field.TypeInt, Nullable: true},
+		{Name: "cuts_made", Type: field.TypeInt, Nullable: true},
+		{Name: "events_played", Type: field.TypeInt, Nullable: true},
+		{Name: "wins", Type: field.TypeInt, Nullable: true},
+		{Name: "earnings", Type: field.TypeInt, Nullable: true},
+		{Name: "driving_distance", Type: field.TypeFloat64, Nullable: true},
+		{Name: "driving_accuracy", Type: field.TypeFloat64, Nullable: true},
+		{Name: "gir_pct", Type: field.TypeFloat64, Nullable: true},
+		{Name: "putting_avg", Type: field.TypeFloat64, Nullable: true},
+		{Name: "scrambling_pct", Type: field.TypeFloat64, Nullable: true},
+		{Name: "last_synced_at", Type: field.TypeTime, Nullable: true},
+		{Name: "golfer_seasons", Type: field.TypeUUID},
+		{Name: "season_golfer_seasons", Type: field.TypeUUID},
+	}
+	// GolferSeasonsTable holds the schema information for the "golfer_seasons" table.
+	GolferSeasonsTable = &schema.Table{
+		Name:       "golfer_seasons",
+		Columns:    GolferSeasonsColumns,
+		PrimaryKey: []*schema.Column{GolferSeasonsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "golfer_seasons_golfers_seasons",
+				Columns:    []*schema.Column{GolferSeasonsColumns[15]},
+				RefColumns: []*schema.Column{GolfersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "golfer_seasons_seasons_golfer_seasons",
+				Columns:    []*schema.Column{GolferSeasonsColumns[16]},
+				RefColumns: []*schema.Column{SeasonsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "golferseason_golfer_seasons_season_golfer_seasons",
+				Unique:  true,
+				Columns: []*schema.Column{GolferSeasonsColumns[15], GolferSeasonsColumns[16]},
+			},
+		},
+	}
+	// HoleScoresColumns holds the columns for the "hole_scores" table.
+	HoleScoresColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "hole_number", Type: field.TypeInt},
+		{Name: "par", Type: field.TypeInt},
+		{Name: "score", Type: field.TypeInt, Nullable: true},
+		{Name: "round_hole_scores", Type: field.TypeUUID},
+	}
+	// HoleScoresTable holds the schema information for the "hole_scores" table.
+	HoleScoresTable = &schema.Table{
+		Name:       "hole_scores",
+		Columns:    HoleScoresColumns,
+		PrimaryKey: []*schema.Column{HoleScoresColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "hole_scores_rounds_hole_scores",
+				Columns:    []*schema.Column{HoleScoresColumns[4]},
+				RefColumns: []*schema.Column{RoundsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "holescore_hole_number_round_hole_scores",
+				Unique:  true,
+				Columns: []*schema.Column{HoleScoresColumns[1], HoleScoresColumns[4]},
+			},
+		},
+	}
 	// LeaguesColumns holds the columns for the "leagues" table.
 	LeaguesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -118,6 +243,7 @@ var (
 		{Name: "season_year", Type: field.TypeInt},
 		{Name: "joining_enabled", Type: field.TypeBool, Default: true},
 		{Name: "league_created_by", Type: field.TypeUUID},
+		{Name: "season_leagues", Type: field.TypeUUID, Nullable: true},
 	}
 	// LeaguesTable holds the schema information for the "leagues" table.
 	LeaguesTable = &schema.Table{
@@ -130,6 +256,12 @@ var (
 				Columns:    []*schema.Column{LeaguesColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "leagues_seasons_leagues",
+				Columns:    []*schema.Column{LeaguesColumns[8]},
+				RefColumns: []*schema.Column{SeasonsColumns[0]},
+				OnDelete:   schema.SetNull,
 			},
 		},
 	}
@@ -177,6 +309,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "golfer_picks", Type: field.TypeUUID},
 		{Name: "league_picks", Type: field.TypeUUID},
+		{Name: "season_picks", Type: field.TypeUUID, Nullable: true},
 		{Name: "tournament_picks", Type: field.TypeUUID},
 		{Name: "user_picks", Type: field.TypeUUID},
 	}
@@ -199,14 +332,20 @@ var (
 				OnDelete:   schema.NoAction,
 			},
 			{
-				Symbol:     "picks_tournaments_picks",
+				Symbol:     "picks_seasons_picks",
 				Columns:    []*schema.Column{PicksColumns[5]},
+				RefColumns: []*schema.Column{SeasonsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "picks_tournaments_picks",
+				Columns:    []*schema.Column{PicksColumns[6]},
 				RefColumns: []*schema.Column{TournamentsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "picks_users_picks",
-				Columns:    []*schema.Column{PicksColumns[6]},
+				Columns:    []*schema.Column{PicksColumns[7]},
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -215,14 +354,62 @@ var (
 			{
 				Name:    "pick_user_picks_tournament_picks_league_picks",
 				Unique:  true,
-				Columns: []*schema.Column{PicksColumns[6], PicksColumns[5], PicksColumns[4]},
+				Columns: []*schema.Column{PicksColumns[7], PicksColumns[6], PicksColumns[4]},
 			},
 			{
 				Name:    "pick_season_year_user_picks_golfer_picks_league_picks",
 				Unique:  true,
-				Columns: []*schema.Column{PicksColumns[1], PicksColumns[6], PicksColumns[3], PicksColumns[4]},
+				Columns: []*schema.Column{PicksColumns[1], PicksColumns[7], PicksColumns[3], PicksColumns[4]},
 			},
 		},
+	}
+	// RoundsColumns holds the columns for the "rounds" table.
+	RoundsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "round_number", Type: field.TypeInt},
+		{Name: "score", Type: field.TypeInt, Nullable: true},
+		{Name: "par_relative_score", Type: field.TypeInt, Nullable: true},
+		{Name: "tee_time", Type: field.TypeTime, Nullable: true},
+		{Name: "tournament_entry_rounds", Type: field.TypeUUID},
+	}
+	// RoundsTable holds the schema information for the "rounds" table.
+	RoundsTable = &schema.Table{
+		Name:       "rounds",
+		Columns:    RoundsColumns,
+		PrimaryKey: []*schema.Column{RoundsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "rounds_tournament_entries_rounds",
+				Columns:    []*schema.Column{RoundsColumns[7]},
+				RefColumns: []*schema.Column{TournamentEntriesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "round_round_number_tournament_entry_rounds",
+				Unique:  true,
+				Columns: []*schema.Column{RoundsColumns[3], RoundsColumns[7]},
+			},
+		},
+	}
+	// SeasonsColumns holds the columns for the "seasons" table.
+	SeasonsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "year", Type: field.TypeInt, Unique: true},
+		{Name: "start_date", Type: field.TypeTime},
+		{Name: "end_date", Type: field.TypeTime},
+		{Name: "is_current", Type: field.TypeBool, Default: false},
+	}
+	// SeasonsTable holds the schema information for the "seasons" table.
+	SeasonsTable = &schema.Table{
+		Name:       "seasons",
+		Columns:    SeasonsColumns,
+		PrimaryKey: []*schema.Column{SeasonsColumns[0]},
 	}
 	// SyncStatusColumns holds the columns for the "sync_status" table.
 	SyncStatusColumns = []*schema.Column{
@@ -257,6 +444,8 @@ var (
 		{Name: "pick_window_opens_at", Type: field.TypeTime, Nullable: true},
 		{Name: "pick_window_closes_at", Type: field.TypeTime, Nullable: true},
 		{Name: "purse", Type: field.TypeInt, Nullable: true},
+		{Name: "course_tournaments", Type: field.TypeUUID, Nullable: true},
+		{Name: "season_tournaments", Type: field.TypeUUID, Nullable: true},
 		{Name: "tournament_champion", Type: field.TypeUUID, Nullable: true},
 	}
 	// TournamentsTable holds the schema information for the "tournaments" table.
@@ -266,8 +455,20 @@ var (
 		PrimaryKey: []*schema.Column{TournamentsColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{
 			{
-				Symbol:     "tournaments_golfers_champion",
+				Symbol:     "tournaments_courses_tournaments",
 				Columns:    []*schema.Column{TournamentsColumns[17]},
+				RefColumns: []*schema.Column{CoursesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "tournaments_seasons_tournaments",
+				Columns:    []*schema.Column{TournamentsColumns[18]},
+				RefColumns: []*schema.Column{SeasonsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:     "tournaments_golfers_champion",
+				Columns:    []*schema.Column{TournamentsColumns[19]},
 				RefColumns: []*schema.Column{GolfersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
@@ -339,11 +540,17 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		CommissionerActionsTable,
+		CoursesTable,
+		CourseHolesTable,
 		EmailRemindersTable,
 		GolfersTable,
+		GolferSeasonsTable,
+		HoleScoresTable,
 		LeaguesTable,
 		LeagueMembershipsTable,
 		PicksTable,
+		RoundsTable,
+		SeasonsTable,
 		SyncStatusTable,
 		TournamentsTable,
 		TournamentEntriesTable,
@@ -355,17 +562,26 @@ func init() {
 	CommissionerActionsTable.ForeignKeys[0].RefTable = LeaguesTable
 	CommissionerActionsTable.ForeignKeys[1].RefTable = UsersTable
 	CommissionerActionsTable.ForeignKeys[2].RefTable = UsersTable
+	CourseHolesTable.ForeignKeys[0].RefTable = CoursesTable
 	EmailRemindersTable.ForeignKeys[0].RefTable = LeaguesTable
 	EmailRemindersTable.ForeignKeys[1].RefTable = TournamentsTable
 	EmailRemindersTable.ForeignKeys[2].RefTable = UsersTable
+	GolferSeasonsTable.ForeignKeys[0].RefTable = GolfersTable
+	GolferSeasonsTable.ForeignKeys[1].RefTable = SeasonsTable
+	HoleScoresTable.ForeignKeys[0].RefTable = RoundsTable
 	LeaguesTable.ForeignKeys[0].RefTable = UsersTable
+	LeaguesTable.ForeignKeys[1].RefTable = SeasonsTable
 	LeagueMembershipsTable.ForeignKeys[0].RefTable = LeaguesTable
 	LeagueMembershipsTable.ForeignKeys[1].RefTable = UsersTable
 	PicksTable.ForeignKeys[0].RefTable = GolfersTable
 	PicksTable.ForeignKeys[1].RefTable = LeaguesTable
-	PicksTable.ForeignKeys[2].RefTable = TournamentsTable
-	PicksTable.ForeignKeys[3].RefTable = UsersTable
-	TournamentsTable.ForeignKeys[0].RefTable = GolfersTable
+	PicksTable.ForeignKeys[2].RefTable = SeasonsTable
+	PicksTable.ForeignKeys[3].RefTable = TournamentsTable
+	PicksTable.ForeignKeys[4].RefTable = UsersTable
+	RoundsTable.ForeignKeys[0].RefTable = TournamentEntriesTable
+	TournamentsTable.ForeignKeys[0].RefTable = CoursesTable
+	TournamentsTable.ForeignKeys[1].RefTable = SeasonsTable
+	TournamentsTable.ForeignKeys[2].RefTable = GolfersTable
 	TournamentEntriesTable.ForeignKeys[0].RefTable = GolfersTable
 	TournamentEntriesTable.ForeignKeys[1].RefTable = TournamentsTable
 }

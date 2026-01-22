@@ -16,6 +16,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
@@ -31,6 +32,7 @@ type PickQuery struct {
 	withTournament *TournamentQuery
 	withGolfer     *GolferQuery
 	withLeague     *LeagueQuery
+	withSeason     *SeasonQuery
 	withFKs        bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -149,6 +151,28 @@ func (_q *PickQuery) QueryLeague() *LeagueQuery {
 			sqlgraph.From(pick.Table, pick.FieldID, selector),
 			sqlgraph.To(league.Table, league.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, true, pick.LeagueTable, pick.LeagueColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySeason chains the current query on the "season" edge.
+func (_q *PickQuery) QuerySeason() *SeasonQuery {
+	query := (&SeasonClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(pick.Table, pick.FieldID, selector),
+			sqlgraph.To(season.Table, season.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, pick.SeasonTable, pick.SeasonColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -352,6 +376,7 @@ func (_q *PickQuery) Clone() *PickQuery {
 		withTournament: _q.withTournament.Clone(),
 		withGolfer:     _q.withGolfer.Clone(),
 		withLeague:     _q.withLeague.Clone(),
+		withSeason:     _q.withSeason.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -399,6 +424,17 @@ func (_q *PickQuery) WithLeague(opts ...func(*LeagueQuery)) *PickQuery {
 		opt(query)
 	}
 	_q.withLeague = query
+	return _q
+}
+
+// WithSeason tells the query-builder to eager-load the nodes that are connected to
+// the "season" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PickQuery) WithSeason(opts ...func(*SeasonQuery)) *PickQuery {
+	query := (&SeasonClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSeason = query
 	return _q
 }
 
@@ -481,14 +517,15 @@ func (_q *PickQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pick, e
 		nodes       = []*Pick{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			_q.withUser != nil,
 			_q.withTournament != nil,
 			_q.withGolfer != nil,
 			_q.withLeague != nil,
+			_q.withSeason != nil,
 		}
 	)
-	if _q.withUser != nil || _q.withTournament != nil || _q.withGolfer != nil || _q.withLeague != nil {
+	if _q.withUser != nil || _q.withTournament != nil || _q.withGolfer != nil || _q.withLeague != nil || _q.withSeason != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -533,6 +570,12 @@ func (_q *PickQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Pick, e
 	if query := _q.withLeague; query != nil {
 		if err := _q.loadLeague(ctx, query, nodes, nil,
 			func(n *Pick, e *League) { n.Edges.League = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSeason; query != nil {
+		if err := _q.loadSeason(ctx, query, nodes, nil,
+			func(n *Pick, e *Season) { n.Edges.Season = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -660,6 +703,38 @@ func (_q *PickQuery) loadLeague(ctx context.Context, query *LeagueQuery, nodes [
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "league_picks" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *PickQuery) loadSeason(ctx context.Context, query *SeasonQuery, nodes []*Pick, init func(*Pick), assign func(*Pick, *Season)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Pick)
+	for i := range nodes {
+		if nodes[i].season_picks == nil {
+			continue
+		}
+		fk := *nodes[i].season_picks
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(season.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "season_picks" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

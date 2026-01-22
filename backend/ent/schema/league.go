@@ -41,5 +41,8 @@ func (League) Edges() []ent.Edge {
 		edge.To("picks", Pick.Type),
 		edge.To("commissioner_actions", CommissionerAction.Type),
 		edge.To("email_reminders", EmailReminder.Type),
+		edge.From("season", Season.Type).
+			Ref("leagues").
+			Unique(),
 	}
 }

@@ -50,6 +50,9 @@ func (Pick) Edges() []ent.Edge {
 			Ref("picks").
 			Unique().
 			Required(),
+		edge.From("season", Season.Type).
+			Ref("picks").
+			Unique(),
 	}
 }
 

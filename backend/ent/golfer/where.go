@@ -777,6 +777,29 @@ func HasEntriesWith(preds ...predicate.TournamentEntry) predicate.Golfer {
 	})
 }
 
+// HasSeasons applies the HasEdge predicate on the "seasons" edge.
+func HasSeasons() predicate.Golfer {
+	return predicate.Golfer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, SeasonsTable, SeasonsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSeasonsWith applies the HasEdge predicate on the "seasons" edge with a given conditions (other predicates).
+func HasSeasonsWith(preds ...predicate.GolferSeason) predicate.Golfer {
+	return predicate.Golfer(func(s *sql.Selector) {
+		step := newSeasonsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Golfer) predicate.Golfer {
 	return predicate.Golfer(sql.AndPredicates(predicates...))

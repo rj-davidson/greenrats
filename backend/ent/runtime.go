@@ -7,12 +7,18 @@ import (
 
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/course"
+	"github.com/rj-davidson/greenrats/ent/coursehole"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/golferseason"
+	"github.com/rj-davidson/greenrats/ent/holescore"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/schema"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
@@ -40,6 +46,48 @@ func init() {
 	commissioneractionDescID := commissioneractionMixinFields0[0].Descriptor()
 	// commissioneraction.DefaultID holds the default value on creation for the id field.
 	commissioneraction.DefaultID = commissioneractionDescID.Default.(func() uuid.UUID)
+	courseMixin := schema.Course{}.Mixin()
+	courseMixinFields0 := courseMixin[0].Fields()
+	_ = courseMixinFields0
+	courseMixinFields1 := courseMixin[1].Fields()
+	_ = courseMixinFields1
+	courseFields := schema.Course{}.Fields()
+	_ = courseFields
+	// courseDescCreatedAt is the schema descriptor for created_at field.
+	courseDescCreatedAt := courseMixinFields1[0].Descriptor()
+	// course.DefaultCreatedAt holds the default value on creation for the created_at field.
+	course.DefaultCreatedAt = courseDescCreatedAt.Default.(func() time.Time)
+	// courseDescUpdatedAt is the schema descriptor for updated_at field.
+	courseDescUpdatedAt := courseMixinFields1[1].Descriptor()
+	// course.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	course.DefaultUpdatedAt = courseDescUpdatedAt.Default.(func() time.Time)
+	// course.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	course.UpdateDefaultUpdatedAt = courseDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// courseDescName is the schema descriptor for name field.
+	courseDescName := courseFields[2].Descriptor()
+	// course.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	course.NameValidator = courseDescName.Validators[0].(func(string) error)
+	// courseDescID is the schema descriptor for id field.
+	courseDescID := courseMixinFields0[0].Descriptor()
+	// course.DefaultID holds the default value on creation for the id field.
+	course.DefaultID = courseDescID.Default.(func() uuid.UUID)
+	courseholeMixin := schema.CourseHole{}.Mixin()
+	courseholeMixinFields0 := courseholeMixin[0].Fields()
+	_ = courseholeMixinFields0
+	courseholeFields := schema.CourseHole{}.Fields()
+	_ = courseholeFields
+	// courseholeDescHoleNumber is the schema descriptor for hole_number field.
+	courseholeDescHoleNumber := courseholeFields[0].Descriptor()
+	// coursehole.HoleNumberValidator is a validator for the "hole_number" field. It is called by the builders before save.
+	coursehole.HoleNumberValidator = courseholeDescHoleNumber.Validators[0].(func(int) error)
+	// courseholeDescPar is the schema descriptor for par field.
+	courseholeDescPar := courseholeFields[1].Descriptor()
+	// coursehole.ParValidator is a validator for the "par" field. It is called by the builders before save.
+	coursehole.ParValidator = courseholeDescPar.Validators[0].(func(int) error)
+	// courseholeDescID is the schema descriptor for id field.
+	courseholeDescID := courseholeMixinFields0[0].Descriptor()
+	// coursehole.DefaultID holds the default value on creation for the id field.
+	coursehole.DefaultID = courseholeDescID.Default.(func() uuid.UUID)
 	emailreminderMixin := schema.EmailReminder{}.Mixin()
 	emailreminderMixinFields0 := emailreminderMixin[0].Fields()
 	_ = emailreminderMixinFields0
@@ -86,6 +134,44 @@ func init() {
 	golferDescID := golferMixinFields0[0].Descriptor()
 	// golfer.DefaultID holds the default value on creation for the id field.
 	golfer.DefaultID = golferDescID.Default.(func() uuid.UUID)
+	golferseasonMixin := schema.GolferSeason{}.Mixin()
+	golferseasonMixinFields0 := golferseasonMixin[0].Fields()
+	_ = golferseasonMixinFields0
+	golferseasonMixinFields1 := golferseasonMixin[1].Fields()
+	_ = golferseasonMixinFields1
+	golferseasonFields := schema.GolferSeason{}.Fields()
+	_ = golferseasonFields
+	// golferseasonDescCreatedAt is the schema descriptor for created_at field.
+	golferseasonDescCreatedAt := golferseasonMixinFields1[0].Descriptor()
+	// golferseason.DefaultCreatedAt holds the default value on creation for the created_at field.
+	golferseason.DefaultCreatedAt = golferseasonDescCreatedAt.Default.(func() time.Time)
+	// golferseasonDescUpdatedAt is the schema descriptor for updated_at field.
+	golferseasonDescUpdatedAt := golferseasonMixinFields1[1].Descriptor()
+	// golferseason.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	golferseason.DefaultUpdatedAt = golferseasonDescUpdatedAt.Default.(func() time.Time)
+	// golferseason.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	golferseason.UpdateDefaultUpdatedAt = golferseasonDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// golferseasonDescID is the schema descriptor for id field.
+	golferseasonDescID := golferseasonMixinFields0[0].Descriptor()
+	// golferseason.DefaultID holds the default value on creation for the id field.
+	golferseason.DefaultID = golferseasonDescID.Default.(func() uuid.UUID)
+	holescoreMixin := schema.HoleScore{}.Mixin()
+	holescoreMixinFields0 := holescoreMixin[0].Fields()
+	_ = holescoreMixinFields0
+	holescoreFields := schema.HoleScore{}.Fields()
+	_ = holescoreFields
+	// holescoreDescHoleNumber is the schema descriptor for hole_number field.
+	holescoreDescHoleNumber := holescoreFields[0].Descriptor()
+	// holescore.HoleNumberValidator is a validator for the "hole_number" field. It is called by the builders before save.
+	holescore.HoleNumberValidator = holescoreDescHoleNumber.Validators[0].(func(int) error)
+	// holescoreDescPar is the schema descriptor for par field.
+	holescoreDescPar := holescoreFields[1].Descriptor()
+	// holescore.ParValidator is a validator for the "par" field. It is called by the builders before save.
+	holescore.ParValidator = holescoreDescPar.Validators[0].(func(int) error)
+	// holescoreDescID is the schema descriptor for id field.
+	holescoreDescID := holescoreMixinFields0[0].Descriptor()
+	// holescore.DefaultID holds the default value on creation for the id field.
+	holescore.DefaultID = holescoreDescID.Default.(func() uuid.UUID)
 	leagueMixin := schema.League{}.Mixin()
 	leagueMixinFields0 := leagueMixin[0].Fields()
 	_ = leagueMixinFields0
@@ -157,6 +243,60 @@ func init() {
 	pickDescID := pickMixinFields0[0].Descriptor()
 	// pick.DefaultID holds the default value on creation for the id field.
 	pick.DefaultID = pickDescID.Default.(func() uuid.UUID)
+	roundMixin := schema.Round{}.Mixin()
+	roundMixinFields0 := roundMixin[0].Fields()
+	_ = roundMixinFields0
+	roundMixinFields1 := roundMixin[1].Fields()
+	_ = roundMixinFields1
+	roundFields := schema.Round{}.Fields()
+	_ = roundFields
+	// roundDescCreatedAt is the schema descriptor for created_at field.
+	roundDescCreatedAt := roundMixinFields1[0].Descriptor()
+	// round.DefaultCreatedAt holds the default value on creation for the created_at field.
+	round.DefaultCreatedAt = roundDescCreatedAt.Default.(func() time.Time)
+	// roundDescUpdatedAt is the schema descriptor for updated_at field.
+	roundDescUpdatedAt := roundMixinFields1[1].Descriptor()
+	// round.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	round.DefaultUpdatedAt = roundDescUpdatedAt.Default.(func() time.Time)
+	// round.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	round.UpdateDefaultUpdatedAt = roundDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// roundDescRoundNumber is the schema descriptor for round_number field.
+	roundDescRoundNumber := roundFields[0].Descriptor()
+	// round.RoundNumberValidator is a validator for the "round_number" field. It is called by the builders before save.
+	round.RoundNumberValidator = roundDescRoundNumber.Validators[0].(func(int) error)
+	// roundDescID is the schema descriptor for id field.
+	roundDescID := roundMixinFields0[0].Descriptor()
+	// round.DefaultID holds the default value on creation for the id field.
+	round.DefaultID = roundDescID.Default.(func() uuid.UUID)
+	seasonMixin := schema.Season{}.Mixin()
+	seasonMixinFields0 := seasonMixin[0].Fields()
+	_ = seasonMixinFields0
+	seasonMixinFields1 := seasonMixin[1].Fields()
+	_ = seasonMixinFields1
+	seasonFields := schema.Season{}.Fields()
+	_ = seasonFields
+	// seasonDescCreatedAt is the schema descriptor for created_at field.
+	seasonDescCreatedAt := seasonMixinFields1[0].Descriptor()
+	// season.DefaultCreatedAt holds the default value on creation for the created_at field.
+	season.DefaultCreatedAt = seasonDescCreatedAt.Default.(func() time.Time)
+	// seasonDescUpdatedAt is the schema descriptor for updated_at field.
+	seasonDescUpdatedAt := seasonMixinFields1[1].Descriptor()
+	// season.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	season.DefaultUpdatedAt = seasonDescUpdatedAt.Default.(func() time.Time)
+	// season.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	season.UpdateDefaultUpdatedAt = seasonDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// seasonDescYear is the schema descriptor for year field.
+	seasonDescYear := seasonFields[0].Descriptor()
+	// season.YearValidator is a validator for the "year" field. It is called by the builders before save.
+	season.YearValidator = seasonDescYear.Validators[0].(func(int) error)
+	// seasonDescIsCurrent is the schema descriptor for is_current field.
+	seasonDescIsCurrent := seasonFields[3].Descriptor()
+	// season.DefaultIsCurrent holds the default value on creation for the is_current field.
+	season.DefaultIsCurrent = seasonDescIsCurrent.Default.(bool)
+	// seasonDescID is the schema descriptor for id field.
+	seasonDescID := seasonMixinFields0[0].Descriptor()
+	// season.DefaultID holds the default value on creation for the id field.
+	season.DefaultID = seasonDescID.Default.(func() uuid.UUID)
 	syncstatusMixin := schema.SyncStatus{}.Mixin()
 	syncstatusMixinFields0 := syncstatusMixin[0].Fields()
 	_ = syncstatusMixinFields0

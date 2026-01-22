@@ -19,6 +19,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -34,6 +35,7 @@ type LeagueQuery struct {
 	withPicks               *PickQuery
 	withCommissionerActions *CommissionerActionQuery
 	withEmailReminders      *EmailReminderQuery
+	withSeason              *SeasonQuery
 	withFKs                 bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -174,6 +176,28 @@ func (_q *LeagueQuery) QueryEmailReminders() *EmailReminderQuery {
 			sqlgraph.From(league.Table, league.FieldID, selector),
 			sqlgraph.To(emailreminder.Table, emailreminder.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, league.EmailRemindersTable, league.EmailRemindersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySeason chains the current query on the "season" edge.
+func (_q *LeagueQuery) QuerySeason() *SeasonQuery {
+	query := (&SeasonClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(league.Table, league.FieldID, selector),
+			sqlgraph.To(season.Table, season.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, league.SeasonTable, league.SeasonColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -378,6 +402,7 @@ func (_q *LeagueQuery) Clone() *LeagueQuery {
 		withPicks:               _q.withPicks.Clone(),
 		withCommissionerActions: _q.withCommissionerActions.Clone(),
 		withEmailReminders:      _q.withEmailReminders.Clone(),
+		withSeason:              _q.withSeason.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -436,6 +461,17 @@ func (_q *LeagueQuery) WithEmailReminders(opts ...func(*EmailReminderQuery)) *Le
 		opt(query)
 	}
 	_q.withEmailReminders = query
+	return _q
+}
+
+// WithSeason tells the query-builder to eager-load the nodes that are connected to
+// the "season" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LeagueQuery) WithSeason(opts ...func(*SeasonQuery)) *LeagueQuery {
+	query := (&SeasonClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSeason = query
 	return _q
 }
 
@@ -518,15 +554,16 @@ func (_q *LeagueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Leagu
 		nodes       = []*League{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [5]bool{
+		loadedTypes = [6]bool{
 			_q.withCreatedBy != nil,
 			_q.withMemberships != nil,
 			_q.withPicks != nil,
 			_q.withCommissionerActions != nil,
 			_q.withEmailReminders != nil,
+			_q.withSeason != nil,
 		}
 	)
-	if _q.withCreatedBy != nil {
+	if _q.withCreatedBy != nil || _q.withSeason != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -583,6 +620,12 @@ func (_q *LeagueQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Leagu
 		if err := _q.loadEmailReminders(ctx, query, nodes,
 			func(n *League) { n.Edges.EmailReminders = []*EmailReminder{} },
 			func(n *League, e *EmailReminder) { n.Edges.EmailReminders = append(n.Edges.EmailReminders, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSeason; query != nil {
+		if err := _q.loadSeason(ctx, query, nodes, nil,
+			func(n *League, e *Season) { n.Edges.Season = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -742,6 +785,38 @@ func (_q *LeagueQuery) loadEmailReminders(ctx context.Context, query *EmailRemin
 			return fmt.Errorf(`unexpected referenced foreign-key "league_email_reminders" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
+	}
+	return nil
+}
+func (_q *LeagueQuery) loadSeason(ctx context.Context, query *SeasonQuery, nodes []*League, init func(*League), assign func(*League, *Season)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*League)
+	for i := range nodes {
+		if nodes[i].season_leagues == nil {
+			continue
+		}
+		fk := *nodes[i].season_leagues
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(season.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "season_leagues" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }

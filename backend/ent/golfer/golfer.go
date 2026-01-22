@@ -41,6 +41,8 @@ const (
 	EdgePicks = "picks"
 	// EdgeEntries holds the string denoting the entries edge name in mutations.
 	EdgeEntries = "entries"
+	// EdgeSeasons holds the string denoting the seasons edge name in mutations.
+	EdgeSeasons = "seasons"
 	// Table holds the table name of the golfer in the database.
 	Table = "golfers"
 	// PicksTable is the table that holds the picks relation/edge.
@@ -57,6 +59,13 @@ const (
 	EntriesInverseTable = "tournament_entries"
 	// EntriesColumn is the table column denoting the entries relation/edge.
 	EntriesColumn = "golfer_entries"
+	// SeasonsTable is the table that holds the seasons relation/edge.
+	SeasonsTable = "golfer_seasons"
+	// SeasonsInverseTable is the table name for the GolferSeason entity.
+	// It exists in this package in order to avoid circular dependency with the "golferseason" package.
+	SeasonsInverseTable = "golfer_seasons"
+	// SeasonsColumn is the table column denoting the seasons relation/edge.
+	SeasonsColumn = "golfer_seasons"
 )
 
 // Columns holds all SQL columns for golfer fields.
@@ -192,6 +201,20 @@ func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// BySeasonsCount orders the results by seasons count.
+func BySeasonsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newSeasonsStep(), opts...)
+	}
+}
+
+// BySeasons orders the results by seasons terms.
+func BySeasons(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSeasonsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newPicksStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -204,5 +227,12 @@ func newEntriesStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EntriesInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
+	)
+}
+func newSeasonsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SeasonsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, SeasonsTable, SeasonsColumn),
 	)
 }

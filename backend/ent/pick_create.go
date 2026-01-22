@@ -14,6 +14,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
@@ -101,6 +102,25 @@ func (_c *PickCreate) SetLeagueID(id uuid.UUID) *PickCreate {
 // SetLeague sets the "league" edge to the League entity.
 func (_c *PickCreate) SetLeague(v *League) *PickCreate {
 	return _c.SetLeagueID(v.ID)
+}
+
+// SetSeasonID sets the "season" edge to the Season entity by ID.
+func (_c *PickCreate) SetSeasonID(id uuid.UUID) *PickCreate {
+	_c.mutation.SetSeasonID(id)
+	return _c
+}
+
+// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
+func (_c *PickCreate) SetNillableSeasonID(id *uuid.UUID) *PickCreate {
+	if id != nil {
+		_c = _c.SetSeasonID(*id)
+	}
+	return _c
+}
+
+// SetSeason sets the "season" edge to the Season entity.
+func (_c *PickCreate) SetSeason(v *Season) *PickCreate {
+	return _c.SetSeasonID(v.ID)
 }
 
 // Mutation returns the PickMutation object of the builder.
@@ -277,6 +297,23 @@ func (_c *PickCreate) createSpec() (*Pick, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.league_picks = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SeasonIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   pick.SeasonTable,
+			Columns: []string{pick.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.season_picks = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

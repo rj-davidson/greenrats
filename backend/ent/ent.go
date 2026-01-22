@@ -13,11 +13,17 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/course"
+	"github.com/rj-davidson/greenrats/ent/coursehole"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/golferseason"
+	"github.com/rj-davidson/greenrats/ent/holescore"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/round"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
@@ -83,11 +89,17 @@ func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
 			commissioneraction.Table: commissioneraction.ValidColumn,
+			course.Table:             course.ValidColumn,
+			coursehole.Table:         coursehole.ValidColumn,
 			emailreminder.Table:      emailreminder.ValidColumn,
 			golfer.Table:             golfer.ValidColumn,
+			golferseason.Table:       golferseason.ValidColumn,
+			holescore.Table:          holescore.ValidColumn,
 			league.Table:             league.ValidColumn,
 			leaguemembership.Table:   leaguemembership.ValidColumn,
 			pick.Table:               pick.ValidColumn,
+			round.Table:              round.ValidColumn,
+			season.Table:             season.ValidColumn,
 			syncstatus.Table:         syncstatus.ValidColumn,
 			tournament.Table:         tournament.ValidColumn,
 			tournamententry.Table:    tournamententry.ValidColumn,

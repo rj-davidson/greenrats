@@ -55,6 +55,10 @@ const (
 	EdgeEmailReminders = "email_reminders"
 	// EdgeChampion holds the string denoting the champion edge name in mutations.
 	EdgeChampion = "champion"
+	// EdgeSeason holds the string denoting the season edge name in mutations.
+	EdgeSeason = "season"
+	// EdgeCourseRef holds the string denoting the course_ref edge name in mutations.
+	EdgeCourseRef = "course_ref"
 	// Table holds the table name of the tournament in the database.
 	Table = "tournaments"
 	// PicksTable is the table that holds the picks relation/edge.
@@ -85,6 +89,20 @@ const (
 	ChampionInverseTable = "golfers"
 	// ChampionColumn is the table column denoting the champion relation/edge.
 	ChampionColumn = "tournament_champion"
+	// SeasonTable is the table that holds the season relation/edge.
+	SeasonTable = "tournaments"
+	// SeasonInverseTable is the table name for the Season entity.
+	// It exists in this package in order to avoid circular dependency with the "season" package.
+	SeasonInverseTable = "seasons"
+	// SeasonColumn is the table column denoting the season relation/edge.
+	SeasonColumn = "season_tournaments"
+	// CourseRefTable is the table that holds the course_ref relation/edge.
+	CourseRefTable = "tournaments"
+	// CourseRefInverseTable is the table name for the Course entity.
+	// It exists in this package in order to avoid circular dependency with the "course" package.
+	CourseRefInverseTable = "courses"
+	// CourseRefColumn is the table column denoting the course_ref relation/edge.
+	CourseRefColumn = "course_tournaments"
 )
 
 // Columns holds all SQL columns for tournament fields.
@@ -111,6 +129,8 @@ var Columns = []string{
 // ForeignKeys holds the SQL foreign-keys that are owned by the "tournaments"
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
+	"course_tournaments",
+	"season_tournaments",
 	"tournament_champion",
 }
 
@@ -278,6 +298,20 @@ func ByChampionField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newChampionStep(), sql.OrderByField(field, opts...))
 	}
 }
+
+// BySeasonField orders the results by season field.
+func BySeasonField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSeasonStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByCourseRefField orders the results by course_ref field.
+func ByCourseRefField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newCourseRefStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newPicksStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -304,5 +338,19 @@ func newChampionStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(ChampionInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, ChampionTable, ChampionColumn),
+	)
+}
+func newSeasonStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SeasonInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, SeasonTable, SeasonColumn),
+	)
+}
+func newCourseRefStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(CourseRefInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, CourseRefTable, CourseRefColumn),
 	)
 }

@@ -12,10 +12,12 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
@@ -380,6 +382,44 @@ func (_u *TournamentUpdate) SetChampion(v *Golfer) *TournamentUpdate {
 	return _u.SetChampionID(v.ID)
 }
 
+// SetSeasonID sets the "season" edge to the Season entity by ID.
+func (_u *TournamentUpdate) SetSeasonID(id uuid.UUID) *TournamentUpdate {
+	_u.mutation.SetSeasonID(id)
+	return _u
+}
+
+// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
+func (_u *TournamentUpdate) SetNillableSeasonID(id *uuid.UUID) *TournamentUpdate {
+	if id != nil {
+		_u = _u.SetSeasonID(*id)
+	}
+	return _u
+}
+
+// SetSeason sets the "season" edge to the Season entity.
+func (_u *TournamentUpdate) SetSeason(v *Season) *TournamentUpdate {
+	return _u.SetSeasonID(v.ID)
+}
+
+// SetCourseRefID sets the "course_ref" edge to the Course entity by ID.
+func (_u *TournamentUpdate) SetCourseRefID(id uuid.UUID) *TournamentUpdate {
+	_u.mutation.SetCourseRefID(id)
+	return _u
+}
+
+// SetNillableCourseRefID sets the "course_ref" edge to the Course entity by ID if the given value is not nil.
+func (_u *TournamentUpdate) SetNillableCourseRefID(id *uuid.UUID) *TournamentUpdate {
+	if id != nil {
+		_u = _u.SetCourseRefID(*id)
+	}
+	return _u
+}
+
+// SetCourseRef sets the "course_ref" edge to the Course entity.
+func (_u *TournamentUpdate) SetCourseRef(v *Course) *TournamentUpdate {
+	return _u.SetCourseRefID(v.ID)
+}
+
 // Mutation returns the TournamentMutation object of the builder.
 func (_u *TournamentUpdate) Mutation() *TournamentMutation {
 	return _u.mutation
@@ -451,6 +491,18 @@ func (_u *TournamentUpdate) RemoveEmailReminders(v ...*EmailReminder) *Tournamen
 // ClearChampion clears the "champion" edge to the Golfer entity.
 func (_u *TournamentUpdate) ClearChampion() *TournamentUpdate {
 	_u.mutation.ClearChampion()
+	return _u
+}
+
+// ClearSeason clears the "season" edge to the Season entity.
+func (_u *TournamentUpdate) ClearSeason() *TournamentUpdate {
+	_u.mutation.ClearSeason()
+	return _u
+}
+
+// ClearCourseRef clears the "course_ref" edge to the Course entity.
+func (_u *TournamentUpdate) ClearCourseRef() *TournamentUpdate {
+	_u.mutation.ClearCourseRef()
 	return _u
 }
 
@@ -753,6 +805,64 @@ func (_u *TournamentUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SeasonCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.SeasonTable,
+			Columns: []string{tournament.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SeasonIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.SeasonTable,
+			Columns: []string{tournament.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CourseRefCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.CourseRefTable,
+			Columns: []string{tournament.CourseRefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CourseRefIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.CourseRefTable,
+			Columns: []string{tournament.CourseRefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1127,6 +1237,44 @@ func (_u *TournamentUpdateOne) SetChampion(v *Golfer) *TournamentUpdateOne {
 	return _u.SetChampionID(v.ID)
 }
 
+// SetSeasonID sets the "season" edge to the Season entity by ID.
+func (_u *TournamentUpdateOne) SetSeasonID(id uuid.UUID) *TournamentUpdateOne {
+	_u.mutation.SetSeasonID(id)
+	return _u
+}
+
+// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillableSeasonID(id *uuid.UUID) *TournamentUpdateOne {
+	if id != nil {
+		_u = _u.SetSeasonID(*id)
+	}
+	return _u
+}
+
+// SetSeason sets the "season" edge to the Season entity.
+func (_u *TournamentUpdateOne) SetSeason(v *Season) *TournamentUpdateOne {
+	return _u.SetSeasonID(v.ID)
+}
+
+// SetCourseRefID sets the "course_ref" edge to the Course entity by ID.
+func (_u *TournamentUpdateOne) SetCourseRefID(id uuid.UUID) *TournamentUpdateOne {
+	_u.mutation.SetCourseRefID(id)
+	return _u
+}
+
+// SetNillableCourseRefID sets the "course_ref" edge to the Course entity by ID if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillableCourseRefID(id *uuid.UUID) *TournamentUpdateOne {
+	if id != nil {
+		_u = _u.SetCourseRefID(*id)
+	}
+	return _u
+}
+
+// SetCourseRef sets the "course_ref" edge to the Course entity.
+func (_u *TournamentUpdateOne) SetCourseRef(v *Course) *TournamentUpdateOne {
+	return _u.SetCourseRefID(v.ID)
+}
+
 // Mutation returns the TournamentMutation object of the builder.
 func (_u *TournamentUpdateOne) Mutation() *TournamentMutation {
 	return _u.mutation
@@ -1198,6 +1346,18 @@ func (_u *TournamentUpdateOne) RemoveEmailReminders(v ...*EmailReminder) *Tourna
 // ClearChampion clears the "champion" edge to the Golfer entity.
 func (_u *TournamentUpdateOne) ClearChampion() *TournamentUpdateOne {
 	_u.mutation.ClearChampion()
+	return _u
+}
+
+// ClearSeason clears the "season" edge to the Season entity.
+func (_u *TournamentUpdateOne) ClearSeason() *TournamentUpdateOne {
+	_u.mutation.ClearSeason()
+	return _u
+}
+
+// ClearCourseRef clears the "course_ref" edge to the Course entity.
+func (_u *TournamentUpdateOne) ClearCourseRef() *TournamentUpdateOne {
+	_u.mutation.ClearCourseRef()
 	return _u
 }
 
@@ -1530,6 +1690,64 @@ func (_u *TournamentUpdateOne) sqlSave(ctx context.Context) (_node *Tournament, 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SeasonCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.SeasonTable,
+			Columns: []string{tournament.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SeasonIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.SeasonTable,
+			Columns: []string{tournament.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.CourseRefCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.CourseRefTable,
+			Columns: []string{tournament.CourseRefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.CourseRefIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.CourseRefTable,
+			Columns: []string{tournament.CourseRefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

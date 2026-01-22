@@ -1143,6 +1143,52 @@ func HasChampionWith(preds ...predicate.Golfer) predicate.Tournament {
 	})
 }
 
+// HasSeason applies the HasEdge predicate on the "season" edge.
+func HasSeason() predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, SeasonTable, SeasonColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasSeasonWith applies the HasEdge predicate on the "season" edge with a given conditions (other predicates).
+func HasSeasonWith(preds ...predicate.Season) predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := newSeasonStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasCourseRef applies the HasEdge predicate on the "course_ref" edge.
+func HasCourseRef() predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, CourseRefTable, CourseRefColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasCourseRefWith applies the HasEdge predicate on the "course_ref" edge with a given conditions (other predicates).
+func HasCourseRefWith(preds ...predicate.Course) predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := newCourseRefStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Tournament) predicate.Tournament {
 	return predicate.Tournament(sql.AndPredicates(predicates...))

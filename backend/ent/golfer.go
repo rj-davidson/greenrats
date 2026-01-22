@@ -52,9 +52,11 @@ type GolferEdges struct {
 	Picks []*Pick `json:"picks,omitempty"`
 	// Entries holds the value of the entries edge.
 	Entries []*TournamentEntry `json:"entries,omitempty"`
+	// Seasons holds the value of the seasons edge.
+	Seasons []*GolferSeason `json:"seasons,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
+	loadedTypes [3]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -73,6 +75,15 @@ func (e GolferEdges) EntriesOrErr() ([]*TournamentEntry, error) {
 		return e.Entries, nil
 	}
 	return nil, &NotLoadedError{edge: "entries"}
+}
+
+// SeasonsOrErr returns the Seasons value or an error if the edge
+// was not loaded in eager-loading.
+func (e GolferEdges) SeasonsOrErr() ([]*GolferSeason, error) {
+	if e.loadedTypes[2] {
+		return e.Seasons, nil
+	}
+	return nil, &NotLoadedError{edge: "seasons"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -204,6 +215,11 @@ func (_m *Golfer) QueryPicks() *PickQuery {
 // QueryEntries queries the "entries" edge of the Golfer entity.
 func (_m *Golfer) QueryEntries() *TournamentEntryQuery {
 	return NewGolferClient(_m.config).QueryEntries(_m)
+}
+
+// QuerySeasons queries the "seasons" edge of the Golfer entity.
+func (_m *Golfer) QuerySeasons() *GolferSeasonQuery {
+	return NewGolferClient(_m.config).QuerySeasons(_m)
 }
 
 // Update returns a builder for updating this Golfer.

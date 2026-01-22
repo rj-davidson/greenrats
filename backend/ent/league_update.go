@@ -18,6 +18,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -174,6 +175,25 @@ func (_u *LeagueUpdate) AddEmailReminders(v ...*EmailReminder) *LeagueUpdate {
 	return _u.AddEmailReminderIDs(ids...)
 }
 
+// SetSeasonID sets the "season" edge to the Season entity by ID.
+func (_u *LeagueUpdate) SetSeasonID(id uuid.UUID) *LeagueUpdate {
+	_u.mutation.SetSeasonID(id)
+	return _u
+}
+
+// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
+func (_u *LeagueUpdate) SetNillableSeasonID(id *uuid.UUID) *LeagueUpdate {
+	if id != nil {
+		_u = _u.SetSeasonID(*id)
+	}
+	return _u
+}
+
+// SetSeason sets the "season" edge to the Season entity.
+func (_u *LeagueUpdate) SetSeason(v *Season) *LeagueUpdate {
+	return _u.SetSeasonID(v.ID)
+}
+
 // Mutation returns the LeagueMutation object of the builder.
 func (_u *LeagueUpdate) Mutation() *LeagueMutation {
 	return _u.mutation
@@ -267,6 +287,12 @@ func (_u *LeagueUpdate) RemoveEmailReminders(v ...*EmailReminder) *LeagueUpdate 
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailReminderIDs(ids...)
+}
+
+// ClearSeason clears the "season" edge to the Season entity.
+func (_u *LeagueUpdate) ClearSeason() *LeagueUpdate {
+	_u.mutation.ClearSeason()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -562,6 +588,35 @@ func (_u *LeagueUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.SeasonCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   league.SeasonTable,
+			Columns: []string{league.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SeasonIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   league.SeasonTable,
+			Columns: []string{league.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{league.Label}
@@ -722,6 +777,25 @@ func (_u *LeagueUpdateOne) AddEmailReminders(v ...*EmailReminder) *LeagueUpdateO
 	return _u.AddEmailReminderIDs(ids...)
 }
 
+// SetSeasonID sets the "season" edge to the Season entity by ID.
+func (_u *LeagueUpdateOne) SetSeasonID(id uuid.UUID) *LeagueUpdateOne {
+	_u.mutation.SetSeasonID(id)
+	return _u
+}
+
+// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
+func (_u *LeagueUpdateOne) SetNillableSeasonID(id *uuid.UUID) *LeagueUpdateOne {
+	if id != nil {
+		_u = _u.SetSeasonID(*id)
+	}
+	return _u
+}
+
+// SetSeason sets the "season" edge to the Season entity.
+func (_u *LeagueUpdateOne) SetSeason(v *Season) *LeagueUpdateOne {
+	return _u.SetSeasonID(v.ID)
+}
+
 // Mutation returns the LeagueMutation object of the builder.
 func (_u *LeagueUpdateOne) Mutation() *LeagueMutation {
 	return _u.mutation
@@ -815,6 +889,12 @@ func (_u *LeagueUpdateOne) RemoveEmailReminders(v ...*EmailReminder) *LeagueUpda
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailReminderIDs(ids...)
+}
+
+// ClearSeason clears the "season" edge to the Season entity.
+func (_u *LeagueUpdateOne) ClearSeason() *LeagueUpdateOne {
+	_u.mutation.ClearSeason()
+	return _u
 }
 
 // Where appends a list predicates to the LeagueUpdate builder.
@@ -1133,6 +1213,35 @@ func (_u *LeagueUpdateOne) sqlSave(ctx context.Context) (_node *League, err erro
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SeasonCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   league.SeasonTable,
+			Columns: []string{league.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SeasonIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   league.SeasonTable,
+			Columns: []string{league.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

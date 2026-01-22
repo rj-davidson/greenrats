@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/golferseason"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
@@ -243,6 +244,21 @@ func (_u *GolferUpdate) AddEntries(v ...*TournamentEntry) *GolferUpdate {
 	return _u.AddEntryIDs(ids...)
 }
 
+// AddSeasonIDs adds the "seasons" edge to the GolferSeason entity by IDs.
+func (_u *GolferUpdate) AddSeasonIDs(ids ...uuid.UUID) *GolferUpdate {
+	_u.mutation.AddSeasonIDs(ids...)
+	return _u
+}
+
+// AddSeasons adds the "seasons" edges to the GolferSeason entity.
+func (_u *GolferUpdate) AddSeasons(v ...*GolferSeason) *GolferUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSeasonIDs(ids...)
+}
+
 // Mutation returns the GolferMutation object of the builder.
 func (_u *GolferUpdate) Mutation() *GolferMutation {
 	return _u.mutation
@@ -288,6 +304,27 @@ func (_u *GolferUpdate) RemoveEntries(v ...*TournamentEntry) *GolferUpdate {
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEntryIDs(ids...)
+}
+
+// ClearSeasons clears all "seasons" edges to the GolferSeason entity.
+func (_u *GolferUpdate) ClearSeasons() *GolferUpdate {
+	_u.mutation.ClearSeasons()
+	return _u
+}
+
+// RemoveSeasonIDs removes the "seasons" edge to GolferSeason entities by IDs.
+func (_u *GolferUpdate) RemoveSeasonIDs(ids ...uuid.UUID) *GolferUpdate {
+	_u.mutation.RemoveSeasonIDs(ids...)
+	return _u
+}
+
+// RemoveSeasons removes "seasons" edges to GolferSeason entities.
+func (_u *GolferUpdate) RemoveSeasons(v ...*GolferSeason) *GolferUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSeasonIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -485,6 +522,51 @@ func (_u *GolferUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SeasonsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.SeasonsTable,
+			Columns: []string{golfer.SeasonsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golferseason.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSeasonsIDs(); len(nodes) > 0 && !_u.mutation.SeasonsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.SeasonsTable,
+			Columns: []string{golfer.SeasonsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golferseason.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SeasonsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.SeasonsTable,
+			Columns: []string{golfer.SeasonsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golferseason.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -724,6 +806,21 @@ func (_u *GolferUpdateOne) AddEntries(v ...*TournamentEntry) *GolferUpdateOne {
 	return _u.AddEntryIDs(ids...)
 }
 
+// AddSeasonIDs adds the "seasons" edge to the GolferSeason entity by IDs.
+func (_u *GolferUpdateOne) AddSeasonIDs(ids ...uuid.UUID) *GolferUpdateOne {
+	_u.mutation.AddSeasonIDs(ids...)
+	return _u
+}
+
+// AddSeasons adds the "seasons" edges to the GolferSeason entity.
+func (_u *GolferUpdateOne) AddSeasons(v ...*GolferSeason) *GolferUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddSeasonIDs(ids...)
+}
+
 // Mutation returns the GolferMutation object of the builder.
 func (_u *GolferUpdateOne) Mutation() *GolferMutation {
 	return _u.mutation
@@ -769,6 +866,27 @@ func (_u *GolferUpdateOne) RemoveEntries(v ...*TournamentEntry) *GolferUpdateOne
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEntryIDs(ids...)
+}
+
+// ClearSeasons clears all "seasons" edges to the GolferSeason entity.
+func (_u *GolferUpdateOne) ClearSeasons() *GolferUpdateOne {
+	_u.mutation.ClearSeasons()
+	return _u
+}
+
+// RemoveSeasonIDs removes the "seasons" edge to GolferSeason entities by IDs.
+func (_u *GolferUpdateOne) RemoveSeasonIDs(ids ...uuid.UUID) *GolferUpdateOne {
+	_u.mutation.RemoveSeasonIDs(ids...)
+	return _u
+}
+
+// RemoveSeasons removes "seasons" edges to GolferSeason entities.
+func (_u *GolferUpdateOne) RemoveSeasons(v ...*GolferSeason) *GolferUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveSeasonIDs(ids...)
 }
 
 // Where appends a list predicates to the GolferUpdate builder.
@@ -996,6 +1114,51 @@ func (_u *GolferUpdateOne) sqlSave(ctx context.Context) (_node *Golfer, err erro
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.SeasonsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.SeasonsTable,
+			Columns: []string{golfer.SeasonsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golferseason.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedSeasonsIDs(); len(nodes) > 0 && !_u.mutation.SeasonsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.SeasonsTable,
+			Columns: []string{golfer.SeasonsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golferseason.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.SeasonsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.SeasonsTable,
+			Columns: []string{golfer.SeasonsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golferseason.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

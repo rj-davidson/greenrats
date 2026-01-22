@@ -37,6 +37,8 @@ const (
 	EdgeCommissionerActions = "commissioner_actions"
 	// EdgeEmailReminders holds the string denoting the email_reminders edge name in mutations.
 	EdgeEmailReminders = "email_reminders"
+	// EdgeSeason holds the string denoting the season edge name in mutations.
+	EdgeSeason = "season"
 	// Table holds the table name of the league in the database.
 	Table = "leagues"
 	// CreatedByTable is the table that holds the created_by relation/edge.
@@ -74,6 +76,13 @@ const (
 	EmailRemindersInverseTable = "email_reminders"
 	// EmailRemindersColumn is the table column denoting the email_reminders relation/edge.
 	EmailRemindersColumn = "league_email_reminders"
+	// SeasonTable is the table that holds the season relation/edge.
+	SeasonTable = "leagues"
+	// SeasonInverseTable is the table name for the Season entity.
+	// It exists in this package in order to avoid circular dependency with the "season" package.
+	SeasonInverseTable = "seasons"
+	// SeasonColumn is the table column denoting the season relation/edge.
+	SeasonColumn = "season_leagues"
 )
 
 // Columns holds all SQL columns for league fields.
@@ -91,6 +100,7 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"league_created_by",
+	"season_leagues",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -225,6 +235,13 @@ func ByEmailReminders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEmailRemindersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// BySeasonField orders the results by season field.
+func BySeasonField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newSeasonStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newCreatedByStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -258,5 +275,12 @@ func newEmailRemindersStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EmailRemindersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EmailRemindersTable, EmailRemindersColumn),
+	)
+}
+func newSeasonStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(SeasonInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, SeasonTable, SeasonColumn),
 	)
 }

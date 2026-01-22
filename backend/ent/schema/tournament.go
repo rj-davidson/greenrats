@@ -76,5 +76,11 @@ func (Tournament) Edges() []ent.Edge {
 		edge.To("email_reminders", EmailReminder.Type),
 		edge.To("champion", Golfer.Type).
 			Unique(),
+		edge.From("season", Season.Type).
+			Ref("tournaments").
+			Unique(),
+		edge.From("course_ref", Course.Type).
+			Ref("tournaments").
+			Unique(),
 	}
 }

@@ -11,9 +11,11 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
@@ -295,6 +297,44 @@ func (_c *TournamentCreate) SetChampion(v *Golfer) *TournamentCreate {
 	return _c.SetChampionID(v.ID)
 }
 
+// SetSeasonID sets the "season" edge to the Season entity by ID.
+func (_c *TournamentCreate) SetSeasonID(id uuid.UUID) *TournamentCreate {
+	_c.mutation.SetSeasonID(id)
+	return _c
+}
+
+// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
+func (_c *TournamentCreate) SetNillableSeasonID(id *uuid.UUID) *TournamentCreate {
+	if id != nil {
+		_c = _c.SetSeasonID(*id)
+	}
+	return _c
+}
+
+// SetSeason sets the "season" edge to the Season entity.
+func (_c *TournamentCreate) SetSeason(v *Season) *TournamentCreate {
+	return _c.SetSeasonID(v.ID)
+}
+
+// SetCourseRefID sets the "course_ref" edge to the Course entity by ID.
+func (_c *TournamentCreate) SetCourseRefID(id uuid.UUID) *TournamentCreate {
+	_c.mutation.SetCourseRefID(id)
+	return _c
+}
+
+// SetNillableCourseRefID sets the "course_ref" edge to the Course entity by ID if the given value is not nil.
+func (_c *TournamentCreate) SetNillableCourseRefID(id *uuid.UUID) *TournamentCreate {
+	if id != nil {
+		_c = _c.SetCourseRefID(*id)
+	}
+	return _c
+}
+
+// SetCourseRef sets the "course_ref" edge to the Course entity.
+func (_c *TournamentCreate) SetCourseRef(v *Course) *TournamentCreate {
+	return _c.SetCourseRefID(v.ID)
+}
+
 // Mutation returns the TournamentMutation object of the builder.
 func (_c *TournamentCreate) Mutation() *TournamentMutation {
 	return _c.mutation
@@ -531,6 +571,40 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_node.tournament_champion = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.SeasonIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.SeasonTable,
+			Columns: []string{tournament.SeasonColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(season.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.season_tournaments = &nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.CourseRefIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   tournament.CourseRefTable,
+			Columns: []string{tournament.CourseRefColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(course.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.course_tournaments = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

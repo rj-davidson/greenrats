@@ -13,10 +13,12 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
@@ -32,6 +34,8 @@ type TournamentQuery struct {
 	withEntries        *TournamentEntryQuery
 	withEmailReminders *EmailReminderQuery
 	withChampion       *GolferQuery
+	withSeason         *SeasonQuery
+	withCourseRef      *CourseQuery
 	withFKs            bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
@@ -150,6 +154,50 @@ func (_q *TournamentQuery) QueryChampion() *GolferQuery {
 			sqlgraph.From(tournament.Table, tournament.FieldID, selector),
 			sqlgraph.To(golfer.Table, golfer.FieldID),
 			sqlgraph.Edge(sqlgraph.M2O, false, tournament.ChampionTable, tournament.ChampionColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QuerySeason chains the current query on the "season" edge.
+func (_q *TournamentQuery) QuerySeason() *SeasonQuery {
+	query := (&SeasonClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournament.Table, tournament.FieldID, selector),
+			sqlgraph.To(season.Table, season.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, tournament.SeasonTable, tournament.SeasonColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryCourseRef chains the current query on the "course_ref" edge.
+func (_q *TournamentQuery) QueryCourseRef() *CourseQuery {
+	query := (&CourseClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournament.Table, tournament.FieldID, selector),
+			sqlgraph.To(course.Table, course.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, tournament.CourseRefTable, tournament.CourseRefColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -353,6 +401,8 @@ func (_q *TournamentQuery) Clone() *TournamentQuery {
 		withEntries:        _q.withEntries.Clone(),
 		withEmailReminders: _q.withEmailReminders.Clone(),
 		withChampion:       _q.withChampion.Clone(),
+		withSeason:         _q.withSeason.Clone(),
+		withCourseRef:      _q.withCourseRef.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -400,6 +450,28 @@ func (_q *TournamentQuery) WithChampion(opts ...func(*GolferQuery)) *TournamentQ
 		opt(query)
 	}
 	_q.withChampion = query
+	return _q
+}
+
+// WithSeason tells the query-builder to eager-load the nodes that are connected to
+// the "season" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TournamentQuery) WithSeason(opts ...func(*SeasonQuery)) *TournamentQuery {
+	query := (&SeasonClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withSeason = query
+	return _q
+}
+
+// WithCourseRef tells the query-builder to eager-load the nodes that are connected to
+// the "course_ref" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TournamentQuery) WithCourseRef(opts ...func(*CourseQuery)) *TournamentQuery {
+	query := (&CourseClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withCourseRef = query
 	return _q
 }
 
@@ -482,14 +554,16 @@ func (_q *TournamentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 		nodes       = []*Tournament{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [6]bool{
 			_q.withPicks != nil,
 			_q.withEntries != nil,
 			_q.withEmailReminders != nil,
 			_q.withChampion != nil,
+			_q.withSeason != nil,
+			_q.withCourseRef != nil,
 		}
 	)
-	if _q.withChampion != nil {
+	if _q.withChampion != nil || _q.withSeason != nil || _q.withCourseRef != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -537,6 +611,18 @@ func (_q *TournamentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 	if query := _q.withChampion; query != nil {
 		if err := _q.loadChampion(ctx, query, nodes, nil,
 			func(n *Tournament, e *Golfer) { n.Edges.Champion = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withSeason; query != nil {
+		if err := _q.loadSeason(ctx, query, nodes, nil,
+			func(n *Tournament, e *Season) { n.Edges.Season = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withCourseRef; query != nil {
+		if err := _q.loadCourseRef(ctx, query, nodes, nil,
+			func(n *Tournament, e *Course) { n.Edges.CourseRef = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -661,6 +747,70 @@ func (_q *TournamentQuery) loadChampion(ctx context.Context, query *GolferQuery,
 		nodes, ok := nodeids[n.ID]
 		if !ok {
 			return fmt.Errorf(`unexpected foreign-key "tournament_champion" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *TournamentQuery) loadSeason(ctx context.Context, query *SeasonQuery, nodes []*Tournament, init func(*Tournament), assign func(*Tournament, *Season)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Tournament)
+	for i := range nodes {
+		if nodes[i].season_tournaments == nil {
+			continue
+		}
+		fk := *nodes[i].season_tournaments
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(season.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "season_tournaments" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *TournamentQuery) loadCourseRef(ctx context.Context, query *CourseQuery, nodes []*Tournament, init func(*Tournament), assign func(*Tournament, *Course)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Tournament)
+	for i := range nodes {
+		if nodes[i].course_tournaments == nil {
+			continue
+		}
+		fk := *nodes[i].course_tournaments
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(course.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "course_tournaments" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
