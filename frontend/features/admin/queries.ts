@@ -1,12 +1,8 @@
 import type {
-  AddFieldEntryRequest,
-  FieldEntry,
-  ListFieldResponse,
   ListLeaguesResponse,
   ListTournamentsResponse,
   ListUsersResponse,
   TriggerResponse,
-  UpdateFieldEntryRequest,
 } from "@/features/admin/types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import type { Requestor } from "@/lib/query/requestor";
@@ -18,7 +14,6 @@ export const adminKeys = {
   users: () => [...adminKeys.all, "users"] as const,
   leagues: () => [...adminKeys.all, "leagues"] as const,
   tournaments: () => [...adminKeys.all, "tournaments"] as const,
-  field: (tournamentId: string) => [...adminKeys.all, "field", tournamentId] as const,
 };
 
 export function buildGetAdminUsersQueryOptions(requestor: Requestor = makeClientRequest) {
@@ -99,66 +94,6 @@ export function useTriggerSyncEarnings() {
       return makeClientRequest.post<TriggerResponse>(
         `/api/v1/admin/automations/sync-earnings/${tournamentId}`,
       );
-    },
-  });
-}
-
-export function buildGetAdminTournamentFieldQueryOptions(
-  tournamentId: string,
-  requestor: Requestor = makeClientRequest,
-) {
-  return queryOptions<ListFieldResponse>({
-    queryKey: adminKeys.field(tournamentId),
-    queryFn: () => requestor.get<ListFieldResponse>(`/api/v1/admin/tournaments/${tournamentId}/field`),
-    enabled: !!tournamentId,
-  });
-}
-
-export function useAdminTournamentField(tournamentId: string) {
-  return useQuery(buildGetAdminTournamentFieldQueryOptions(tournamentId));
-}
-
-export function useAddFieldEntry(tournamentId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (request: AddFieldEntryRequest) => {
-      return makeClientRequest.post<FieldEntry>(
-        `/api/v1/admin/tournaments/${tournamentId}/field`,
-        request,
-      );
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: adminKeys.field(tournamentId) });
-    },
-  });
-}
-
-export function useUpdateFieldEntry(tournamentId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ entryId, request }: { entryId: string; request: UpdateFieldEntryRequest }) => {
-      return makeClientRequest.put<FieldEntry>(
-        `/api/v1/admin/tournaments/${tournamentId}/field/${entryId}`,
-        request,
-      );
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: adminKeys.field(tournamentId) });
-    },
-  });
-}
-
-export function useDeleteFieldEntry(tournamentId: string) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (entryId: string) => {
-      await makeClientRequest.del(`/api/v1/admin/tournaments/${tournamentId}/field/${entryId}`);
-    },
-    onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey: adminKeys.field(tournamentId) });
     },
   });
 }

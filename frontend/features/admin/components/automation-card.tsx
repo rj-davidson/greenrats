@@ -6,6 +6,7 @@ import {
   useTriggerSyncPlayers,
   useTriggerSyncLeaderboard,
   useTriggerSyncEarnings,
+  useTriggerSyncField,
 } from "@/features/admin/queries";
 import { Button } from "@/components/shadcn/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
@@ -26,6 +27,7 @@ export function AutomationsPage() {
   const syncPlayers = useTriggerSyncPlayers();
   const syncLeaderboard = useTriggerSyncLeaderboard();
   const syncEarnings = useTriggerSyncEarnings();
+  const syncField = useTriggerSyncField();
 
   const [selectedTournament, setSelectedTournament] = useState<string>("");
 
@@ -70,6 +72,19 @@ export function AutomationsPage() {
       toast.success("Earnings sync started");
     } catch {
       toast.error("Failed to start earnings sync");
+    }
+  };
+
+  const handleSyncField = async () => {
+    if (!selectedTournament) {
+      toast.error("Please select a tournament");
+      return;
+    }
+    try {
+      await syncField.mutateAsync(selectedTournament);
+      toast.success("Field sync started");
+    } catch {
+      toast.error("Failed to start field sync");
     }
   };
 
@@ -136,7 +151,17 @@ export function AutomationsPage() {
             </SelectContent>
           </Select>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
+            <Button
+              onClick={handleSyncField}
+              disabled={!selectedTournament || syncField.isPending}
+              variant="outline"
+              className="w-full"
+            >
+              <RefreshCwIcon className={syncField.isPending ? "animate-spin" : ""} />
+              {syncField.isPending ? "Syncing..." : "Sync Field"}
+            </Button>
+
             <Button
               onClick={handleSyncLeaderboard}
               disabled={!selectedTournament || syncLeaderboard.isPending}
