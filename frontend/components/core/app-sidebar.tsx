@@ -15,7 +15,7 @@ import {
 } from "@/components/shadcn/sidebar";
 import { LeagueMonogram } from "@/features/leagues/components";
 import { useUserLeagues } from "@/features/leagues/queries";
-import { useActiveTournament, useTournaments } from "@/features/tournaments/queries";
+import { useCurrentTournament, useTournaments } from "@/features/tournaments/queries";
 import type { Tournament } from "@/features/tournaments/types";
 import { useCurrentUser } from "@/features/users/queries";
 import { CalendarIcon, ChevronRightIcon, SettingsIcon, TrophyIcon } from "lucide-react";
@@ -46,35 +46,40 @@ function TournamentIcon({ status }: { status: Tournament["status"] }) {
 }
 
 function useSidebarTournaments() {
-  const { data: activeData, isLoading: activeLoading } = useActiveTournament();
+  const { tournament: currentTournament, isLoading: currentLoading } = useCurrentTournament();
   const { data: completedData, isLoading: completedLoading } = useTournaments({
     status: "completed",
     limit: 1,
   });
   const { data: upcomingData, isLoading: upcomingLoading } = useTournaments({
     status: "upcoming",
-    limit: 2,
+    limit: 3,
   });
 
-  const isLoading = activeLoading || completedLoading || upcomingLoading;
+  const isLoading = currentLoading || completedLoading || upcomingLoading;
 
-  const activeTournament = activeData?.tournament ?? null;
   const recentCompleted = completedData?.tournaments[0] ?? null;
   const upcomingTournaments = upcomingData?.tournaments ?? [];
 
   const tournaments: Tournament[] = [];
+  const addedIds = new Set<string>();
 
   if (recentCompleted) {
     tournaments.push(recentCompleted);
+    addedIds.add(recentCompleted.id);
   }
 
-  if (activeTournament) {
-    tournaments.push(activeTournament);
+  if (currentTournament && !addedIds.has(currentTournament.id)) {
+    tournaments.push(currentTournament);
+    addedIds.add(currentTournament.id);
   }
 
   for (const upcoming of upcomingTournaments) {
     if (tournaments.length >= 3) break;
-    tournaments.push(upcoming);
+    if (!addedIds.has(upcoming.id)) {
+      tournaments.push(upcoming);
+      addedIds.add(upcoming.id);
+    }
   }
 
   return { tournaments, isLoading };

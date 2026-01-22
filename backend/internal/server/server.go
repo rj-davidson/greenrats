@@ -19,7 +19,6 @@ import (
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
 	"github.com/rj-davidson/greenrats/internal/external/openai"
 	"github.com/rj-davidson/greenrats/internal/external/pgatour"
-	"github.com/rj-davidson/greenrats/internal/external/scrapedo"
 	"github.com/rj-davidson/greenrats/internal/features/admin"
 	"github.com/rj-davidson/greenrats/internal/features/golfers"
 	"github.com/rj-davidson/greenrats/internal/features/users"
@@ -90,7 +89,6 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 	pgatourClient := pgatour.New(cfg.PGATourAPIKey, logger)
 	exaClient := exa.New(cfg.ExaAPIKey, logger)
 	openaiClient := openai.New(cfg.OpenAIAPIKey, cfg.OpenAIModel, logger)
-	scrapeDoClient := scrapedo.New(cfg.ScrapeDoAPIKey, logger)
 	golferSvc := golfers.NewService(db)
 
 	var gmapsClient *googlemaps.Client
@@ -103,7 +101,7 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 	}
 
 	adminIngestSvc := admin.NewIngestService(
-		db, cfg, bdlClient, pgatourClient, gmapsClient, exaClient, openaiClient, scrapeDoClient, golferSvc, logger,
+		db, cfg, bdlClient, pgatourClient, gmapsClient, exaClient, openaiClient, golferSvc, logger,
 	)
 
 	s := &Server{

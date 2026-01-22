@@ -31,8 +31,7 @@ type Config struct {
 	OpenAIAPIKey string `mapstructure:"OPENAI_API_KEY"`
 	OpenAIModel  string `mapstructure:"OPENAI_MODEL"`
 
-	ExaAPIKey      string `mapstructure:"EXA_API_KEY"`
-	ScrapeDoAPIKey string `mapstructure:"SCRAPE_DO_API_KEY"`
+	ExaAPIKey string `mapstructure:"EXA_API_KEY"`
 
 	CurrentSeason int `mapstructure:"CURRENT_SEASON"`
 
@@ -58,7 +57,6 @@ func Load() (*Config, error) {
 	v.SetDefault("OPENAI_API_KEY", "")
 	v.SetDefault("OPENAI_MODEL", "gpt-4o-mini")
 	v.SetDefault("EXA_API_KEY", "")
-	v.SetDefault("SCRAPE_DO_API_KEY", "")
 	v.SetDefault("CURRENT_SEASON", 2026)
 
 	v.SetConfigName(".env")
@@ -87,7 +85,6 @@ func Load() (*Config, error) {
 	_ = v.BindEnv("OPENAI_API_KEY")
 	_ = v.BindEnv("OPENAI_MODEL")
 	_ = v.BindEnv("EXA_API_KEY")
-	_ = v.BindEnv("SCRAPE_DO_API_KEY")
 	_ = v.BindEnv("CURRENT_SEASON")
 
 	var cfg Config

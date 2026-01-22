@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"math"
 	"strings"
 
 	"github.com/gofrs/uuid/v5"
@@ -18,7 +17,6 @@ import (
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
 	"github.com/rj-davidson/greenrats/internal/external/openai"
 	"github.com/rj-davidson/greenrats/internal/external/pgatour"
-	"github.com/rj-davidson/greenrats/internal/external/scrapedo"
 	"github.com/rj-davidson/greenrats/internal/features/fields"
 	"github.com/rj-davidson/greenrats/internal/features/golfers"
 	"github.com/rj-davidson/greenrats/internal/sync"
@@ -32,7 +30,6 @@ type IngestService struct {
 	fieldsService *fields.Service
 	exa           *exa.Client
 	openai        *openai.Client
-	scrapedo      *scrapedo.Client
 	golfers       *golfers.Service
 	logger        *slog.Logger
 }
@@ -45,7 +42,6 @@ func NewIngestService(
 	googlemapsClient *googlemaps.Client,
 	exaClient *exa.Client,
 	openaiClient *openai.Client,
-	scrapeDoClient *scrapedo.Client,
 	golfersSvc *golfers.Service,
 	logger *slog.Logger,
 ) *IngestService {
@@ -57,7 +53,6 @@ func NewIngestService(
 		fieldsService: fields.NewService(db, pgatourClient, logger),
 		exa:           exaClient,
 		openai:        openaiClient,
-		scrapedo:      scrapeDoClient,
 		golfers:       golfersSvc,
 		logger:        logger,
 	}
@@ -205,25 +200,8 @@ func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID
 		exaContent.WriteString("\n\n")
 	}
 
-	matchedGolferIDs := make(map[string]bool)
-	var updated int
-
-	if s.config.ScrapeDoAPIKey != "" {
-		updated, matchedGolferIDs = s.tryScrapedoEarnings(ctx, t, exaResponse, golferInputs, entryByGolferID)
-	}
-
-	unmatchedGolfers := make([]openai.GolferInput, 0)
-	for _, g := range golferInputs {
-		if !matchedGolferIDs[g.GolferID] {
-			unmatchedGolfers = append(unmatchedGolfers, g)
-		}
-	}
-
-	if len(unmatchedGolfers) > 0 {
-		s.logger.Info("using OpenAI for remaining golfers", "count", len(unmatchedGolfers), "tournament", t.Name)
-		openaiUpdated := s.matchWithOpenAI(ctx, t, exaContent.String(), unmatchedGolfers, entryByGolferID)
-		updated += openaiUpdated
-	}
+	s.logger.Info("using OpenAI for golfer matching", "count", len(golferInputs), "tournament", t.Name)
+	updated := s.matchWithOpenAI(ctx, t, exaContent.String(), golferInputs, entryByGolferID)
 
 	s.logger.Info("earnings sync completed", "tournament", t.Name, "updated", updated)
 	return nil
@@ -244,93 +222,6 @@ func (s *IngestService) SyncField(ctx context.Context, tournamentID uuid.UUID) e
 	)
 
 	return nil
-}
-
-func (s *IngestService) tryScrapedoEarnings(
-	ctx context.Context,
-	t *ent.Tournament,
-	exaResponse *exa.SearchResponse,
-	golferInputs []openai.GolferInput,
-	entryByGolferID map[string]*ent.TournamentEntry,
-) (updated int, matchedIDs map[string]bool) {
-	matchedIDs = make(map[string]bool)
-	targetMatches := int(math.Ceil(scrapedo.EarningsMatchThreshold * float64(len(golferInputs))))
-
-	for _, result := range exaResponse.Results {
-		s.logger.Debug("trying scrape.do", "url", result.URL, "tournament", t.Name)
-
-		scrapeResp, err := s.scrapedo.Scrape(ctx, result.URL, scrapedo.ScrapeOptions{Render: true})
-		if err != nil {
-			s.logger.Warn("scrape.do failed", "url", result.URL, "error", err)
-			continue
-		}
-
-		if scrapeResp.StatusCode != 200 {
-			s.logger.Warn("scrape.do returned non-200 status", "url", result.URL, "status", scrapeResp.StatusCode)
-			continue
-		}
-
-		parseResult := scrapedo.ParseLeaderboard(scrapeResp.Content)
-		if !parseResult.Success {
-			s.logger.Debug("programmatic parsing failed", "url", result.URL, "entries", len(parseResult.Entries))
-			continue
-		}
-
-		for _, golferInput := range golferInputs {
-			if matchedIDs[golferInput.GolferID] {
-				continue
-			}
-
-			for _, parsed := range parseResult.Entries {
-				if !s.namesMatch(golferInput, parsed.Name) {
-					continue
-				}
-				entry := entryByGolferID[golferInput.GolferID]
-				if entry != nil && entry.Earnings != parsed.Earnings {
-					_, err := entry.Update().
-						SetEarnings(parsed.Earnings).
-						Save(ctx)
-					if err != nil {
-						s.logger.Warn("failed to update earnings", "golfer_id", golferInput.GolferID, "error", err)
-						continue
-					}
-					updated++
-				}
-				matchedIDs[golferInput.GolferID] = true
-				break
-			}
-		}
-
-		if len(matchedIDs) >= targetMatches {
-			break
-		}
-	}
-
-	return updated, matchedIDs
-}
-
-func (s *IngestService) namesMatch(golferInput openai.GolferInput, parsedName string) bool {
-	parsedCandidates := golfers.NormalizeName(parsedName)
-	golferCandidates := golfers.NormalizeName(golferInput.Name)
-
-	for _, pc := range parsedCandidates {
-		for _, gc := range golferCandidates {
-			if strings.EqualFold(pc, gc) {
-				return true
-			}
-		}
-	}
-
-	if golferInput.FirstName != "" && golferInput.LastName != "" {
-		fullName := golferInput.FirstName + " " + golferInput.LastName
-		for _, pc := range parsedCandidates {
-			if strings.EqualFold(pc, fullName) {
-				return true
-			}
-		}
-	}
-
-	return false
 }
 
 const earningsBatchSize = 10

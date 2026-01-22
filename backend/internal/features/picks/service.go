@@ -173,7 +173,7 @@ type CreatePickForUserParams struct {
 	GolferID       uuid.UUID
 }
 
-func (s *Service) CreatePickForUser(ctx context.Context, params CreatePickForUserParams) (*Pick, error) {
+func (s *Service) CreatePickForUser(ctx context.Context, params *CreatePickForUserParams) (*Pick, error) {
 	isOwner, err := s.isLeagueOwner(ctx, params.LeagueID, params.CommissionerID)
 	if err != nil {
 		return nil, err

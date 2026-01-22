@@ -355,7 +355,7 @@ func (h *Handler) CreatePickForUser(c *fiber.Ctx) error {
 		})
 	}
 
-	pick, err := h.service.CreatePickForUser(c.UserContext(), CreatePickForUserParams{
+	pick, err := h.service.CreatePickForUser(c.UserContext(), &CreatePickForUserParams{
 		CommissionerID: userID,
 		TargetUserID:   req.UserID,
 		LeagueID:       leagueID,
