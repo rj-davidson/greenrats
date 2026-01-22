@@ -30,7 +30,7 @@ type PlayerRoundStats struct {
 	DrivingAccuracyRank    *int          `json:"driving_accuracy_rank"`
 	DrivingDistance        *float64      `json:"driving_distance"`
 	DrivingDistanceRank    *int          `json:"driving_distance_rank"`
-	LongestDrive           *float64      `json:"longest_drive"`
+	LongestDrive           *int          `json:"longest_drive"`
 	LongestDriveRank       *int          `json:"longest_drive_rank"`
 	GreensInRegulation     *float64      `json:"greens_in_regulation"`
 	GreensInRegulationRank *int          `json:"greens_in_regulation_rank"`
@@ -47,14 +47,19 @@ type PlayerRoundStats struct {
 	DoubleBogeys           *int          `json:"double_bogeys"`
 }
 
+type StatValueItem struct {
+	StatName  string `json:"statName"`
+	StatValue string `json:"statValue"`
+}
+
 type PlayerSeasonStat struct {
-	Player       Player  `json:"player"`
-	StatID       int     `json:"stat_id"`
-	StatName     string  `json:"stat_name"`
-	StatCategory *string `json:"stat_category"`
-	Season       int     `json:"season"`
-	Rank         *int    `json:"rank"`
-	StatValue    any     `json:"stat_value"`
+	Player       Player          `json:"player"`
+	StatID       int             `json:"stat_id"`
+	StatName     string          `json:"stat_name"`
+	StatCategory *string         `json:"stat_category"`
+	Season       int             `json:"season"`
+	Rank         *int            `json:"rank"`
+	StatValue    []StatValueItem `json:"stat_value"`
 }
 
 type PlayerScorecard struct {
@@ -83,5 +88,20 @@ type PlayerSeasonStatsResponse struct {
 
 type PlayerScorecardsResponse struct {
 	Data []PlayerScorecard `json:"data"`
+	Meta Meta              `json:"meta"`
+}
+
+type TournamentField struct {
+	ID          int        `json:"id"`
+	Tournament  Tournament `json:"tournament"`
+	Player      Player     `json:"player"`
+	EntryStatus string     `json:"entry_status"`
+	Qualifier   string     `json:"qualifier"`
+	OWGR        *int       `json:"owgr"`
+	IsAmateur   bool       `json:"is_amateur"`
+}
+
+type TournamentFieldResponse struct {
+	Data []TournamentField `json:"data"`
 	Meta Meta              `json:"meta"`
 }

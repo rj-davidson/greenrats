@@ -673,107 +673,126 @@ func (s *Service) UpsertGolferSeasonStat(ctx context.Context, golferID, seasonID
 	return nil
 }
 
+func getStatValue(items []balldontlie.StatValueItem) string {
+	if len(items) == 0 {
+		return ""
+	}
+	return items[0].StatValue
+}
+
 func applyStatToGolferSeason(builder *ent.GolferSeasonCreate, stat *balldontlie.PlayerSeasonStat) {
-	if stat.StatValue == nil {
+	if len(stat.StatValue) == 0 {
+		return
+	}
+
+	valStr := getStatValue(stat.StatValue)
+	if valStr == "" {
 		return
 	}
 
 	switch stat.StatName {
 	case "Scoring Average":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			builder.SetScoringAvg(v)
 		}
 	case "Top 10 Finishes":
-		if v, ok := stat.StatValue.(float64); ok {
-			builder.SetTop10s(int(v))
+		if v, err := strconv.Atoi(valStr); err == nil {
+			builder.SetTop10s(v)
 		}
 	case "Cuts Made":
-		if v, ok := stat.StatValue.(float64); ok {
-			builder.SetCutsMade(int(v))
+		if v, err := strconv.Atoi(valStr); err == nil {
+			builder.SetCutsMade(v)
 		}
 	case "Events Played":
-		if v, ok := stat.StatValue.(float64); ok {
-			builder.SetEventsPlayed(int(v))
+		if v, err := strconv.Atoi(valStr); err == nil {
+			builder.SetEventsPlayed(v)
 		}
 	case "Wins":
-		if v, ok := stat.StatValue.(float64); ok {
-			builder.SetWins(int(v))
+		if v, err := strconv.Atoi(valStr); err == nil {
+			builder.SetWins(v)
 		}
 	case "Official Money":
-		if v, ok := stat.StatValue.(float64); ok {
+		cleaned := strings.ReplaceAll(strings.ReplaceAll(valStr, "$", ""), ",", "")
+		if v, err := strconv.ParseFloat(cleaned, 64); err == nil {
 			builder.SetEarnings(int(v))
 		}
 	case "Driving Distance":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			builder.SetDrivingDistance(v)
 		}
 	case "Driving Accuracy Percentage":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			builder.SetDrivingAccuracy(v)
 		}
 	case "Greens in Regulation Percentage":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			builder.SetGirPct(v)
 		}
 	case "Putting Average":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			builder.SetPuttingAvg(v)
 		}
 	case "Scrambling":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			builder.SetScramblingPct(v)
 		}
 	}
 }
 
 func applyStatToGolferSeasonUpdate(updater *ent.GolferSeasonUpdateOne, stat *balldontlie.PlayerSeasonStat) {
-	if stat.StatValue == nil {
+	if len(stat.StatValue) == 0 {
+		return
+	}
+
+	valStr := getStatValue(stat.StatValue)
+	if valStr == "" {
 		return
 	}
 
 	switch stat.StatName {
 	case "Scoring Average":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			updater.SetScoringAvg(v)
 		}
 	case "Top 10 Finishes":
-		if v, ok := stat.StatValue.(float64); ok {
-			updater.SetTop10s(int(v))
+		if v, err := strconv.Atoi(valStr); err == nil {
+			updater.SetTop10s(v)
 		}
 	case "Cuts Made":
-		if v, ok := stat.StatValue.(float64); ok {
-			updater.SetCutsMade(int(v))
+		if v, err := strconv.Atoi(valStr); err == nil {
+			updater.SetCutsMade(v)
 		}
 	case "Events Played":
-		if v, ok := stat.StatValue.(float64); ok {
-			updater.SetEventsPlayed(int(v))
+		if v, err := strconv.Atoi(valStr); err == nil {
+			updater.SetEventsPlayed(v)
 		}
 	case "Wins":
-		if v, ok := stat.StatValue.(float64); ok {
-			updater.SetWins(int(v))
+		if v, err := strconv.Atoi(valStr); err == nil {
+			updater.SetWins(v)
 		}
 	case "Official Money":
-		if v, ok := stat.StatValue.(float64); ok {
+		cleaned := strings.ReplaceAll(strings.ReplaceAll(valStr, "$", ""), ",", "")
+		if v, err := strconv.ParseFloat(cleaned, 64); err == nil {
 			updater.SetEarnings(int(v))
 		}
 	case "Driving Distance":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			updater.SetDrivingDistance(v)
 		}
 	case "Driving Accuracy Percentage":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			updater.SetDrivingAccuracy(v)
 		}
 	case "Greens in Regulation Percentage":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			updater.SetGirPct(v)
 		}
 	case "Putting Average":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			updater.SetPuttingAvg(v)
 		}
 	case "Scrambling":
-		if v, ok := stat.StatValue.(float64); ok {
+		if v, err := strconv.ParseFloat(valStr, 64); err == nil {
 			updater.SetScramblingPct(v)
 		}
 	}

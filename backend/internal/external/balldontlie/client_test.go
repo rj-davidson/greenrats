@@ -266,7 +266,7 @@ func TestGetPlayerSeasonStats_Success(t *testing.T) {
 					StatName:  "Scoring Average",
 					Season:    2026,
 					Rank:      intPtr(1),
-					StatValue: 68.5,
+					StatValue: []StatValueItem{{StatValue: "68.5"}},
 				},
 				{
 					Player:    Player{ID: 1, DisplayName: "Scottie Scheffler"},
@@ -274,7 +274,7 @@ func TestGetPlayerSeasonStats_Success(t *testing.T) {
 					StatName:  "Driving Distance",
 					Season:    2026,
 					Rank:      intPtr(15),
-					StatValue: 310.5,
+					StatValue: []StatValueItem{{StatValue: "310.5"}},
 				},
 			},
 			Meta: Meta{NextCursor: 0, PerPage: 100},
@@ -291,7 +291,7 @@ func TestGetPlayerSeasonStats_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, stats, 2)
 	assert.Equal(t, "Scoring Average", stats[0].StatName)
-	assert.Equal(t, 68.5, stats[0].StatValue)
+	assert.Equal(t, "68.5", stats[0].StatValue[0].StatValue)
 	assert.Equal(t, "Driving Distance", stats[1].StatName)
 }
 

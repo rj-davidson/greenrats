@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,6 +14,10 @@ import (
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
+func statValue(v any) []balldontlie.StatValueItem {
+	return []balldontlie.StatValueItem{{StatValue: fmt.Sprintf("%v", v)}}
+}
+
 func TestUpsertGolferSeasonStat_Create(t *testing.T) {
 	ctx := context.Background()
 	svc := newTestService(t)
@@ -22,7 +27,7 @@ func TestUpsertGolferSeasonStat_Create(t *testing.T) {
 
 	stat := &balldontlie.PlayerSeasonStat{
 		StatName:  "Scoring Average",
-		StatValue: 68.5,
+		StatValue: statValue(68.5),
 	}
 
 	err := svc.UpsertGolferSeasonStat(ctx, golferEntity.ID, season.ID, stat)
@@ -45,14 +50,14 @@ func TestUpsertGolferSeasonStat_Update(t *testing.T) {
 
 	stat := &balldontlie.PlayerSeasonStat{
 		StatName:  "Scoring Average",
-		StatValue: 68.5,
+		StatValue: statValue(68.5),
 	}
 
 	err := svc.UpsertGolferSeasonStat(ctx, golferEntity.ID, season.ID, stat)
 	require.NoError(t, err)
 
 	stat.StatName = "Driving Distance"
-	stat.StatValue = 310.5
+	stat.StatValue = statValue(310.5)
 
 	err = svc.UpsertGolferSeasonStat(ctx, golferEntity.ID, season.ID, stat)
 	require.NoError(t, err)
@@ -74,17 +79,17 @@ func TestUpsertGolferSeasonStat_AllStats(t *testing.T) {
 	season := testutil.CreateSeason(t, svc.db, 2026)
 
 	stats := []balldontlie.PlayerSeasonStat{
-		{StatName: "Scoring Average", StatValue: 68.5},
-		{StatName: "Top 10 Finishes", StatValue: float64(10)},
-		{StatName: "Cuts Made", StatValue: float64(18)},
-		{StatName: "Events Played", StatValue: float64(20)},
-		{StatName: "Wins", StatValue: float64(4)},
-		{StatName: "Official Money", StatValue: float64(15000000)},
-		{StatName: "Driving Distance", StatValue: 310.5},
-		{StatName: "Driving Accuracy Percentage", StatValue: 62.5},
-		{StatName: "Greens in Regulation Percentage", StatValue: 70.2},
-		{StatName: "Putting Average", StatValue: 1.72},
-		{StatName: "Scrambling", StatValue: 65.8},
+		{StatName: "Scoring Average", StatValue: statValue(68.5)},
+		{StatName: "Top 10 Finishes", StatValue: statValue(10)},
+		{StatName: "Cuts Made", StatValue: statValue(18)},
+		{StatName: "Events Played", StatValue: statValue(20)},
+		{StatName: "Wins", StatValue: statValue(4)},
+		{StatName: "Official Money", StatValue: statValue("$15,000,000")},
+		{StatName: "Driving Distance", StatValue: statValue(310.5)},
+		{StatName: "Driving Accuracy Percentage", StatValue: statValue(62.5)},
+		{StatName: "Greens in Regulation Percentage", StatValue: statValue(70.2)},
+		{StatName: "Putting Average", StatValue: statValue(1.72)},
+		{StatName: "Scrambling", StatValue: statValue(65.8)},
 	}
 
 	for _, stat := range stats {
