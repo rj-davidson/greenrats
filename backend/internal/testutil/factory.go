@@ -494,3 +494,72 @@ func (f *Factory) CreateTournamentField(t *ent.Tournament, golfers []*ent.Golfer
 func (f *Factory) RandomUUID() uuid.UUID {
 	return uuid.Must(uuid.NewV4())
 }
+
+func CreateTournament(t *testing.T, db *ent.Client, name string, seasonYear int) *ent.Tournament {
+	t.Helper()
+	ctx := context.Background()
+
+	startDate := time.Now().AddDate(0, 0, 7)
+	endDate := startDate.AddDate(0, 0, 4)
+
+	tournament, err := db.Tournament.Create().
+		SetName(name).
+		SetStartDate(startDate).
+		SetEndDate(endDate).
+		SetSeasonYear(seasonYear).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("failed to create tournament: %v", err)
+	}
+	return tournament
+}
+
+func CreateGolfer(t *testing.T, db *ent.Client, name string, bdlID int) *ent.Golfer {
+	t.Helper()
+	ctx := context.Background()
+
+	golfer, err := db.Golfer.Create().
+		SetName(name).
+		SetBdlID(bdlID).
+		SetCountryCode("USA").
+		SetActive(true).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("failed to create golfer: %v", err)
+	}
+	return golfer
+}
+
+func CreateTournamentEntry(t *testing.T, db *ent.Client, tournamentID, golferID uuid.UUID) *ent.TournamentEntry {
+	t.Helper()
+	ctx := context.Background()
+
+	entry, err := db.TournamentEntry.Create().
+		SetTournamentID(tournamentID).
+		SetGolferID(golferID).
+		SetStatus(tournamententry.StatusPending).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("failed to create tournament entry: %v", err)
+	}
+	return entry
+}
+
+func CreateSeason(t *testing.T, db *ent.Client, year int) *ent.Season {
+	t.Helper()
+	ctx := context.Background()
+
+	startDate := time.Date(year-1, time.October, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(year, time.September, 30, 23, 59, 59, 0, time.UTC)
+
+	season, err := db.Season.Create().
+		SetYear(year).
+		SetStartDate(startDate).
+		SetEndDate(endDate).
+		SetIsCurrent(true).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("failed to create season: %v", err)
+	}
+	return season
+}
