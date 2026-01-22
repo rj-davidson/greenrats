@@ -45,7 +45,29 @@ func (Tournament) Fields() []ent.Field {
 			Nillable(),
 		field.String("location").
 			Optional().
+			Nillable().
+			Comment("Deprecated: use city/state/country instead"),
+		field.String("city").
+			Optional().
 			Nillable(),
+		field.String("state").
+			Optional().
+			Nillable(),
+		field.String("country").
+			Optional().
+			Nillable(),
+		field.String("timezone").
+			Optional().
+			Nillable().
+			Comment("IANA timezone (e.g., America/New_York)"),
+		field.Time("pick_window_opens_at").
+			Optional().
+			Nillable().
+			Comment("UTC timestamp when pick window opens"),
+		field.Time("pick_window_closes_at").
+			Optional().
+			Nillable().
+			Comment("UTC timestamp when pick window closes"),
 		field.Int("purse").
 			Optional().
 			Nillable().
@@ -59,5 +81,7 @@ func (Tournament) Edges() []ent.Edge {
 		edge.To("picks", Pick.Type),
 		edge.To("entries", TournamentEntry.Type),
 		edge.To("email_reminders", EmailReminder.Type),
+		edge.To("champion", Golfer.Type).
+			Unique(),
 	}
 }

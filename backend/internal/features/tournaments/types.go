@@ -12,14 +12,22 @@ var (
 
 // Tournament represents a golf tournament.
 type Tournament struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-	Status    string    `json:"status"` // upcoming, active, completed
-	Venue     string    `json:"venue,omitempty"`
-	Course    string    `json:"course,omitempty"`
-	Purse     float64   `json:"purse,omitempty"`
+	ID                 string     `json:"id"`
+	Name               string     `json:"name"`
+	StartDate          time.Time  `json:"start_date"`
+	EndDate            time.Time  `json:"end_date"`
+	Status             string     `json:"status"` // upcoming, active, completed
+	Venue              string     `json:"venue,omitempty"`
+	Course             string     `json:"course,omitempty"`
+	Purse              float64    `json:"purse,omitempty"`
+	City               string     `json:"city,omitempty"`
+	State              string     `json:"state,omitempty"`
+	Country            string     `json:"country,omitempty"`
+	Timezone           string     `json:"timezone,omitempty"`
+	PickWindowOpensAt  *time.Time `json:"pick_window_opens_at,omitempty"`
+	PickWindowClosesAt *time.Time `json:"pick_window_closes_at,omitempty"`
+	ChampionID         string     `json:"champion_id,omitempty"`
+	ChampionName       string     `json:"champion_name,omitempty"`
 }
 
 // ListTournamentsRequest represents the request parameters for listing tournaments.

@@ -10,6 +10,7 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
@@ -38,14 +39,27 @@ type Tournament struct {
 	SeasonYear int `json:"season_year,omitempty"`
 	// Course holds the value of the "course" field.
 	Course *string `json:"course,omitempty"`
-	// Location holds the value of the "location" field.
+	// Deprecated: use city/state/country instead
 	Location *string `json:"location,omitempty"`
+	// City holds the value of the "city" field.
+	City *string `json:"city,omitempty"`
+	// State holds the value of the "state" field.
+	State *string `json:"state,omitempty"`
+	// Country holds the value of the "country" field.
+	Country *string `json:"country,omitempty"`
+	// IANA timezone (e.g., America/New_York)
+	Timezone *string `json:"timezone,omitempty"`
+	// UTC timestamp when pick window opens
+	PickWindowOpensAt *time.Time `json:"pick_window_opens_at,omitempty"`
+	// UTC timestamp when pick window closes
+	PickWindowClosesAt *time.Time `json:"pick_window_closes_at,omitempty"`
 	// Total prize money in dollars
 	Purse *int `json:"purse,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TournamentQuery when eager-loading is set.
-	Edges        TournamentEdges `json:"edges"`
-	selectValues sql.SelectValues
+	Edges               TournamentEdges `json:"edges"`
+	tournament_champion *uuid.UUID
+	selectValues        sql.SelectValues
 }
 
 // TournamentEdges holds the relations/edges for other nodes in the graph.
@@ -56,9 +70,11 @@ type TournamentEdges struct {
 	Entries []*TournamentEntry `json:"entries,omitempty"`
 	// EmailReminders holds the value of the email_reminders edge.
 	EmailReminders []*EmailReminder `json:"email_reminders,omitempty"`
+	// Champion holds the value of the champion edge.
+	Champion *Golfer `json:"champion,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -88,6 +104,17 @@ func (e TournamentEdges) EmailRemindersOrErr() ([]*EmailReminder, error) {
 	return nil, &NotLoadedError{edge: "email_reminders"}
 }
 
+// ChampionOrErr returns the Champion value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TournamentEdges) ChampionOrErr() (*Golfer, error) {
+	if e.Champion != nil {
+		return e.Champion, nil
+	} else if e.loadedTypes[3] {
+		return nil, &NotFoundError{label: golfer.Label}
+	}
+	return nil, &NotLoadedError{edge: "champion"}
+}
+
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Tournament) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
@@ -95,12 +122,14 @@ func (*Tournament) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case tournament.FieldBdlID, tournament.FieldSeasonYear, tournament.FieldPurse:
 			values[i] = new(sql.NullInt64)
-		case tournament.FieldPgaTourID, tournament.FieldName, tournament.FieldStatus, tournament.FieldCourse, tournament.FieldLocation:
+		case tournament.FieldPgaTourID, tournament.FieldName, tournament.FieldStatus, tournament.FieldCourse, tournament.FieldLocation, tournament.FieldCity, tournament.FieldState, tournament.FieldCountry, tournament.FieldTimezone:
 			values[i] = new(sql.NullString)
-		case tournament.FieldCreatedAt, tournament.FieldUpdatedAt, tournament.FieldStartDate, tournament.FieldEndDate:
+		case tournament.FieldCreatedAt, tournament.FieldUpdatedAt, tournament.FieldStartDate, tournament.FieldEndDate, tournament.FieldPickWindowOpensAt, tournament.FieldPickWindowClosesAt:
 			values[i] = new(sql.NullTime)
 		case tournament.FieldID:
 			values[i] = new(uuid.UUID)
+		case tournament.ForeignKeys[0]: // tournament_champion
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
 		}
@@ -192,12 +221,61 @@ func (_m *Tournament) assignValues(columns []string, values []any) error {
 				_m.Location = new(string)
 				*_m.Location = value.String
 			}
+		case tournament.FieldCity:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field city", values[i])
+			} else if value.Valid {
+				_m.City = new(string)
+				*_m.City = value.String
+			}
+		case tournament.FieldState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field state", values[i])
+			} else if value.Valid {
+				_m.State = new(string)
+				*_m.State = value.String
+			}
+		case tournament.FieldCountry:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field country", values[i])
+			} else if value.Valid {
+				_m.Country = new(string)
+				*_m.Country = value.String
+			}
+		case tournament.FieldTimezone:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field timezone", values[i])
+			} else if value.Valid {
+				_m.Timezone = new(string)
+				*_m.Timezone = value.String
+			}
+		case tournament.FieldPickWindowOpensAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field pick_window_opens_at", values[i])
+			} else if value.Valid {
+				_m.PickWindowOpensAt = new(time.Time)
+				*_m.PickWindowOpensAt = value.Time
+			}
+		case tournament.FieldPickWindowClosesAt:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field pick_window_closes_at", values[i])
+			} else if value.Valid {
+				_m.PickWindowClosesAt = new(time.Time)
+				*_m.PickWindowClosesAt = value.Time
+			}
 		case tournament.FieldPurse:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field purse", values[i])
 			} else if value.Valid {
 				_m.Purse = new(int)
 				*_m.Purse = int(value.Int64)
+			}
+		case tournament.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field tournament_champion", values[i])
+			} else if value.Valid {
+				_m.tournament_champion = new(uuid.UUID)
+				*_m.tournament_champion = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -225,6 +303,11 @@ func (_m *Tournament) QueryEntries() *TournamentEntryQuery {
 // QueryEmailReminders queries the "email_reminders" edge of the Tournament entity.
 func (_m *Tournament) QueryEmailReminders() *EmailReminderQuery {
 	return NewTournamentClient(_m.config).QueryEmailReminders(_m)
+}
+
+// QueryChampion queries the "champion" edge of the Tournament entity.
+func (_m *Tournament) QueryChampion() *GolferQuery {
+	return NewTournamentClient(_m.config).QueryChampion(_m)
 }
 
 // Update returns a builder for updating this Tournament.
@@ -289,6 +372,36 @@ func (_m *Tournament) String() string {
 	if v := _m.Location; v != nil {
 		builder.WriteString("location=")
 		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.City; v != nil {
+		builder.WriteString("city=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.State; v != nil {
+		builder.WriteString("state=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Country; v != nil {
+		builder.WriteString("country=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Timezone; v != nil {
+		builder.WriteString("timezone=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.PickWindowOpensAt; v != nil {
+		builder.WriteString("pick_window_opens_at=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.PickWindowClosesAt; v != nil {
+		builder.WriteString("pick_window_closes_at=")
+		builder.WriteString(v.Format(time.ANSIC))
 	}
 	builder.WriteString(", ")
 	if v := _m.Purse; v != nil {

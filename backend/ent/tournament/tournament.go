@@ -38,6 +38,18 @@ const (
 	FieldCourse = "course"
 	// FieldLocation holds the string denoting the location field in the database.
 	FieldLocation = "location"
+	// FieldCity holds the string denoting the city field in the database.
+	FieldCity = "city"
+	// FieldState holds the string denoting the state field in the database.
+	FieldState = "state"
+	// FieldCountry holds the string denoting the country field in the database.
+	FieldCountry = "country"
+	// FieldTimezone holds the string denoting the timezone field in the database.
+	FieldTimezone = "timezone"
+	// FieldPickWindowOpensAt holds the string denoting the pick_window_opens_at field in the database.
+	FieldPickWindowOpensAt = "pick_window_opens_at"
+	// FieldPickWindowClosesAt holds the string denoting the pick_window_closes_at field in the database.
+	FieldPickWindowClosesAt = "pick_window_closes_at"
 	// FieldPurse holds the string denoting the purse field in the database.
 	FieldPurse = "purse"
 	// EdgePicks holds the string denoting the picks edge name in mutations.
@@ -46,6 +58,8 @@ const (
 	EdgeEntries = "entries"
 	// EdgeEmailReminders holds the string denoting the email_reminders edge name in mutations.
 	EdgeEmailReminders = "email_reminders"
+	// EdgeChampion holds the string denoting the champion edge name in mutations.
+	EdgeChampion = "champion"
 	// Table holds the table name of the tournament in the database.
 	Table = "tournaments"
 	// PicksTable is the table that holds the picks relation/edge.
@@ -69,6 +83,13 @@ const (
 	EmailRemindersInverseTable = "email_reminders"
 	// EmailRemindersColumn is the table column denoting the email_reminders relation/edge.
 	EmailRemindersColumn = "tournament_email_reminders"
+	// ChampionTable is the table that holds the champion relation/edge.
+	ChampionTable = "tournaments"
+	// ChampionInverseTable is the table name for the Golfer entity.
+	// It exists in this package in order to avoid circular dependency with the "golfer" package.
+	ChampionInverseTable = "golfers"
+	// ChampionColumn is the table column denoting the champion relation/edge.
+	ChampionColumn = "tournament_champion"
 )
 
 // Columns holds all SQL columns for tournament fields.
@@ -85,13 +106,30 @@ var Columns = []string{
 	FieldSeasonYear,
 	FieldCourse,
 	FieldLocation,
+	FieldCity,
+	FieldState,
+	FieldCountry,
+	FieldTimezone,
+	FieldPickWindowOpensAt,
+	FieldPickWindowClosesAt,
 	FieldPurse,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the "tournaments"
+// table and are not defined as standalone fields in the schema.
+var ForeignKeys = []string{
+	"tournament_champion",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
 func ValidColumn(column string) bool {
 	for i := range Columns {
 		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
 			return true
 		}
 	}
@@ -201,6 +239,36 @@ func ByLocation(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldLocation, opts...).ToFunc()
 }
 
+// ByCity orders the results by the city field.
+func ByCity(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCity, opts...).ToFunc()
+}
+
+// ByState orders the results by the state field.
+func ByState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldState, opts...).ToFunc()
+}
+
+// ByCountry orders the results by the country field.
+func ByCountry(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldCountry, opts...).ToFunc()
+}
+
+// ByTimezone orders the results by the timezone field.
+func ByTimezone(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTimezone, opts...).ToFunc()
+}
+
+// ByPickWindowOpensAt orders the results by the pick_window_opens_at field.
+func ByPickWindowOpensAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPickWindowOpensAt, opts...).ToFunc()
+}
+
+// ByPickWindowClosesAt orders the results by the pick_window_closes_at field.
+func ByPickWindowClosesAt(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPickWindowClosesAt, opts...).ToFunc()
+}
+
 // ByPurse orders the results by the purse field.
 func ByPurse(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldPurse, opts...).ToFunc()
@@ -247,6 +315,13 @@ func ByEmailReminders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newEmailRemindersStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByChampionField orders the results by champion field.
+func ByChampionField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newChampionStep(), sql.OrderByField(field, opts...))
+	}
+}
 func newPicksStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -266,5 +341,12 @@ func newEmailRemindersStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EmailRemindersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EmailRemindersTable, EmailRemindersColumn),
+	)
+}
+func newChampionStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(ChampionInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, ChampionTable, ChampionColumn),
 	)
 }

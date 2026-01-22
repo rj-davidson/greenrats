@@ -5392,6 +5392,12 @@ type TournamentMutation struct {
 	addseason_year         *int
 	course                 *string
 	location               *string
+	city                   *string
+	state                  *string
+	country                *string
+	timezone               *string
+	pick_window_opens_at   *time.Time
+	pick_window_closes_at  *time.Time
 	purse                  *int
 	addpurse               *int
 	clearedFields          map[string]struct{}
@@ -5404,6 +5410,8 @@ type TournamentMutation struct {
 	email_reminders        map[uuid.UUID]struct{}
 	removedemail_reminders map[uuid.UUID]struct{}
 	clearedemail_reminders bool
+	champion               *uuid.UUID
+	clearedchampion        bool
 	done                   bool
 	oldValue               func(context.Context) (*Tournament, error)
 	predicates             []predicate.Tournament
@@ -6002,6 +6010,300 @@ func (m *TournamentMutation) ResetLocation() {
 	delete(m.clearedFields, tournament.FieldLocation)
 }
 
+// SetCity sets the "city" field.
+func (m *TournamentMutation) SetCity(s string) {
+	m.city = &s
+}
+
+// City returns the value of the "city" field in the mutation.
+func (m *TournamentMutation) City() (r string, exists bool) {
+	v := m.city
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCity returns the old "city" field's value of the Tournament entity.
+// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentMutation) OldCity(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCity is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCity requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCity: %w", err)
+	}
+	return oldValue.City, nil
+}
+
+// ClearCity clears the value of the "city" field.
+func (m *TournamentMutation) ClearCity() {
+	m.city = nil
+	m.clearedFields[tournament.FieldCity] = struct{}{}
+}
+
+// CityCleared returns if the "city" field was cleared in this mutation.
+func (m *TournamentMutation) CityCleared() bool {
+	_, ok := m.clearedFields[tournament.FieldCity]
+	return ok
+}
+
+// ResetCity resets all changes to the "city" field.
+func (m *TournamentMutation) ResetCity() {
+	m.city = nil
+	delete(m.clearedFields, tournament.FieldCity)
+}
+
+// SetState sets the "state" field.
+func (m *TournamentMutation) SetState(s string) {
+	m.state = &s
+}
+
+// State returns the value of the "state" field in the mutation.
+func (m *TournamentMutation) State() (r string, exists bool) {
+	v := m.state
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldState returns the old "state" field's value of the Tournament entity.
+// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentMutation) OldState(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldState is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldState requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldState: %w", err)
+	}
+	return oldValue.State, nil
+}
+
+// ClearState clears the value of the "state" field.
+func (m *TournamentMutation) ClearState() {
+	m.state = nil
+	m.clearedFields[tournament.FieldState] = struct{}{}
+}
+
+// StateCleared returns if the "state" field was cleared in this mutation.
+func (m *TournamentMutation) StateCleared() bool {
+	_, ok := m.clearedFields[tournament.FieldState]
+	return ok
+}
+
+// ResetState resets all changes to the "state" field.
+func (m *TournamentMutation) ResetState() {
+	m.state = nil
+	delete(m.clearedFields, tournament.FieldState)
+}
+
+// SetCountry sets the "country" field.
+func (m *TournamentMutation) SetCountry(s string) {
+	m.country = &s
+}
+
+// Country returns the value of the "country" field in the mutation.
+func (m *TournamentMutation) Country() (r string, exists bool) {
+	v := m.country
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCountry returns the old "country" field's value of the Tournament entity.
+// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentMutation) OldCountry(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCountry is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCountry requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCountry: %w", err)
+	}
+	return oldValue.Country, nil
+}
+
+// ClearCountry clears the value of the "country" field.
+func (m *TournamentMutation) ClearCountry() {
+	m.country = nil
+	m.clearedFields[tournament.FieldCountry] = struct{}{}
+}
+
+// CountryCleared returns if the "country" field was cleared in this mutation.
+func (m *TournamentMutation) CountryCleared() bool {
+	_, ok := m.clearedFields[tournament.FieldCountry]
+	return ok
+}
+
+// ResetCountry resets all changes to the "country" field.
+func (m *TournamentMutation) ResetCountry() {
+	m.country = nil
+	delete(m.clearedFields, tournament.FieldCountry)
+}
+
+// SetTimezone sets the "timezone" field.
+func (m *TournamentMutation) SetTimezone(s string) {
+	m.timezone = &s
+}
+
+// Timezone returns the value of the "timezone" field in the mutation.
+func (m *TournamentMutation) Timezone() (r string, exists bool) {
+	v := m.timezone
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldTimezone returns the old "timezone" field's value of the Tournament entity.
+// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentMutation) OldTimezone(ctx context.Context) (v *string, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldTimezone is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldTimezone requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldTimezone: %w", err)
+	}
+	return oldValue.Timezone, nil
+}
+
+// ClearTimezone clears the value of the "timezone" field.
+func (m *TournamentMutation) ClearTimezone() {
+	m.timezone = nil
+	m.clearedFields[tournament.FieldTimezone] = struct{}{}
+}
+
+// TimezoneCleared returns if the "timezone" field was cleared in this mutation.
+func (m *TournamentMutation) TimezoneCleared() bool {
+	_, ok := m.clearedFields[tournament.FieldTimezone]
+	return ok
+}
+
+// ResetTimezone resets all changes to the "timezone" field.
+func (m *TournamentMutation) ResetTimezone() {
+	m.timezone = nil
+	delete(m.clearedFields, tournament.FieldTimezone)
+}
+
+// SetPickWindowOpensAt sets the "pick_window_opens_at" field.
+func (m *TournamentMutation) SetPickWindowOpensAt(t time.Time) {
+	m.pick_window_opens_at = &t
+}
+
+// PickWindowOpensAt returns the value of the "pick_window_opens_at" field in the mutation.
+func (m *TournamentMutation) PickWindowOpensAt() (r time.Time, exists bool) {
+	v := m.pick_window_opens_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPickWindowOpensAt returns the old "pick_window_opens_at" field's value of the Tournament entity.
+// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentMutation) OldPickWindowOpensAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPickWindowOpensAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPickWindowOpensAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPickWindowOpensAt: %w", err)
+	}
+	return oldValue.PickWindowOpensAt, nil
+}
+
+// ClearPickWindowOpensAt clears the value of the "pick_window_opens_at" field.
+func (m *TournamentMutation) ClearPickWindowOpensAt() {
+	m.pick_window_opens_at = nil
+	m.clearedFields[tournament.FieldPickWindowOpensAt] = struct{}{}
+}
+
+// PickWindowOpensAtCleared returns if the "pick_window_opens_at" field was cleared in this mutation.
+func (m *TournamentMutation) PickWindowOpensAtCleared() bool {
+	_, ok := m.clearedFields[tournament.FieldPickWindowOpensAt]
+	return ok
+}
+
+// ResetPickWindowOpensAt resets all changes to the "pick_window_opens_at" field.
+func (m *TournamentMutation) ResetPickWindowOpensAt() {
+	m.pick_window_opens_at = nil
+	delete(m.clearedFields, tournament.FieldPickWindowOpensAt)
+}
+
+// SetPickWindowClosesAt sets the "pick_window_closes_at" field.
+func (m *TournamentMutation) SetPickWindowClosesAt(t time.Time) {
+	m.pick_window_closes_at = &t
+}
+
+// PickWindowClosesAt returns the value of the "pick_window_closes_at" field in the mutation.
+func (m *TournamentMutation) PickWindowClosesAt() (r time.Time, exists bool) {
+	v := m.pick_window_closes_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldPickWindowClosesAt returns the old "pick_window_closes_at" field's value of the Tournament entity.
+// If the Tournament object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentMutation) OldPickWindowClosesAt(ctx context.Context) (v *time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldPickWindowClosesAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldPickWindowClosesAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldPickWindowClosesAt: %w", err)
+	}
+	return oldValue.PickWindowClosesAt, nil
+}
+
+// ClearPickWindowClosesAt clears the value of the "pick_window_closes_at" field.
+func (m *TournamentMutation) ClearPickWindowClosesAt() {
+	m.pick_window_closes_at = nil
+	m.clearedFields[tournament.FieldPickWindowClosesAt] = struct{}{}
+}
+
+// PickWindowClosesAtCleared returns if the "pick_window_closes_at" field was cleared in this mutation.
+func (m *TournamentMutation) PickWindowClosesAtCleared() bool {
+	_, ok := m.clearedFields[tournament.FieldPickWindowClosesAt]
+	return ok
+}
+
+// ResetPickWindowClosesAt resets all changes to the "pick_window_closes_at" field.
+func (m *TournamentMutation) ResetPickWindowClosesAt() {
+	m.pick_window_closes_at = nil
+	delete(m.clearedFields, tournament.FieldPickWindowClosesAt)
+}
+
 // SetPurse sets the "purse" field.
 func (m *TournamentMutation) SetPurse(i int) {
 	m.purse = &i
@@ -6234,6 +6536,45 @@ func (m *TournamentMutation) ResetEmailReminders() {
 	m.removedemail_reminders = nil
 }
 
+// SetChampionID sets the "champion" edge to the Golfer entity by id.
+func (m *TournamentMutation) SetChampionID(id uuid.UUID) {
+	m.champion = &id
+}
+
+// ClearChampion clears the "champion" edge to the Golfer entity.
+func (m *TournamentMutation) ClearChampion() {
+	m.clearedchampion = true
+}
+
+// ChampionCleared reports if the "champion" edge to the Golfer entity was cleared.
+func (m *TournamentMutation) ChampionCleared() bool {
+	return m.clearedchampion
+}
+
+// ChampionID returns the "champion" edge ID in the mutation.
+func (m *TournamentMutation) ChampionID() (id uuid.UUID, exists bool) {
+	if m.champion != nil {
+		return *m.champion, true
+	}
+	return
+}
+
+// ChampionIDs returns the "champion" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// ChampionID instead. It exists only for internal usage by the builders.
+func (m *TournamentMutation) ChampionIDs() (ids []uuid.UUID) {
+	if id := m.champion; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetChampion resets all changes to the "champion" edge.
+func (m *TournamentMutation) ResetChampion() {
+	m.champion = nil
+	m.clearedchampion = false
+}
+
 // Where appends a list predicates to the TournamentMutation builder.
 func (m *TournamentMutation) Where(ps ...predicate.Tournament) {
 	m.predicates = append(m.predicates, ps...)
@@ -6268,7 +6609,7 @@ func (m *TournamentMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *TournamentMutation) Fields() []string {
-	fields := make([]string, 0, 12)
+	fields := make([]string, 0, 18)
 	if m.created_at != nil {
 		fields = append(fields, tournament.FieldCreatedAt)
 	}
@@ -6301,6 +6642,24 @@ func (m *TournamentMutation) Fields() []string {
 	}
 	if m.location != nil {
 		fields = append(fields, tournament.FieldLocation)
+	}
+	if m.city != nil {
+		fields = append(fields, tournament.FieldCity)
+	}
+	if m.state != nil {
+		fields = append(fields, tournament.FieldState)
+	}
+	if m.country != nil {
+		fields = append(fields, tournament.FieldCountry)
+	}
+	if m.timezone != nil {
+		fields = append(fields, tournament.FieldTimezone)
+	}
+	if m.pick_window_opens_at != nil {
+		fields = append(fields, tournament.FieldPickWindowOpensAt)
+	}
+	if m.pick_window_closes_at != nil {
+		fields = append(fields, tournament.FieldPickWindowClosesAt)
 	}
 	if m.purse != nil {
 		fields = append(fields, tournament.FieldPurse)
@@ -6335,6 +6694,18 @@ func (m *TournamentMutation) Field(name string) (ent.Value, bool) {
 		return m.Course()
 	case tournament.FieldLocation:
 		return m.Location()
+	case tournament.FieldCity:
+		return m.City()
+	case tournament.FieldState:
+		return m.State()
+	case tournament.FieldCountry:
+		return m.Country()
+	case tournament.FieldTimezone:
+		return m.Timezone()
+	case tournament.FieldPickWindowOpensAt:
+		return m.PickWindowOpensAt()
+	case tournament.FieldPickWindowClosesAt:
+		return m.PickWindowClosesAt()
 	case tournament.FieldPurse:
 		return m.Purse()
 	}
@@ -6368,6 +6739,18 @@ func (m *TournamentMutation) OldField(ctx context.Context, name string) (ent.Val
 		return m.OldCourse(ctx)
 	case tournament.FieldLocation:
 		return m.OldLocation(ctx)
+	case tournament.FieldCity:
+		return m.OldCity(ctx)
+	case tournament.FieldState:
+		return m.OldState(ctx)
+	case tournament.FieldCountry:
+		return m.OldCountry(ctx)
+	case tournament.FieldTimezone:
+		return m.OldTimezone(ctx)
+	case tournament.FieldPickWindowOpensAt:
+		return m.OldPickWindowOpensAt(ctx)
+	case tournament.FieldPickWindowClosesAt:
+		return m.OldPickWindowClosesAt(ctx)
 	case tournament.FieldPurse:
 		return m.OldPurse(ctx)
 	}
@@ -6455,6 +6838,48 @@ func (m *TournamentMutation) SetField(name string, value ent.Value) error {
 			return fmt.Errorf("unexpected type %T for field %s", value, name)
 		}
 		m.SetLocation(v)
+		return nil
+	case tournament.FieldCity:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCity(v)
+		return nil
+	case tournament.FieldState:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetState(v)
+		return nil
+	case tournament.FieldCountry:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCountry(v)
+		return nil
+	case tournament.FieldTimezone:
+		v, ok := value.(string)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetTimezone(v)
+		return nil
+	case tournament.FieldPickWindowOpensAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPickWindowOpensAt(v)
+		return nil
+	case tournament.FieldPickWindowClosesAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetPickWindowClosesAt(v)
 		return nil
 	case tournament.FieldPurse:
 		v, ok := value.(int)
@@ -6544,6 +6969,24 @@ func (m *TournamentMutation) ClearedFields() []string {
 	if m.FieldCleared(tournament.FieldLocation) {
 		fields = append(fields, tournament.FieldLocation)
 	}
+	if m.FieldCleared(tournament.FieldCity) {
+		fields = append(fields, tournament.FieldCity)
+	}
+	if m.FieldCleared(tournament.FieldState) {
+		fields = append(fields, tournament.FieldState)
+	}
+	if m.FieldCleared(tournament.FieldCountry) {
+		fields = append(fields, tournament.FieldCountry)
+	}
+	if m.FieldCleared(tournament.FieldTimezone) {
+		fields = append(fields, tournament.FieldTimezone)
+	}
+	if m.FieldCleared(tournament.FieldPickWindowOpensAt) {
+		fields = append(fields, tournament.FieldPickWindowOpensAt)
+	}
+	if m.FieldCleared(tournament.FieldPickWindowClosesAt) {
+		fields = append(fields, tournament.FieldPickWindowClosesAt)
+	}
 	if m.FieldCleared(tournament.FieldPurse) {
 		fields = append(fields, tournament.FieldPurse)
 	}
@@ -6572,6 +7015,24 @@ func (m *TournamentMutation) ClearField(name string) error {
 		return nil
 	case tournament.FieldLocation:
 		m.ClearLocation()
+		return nil
+	case tournament.FieldCity:
+		m.ClearCity()
+		return nil
+	case tournament.FieldState:
+		m.ClearState()
+		return nil
+	case tournament.FieldCountry:
+		m.ClearCountry()
+		return nil
+	case tournament.FieldTimezone:
+		m.ClearTimezone()
+		return nil
+	case tournament.FieldPickWindowOpensAt:
+		m.ClearPickWindowOpensAt()
+		return nil
+	case tournament.FieldPickWindowClosesAt:
+		m.ClearPickWindowClosesAt()
 		return nil
 	case tournament.FieldPurse:
 		m.ClearPurse()
@@ -6617,6 +7078,24 @@ func (m *TournamentMutation) ResetField(name string) error {
 	case tournament.FieldLocation:
 		m.ResetLocation()
 		return nil
+	case tournament.FieldCity:
+		m.ResetCity()
+		return nil
+	case tournament.FieldState:
+		m.ResetState()
+		return nil
+	case tournament.FieldCountry:
+		m.ResetCountry()
+		return nil
+	case tournament.FieldTimezone:
+		m.ResetTimezone()
+		return nil
+	case tournament.FieldPickWindowOpensAt:
+		m.ResetPickWindowOpensAt()
+		return nil
+	case tournament.FieldPickWindowClosesAt:
+		m.ResetPickWindowClosesAt()
+		return nil
 	case tournament.FieldPurse:
 		m.ResetPurse()
 		return nil
@@ -6626,7 +7105,7 @@ func (m *TournamentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TournamentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.picks != nil {
 		edges = append(edges, tournament.EdgePicks)
 	}
@@ -6635,6 +7114,9 @@ func (m *TournamentMutation) AddedEdges() []string {
 	}
 	if m.email_reminders != nil {
 		edges = append(edges, tournament.EdgeEmailReminders)
+	}
+	if m.champion != nil {
+		edges = append(edges, tournament.EdgeChampion)
 	}
 	return edges
 }
@@ -6661,13 +7143,17 @@ func (m *TournamentMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case tournament.EdgeChampion:
+		if id := m.champion; id != nil {
+			return []ent.Value{*id}
+		}
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TournamentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedpicks != nil {
 		edges = append(edges, tournament.EdgePicks)
 	}
@@ -6708,7 +7194,7 @@ func (m *TournamentMutation) RemovedIDs(name string) []ent.Value {
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TournamentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedpicks {
 		edges = append(edges, tournament.EdgePicks)
 	}
@@ -6717,6 +7203,9 @@ func (m *TournamentMutation) ClearedEdges() []string {
 	}
 	if m.clearedemail_reminders {
 		edges = append(edges, tournament.EdgeEmailReminders)
+	}
+	if m.clearedchampion {
+		edges = append(edges, tournament.EdgeChampion)
 	}
 	return edges
 }
@@ -6731,6 +7220,8 @@ func (m *TournamentMutation) EdgeCleared(name string) bool {
 		return m.clearedentries
 	case tournament.EdgeEmailReminders:
 		return m.clearedemail_reminders
+	case tournament.EdgeChampion:
+		return m.clearedchampion
 	}
 	return false
 }
@@ -6739,6 +7230,9 @@ func (m *TournamentMutation) EdgeCleared(name string) bool {
 // if that edge is not defined in the schema.
 func (m *TournamentMutation) ClearEdge(name string) error {
 	switch name {
+	case tournament.EdgeChampion:
+		m.ClearChampion()
+		return nil
 	}
 	return fmt.Errorf("unknown Tournament unique edge %s", name)
 }
@@ -6755,6 +7249,9 @@ func (m *TournamentMutation) ResetEdge(name string) error {
 		return nil
 	case tournament.EdgeEmailReminders:
 		m.ResetEmailReminders()
+		return nil
+	case tournament.EdgeChampion:
+		m.ResetChampion()
 		return nil
 	}
 	return fmt.Errorf("unknown Tournament edge %s", name)

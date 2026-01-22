@@ -1671,6 +1671,22 @@ func (c *TournamentClient) QueryEmailReminders(_m *Tournament) *EmailReminderQue
 	return query
 }
 
+// QueryChampion queries the champion edge of a Tournament.
+func (c *TournamentClient) QueryChampion(_m *Tournament) *GolferQuery {
+	query := (&GolferClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournament.Table, tournament.FieldID, id),
+			sqlgraph.To(golfer.Table, golfer.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, tournament.ChampionTable, tournament.ChampionColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // Hooks returns the client hooks.
 func (c *TournamentClient) Hooks() []Hook {
 	return c.hooks.Tournament

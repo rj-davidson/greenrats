@@ -452,8 +452,15 @@ func (s *Service) CanMakePick(ctx context.Context, tournamentID uuid.UUID) (*Pic
 
 func (s *Service) getPickWindowStatus(t *ent.Tournament) PickWindowStatus {
 	now := time.Now().UTC()
-	opensAt := t.StartDate.AddDate(0, 0, -pickWindowDays)
-	closesAt := t.StartDate
+
+	var opensAt, closesAt time.Time
+	if t.PickWindowOpensAt != nil && t.PickWindowClosesAt != nil {
+		opensAt = *t.PickWindowOpensAt
+		closesAt = *t.PickWindowClosesAt
+	} else {
+		closesAt = t.StartDate
+		opensAt = closesAt.AddDate(0, 0, -pickWindowDays)
+	}
 
 	status := PickWindowStatus{
 		TournamentID:   t.ID,

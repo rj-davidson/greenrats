@@ -51,7 +51,7 @@ func (s *Service) List(ctx context.Context, req ListTournamentsRequest) (*ListTo
 		query = query.Offset(req.Offset)
 	}
 
-	results, err := query.All(ctx)
+	results, err := query.WithChampion().All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list tournaments: %w", err)
 	}
@@ -74,7 +74,10 @@ func (s *Service) GetByID(ctx context.Context, id string) (*Tournament, error) {
 		return nil, ErrInvalidTournamentID
 	}
 
-	t, err := s.db.Tournament.Get(ctx, uid)
+	t, err := s.db.Tournament.Query().
+		Where(tournament.IDEQ(uid)).
+		WithChampion().
+		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, ErrTournamentNotFound
@@ -91,6 +94,7 @@ func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 	t, err := s.db.Tournament.Query().
 		Where(tournament.StatusEQ(tournament.StatusActive)).
 		Order(ent.Asc(tournament.FieldStartDate)).
+		WithChampion().
 		First(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -211,21 +215,39 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboar
 
 func toTournament(t *ent.Tournament) Tournament {
 	result := Tournament{
-		ID:        t.ID.String(),
-		Name:      t.Name,
-		StartDate: t.StartDate,
-		EndDate:   t.EndDate,
-		Status:    string(t.Status),
+		ID:                 t.ID.String(),
+		Name:               t.Name,
+		StartDate:          t.StartDate,
+		EndDate:            t.EndDate,
+		Status:             string(t.Status),
+		PickWindowOpensAt:  t.PickWindowOpensAt,
+		PickWindowClosesAt: t.PickWindowClosesAt,
 	}
 
-	if t.Location != nil {
-		result.Venue = *t.Location
+	if t.Location != nil { //nolint:staticcheck // backward compatibility
+		result.Venue = *t.Location //nolint:staticcheck // backward compatibility
 	}
 	if t.Course != nil {
 		result.Course = *t.Course
 	}
 	if t.Purse != nil {
 		result.Purse = float64(*t.Purse)
+	}
+	if t.City != nil {
+		result.City = *t.City
+	}
+	if t.State != nil {
+		result.State = *t.State
+	}
+	if t.Country != nil {
+		result.Country = *t.Country
+	}
+	if t.Timezone != nil {
+		result.Timezone = *t.Timezone
+	}
+	if t.Edges.Champion != nil {
+		result.ChampionID = t.Edges.Champion.ID.String()
+		result.ChampionName = t.Edges.Champion.Name
 	}
 
 	return result

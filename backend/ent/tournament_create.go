@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
@@ -146,6 +147,90 @@ func (_c *TournamentCreate) SetNillableLocation(v *string) *TournamentCreate {
 	return _c
 }
 
+// SetCity sets the "city" field.
+func (_c *TournamentCreate) SetCity(v string) *TournamentCreate {
+	_c.mutation.SetCity(v)
+	return _c
+}
+
+// SetNillableCity sets the "city" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillableCity(v *string) *TournamentCreate {
+	if v != nil {
+		_c.SetCity(*v)
+	}
+	return _c
+}
+
+// SetState sets the "state" field.
+func (_c *TournamentCreate) SetState(v string) *TournamentCreate {
+	_c.mutation.SetState(v)
+	return _c
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillableState(v *string) *TournamentCreate {
+	if v != nil {
+		_c.SetState(*v)
+	}
+	return _c
+}
+
+// SetCountry sets the "country" field.
+func (_c *TournamentCreate) SetCountry(v string) *TournamentCreate {
+	_c.mutation.SetCountry(v)
+	return _c
+}
+
+// SetNillableCountry sets the "country" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillableCountry(v *string) *TournamentCreate {
+	if v != nil {
+		_c.SetCountry(*v)
+	}
+	return _c
+}
+
+// SetTimezone sets the "timezone" field.
+func (_c *TournamentCreate) SetTimezone(v string) *TournamentCreate {
+	_c.mutation.SetTimezone(v)
+	return _c
+}
+
+// SetNillableTimezone sets the "timezone" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillableTimezone(v *string) *TournamentCreate {
+	if v != nil {
+		_c.SetTimezone(*v)
+	}
+	return _c
+}
+
+// SetPickWindowOpensAt sets the "pick_window_opens_at" field.
+func (_c *TournamentCreate) SetPickWindowOpensAt(v time.Time) *TournamentCreate {
+	_c.mutation.SetPickWindowOpensAt(v)
+	return _c
+}
+
+// SetNillablePickWindowOpensAt sets the "pick_window_opens_at" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillablePickWindowOpensAt(v *time.Time) *TournamentCreate {
+	if v != nil {
+		_c.SetPickWindowOpensAt(*v)
+	}
+	return _c
+}
+
+// SetPickWindowClosesAt sets the "pick_window_closes_at" field.
+func (_c *TournamentCreate) SetPickWindowClosesAt(v time.Time) *TournamentCreate {
+	_c.mutation.SetPickWindowClosesAt(v)
+	return _c
+}
+
+// SetNillablePickWindowClosesAt sets the "pick_window_closes_at" field if the given value is not nil.
+func (_c *TournamentCreate) SetNillablePickWindowClosesAt(v *time.Time) *TournamentCreate {
+	if v != nil {
+		_c.SetPickWindowClosesAt(*v)
+	}
+	return _c
+}
+
 // SetPurse sets the "purse" field.
 func (_c *TournamentCreate) SetPurse(v int) *TournamentCreate {
 	_c.mutation.SetPurse(v)
@@ -217,6 +302,25 @@ func (_c *TournamentCreate) AddEmailReminders(v ...*EmailReminder) *TournamentCr
 		ids[i] = v[i].ID
 	}
 	return _c.AddEmailReminderIDs(ids...)
+}
+
+// SetChampionID sets the "champion" edge to the Golfer entity by ID.
+func (_c *TournamentCreate) SetChampionID(id uuid.UUID) *TournamentCreate {
+	_c.mutation.SetChampionID(id)
+	return _c
+}
+
+// SetNillableChampionID sets the "champion" edge to the Golfer entity by ID if the given value is not nil.
+func (_c *TournamentCreate) SetNillableChampionID(id *uuid.UUID) *TournamentCreate {
+	if id != nil {
+		_c = _c.SetChampionID(*id)
+	}
+	return _c
+}
+
+// SetChampion sets the "champion" edge to the Golfer entity.
+func (_c *TournamentCreate) SetChampion(v *Golfer) *TournamentCreate {
+	return _c.SetChampionID(v.ID)
 }
 
 // Mutation returns the TournamentMutation object of the builder.
@@ -384,6 +488,30 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 		_spec.SetField(tournament.FieldLocation, field.TypeString, value)
 		_node.Location = &value
 	}
+	if value, ok := _c.mutation.City(); ok {
+		_spec.SetField(tournament.FieldCity, field.TypeString, value)
+		_node.City = &value
+	}
+	if value, ok := _c.mutation.State(); ok {
+		_spec.SetField(tournament.FieldState, field.TypeString, value)
+		_node.State = &value
+	}
+	if value, ok := _c.mutation.Country(); ok {
+		_spec.SetField(tournament.FieldCountry, field.TypeString, value)
+		_node.Country = &value
+	}
+	if value, ok := _c.mutation.Timezone(); ok {
+		_spec.SetField(tournament.FieldTimezone, field.TypeString, value)
+		_node.Timezone = &value
+	}
+	if value, ok := _c.mutation.PickWindowOpensAt(); ok {
+		_spec.SetField(tournament.FieldPickWindowOpensAt, field.TypeTime, value)
+		_node.PickWindowOpensAt = &value
+	}
+	if value, ok := _c.mutation.PickWindowClosesAt(); ok {
+		_spec.SetField(tournament.FieldPickWindowClosesAt, field.TypeTime, value)
+		_node.PickWindowClosesAt = &value
+	}
 	if value, ok := _c.mutation.Purse(); ok {
 		_spec.SetField(tournament.FieldPurse, field.TypeInt, value)
 		_node.Purse = &value
@@ -434,6 +562,23 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.ChampionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tournament.ChampionTable,
+			Columns: []string{tournament.ChampionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.tournament_champion = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

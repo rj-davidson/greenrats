@@ -1,0 +1,2 @@
+-- Modify "tournaments" table
+ALTER TABLE "tournaments" ADD COLUMN "city" character varying NULL, ADD COLUMN "state" character varying NULL, ADD COLUMN "country" character varying NULL, ADD COLUMN "timezone" character varying NULL, ADD COLUMN "pick_window_opens_at" timestamptz NULL, ADD COLUMN "pick_window_closes_at" timestamptz NULL, ADD COLUMN "tournament_champion" uuid NULL, ADD CONSTRAINT "tournaments_golfers_champion" FOREIGN KEY ("tournament_champion") REFERENCES "golfers" ("id") ON UPDATE NO ACTION ON DELETE SET NULL;

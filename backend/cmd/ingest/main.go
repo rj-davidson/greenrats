@@ -7,8 +7,6 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
-	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
@@ -29,24 +27,20 @@ import (
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
+	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
 	"github.com/rj-davidson/greenrats/internal/external/pgatour"
 	"github.com/rj-davidson/greenrats/internal/external/scrapedo"
 	"github.com/rj-davidson/greenrats/internal/features/fields"
+	"github.com/rj-davidson/greenrats/internal/sync"
 )
 
-// Sync intervals based on cost optimization plan:
-// - Tournaments: Daily (24 hours) via BallDontLie
-// - Leaderboards: Hourly during active tournaments via BallDontLie
-// - Players: Weekly via BallDontLie
-// - Earnings: Every 6 hours via BallDontLie (included in tournament results)
-// - Fields: Twice daily (12 hours) for upcoming tournaments
 const (
 	tournamentSyncInterval  = 24 * time.Hour
 	leaderboardSyncInterval = 1 * time.Hour
-	playerSyncInterval      = 7 * 24 * time.Hour // Weekly
-	reminderCheckInterval   = 1 * time.Hour      // Check for pick reminders
-	earningsCheckInterval   = 6 * time.Hour      // Check for earnings to sync
-	fieldSyncInterval       = 12 * time.Hour     // Sync fields for upcoming tournaments
+	playerSyncInterval      = 7 * 24 * time.Hour
+	reminderCheckInterval   = 1 * time.Hour
+	earningsCheckInterval   = 6 * time.Hour
+	fieldSyncInterval       = 12 * time.Hour
 )
 
 type Ingester struct {
@@ -54,6 +48,7 @@ type Ingester struct {
 	config        *config.Config
 	ballDontLie   *balldontlie.Client
 	pgatourClient *pgatour.Client
+	syncService   *sync.Service
 	fieldsService *fields.Service
 	majorScraper  *fields.MajorScraper
 	email         *email.Client
@@ -107,11 +102,23 @@ func run() error {
 	fieldsService := fields.NewService(db, pgatourClient, logger)
 	majorScraper := fields.NewMajorScraper(scrapeDoClient, logger)
 
+	var gmapsClient *googlemaps.Client
+	if cfg.GoogleMapsAPIKey != "" {
+		var err error
+		gmapsClient, err = googlemaps.New(cfg.GoogleMapsAPIKey, logger)
+		if err != nil {
+			log.Printf("Warning: failed to create Google Maps client: %v", err)
+		}
+	}
+
+	syncService := sync.NewService(db, gmapsClient, logger)
+
 	ingester := &Ingester{
 		db:            db,
 		config:        cfg,
 		ballDontLie:   bdlClient,
 		pgatourClient: pgatourClient,
+		syncService:   syncService,
 		fieldsService: fieldsService,
 		majorScraper:  majorScraper,
 		email:         emailClient,
@@ -139,33 +146,25 @@ func run() error {
 	return nil
 }
 
-// runScheduledJobs runs periodic data ingestion tasks.
 func (i *Ingester) runScheduledJobs(ctx context.Context) {
-	// Tournament sync - daily via BallDontLie
 	tournamentTicker := time.NewTicker(tournamentSyncInterval)
 	defer tournamentTicker.Stop()
 
-	// Live leaderboard sync - hourly during active tournaments via BallDontLie
 	leaderboardTicker := time.NewTicker(leaderboardSyncInterval)
 	defer leaderboardTicker.Stop()
 
-	// Player sync - weekly via BallDontLie
 	playerTicker := time.NewTicker(playerSyncInterval)
 	defer playerTicker.Stop()
 
-	// Pick reminder check - hourly
 	reminderTicker := time.NewTicker(reminderCheckInterval)
 	defer reminderTicker.Stop()
 
-	// Earnings check - every 6 hours to sync earnings for recently completed tournaments
 	earningsTicker := time.NewTicker(earningsCheckInterval)
 	defer earningsTicker.Stop()
 
-	// Field sync - twice daily for upcoming tournaments
 	fieldTicker := time.NewTicker(fieldSyncInterval)
 	defer fieldTicker.Stop()
 
-	// Run initial syncs only if data is stale
 	log.Println("Checking for required initial syncs...")
 	if i.shouldSync(ctx, "tournaments", tournamentSyncInterval) {
 		i.syncTournaments(ctx)
@@ -264,8 +263,6 @@ func (i *Ingester) recordSync(ctx context.Context, syncType string) {
 	}
 }
 
-// syncTournaments fetches and stores tournament data from BallDontLie.
-// Runs daily to minimize API calls.
 func (i *Ingester) syncTournaments(ctx context.Context) {
 	log.Println("Starting tournament sync...")
 
@@ -279,10 +276,20 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	log.Printf("Fetched %d tournaments for %d season", len(tournaments), i.config.CurrentSeason)
 
 	for idx := range tournaments {
-		if err := i.upsertTournament(ctx, &tournaments[idx]); err != nil {
+		result, err := i.syncService.UpsertTournament(ctx, &tournaments[idx])
+		if err != nil {
 			log.Printf("failed to upsert tournament %s: %v", tournaments[idx].Name, err)
 			i.captureJobError("sync_tournaments", err)
 			continue
+		}
+
+		if result.Created {
+			log.Printf("Created tournament: %s", tournaments[idx].Name)
+		} else {
+			log.Printf("Updated tournament: %s (status: %s)", tournaments[idx].Name, result.CurrentStatus)
+			if result.PreviousStatus != tournament.StatusCompleted && result.CurrentStatus == tournament.StatusCompleted {
+				i.sendTournamentResultsEmails(ctx, result.Tournament)
+			}
 		}
 	}
 
@@ -290,156 +297,6 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	log.Println("Tournament sync completed")
 }
 
-func parseEndDatePtr(endDateStr *string, startDate time.Time) time.Time {
-	if endDateStr == nil || *endDateStr == "" {
-		return startDate.AddDate(0, 0, 4).Add(6 * time.Hour)
-	}
-	return parseEndDate(*endDateStr, startDate)
-}
-
-func parseEndDate(endDateStr string, startDate time.Time) time.Time {
-	const iso8601Millis = "2006-01-02T15:04:05.000Z"
-
-	// Try ISO 8601 format first
-	if endDate, err := time.Parse(iso8601Millis, endDateStr); err == nil {
-		return endDate.AddDate(0, 0, 1).Add(6 * time.Hour)
-	}
-
-	// Try parsing display format like "Jan 15 - 18" or "Jan 15 - Feb 2"
-	endDateStr = strings.TrimSpace(endDateStr)
-	if idx := strings.LastIndex(endDateStr, " - "); idx != -1 {
-		endPart := strings.TrimSpace(endDateStr[idx+3:])
-
-		// Check if endPart is just a day number (e.g., "18")
-		if day, err := strconv.Atoi(endPart); err == nil && day >= 1 && day <= 31 {
-			endDate := time.Date(startDate.Year(), startDate.Month(), day, 0, 0, 0, 0, time.UTC)
-			// Handle month rollover (e.g., start Jan 30, end day 2 means Feb 2)
-			if endDate.Before(startDate) {
-				endDate = endDate.AddDate(0, 1, 0)
-			}
-			return endDate.AddDate(0, 0, 1).Add(6 * time.Hour)
-		}
-
-		// Try parsing "Feb 2" format
-		formats := []string{"Jan 2", "January 2"}
-		for _, format := range formats {
-			if parsed, err := time.Parse(format, endPart); err == nil {
-				endDate := time.Date(startDate.Year(), parsed.Month(), parsed.Day(), 0, 0, 0, 0, time.UTC)
-				// Handle year rollover (e.g., start Dec 30, end Jan 2)
-				if endDate.Before(startDate) {
-					endDate = endDate.AddDate(1, 0, 0)
-				}
-				return endDate.AddDate(0, 0, 1).Add(6 * time.Hour)
-			}
-		}
-	}
-
-	// Fallback: standard 4-day tournament (start + 4 days at 06:00 UTC)
-	return startDate.AddDate(0, 0, 4).Add(6 * time.Hour)
-}
-
-// upsertTournament creates or updates a tournament from BallDontLie data.
-func (i *Ingester) upsertTournament(ctx context.Context, t *balldontlie.Tournament) error {
-	const iso8601Millis = "2006-01-02T15:04:05.000Z"
-	startDate, err := time.Parse(iso8601Millis, t.StartDate)
-	if err != nil {
-		return fmt.Errorf("failed to parse start date: %w", err)
-	}
-
-	endDate := parseEndDatePtr(t.EndDate, startDate)
-
-	// Determine status based on dates
-	now := time.Now().UTC()
-	status := tournament.StatusUpcoming
-	if now.After(endDate) {
-		status = tournament.StatusCompleted
-	} else if now.After(startDate) || now.Equal(startDate) {
-		status = tournament.StatusActive
-	}
-
-	// Try to find existing tournament by BallDontLie ID
-	existing, err := i.db.Tournament.Query().
-		Where(tournament.BdlID(t.ID)).
-		Only(ctx)
-
-	switch {
-	case ent.IsNotFound(err):
-		// Create new tournament
-		builder := i.db.Tournament.Create().
-			SetBdlID(t.ID).
-			SetName(t.Name).
-			SetStartDate(startDate).
-			SetEndDate(endDate).
-			SetStatus(status).
-			SetSeasonYear(t.Season)
-
-		if pgaTourID := pgatour.GetPGATourID(t.ID); pgaTourID != "" {
-			builder.SetPgaTourID(pgaTourID)
-		}
-
-		if t.CourseName != nil && *t.CourseName != "" {
-			builder.SetCourse(*t.CourseName)
-		}
-		if t.City != nil && *t.City != "" {
-			builder.SetLocation(*t.City)
-		}
-		if t.Purse != nil && *t.Purse != "" {
-			if purse, err := strconv.Atoi(*t.Purse); err == nil && purse > 0 {
-				builder.SetPurse(purse)
-			}
-		}
-
-		_, err = builder.Save(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to create tournament: %w", err)
-		}
-		log.Printf("Created tournament: %s", t.Name)
-	case err != nil:
-		return fmt.Errorf("failed to query tournament: %w", err)
-	default:
-		previousStatus := existing.Status
-
-		// Update existing tournament
-		updater := existing.Update().
-			SetName(t.Name).
-			SetStartDate(startDate).
-			SetEndDate(endDate).
-			SetStatus(status)
-
-		if t.CourseName != nil && *t.CourseName != "" {
-			updater.SetCourse(*t.CourseName)
-		}
-		if t.City != nil && *t.City != "" {
-			updater.SetLocation(*t.City)
-		}
-		if t.Purse != nil && *t.Purse != "" {
-			if purse, err := strconv.Atoi(*t.Purse); err == nil && purse > 0 {
-				updater.SetPurse(purse)
-			}
-		}
-
-		if existing.PgaTourID == nil || *existing.PgaTourID == "" {
-			if pgaTourID := pgatour.GetPGATourID(t.ID); pgaTourID != "" {
-				updater.SetPgaTourID(pgaTourID)
-			}
-		}
-
-		_, err = updater.Save(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to update tournament: %w", err)
-		}
-		log.Printf("Updated tournament: %s (status: %s)", t.Name, status)
-
-		if previousStatus != tournament.StatusCompleted && status == tournament.StatusCompleted {
-			i.sendTournamentResultsEmails(ctx, existing)
-		}
-	}
-
-	return nil
-}
-
-// syncPlayers fetches and stores player data from BallDontLie.
-// Runs weekly to minimize API calls.
 func (i *Ingester) syncPlayers(ctx context.Context) {
 	log.Println("Starting player sync...")
 
@@ -453,7 +310,7 @@ func (i *Ingester) syncPlayers(ctx context.Context) {
 	log.Printf("Fetched %d players", len(players))
 
 	for idx := range players {
-		if err := i.upsertPlayer(ctx, &players[idx]); err != nil {
+		if err := i.syncService.UpsertPlayer(ctx, &players[idx]); err != nil {
 			log.Printf("failed to upsert player %s: %v", players[idx].DisplayName, err)
 			i.captureJobError("sync_players", err)
 			continue
@@ -464,90 +321,9 @@ func (i *Ingester) syncPlayers(ctx context.Context) {
 	log.Println("Player sync completed")
 }
 
-func (i *Ingester) upsertPlayer(ctx context.Context, p *balldontlie.Player) error {
-	name := p.DisplayName
-	if name == "" && p.FirstName != nil && p.LastName != nil {
-		name = fmt.Sprintf("%s %s", *p.FirstName, *p.LastName)
-	}
-
-	countryCode := "UNK"
-	if p.CountryCode != nil && *p.CountryCode != "" {
-		countryCode = *p.CountryCode
-	}
-
-	existing, err := i.db.Golfer.Query().
-		Where(golfer.BdlID(p.ID)).
-		Only(ctx)
-
-	if ent.IsNotFound(err) {
-		existing, err = i.db.Golfer.Query().
-			Where(golfer.Name(name)).
-			Only(ctx)
-	}
-
-	switch {
-	case ent.IsNotFound(err):
-		builder := i.db.Golfer.Create().
-			SetBdlID(p.ID).
-			SetName(name).
-			SetCountryCode(countryCode).
-			SetActive(p.Active)
-
-		if p.FirstName != nil {
-			builder.SetFirstName(*p.FirstName)
-		}
-		if p.LastName != nil {
-			builder.SetLastName(*p.LastName)
-		}
-		if p.Country != nil && *p.Country != "" {
-			builder.SetCountry(*p.Country)
-		}
-		if p.OWGR != nil && *p.OWGR > 0 {
-			builder.SetOwgr(*p.OWGR)
-		}
-
-		_, err = builder.Save(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to create golfer: %w", err)
-		}
-		log.Printf("Created golfer: %s", name)
-	case err != nil:
-		return fmt.Errorf("failed to query golfer: %w", err)
-	default:
-		updater := existing.Update().
-			SetName(name).
-			SetCountryCode(countryCode).
-			SetActive(p.Active).
-			SetBdlID(p.ID)
-
-		if p.FirstName != nil {
-			updater.SetFirstName(*p.FirstName)
-		}
-		if p.LastName != nil {
-			updater.SetLastName(*p.LastName)
-		}
-		if p.Country != nil && *p.Country != "" {
-			updater.SetCountry(*p.Country)
-		}
-		if p.OWGR != nil && *p.OWGR > 0 {
-			updater.SetOwgr(*p.OWGR)
-		}
-
-		_, err = updater.Save(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to update golfer: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// syncLeaderboards fetches live leaderboard data for active tournaments from BallDontLie.
-// Runs hourly (vs the previous 2-minute interval) to optimize API usage.
 func (i *Ingester) syncLeaderboards(ctx context.Context) {
 	log.Println("Checking for active tournament leaderboards...")
 
-	// Find active tournaments
 	tournaments, err := i.db.Tournament.Query().
 		Where(tournament.StatusEQ(tournament.StatusActive)).
 		All(ctx)
@@ -578,7 +354,6 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) {
 	log.Println("Leaderboard sync completed")
 }
 
-// syncTournamentLeaderboard fetches and stores leaderboard data for a single tournament.
 func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournament) error {
 	log.Printf("Syncing leaderboard for tournament: %s", t.Name)
 
@@ -590,7 +365,7 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 	log.Printf("Fetched %d results for tournament %s", len(results), t.Name)
 
 	for idx := range results {
-		if err := i.upsertTournamentEntry(ctx, t, &results[idx]); err != nil {
+		if err := i.syncService.UpsertTournamentEntry(ctx, t, &results[idx]); err != nil {
 			log.Printf("failed to upsert result for player %s: %v", results[idx].Player.DisplayName, err)
 			i.captureJobError("sync_tournament_leaderboard", err)
 			continue
@@ -600,91 +375,6 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 	return nil
 }
 
-func (i *Ingester) upsertTournamentEntry(ctx context.Context, t *ent.Tournament, r *balldontlie.TournamentResult) error {
-	g, err := i.db.Golfer.Query().
-		Where(golfer.BdlID(r.Player.ID)).
-		Only(ctx)
-
-	if ent.IsNotFound(err) {
-		return nil
-	} else if err != nil {
-		return fmt.Errorf("failed to query golfer: %w", err)
-	}
-
-	status := tournamententry.StatusActive
-	cut := false
-	if r.Tournament.Status != nil {
-		switch *r.Tournament.Status {
-		case "COMPLETED":
-			status = tournamententry.StatusFinished
-		case "IN_PROGRESS":
-			status = tournamententry.StatusActive
-		}
-	}
-
-	position := 0
-	if r.PositionNumeric != nil {
-		position = *r.PositionNumeric
-	}
-	if r.Position != nil && *r.Position == "CUT" {
-		cut = true
-		status = tournamententry.StatusFinished
-	}
-
-	score := 0
-	if r.TotalScore != nil {
-		score = *r.TotalScore
-	}
-	totalStrokes := 0
-
-	earnings := 0
-	if r.Earnings != nil {
-		earnings = *r.Earnings
-	}
-
-	existing, err := i.db.TournamentEntry.Query().
-		Where(
-			tournamententry.HasTournamentWith(tournament.ID(t.ID)),
-			tournamententry.HasGolferWith(golfer.ID(g.ID)),
-		).
-		Only(ctx)
-
-	switch {
-	case ent.IsNotFound(err):
-		_, err = i.db.TournamentEntry.Create().
-			SetTournament(t).
-			SetGolfer(g).
-			SetPosition(position).
-			SetCut(cut).
-			SetScore(score).
-			SetTotalStrokes(totalStrokes).
-			SetStatus(status).
-			SetEarnings(earnings).
-			Save(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to create tournament entry: %w", err)
-		}
-	case err != nil:
-		return fmt.Errorf("failed to query tournament entry: %w", err)
-	default:
-		_, err = existing.Update().
-			SetPosition(position).
-			SetCut(cut).
-			SetScore(score).
-			SetTotalStrokes(totalStrokes).
-			SetStatus(status).
-			SetEarnings(earnings).
-			Save(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to update tournament entry: %w", err)
-		}
-	}
-
-	return nil
-}
-
-// syncEarnings syncs earnings for completed tournaments via the BallDontLie API.
-// The tournament results endpoint now includes earnings data directly.
 func (i *Ingester) syncEarnings(ctx context.Context) {
 	log.Println("Checking for tournaments needing earnings sync...")
 

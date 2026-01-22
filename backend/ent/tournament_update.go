@@ -13,6 +13,7 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/tournament"
@@ -202,6 +203,126 @@ func (_u *TournamentUpdate) ClearLocation() *TournamentUpdate {
 	return _u
 }
 
+// SetCity sets the "city" field.
+func (_u *TournamentUpdate) SetCity(v string) *TournamentUpdate {
+	_u.mutation.SetCity(v)
+	return _u
+}
+
+// SetNillableCity sets the "city" field if the given value is not nil.
+func (_u *TournamentUpdate) SetNillableCity(v *string) *TournamentUpdate {
+	if v != nil {
+		_u.SetCity(*v)
+	}
+	return _u
+}
+
+// ClearCity clears the value of the "city" field.
+func (_u *TournamentUpdate) ClearCity() *TournamentUpdate {
+	_u.mutation.ClearCity()
+	return _u
+}
+
+// SetState sets the "state" field.
+func (_u *TournamentUpdate) SetState(v string) *TournamentUpdate {
+	_u.mutation.SetState(v)
+	return _u
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (_u *TournamentUpdate) SetNillableState(v *string) *TournamentUpdate {
+	if v != nil {
+		_u.SetState(*v)
+	}
+	return _u
+}
+
+// ClearState clears the value of the "state" field.
+func (_u *TournamentUpdate) ClearState() *TournamentUpdate {
+	_u.mutation.ClearState()
+	return _u
+}
+
+// SetCountry sets the "country" field.
+func (_u *TournamentUpdate) SetCountry(v string) *TournamentUpdate {
+	_u.mutation.SetCountry(v)
+	return _u
+}
+
+// SetNillableCountry sets the "country" field if the given value is not nil.
+func (_u *TournamentUpdate) SetNillableCountry(v *string) *TournamentUpdate {
+	if v != nil {
+		_u.SetCountry(*v)
+	}
+	return _u
+}
+
+// ClearCountry clears the value of the "country" field.
+func (_u *TournamentUpdate) ClearCountry() *TournamentUpdate {
+	_u.mutation.ClearCountry()
+	return _u
+}
+
+// SetTimezone sets the "timezone" field.
+func (_u *TournamentUpdate) SetTimezone(v string) *TournamentUpdate {
+	_u.mutation.SetTimezone(v)
+	return _u
+}
+
+// SetNillableTimezone sets the "timezone" field if the given value is not nil.
+func (_u *TournamentUpdate) SetNillableTimezone(v *string) *TournamentUpdate {
+	if v != nil {
+		_u.SetTimezone(*v)
+	}
+	return _u
+}
+
+// ClearTimezone clears the value of the "timezone" field.
+func (_u *TournamentUpdate) ClearTimezone() *TournamentUpdate {
+	_u.mutation.ClearTimezone()
+	return _u
+}
+
+// SetPickWindowOpensAt sets the "pick_window_opens_at" field.
+func (_u *TournamentUpdate) SetPickWindowOpensAt(v time.Time) *TournamentUpdate {
+	_u.mutation.SetPickWindowOpensAt(v)
+	return _u
+}
+
+// SetNillablePickWindowOpensAt sets the "pick_window_opens_at" field if the given value is not nil.
+func (_u *TournamentUpdate) SetNillablePickWindowOpensAt(v *time.Time) *TournamentUpdate {
+	if v != nil {
+		_u.SetPickWindowOpensAt(*v)
+	}
+	return _u
+}
+
+// ClearPickWindowOpensAt clears the value of the "pick_window_opens_at" field.
+func (_u *TournamentUpdate) ClearPickWindowOpensAt() *TournamentUpdate {
+	_u.mutation.ClearPickWindowOpensAt()
+	return _u
+}
+
+// SetPickWindowClosesAt sets the "pick_window_closes_at" field.
+func (_u *TournamentUpdate) SetPickWindowClosesAt(v time.Time) *TournamentUpdate {
+	_u.mutation.SetPickWindowClosesAt(v)
+	return _u
+}
+
+// SetNillablePickWindowClosesAt sets the "pick_window_closes_at" field if the given value is not nil.
+func (_u *TournamentUpdate) SetNillablePickWindowClosesAt(v *time.Time) *TournamentUpdate {
+	if v != nil {
+		_u.SetPickWindowClosesAt(*v)
+	}
+	return _u
+}
+
+// ClearPickWindowClosesAt clears the value of the "pick_window_closes_at" field.
+func (_u *TournamentUpdate) ClearPickWindowClosesAt() *TournamentUpdate {
+	_u.mutation.ClearPickWindowClosesAt()
+	return _u
+}
+
 // SetPurse sets the "purse" field.
 func (_u *TournamentUpdate) SetPurse(v int) *TournamentUpdate {
 	_u.mutation.ResetPurse()
@@ -274,6 +395,25 @@ func (_u *TournamentUpdate) AddEmailReminders(v ...*EmailReminder) *TournamentUp
 	return _u.AddEmailReminderIDs(ids...)
 }
 
+// SetChampionID sets the "champion" edge to the Golfer entity by ID.
+func (_u *TournamentUpdate) SetChampionID(id uuid.UUID) *TournamentUpdate {
+	_u.mutation.SetChampionID(id)
+	return _u
+}
+
+// SetNillableChampionID sets the "champion" edge to the Golfer entity by ID if the given value is not nil.
+func (_u *TournamentUpdate) SetNillableChampionID(id *uuid.UUID) *TournamentUpdate {
+	if id != nil {
+		_u = _u.SetChampionID(*id)
+	}
+	return _u
+}
+
+// SetChampion sets the "champion" edge to the Golfer entity.
+func (_u *TournamentUpdate) SetChampion(v *Golfer) *TournamentUpdate {
+	return _u.SetChampionID(v.ID)
+}
+
 // Mutation returns the TournamentMutation object of the builder.
 func (_u *TournamentUpdate) Mutation() *TournamentMutation {
 	return _u.mutation
@@ -340,6 +480,12 @@ func (_u *TournamentUpdate) RemoveEmailReminders(v ...*EmailReminder) *Tournamen
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailReminderIDs(ids...)
+}
+
+// ClearChampion clears the "champion" edge to the Golfer entity.
+func (_u *TournamentUpdate) ClearChampion() *TournamentUpdate {
+	_u.mutation.ClearChampion()
+	return _u
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -452,6 +598,42 @@ func (_u *TournamentUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 	}
 	if _u.mutation.LocationCleared() {
 		_spec.ClearField(tournament.FieldLocation, field.TypeString)
+	}
+	if value, ok := _u.mutation.City(); ok {
+		_spec.SetField(tournament.FieldCity, field.TypeString, value)
+	}
+	if _u.mutation.CityCleared() {
+		_spec.ClearField(tournament.FieldCity, field.TypeString)
+	}
+	if value, ok := _u.mutation.State(); ok {
+		_spec.SetField(tournament.FieldState, field.TypeString, value)
+	}
+	if _u.mutation.StateCleared() {
+		_spec.ClearField(tournament.FieldState, field.TypeString)
+	}
+	if value, ok := _u.mutation.Country(); ok {
+		_spec.SetField(tournament.FieldCountry, field.TypeString, value)
+	}
+	if _u.mutation.CountryCleared() {
+		_spec.ClearField(tournament.FieldCountry, field.TypeString)
+	}
+	if value, ok := _u.mutation.Timezone(); ok {
+		_spec.SetField(tournament.FieldTimezone, field.TypeString, value)
+	}
+	if _u.mutation.TimezoneCleared() {
+		_spec.ClearField(tournament.FieldTimezone, field.TypeString)
+	}
+	if value, ok := _u.mutation.PickWindowOpensAt(); ok {
+		_spec.SetField(tournament.FieldPickWindowOpensAt, field.TypeTime, value)
+	}
+	if _u.mutation.PickWindowOpensAtCleared() {
+		_spec.ClearField(tournament.FieldPickWindowOpensAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PickWindowClosesAt(); ok {
+		_spec.SetField(tournament.FieldPickWindowClosesAt, field.TypeTime, value)
+	}
+	if _u.mutation.PickWindowClosesAtCleared() {
+		_spec.ClearField(tournament.FieldPickWindowClosesAt, field.TypeTime)
 	}
 	if value, ok := _u.mutation.Purse(); ok {
 		_spec.SetField(tournament.FieldPurse, field.TypeInt, value)
@@ -590,6 +772,35 @@ func (_u *TournamentUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ChampionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tournament.ChampionTable,
+			Columns: []string{tournament.ChampionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ChampionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tournament.ChampionTable,
+			Columns: []string{tournament.ChampionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -787,6 +998,126 @@ func (_u *TournamentUpdateOne) ClearLocation() *TournamentUpdateOne {
 	return _u
 }
 
+// SetCity sets the "city" field.
+func (_u *TournamentUpdateOne) SetCity(v string) *TournamentUpdateOne {
+	_u.mutation.SetCity(v)
+	return _u
+}
+
+// SetNillableCity sets the "city" field if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillableCity(v *string) *TournamentUpdateOne {
+	if v != nil {
+		_u.SetCity(*v)
+	}
+	return _u
+}
+
+// ClearCity clears the value of the "city" field.
+func (_u *TournamentUpdateOne) ClearCity() *TournamentUpdateOne {
+	_u.mutation.ClearCity()
+	return _u
+}
+
+// SetState sets the "state" field.
+func (_u *TournamentUpdateOne) SetState(v string) *TournamentUpdateOne {
+	_u.mutation.SetState(v)
+	return _u
+}
+
+// SetNillableState sets the "state" field if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillableState(v *string) *TournamentUpdateOne {
+	if v != nil {
+		_u.SetState(*v)
+	}
+	return _u
+}
+
+// ClearState clears the value of the "state" field.
+func (_u *TournamentUpdateOne) ClearState() *TournamentUpdateOne {
+	_u.mutation.ClearState()
+	return _u
+}
+
+// SetCountry sets the "country" field.
+func (_u *TournamentUpdateOne) SetCountry(v string) *TournamentUpdateOne {
+	_u.mutation.SetCountry(v)
+	return _u
+}
+
+// SetNillableCountry sets the "country" field if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillableCountry(v *string) *TournamentUpdateOne {
+	if v != nil {
+		_u.SetCountry(*v)
+	}
+	return _u
+}
+
+// ClearCountry clears the value of the "country" field.
+func (_u *TournamentUpdateOne) ClearCountry() *TournamentUpdateOne {
+	_u.mutation.ClearCountry()
+	return _u
+}
+
+// SetTimezone sets the "timezone" field.
+func (_u *TournamentUpdateOne) SetTimezone(v string) *TournamentUpdateOne {
+	_u.mutation.SetTimezone(v)
+	return _u
+}
+
+// SetNillableTimezone sets the "timezone" field if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillableTimezone(v *string) *TournamentUpdateOne {
+	if v != nil {
+		_u.SetTimezone(*v)
+	}
+	return _u
+}
+
+// ClearTimezone clears the value of the "timezone" field.
+func (_u *TournamentUpdateOne) ClearTimezone() *TournamentUpdateOne {
+	_u.mutation.ClearTimezone()
+	return _u
+}
+
+// SetPickWindowOpensAt sets the "pick_window_opens_at" field.
+func (_u *TournamentUpdateOne) SetPickWindowOpensAt(v time.Time) *TournamentUpdateOne {
+	_u.mutation.SetPickWindowOpensAt(v)
+	return _u
+}
+
+// SetNillablePickWindowOpensAt sets the "pick_window_opens_at" field if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillablePickWindowOpensAt(v *time.Time) *TournamentUpdateOne {
+	if v != nil {
+		_u.SetPickWindowOpensAt(*v)
+	}
+	return _u
+}
+
+// ClearPickWindowOpensAt clears the value of the "pick_window_opens_at" field.
+func (_u *TournamentUpdateOne) ClearPickWindowOpensAt() *TournamentUpdateOne {
+	_u.mutation.ClearPickWindowOpensAt()
+	return _u
+}
+
+// SetPickWindowClosesAt sets the "pick_window_closes_at" field.
+func (_u *TournamentUpdateOne) SetPickWindowClosesAt(v time.Time) *TournamentUpdateOne {
+	_u.mutation.SetPickWindowClosesAt(v)
+	return _u
+}
+
+// SetNillablePickWindowClosesAt sets the "pick_window_closes_at" field if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillablePickWindowClosesAt(v *time.Time) *TournamentUpdateOne {
+	if v != nil {
+		_u.SetPickWindowClosesAt(*v)
+	}
+	return _u
+}
+
+// ClearPickWindowClosesAt clears the value of the "pick_window_closes_at" field.
+func (_u *TournamentUpdateOne) ClearPickWindowClosesAt() *TournamentUpdateOne {
+	_u.mutation.ClearPickWindowClosesAt()
+	return _u
+}
+
 // SetPurse sets the "purse" field.
 func (_u *TournamentUpdateOne) SetPurse(v int) *TournamentUpdateOne {
 	_u.mutation.ResetPurse()
@@ -859,6 +1190,25 @@ func (_u *TournamentUpdateOne) AddEmailReminders(v ...*EmailReminder) *Tournamen
 	return _u.AddEmailReminderIDs(ids...)
 }
 
+// SetChampionID sets the "champion" edge to the Golfer entity by ID.
+func (_u *TournamentUpdateOne) SetChampionID(id uuid.UUID) *TournamentUpdateOne {
+	_u.mutation.SetChampionID(id)
+	return _u
+}
+
+// SetNillableChampionID sets the "champion" edge to the Golfer entity by ID if the given value is not nil.
+func (_u *TournamentUpdateOne) SetNillableChampionID(id *uuid.UUID) *TournamentUpdateOne {
+	if id != nil {
+		_u = _u.SetChampionID(*id)
+	}
+	return _u
+}
+
+// SetChampion sets the "champion" edge to the Golfer entity.
+func (_u *TournamentUpdateOne) SetChampion(v *Golfer) *TournamentUpdateOne {
+	return _u.SetChampionID(v.ID)
+}
+
 // Mutation returns the TournamentMutation object of the builder.
 func (_u *TournamentUpdateOne) Mutation() *TournamentMutation {
 	return _u.mutation
@@ -925,6 +1275,12 @@ func (_u *TournamentUpdateOne) RemoveEmailReminders(v ...*EmailReminder) *Tourna
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailReminderIDs(ids...)
+}
+
+// ClearChampion clears the "champion" edge to the Golfer entity.
+func (_u *TournamentUpdateOne) ClearChampion() *TournamentUpdateOne {
+	_u.mutation.ClearChampion()
+	return _u
 }
 
 // Where appends a list predicates to the TournamentUpdate builder.
@@ -1068,6 +1424,42 @@ func (_u *TournamentUpdateOne) sqlSave(ctx context.Context) (_node *Tournament, 
 	if _u.mutation.LocationCleared() {
 		_spec.ClearField(tournament.FieldLocation, field.TypeString)
 	}
+	if value, ok := _u.mutation.City(); ok {
+		_spec.SetField(tournament.FieldCity, field.TypeString, value)
+	}
+	if _u.mutation.CityCleared() {
+		_spec.ClearField(tournament.FieldCity, field.TypeString)
+	}
+	if value, ok := _u.mutation.State(); ok {
+		_spec.SetField(tournament.FieldState, field.TypeString, value)
+	}
+	if _u.mutation.StateCleared() {
+		_spec.ClearField(tournament.FieldState, field.TypeString)
+	}
+	if value, ok := _u.mutation.Country(); ok {
+		_spec.SetField(tournament.FieldCountry, field.TypeString, value)
+	}
+	if _u.mutation.CountryCleared() {
+		_spec.ClearField(tournament.FieldCountry, field.TypeString)
+	}
+	if value, ok := _u.mutation.Timezone(); ok {
+		_spec.SetField(tournament.FieldTimezone, field.TypeString, value)
+	}
+	if _u.mutation.TimezoneCleared() {
+		_spec.ClearField(tournament.FieldTimezone, field.TypeString)
+	}
+	if value, ok := _u.mutation.PickWindowOpensAt(); ok {
+		_spec.SetField(tournament.FieldPickWindowOpensAt, field.TypeTime, value)
+	}
+	if _u.mutation.PickWindowOpensAtCleared() {
+		_spec.ClearField(tournament.FieldPickWindowOpensAt, field.TypeTime)
+	}
+	if value, ok := _u.mutation.PickWindowClosesAt(); ok {
+		_spec.SetField(tournament.FieldPickWindowClosesAt, field.TypeTime, value)
+	}
+	if _u.mutation.PickWindowClosesAtCleared() {
+		_spec.ClearField(tournament.FieldPickWindowClosesAt, field.TypeTime)
+	}
 	if value, ok := _u.mutation.Purse(); ok {
 		_spec.SetField(tournament.FieldPurse, field.TypeInt, value)
 	}
@@ -1205,6 +1597,35 @@ func (_u *TournamentUpdateOne) sqlSave(ctx context.Context) (_node *Tournament, 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.ChampionCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tournament.ChampionTable,
+			Columns: []string{tournament.ChampionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.ChampionIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   tournament.ChampionTable,
+			Columns: []string{tournament.ChampionColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

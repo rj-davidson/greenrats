@@ -16,6 +16,7 @@ import (
 	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/exa"
+	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
 	"github.com/rj-davidson/greenrats/internal/external/openai"
 	"github.com/rj-davidson/greenrats/internal/external/pgatour"
 	"github.com/rj-davidson/greenrats/internal/external/scrapedo"
@@ -92,8 +93,17 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 	scrapeDoClient := scrapedo.New(cfg.ScrapeDoAPIKey, logger)
 	golferSvc := golfers.NewService(db)
 
+	var gmapsClient *googlemaps.Client
+	if cfg.GoogleMapsAPIKey != "" {
+		var err error
+		gmapsClient, err = googlemaps.New(cfg.GoogleMapsAPIKey, logger)
+		if err != nil {
+			log.Printf("Warning: failed to create Google Maps client: %v", err)
+		}
+	}
+
 	adminIngestSvc := admin.NewIngestService(
-		db, cfg, bdlClient, pgatourClient, exaClient, openaiClient, scrapeDoClient, golferSvc, logger,
+		db, cfg, bdlClient, pgatourClient, gmapsClient, exaClient, openaiClient, scrapeDoClient, golferSvc, logger,
 	)
 
 	s := &Server{

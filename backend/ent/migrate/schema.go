@@ -252,13 +252,28 @@ var (
 		{Name: "season_year", Type: field.TypeInt},
 		{Name: "course", Type: field.TypeString, Nullable: true},
 		{Name: "location", Type: field.TypeString, Nullable: true},
+		{Name: "city", Type: field.TypeString, Nullable: true},
+		{Name: "state", Type: field.TypeString, Nullable: true},
+		{Name: "country", Type: field.TypeString, Nullable: true},
+		{Name: "timezone", Type: field.TypeString, Nullable: true},
+		{Name: "pick_window_opens_at", Type: field.TypeTime, Nullable: true},
+		{Name: "pick_window_closes_at", Type: field.TypeTime, Nullable: true},
 		{Name: "purse", Type: field.TypeInt, Nullable: true},
+		{Name: "tournament_champion", Type: field.TypeUUID, Nullable: true},
 	}
 	// TournamentsTable holds the schema information for the "tournaments" table.
 	TournamentsTable = &schema.Table{
 		Name:       "tournaments",
 		Columns:    TournamentsColumns,
 		PrimaryKey: []*schema.Column{TournamentsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tournaments_golfers_champion",
+				Columns:    []*schema.Column{TournamentsColumns[19]},
+				RefColumns: []*schema.Column{GolfersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// TournamentEntriesColumns holds the columns for the "tournament_entries" table.
 	TournamentEntriesColumns = []*schema.Column{
@@ -352,6 +367,7 @@ func init() {
 	PicksTable.ForeignKeys[1].RefTable = LeaguesTable
 	PicksTable.ForeignKeys[2].RefTable = TournamentsTable
 	PicksTable.ForeignKeys[3].RefTable = UsersTable
+	TournamentsTable.ForeignKeys[0].RefTable = GolfersTable
 	TournamentEntriesTable.ForeignKeys[0].RefTable = GolfersTable
 	TournamentEntriesTable.ForeignKeys[1].RefTable = TournamentsTable
 }
