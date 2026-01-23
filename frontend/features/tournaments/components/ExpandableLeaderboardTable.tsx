@@ -83,10 +83,10 @@ export function ExpandableLeaderboardTable({
           <TableHead className="w-12"></TableHead>
           <TableHead className="w-16">Pos</TableHead>
           <TableHead>Player</TableHead>
+          {showPicksColumn && <TableHead className="w-32">Picked by</TableHead>}
           <TableHead className="w-16">{getRoundLabel(currentRound)}</TableHead>
           <TableHead className="w-16">Thru</TableHead>
           <TableHead className="w-20">Total</TableHead>
-          {showPicksColumn && <TableHead className="w-32">Picks</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -175,15 +175,6 @@ function LeaderboardRow({
       <TableCell>
         <span className={cn(isHighlighted && "font-bold")}>{entry.golfer_name}</span>
       </TableCell>
-      <TableCell className="font-mono">{getCurrentRoundScore(entry)}</TableCell>
-      <TableCell className="text-muted-foreground">
-        {formatThru(entry.thru, entry.status)}
-      </TableCell>
-      <TableCell
-        className={cn("font-mono", entry.score < 0 && "text-primary")}
-      >
-        {formatScoreToPar(entry.score)}
-      </TableCell>
       {showPicksColumn && (
         <TableCell className="align-top">
           <div className="flex flex-col text-xs text-muted-foreground">
@@ -193,6 +184,15 @@ function LeaderboardRow({
           </div>
         </TableCell>
       )}
+      <TableCell className="font-mono">{getCurrentRoundScore(entry)}</TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatThru(entry.thru, entry.status)}
+      </TableCell>
+      <TableCell
+        className={cn("font-mono", entry.score < 0 && "text-primary")}
+      >
+        {formatScoreToPar(entry.score)}
+      </TableCell>
     </TableRow>
   );
 }
