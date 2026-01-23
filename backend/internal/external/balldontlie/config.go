@@ -1,6 +1,6 @@
 package balldontlie
 
 const (
-	APIRateLimitPerSecond = 2.0
-	APIRateBurst          = 5
+	APIRateLimitPerSecond = 5.0
+	APIRateBurst          = 10
 )

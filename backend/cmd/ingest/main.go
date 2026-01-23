@@ -96,8 +96,8 @@ func run() error {
 	go ingester.Run(ctx)
 
 	log.Println("GreenRats Ingest Service started")
-	log.Printf("Sync intervals: tournaments=%v, leaderboards=%v, players=%v, fields=%v",
-		sync.TournamentSyncInterval, sync.LeaderboardSyncInterval, sync.PlayerSyncInterval, sync.FieldSyncInterval)
+	log.Printf("Sync intervals: tournaments=%v, leaderboards(play)=%v, leaderboards(idle)=%v, scorecards=%v",
+		sync.TournamentSyncInterval, sync.LeaderboardPlayInterval, sync.LeaderboardIdleInterval, sync.ScorecardSyncInterval)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

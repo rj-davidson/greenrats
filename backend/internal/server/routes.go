@@ -10,10 +10,12 @@ import (
 	"github.com/rj-davidson/greenrats/internal/features/picks"
 	"github.com/rj-davidson/greenrats/internal/features/tournaments"
 	"github.com/rj-davidson/greenrats/internal/features/users"
+	"github.com/rj-davidson/greenrats/internal/sync"
 )
 
 func (s *Server) setupRoutes() {
 	s.app.Get("/health", s.healthCheck)
+	s.app.Get("/health/ingest", s.ingestHealthCheck)
 
 	v1 := s.app.Group("/api/v1")
 
@@ -83,4 +85,19 @@ func (s *Server) apiInfo(c *fiber.Ctx) error {
 		"name":    "GreenRats API",
 		"version": "1.0.0",
 	})
+}
+
+func (s *Server) ingestHealthCheck(c *fiber.Ctx) error {
+	status, err := sync.GetHealthStatus(c.Context(), s.db)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to get sync health status",
+		})
+	}
+
+	if !status.Healthy {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(status)
+	}
+
+	return c.JSON(status)
 }

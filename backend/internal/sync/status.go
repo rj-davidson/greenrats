@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent"
@@ -18,7 +17,7 @@ func (i *Ingester) shouldSync(ctx context.Context, syncType string, interval tim
 		return true
 	}
 	if err != nil {
-		log.Printf("failed to check sync status for %s: %v", syncType, err)
+		i.logger.Error("failed to check sync status", "type", syncType, "error", err)
 		return true
 	}
 
@@ -44,6 +43,6 @@ func (i *Ingester) recordSync(ctx context.Context, syncType string) {
 	}
 
 	if err != nil {
-		log.Printf("failed to record sync for %s: %v", syncType, err)
+		i.logger.Error("failed to record sync", "type", syncType, "error", err)
 	}
 }

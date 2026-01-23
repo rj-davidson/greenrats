@@ -2,29 +2,40 @@ package sync
 
 import (
 	"context"
-	"log"
+	"time"
 )
 
 func (i *Ingester) syncPlayers(ctx context.Context) {
-	log.Println("Starting player sync...")
+	start := time.Now()
+	i.logger.Info("sync started", "type", "players")
 
 	players, err := i.ballDontLie.GetPlayers(ctx)
 	if err != nil {
-		log.Printf("failed to fetch players from BallDontLie: %v", err)
+		i.logger.Error("failed to fetch players from BallDontLie", "error", err)
 		i.captureJobError("sync_players", err)
+		SyncErrors.WithLabelValues("players").Inc()
+		SyncRunsTotal.WithLabelValues("players", "error").Inc()
 		return
 	}
 
-	log.Printf("Fetched %d players", len(players))
+	i.logger.Debug("fetched players", "count", len(players))
 
+	processed := 0
 	for idx := range players {
 		if err := i.syncService.UpsertPlayer(ctx, &players[idx]); err != nil {
-			log.Printf("failed to upsert player %s: %v", players[idx].DisplayName, err)
+			i.logger.Error("failed to upsert player", "player", players[idx].DisplayName, "error", err)
 			i.captureJobError("sync_players", err)
+			SyncErrors.WithLabelValues("players").Inc()
 			continue
 		}
+		processed++
 	}
 
 	i.recordSync(ctx, "players")
-	log.Println("Player sync completed")
+	duration := time.Since(start)
+	SyncDuration.WithLabelValues("players").Observe(duration.Seconds())
+	SyncRecordsProcessed.WithLabelValues("players", "upserted").Add(float64(processed))
+	SyncRunsTotal.WithLabelValues("players", "success").Inc()
+	LastSyncTimestamp.WithLabelValues("players").Set(float64(time.Now().Unix()))
+	i.logger.Info("sync completed", "type", "players", "duration", duration, "processed", processed)
 }

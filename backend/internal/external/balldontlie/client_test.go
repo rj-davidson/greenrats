@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/sony/gobreaker"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/time/rate"
@@ -22,9 +23,14 @@ func newTestClient(serverURL string) *Client {
 		SetBaseURL(serverURL).
 		SetHeader("Content-Type", "application/json")
 
+	breaker := gobreaker.NewCircuitBreaker(gobreaker.Settings{
+		Name: "test",
+	})
+
 	return &Client{
 		client:  client,
 		limiter: rate.NewLimiter(rate.Limit(100), 100),
+		breaker: breaker,
 		logger:  logger,
 	}
 }
@@ -53,8 +59,8 @@ func TestRateLimiterThrottlesRequests(t *testing.T) {
 }
 
 func TestConfigConstants(t *testing.T) {
-	assert.Equal(t, 2.0, APIRateLimitPerSecond)
-	assert.Equal(t, 5, APIRateBurst)
+	assert.Equal(t, 5.0, APIRateLimitPerSecond)
+	assert.Equal(t, 10, APIRateBurst)
 }
 
 func TestGetCourses_Success(t *testing.T) {

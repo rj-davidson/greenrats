@@ -2,33 +2,39 @@ package sync
 
 import (
 	"context"
-	"log"
+	"time"
 )
 
 func (i *Ingester) syncTournaments(ctx context.Context) {
-	log.Println("Starting tournament sync...")
+	start := time.Now()
+	i.logger.Info("sync started", "type", "tournaments", "season", i.config.CurrentSeason)
 
 	tournaments, err := i.ballDontLie.GetTournaments(ctx, i.config.CurrentSeason)
 	if err != nil {
-		log.Printf("failed to fetch tournaments from BallDontLie: %v", err)
+		i.logger.Error("failed to fetch tournaments from BallDontLie", "error", err)
 		i.captureJobError("sync_tournaments", err)
+		SyncErrors.WithLabelValues("tournaments").Inc()
+		SyncRunsTotal.WithLabelValues("tournaments", "error").Inc()
 		return
 	}
 
-	log.Printf("Fetched %d tournaments for %d season", len(tournaments), i.config.CurrentSeason)
+	i.logger.Debug("fetched tournaments", "count", len(tournaments), "season", i.config.CurrentSeason)
 
+	created, updated := 0, 0
 	for idx := range tournaments {
 		result, err := i.syncService.UpsertTournament(ctx, &tournaments[idx])
 		if err != nil {
-			log.Printf("failed to upsert tournament %s: %v", tournaments[idx].Name, err)
+			i.logger.Error("failed to upsert tournament", "tournament", tournaments[idx].Name, "error", err)
 			i.captureJobError("sync_tournaments", err)
+			SyncErrors.WithLabelValues("tournaments").Inc()
 			continue
 		}
 
 		if result.Created {
-			log.Printf("Created tournament: %s", tournaments[idx].Name)
+			created++
+			i.logger.Debug("created tournament", "name", tournaments[idx].Name)
 		} else {
-			log.Printf("Updated tournament: %s", tournaments[idx].Name)
+			updated++
 			if result.BecameCompleted {
 				i.sendTournamentResultsEmails(ctx, result.Tournament)
 			}
@@ -36,5 +42,11 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	}
 
 	i.recordSync(ctx, "tournaments")
-	log.Println("Tournament sync completed")
+	duration := time.Since(start)
+	SyncDuration.WithLabelValues("tournaments").Observe(duration.Seconds())
+	SyncRecordsProcessed.WithLabelValues("tournaments", "created").Add(float64(created))
+	SyncRecordsProcessed.WithLabelValues("tournaments", "updated").Add(float64(updated))
+	SyncRunsTotal.WithLabelValues("tournaments", "success").Inc()
+	LastSyncTimestamp.WithLabelValues("tournaments").Set(float64(time.Now().Unix()))
+	i.logger.Info("sync completed", "type", "tournaments", "duration", duration, "created", created, "updated", updated)
 }

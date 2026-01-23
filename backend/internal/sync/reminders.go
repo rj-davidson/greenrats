@@ -3,7 +3,6 @@ package sync
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -21,7 +20,8 @@ import (
 )
 
 func (i *Ingester) sendPickReminders(ctx context.Context) {
-	log.Println("Checking for pick reminders to send...")
+	start := time.Now()
+	i.logger.Info("sync started", "type", "reminders")
 
 	now := time.Now().UTC()
 	reminderWindowStart := now.Add(24 * time.Hour)
@@ -35,13 +35,16 @@ func (i *Ingester) sendPickReminders(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		log.Printf("failed to query upcoming tournaments: %v", err)
+		i.logger.Error("failed to query upcoming tournaments", "error", err)
 		i.captureJobError("send_pick_reminders", err)
+		SyncErrors.WithLabelValues("reminders").Inc()
+		SyncRunsTotal.WithLabelValues("reminders", "error").Inc()
 		return
 	}
 
 	if len(tournaments) == 0 {
-		log.Println("No tournaments starting within reminder window")
+		i.logger.Debug("no tournaments starting within reminder window")
+		SyncRunsTotal.WithLabelValues("reminders", "skipped").Inc()
 		return
 	}
 
@@ -49,17 +52,21 @@ func (i *Ingester) sendPickReminders(ctx context.Context) {
 		i.sendRemindersForTournament(ctx, t)
 	}
 
-	log.Println("Pick reminder check completed")
+	duration := time.Since(start)
+	SyncDuration.WithLabelValues("reminders").Observe(duration.Seconds())
+	SyncRunsTotal.WithLabelValues("reminders", "success").Inc()
+	LastSyncTimestamp.WithLabelValues("reminders").Set(float64(time.Now().Unix()))
+	i.logger.Info("sync completed", "type", "reminders", "duration", duration, "tournaments", len(tournaments))
 }
 
 func (i *Ingester) sendRemindersForTournament(ctx context.Context, t *ent.Tournament) {
-	log.Printf("Sending pick reminders for tournament: %s", t.Name)
+	i.logger.Debug("sending pick reminders", "tournament", t.Name)
 
 	leagues, err := i.db.League.Query().
 		Where(league.SeasonYearEQ(t.SeasonYear)).
 		All(ctx)
 	if err != nil {
-		log.Printf("failed to query leagues: %v", err)
+		i.logger.Error("failed to query leagues", "error", err)
 		i.captureJobError("send_pick_reminders", err)
 		return
 	}
@@ -75,11 +82,12 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 		WithUser().
 		All(ctx)
 	if err != nil {
-		log.Printf("failed to query league memberships: %v", err)
+		i.logger.Error("failed to query league memberships", "error", err)
 		i.captureJobError("send_pick_reminders", err)
 		return
 	}
 
+	sent := 0
 	for _, m := range memberships {
 		if m.Edges.User == nil {
 			continue
@@ -98,7 +106,7 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 			).
 			Exist(ctx)
 		if err != nil {
-			log.Printf("failed to check pick: %v", err)
+			i.logger.Error("failed to check pick", "error", err)
 			i.captureJobError("send_pick_reminders", err)
 			continue
 		}
@@ -115,7 +123,7 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 			).
 			Exist(ctx)
 		if err != nil {
-			log.Printf("failed to check reminder status: %v", err)
+			i.logger.Error("failed to check reminder status", "error", err)
 			i.captureJobError("send_pick_reminders", err)
 			continue
 		}
@@ -124,10 +132,11 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 		}
 
 		if err := i.sendPickReminderEmail(ctx, u, l, t); err != nil {
-			log.Printf("failed to send reminder to %s: %v", u.Email, err)
+			i.logger.Error("failed to send reminder", "email", u.Email, "error", err)
 			i.captureJobError("send_pick_reminders", err)
 			continue
 		}
+		sent++
 
 		_, err = i.db.EmailReminder.Create().
 			SetUserID(u.ID).
@@ -136,9 +145,13 @@ func (i *Ingester) sendRemindersForLeagueTournament(ctx context.Context, l *ent.
 			SetReminderType(emailreminder.ReminderTypePickReminder).
 			Save(ctx)
 		if err != nil {
-			log.Printf("failed to record reminder: %v", err)
+			i.logger.Error("failed to record reminder", "error", err)
 			i.captureJobError("send_pick_reminders", err)
 		}
+	}
+
+	if sent > 0 {
+		SyncRecordsProcessed.WithLabelValues("reminders", "emails_sent").Add(float64(sent))
 	}
 }
 
@@ -166,7 +179,7 @@ func (i *Ingester) sendPickReminderEmail(_ context.Context, u *ent.User, l *ent.
 }
 
 func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tournament) {
-	log.Printf("Sending tournament results emails for: %s", t.Name)
+	i.logger.Info("sending tournament results emails", "tournament", t.Name)
 
 	winnerEntry, err := i.db.TournamentEntry.Query().
 		Where(
@@ -188,11 +201,12 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 		WithLeague().
 		All(ctx)
 	if err != nil {
-		log.Printf("failed to query picks: %v", err)
+		i.logger.Error("failed to query picks", "error", err)
 		i.captureJobError("send_tournament_results", err)
 		return
 	}
 
+	sent := 0
 	for _, p := range picks {
 		if p.Edges.User == nil || p.Edges.League == nil || p.Edges.Golfer == nil {
 			continue
@@ -210,7 +224,7 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 			).
 			Exist(ctx)
 		if err != nil {
-			log.Printf("failed to check reminder status: %v", err)
+			i.logger.Error("failed to check reminder status", "error", err)
 			i.captureJobError("send_tournament_results", err)
 			continue
 		}
@@ -251,10 +265,11 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 		}
 
 		if err := i.email.SendTournamentResults(p.Edges.User.Email, data); err != nil {
-			log.Printf("failed to send results to %s: %v", p.Edges.User.Email, err)
+			i.logger.Error("failed to send results", "email", p.Edges.User.Email, "error", err)
 			i.captureJobError("send_tournament_results", err)
 			continue
 		}
+		sent++
 
 		_, err = i.db.EmailReminder.Create().
 			SetUserID(p.Edges.User.ID).
@@ -263,12 +278,12 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 			SetReminderType(emailreminder.ReminderTypeTournamentResults).
 			Save(ctx)
 		if err != nil {
-			log.Printf("failed to record reminder: %v", err)
+			i.logger.Error("failed to record reminder", "error", err)
 			i.captureJobError("send_tournament_results", err)
 		}
 	}
 
-	log.Printf("Finished sending tournament results emails for: %s", t.Name)
+	i.logger.Info("finished sending tournament results emails", "tournament", t.Name, "sent", sent)
 }
 
 func (i *Ingester) calculateLeagueStandings(ctx context.Context, userID, leagueID uuid.UUID, seasonYear int) (rank, totalEarnings int) {

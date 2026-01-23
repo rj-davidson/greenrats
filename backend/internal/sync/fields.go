@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent"
@@ -11,7 +10,8 @@ import (
 )
 
 func (i *Ingester) syncFields(ctx context.Context) {
-	log.Println("Checking for tournaments needing field sync...")
+	start := time.Now()
+	i.logger.Info("sync started", "type", "fields")
 
 	now := time.Now().UTC()
 	windowEnd := now.Add(7 * 24 * time.Hour)
@@ -24,49 +24,66 @@ func (i *Ingester) syncFields(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		log.Printf("failed to query upcoming tournaments: %v", err)
+		i.logger.Error("failed to query upcoming tournaments", "error", err)
 		i.captureJobError("sync_fields", err)
+		SyncErrors.WithLabelValues("fields").Inc()
+		SyncRunsTotal.WithLabelValues("fields", "error").Inc()
 		return
 	}
 
 	if len(tournaments) == 0 {
-		log.Println("No upcoming tournaments in sync window")
+		i.logger.Debug("no upcoming tournaments in sync window")
 		i.recordSync(ctx, "fields")
+		SyncRunsTotal.WithLabelValues("fields", "skipped").Inc()
 		return
 	}
 
+	synced := 0
 	for _, t := range tournaments {
 		if t.PgaTourID == nil || *t.PgaTourID == "" {
-			log.Printf("Tournament %s has no PGA Tour ID, skipping field sync", t.Name)
+			i.logger.Debug("tournament has no PGA Tour ID, skipping", "tournament", t.Name)
 			continue
 		}
 
 		hasField, err := i.tournamentHasField(ctx, t)
 		if err != nil {
-			log.Printf("failed to check field for tournament %s: %v", t.Name, err)
+			i.logger.Error("failed to check field", "tournament", t.Name, "error", err)
 			i.captureJobError("sync_fields", err)
+			SyncErrors.WithLabelValues("fields").Inc()
 			continue
 		}
 
 		if hasField {
-			log.Printf("Tournament %s already has field data, skipping", t.Name)
+			i.logger.Debug("tournament already has field data, skipping", "tournament", t.Name)
 			continue
 		}
 
-		log.Printf("Syncing field for tournament: %s", t.Name)
+		i.logger.Debug("syncing field", "tournament", t.Name)
 		result, err := i.fieldsService.SyncTournamentField(ctx, t.ID)
 		if err != nil {
-			log.Printf("failed to sync field for tournament %s: %v", t.Name, err)
+			i.logger.Error("failed to sync field", "tournament", t.Name, "error", err)
 			i.captureJobError("sync_fields", err)
+			SyncErrors.WithLabelValues("fields").Inc()
 			continue
 		}
 
-		log.Printf("Field sync for %s: total=%d, matched=%d, new=%d, updated=%d",
-			t.Name, result.TotalPlayers, result.MatchedPlayers, result.NewEntries, result.UpdatedEntries)
+		i.logger.Debug("field sync completed",
+			"tournament", t.Name,
+			"total", result.TotalPlayers,
+			"matched", result.MatchedPlayers,
+			"new", result.NewEntries,
+			"updated", result.UpdatedEntries)
+		synced++
+		SyncRecordsProcessed.WithLabelValues("fields", "entries").Add(float64(result.NewEntries + result.UpdatedEntries))
 	}
 
 	i.recordSync(ctx, "fields")
-	log.Println("Field sync completed")
+	duration := time.Since(start)
+	SyncDuration.WithLabelValues("fields").Observe(duration.Seconds())
+	SyncRecordsProcessed.WithLabelValues("fields", "tournaments").Add(float64(synced))
+	SyncRunsTotal.WithLabelValues("fields", "success").Inc()
+	LastSyncTimestamp.WithLabelValues("fields").Set(float64(time.Now().Unix()))
+	i.logger.Info("sync completed", "type", "fields", "duration", duration, "tournaments_synced", synced)
 }
 
 func (i *Ingester) tournamentHasField(ctx context.Context, t *ent.Tournament) (bool, error) {

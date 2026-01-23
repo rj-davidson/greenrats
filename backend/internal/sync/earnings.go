@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent"
@@ -11,7 +10,8 @@ import (
 )
 
 func (i *Ingester) syncEarnings(ctx context.Context) {
-	log.Println("Checking for tournaments needing earnings sync...")
+	start := time.Now()
+	i.logger.Info("sync started", "type", "earnings")
 
 	now := time.Now().UTC()
 	currentYear := now.Year()
@@ -23,48 +23,63 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		log.Printf("failed to query completed tournaments: %v", err)
+		i.logger.Error("failed to query completed tournaments", "error", err)
 		i.captureJobError("sync_earnings", err)
+		SyncErrors.WithLabelValues("earnings").Inc()
+		SyncRunsTotal.WithLabelValues("earnings", "error").Inc()
 		return
 	}
 
 	if len(tournaments) == 0 {
-		log.Println("No completed tournaments found")
+		i.logger.Debug("no completed tournaments found")
+		SyncRunsTotal.WithLabelValues("earnings", "skipped").Inc()
 		return
 	}
 
+	synced := 0
 	for _, t := range tournaments {
 		if t.BdlID == nil {
-			log.Printf("Tournament %s has no BallDontLie ID, skipping earnings sync", t.Name)
+			i.logger.Debug("tournament has no BallDontLie ID, skipping", "tournament", t.Name)
 			continue
 		}
 
 		hasEarnings, err := i.tournamentHasEarnings(ctx, t)
 		if err != nil {
-			log.Printf("failed to check earnings for tournament %s: %v", t.Name, err)
+			i.logger.Error("failed to check earnings", "tournament", t.Name, "error", err)
 			i.captureJobError("sync_earnings", err)
+			SyncErrors.WithLabelValues("earnings").Inc()
 			continue
 		}
 
 		daysSinceEnd := int(now.Sub(t.EndDate).Hours() / 24)
-		shouldSync := !hasEarnings || daysSinceEnd == 1 || daysSinceEnd == 2 || daysSinceEnd == 7
+		shouldSync := !hasEarnings ||
+			daysSinceEnd == 1 || daysSinceEnd == 2 || daysSinceEnd == 3 ||
+			daysSinceEnd == 7 || daysSinceEnd == 14
 
 		if shouldSync {
 			if !hasEarnings {
-				log.Printf("Tournament %s missing earnings, syncing...", t.Name)
+				i.logger.Debug("tournament missing earnings, syncing", "tournament", t.Name)
 			} else {
-				log.Printf("Refreshing earnings for recently completed tournament %s (day %d)", t.Name, daysSinceEnd)
+				i.logger.Debug("refreshing earnings for recently completed tournament", "tournament", t.Name, "days_since_end", daysSinceEnd)
 			}
 
 			if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
-				log.Printf("failed to sync earnings for tournament %s: %v", t.Name, err)
+				i.logger.Error("failed to sync earnings", "tournament", t.Name, "error", err)
 				i.captureJobError("sync_earnings", err)
+				SyncErrors.WithLabelValues("earnings").Inc()
+				continue
 			}
+			synced++
 		}
 	}
 
 	i.recordSync(ctx, "earnings")
-	log.Println("Earnings sync completed")
+	duration := time.Since(start)
+	SyncDuration.WithLabelValues("earnings").Observe(duration.Seconds())
+	SyncRecordsProcessed.WithLabelValues("earnings", "tournaments").Add(float64(synced))
+	SyncRunsTotal.WithLabelValues("earnings", "success").Inc()
+	LastSyncTimestamp.WithLabelValues("earnings").Set(float64(time.Now().Unix()))
+	i.logger.Info("sync completed", "type", "earnings", "duration", duration, "tournaments_synced", synced)
 }
 
 func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament) (bool, error) {

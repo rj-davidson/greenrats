@@ -2,6 +2,7 @@ import { ClientProviders } from "@/lib/providers/client-providers";
 import { AuthKitProvider } from "@workos-inc/authkit-nextjs/components";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -36,7 +37,24 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${playfairDisplay.variable} antialiased`}
       >
         <AuthKitProvider>
-          <ClientProviders>{children}</ClientProviders>
+          <ClientProviders>
+            <div className="flex min-h-screen flex-col">
+              <div className="flex-1">{children}</div>
+              <footer className="border-t py-6">
+                <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-6 text-sm text-muted-foreground sm:flex-row">
+                  <span>© {new Date().getFullYear()} GreenRats</span>
+                  <div className="flex gap-4">
+                    <Link className="transition hover:text-foreground" href="/terms">
+                      Terms of Service
+                    </Link>
+                    <Link className="transition hover:text-foreground" href="/privacy">
+                      Privacy Policy
+                    </Link>
+                  </div>
+                </div>
+              </footer>
+            </div>
+          </ClientProviders>
         </AuthKitProvider>
       </body>
     </html>
