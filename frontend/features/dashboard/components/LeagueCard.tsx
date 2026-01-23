@@ -13,7 +13,7 @@ interface LeagueCardProps {
 
 export function LeagueCard({ league }: LeagueCardProps) {
   return (
-    <Link href={`/leagues/${league.id}`}>
+    <Link href={`/${league.id}`}>
       <Card className="transition-colors hover:bg-muted/50">
         <CardHeader className="flex flex-row items-center gap-3 pb-2">
           <LeagueMonogram league={league} size={40} />

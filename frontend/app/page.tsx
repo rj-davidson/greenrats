@@ -1,17 +1,10 @@
-import { AppSidebar } from "@/components/core/app-sidebar";
-import { Breadcrumbs, BreadcrumbsProvider } from "@/components/core/breadcrumbs";
+import { LeaguePickerContent } from "@/app/league-picker";
+import { TopBar } from "@/components/core/top-bar";
 import { Button } from "@/components/shadcn/button";
-import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/shadcn/sidebar";
-import { DashboardView } from "@/features/dashboard/components";
 import { buildGetUserLeaguesQueryOptions } from "@/features/leagues/queries";
-import {
-  buildGetActiveTournamentQueryOptions,
-  buildGetTournamentsQueryOptions,
-} from "@/features/tournaments/queries";
-import { buildGetPendingActionsQueryOptions } from "@/features/users/queries";
 import type { User } from "@/features/users/types";
 import { makeServerRequest } from "@/lib/query/server-requestor";
-import { DehydratedState, HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
+import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { withAuth } from "@workos-inc/authkit-nextjs";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -40,28 +33,21 @@ function LandingPage() {
   );
 }
 
-interface DashboardHomeProps {
-  dehydratedState: DehydratedState;
+interface LeaguePickerProps {
+  displayName: string;
+  dehydratedState: ReturnType<typeof dehydrate>;
 }
 
-function DashboardHome({ dehydratedState }: DashboardHomeProps) {
+function LeaguePicker({ displayName, dehydratedState }: LeaguePickerProps) {
   return (
-    <SidebarProvider>
-      <BreadcrumbsProvider>
-        <AppSidebar />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Breadcrumbs />
-          </header>
-          <main className="min-w-0 flex-1 overflow-x-hidden p-4">
-            <HydrationBoundary state={dehydratedState}>
-              <DashboardView />
-            </HydrationBoundary>
-          </main>
-        </SidebarInset>
-      </BreadcrumbsProvider>
-    </SidebarProvider>
+    <div className="flex min-h-screen flex-col">
+      <TopBar />
+      <main className="flex-1 p-8">
+        <HydrationBoundary state={dehydratedState}>
+          <LeaguePickerContent displayName={displayName} />
+        </HydrationBoundary>
+      </main>
+    </div>
   );
 }
 
@@ -72,26 +58,24 @@ export default async function Home() {
     return <LandingPage />;
   }
 
-  let user: User | null = null;
+  let user: User;
   try {
     user = await makeServerRequest.get<User>("/api/v1/users/me");
   } catch {
-    // User fetch failed, will show landing page
+    return <LandingPage />;
   }
 
-  if (user && !user.display_name) {
+  if (!user.display_name) {
     redirect("/onboarding");
   }
 
   const queryClient = new QueryClient();
-  await Promise.all([
-    queryClient.prefetchQuery(buildGetUserLeaguesQueryOptions(makeServerRequest)),
-    queryClient.prefetchQuery(buildGetPendingActionsQueryOptions(makeServerRequest)),
-    queryClient.prefetchQuery(buildGetActiveTournamentQueryOptions(makeServerRequest)),
-    queryClient.prefetchQuery(
-      buildGetTournamentsQueryOptions({ status: "upcoming", limit: 6 }, makeServerRequest),
-    ),
-  ]);
+  await queryClient.prefetchQuery(buildGetUserLeaguesQueryOptions(makeServerRequest));
 
-  return <DashboardHome dehydratedState={dehydrate(queryClient)} />;
+  return (
+    <LeaguePicker
+      displayName={user.display_name || authUser.email || "User"}
+      dehydratedState={dehydrate(queryClient)}
+    />
+  );
 }

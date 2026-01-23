@@ -44,7 +44,7 @@ export function JoinLeagueForm() {
     try {
       const result = await joinLeague.mutateAsync(data);
       toast.success(`Joined ${result.league.name}!`);
-      router.push(`/leagues/${result.league.id}`);
+      router.push(`/${result.league.id}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to join league";
       if (message.includes("invalid join code")) {

@@ -71,7 +71,7 @@ function CompactRow({ tournament, leagueId, variant }: LeagueTournamentCardProps
   const isMuted = variant === "upcoming";
 
   return (
-    <Link href={`/leagues/${leagueId}/tournaments/${tournament.id}`}>
+    <Link href={`/${leagueId}/tournaments/${tournament.id}`}>
       <div
         className={cn(
           "flex flex-col gap-1 rounded-md border px-3 py-2 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:gap-3",
@@ -113,7 +113,7 @@ function FullCard({ tournament, leagueId, variant }: LeagueTournamentCardProps) 
     tournament.pick_window_closes_at;
 
   return (
-    <Link href={`/leagues/${leagueId}/tournaments/${tournament.id}`}>
+    <Link href={`/${leagueId}/tournaments/${tournament.id}`}>
       <Card className="border-2 border-primary/50 shadow-sm transition-colors hover:bg-muted/50">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-base font-semibold">{tournament.name}</CardTitle>

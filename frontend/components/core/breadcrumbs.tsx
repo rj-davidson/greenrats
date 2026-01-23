@@ -22,9 +22,15 @@ import {
 } from "react";
 
 const routeNames: Record<string, string> = {
-  "/leagues": "Leagues",
-  "/leagues/join": "Join League",
+  "/create": "Create League",
+  "/standings": "Standings",
   "/tournaments": "Tournaments",
+  "/audit": "Audit Log",
+  "/manage": "Manage",
+  "/admin": "Admin",
+  "/admin/users": "Users",
+  "/admin/leagues": "Leagues",
+  "/admin/automations": "Automations",
   "/rules": "Rules",
   "/onboarding": "Onboarding",
 };

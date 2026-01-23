@@ -23,7 +23,7 @@ export function QuickJoinInput() {
         onSuccess: (data) => {
           toast.success(`Joined ${data.league.name}!`);
           setCode("");
-          router.push(`/leagues/${data.league.id}`);
+          router.push(`/${data.league.id}`);
         },
         onError: (error) => {
           const message = error instanceof Error ? error.message : "Failed to join league";

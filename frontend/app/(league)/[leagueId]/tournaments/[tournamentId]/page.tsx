@@ -1,24 +1,19 @@
 "use client";
 
-import type { League } from "@/features/leagues/types";
-import { LeaguePicksTable } from "@/features/leagues/components/LeaguePicksTable";
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
-import { useLeaguePicks } from "@/features/picks/queries";
+import { LeaguePicksTable } from "@/features/leagues/components/LeaguePicksTable";
+import { useLeague } from "@/features/leagues/queries";
 import { PickMaker } from "@/features/picks/components/PickMaker";
+import { useLeaguePicks } from "@/features/picks/queries";
+import { TournamentSelector } from "@/features/tournaments/components";
 import { useTournament } from "@/features/tournaments/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { CalendarIcon } from "lucide-react";
-import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
-
-interface LeagueTournamentViewProps {
-  leagueId: string;
-  tournamentId: string;
-  league?: League;
-}
 
 function formatDateRange(startDate: string, endDate: string): string {
   const start = new Date(startDate);
@@ -30,7 +25,7 @@ function formatDateRange(startDate: string, endDate: string): string {
 
 function getStatusBadge(status: string) {
   switch (status) {
-    case "in_progress":
+    case "active":
       return (
         <Badge variant="destructive" className="animate-pulse">
           LIVE
@@ -45,18 +40,18 @@ function getStatusBadge(status: string) {
   }
 }
 
-export function LeagueTournamentView({
-  leagueId,
-  tournamentId,
-  league,
-}: LeagueTournamentViewProps) {
+export default function TournamentDetailPage() {
+  const params = useParams<{ leagueId: string; tournamentId: string }>();
+  const { leagueId, tournamentId } = params;
+
+  const { data: leagueData } = useLeague(leagueId);
   const { data: tournamentData, isLoading: tournamentLoading } = useTournament(tournamentId);
   const { data: picksData, isLoading: picksLoading } = useLeaguePicks(leagueId, tournamentId);
   const { data: currentUser } = useCurrentUser();
   const { setExtraCrumbs } = useBreadcrumbs();
 
-  const leagueName = league?.name.trim();
-  const tournamentName = tournamentData?.tournament.name.trim();
+  const league = leagueData?.league;
+  const tournament = tournamentData?.tournament;
 
   const currentUserPick = useMemo(() => {
     if (!currentUser || !picksData?.entries) return undefined;
@@ -76,23 +71,15 @@ export function LeagueTournamentView({
 
   useEffect(() => {
     const crumbs: { name: string; path?: string }[] = [];
-
-    if (leagueName) {
-      crumbs.push({ name: leagueName, path: `/${leagueId}` });
+    if (league?.name) {
+      crumbs.push({ name: league.name, path: `/${leagueId}` });
     }
-
-    if (tournamentName) {
-      crumbs.push({ name: tournamentName });
+    if (tournament?.name) {
+      crumbs.push({ name: tournament.name });
     }
-
     setExtraCrumbs(crumbs);
-  }, [leagueId, leagueName, setExtraCrumbs, tournamentName]);
-
-  useEffect(() => {
-    return () => {
-      setExtraCrumbs([]);
-    };
-  }, [setExtraCrumbs]);
+    return () => setExtraCrumbs([]);
+  }, [league?.name, tournament?.name, leagueId, setExtraCrumbs]);
 
   if (tournamentLoading) {
     return (
@@ -103,7 +90,7 @@ export function LeagueTournamentView({
     );
   }
 
-  if (!tournamentData?.tournament) {
+  if (!tournament) {
     return (
       <div className="text-center">
         <h1 className="mb-2 text-2xl font-bold">Tournament Not Found</h1>
@@ -112,18 +99,13 @@ export function LeagueTournamentView({
     );
   }
 
-  const tournament = tournamentData.tournament;
-
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <Link
-            href={`/${leagueId}`}
-            className="mb-1 block text-sm text-muted-foreground hover:text-foreground"
-          >
-            {league?.name || "Back to league"}
-          </Link>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1">
+          <div className="mb-2">
+            <TournamentSelector leagueId={leagueId} currentTournamentId={tournamentId} />
+          </div>
           <h1 className="text-2xl font-bold">{tournament.name}</h1>
           <div className="mt-1 flex items-center gap-2 text-muted-foreground">
             <CalendarIcon className="size-4" />
@@ -141,11 +123,7 @@ export function LeagueTournamentView({
 
         <TabsContent value="picks" className="space-y-6">
           {tournament.status === "upcoming" && (
-            <PickMaker
-              leagueId={leagueId}
-              tournament={tournament}
-              currentPick={currentUserPick}
-            />
+            <PickMaker leagueId={leagueId} tournament={tournament} currentPick={currentUserPick} />
           )}
           {picksLoading ? (
             <Skeleton className="h-64 w-full" />

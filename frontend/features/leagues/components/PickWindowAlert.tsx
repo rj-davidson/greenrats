@@ -84,7 +84,7 @@ function OpenWindowAlert({
               </p>
             </div>
             <Button asChild size="sm" variant="outline">
-              <Link href={`/leagues/${leagueId}/tournaments/${tournament.id}`}>
+              <Link href={`/${leagueId}/tournaments/${tournament.id}`}>
                 View Pick
               </Link>
             </Button>
@@ -104,7 +104,7 @@ function OpenWindowAlert({
             Closes in <span className="font-medium">{countdown}</span>
           </p>
           <Button asChild size="sm">
-            <Link href={`/leagues/${leagueId}/tournaments/${tournament.id}`}>
+            <Link href={`/${leagueId}/tournaments/${tournament.id}`}>
               Make Your Pick
             </Link>
           </Button>

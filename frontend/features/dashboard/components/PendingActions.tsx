@@ -40,7 +40,7 @@ function PendingPickCard({ action }: { action: PendingPickAction }) {
           Make your pick for {action.league_name}
         </span>
         <Button asChild size="sm">
-          <Link href={`/leagues/${action.league_id}/tournaments/${action.tournament_id}`}>
+          <Link href={`/${action.league_id}/tournaments/${action.tournament_id}`}>
             Make Pick
           </Link>
         </Button>
