@@ -1,6 +1,5 @@
 "use client";
 
-import { CreateLeagueForm } from "@/features/leagues/components/CreateLeagueForm";
 import { Button } from "@/components/shadcn/button";
 import {
   Dialog,
@@ -10,6 +9,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/shadcn/dialog";
+import { CreateLeagueForm } from "@/features/leagues/components/CreateLeagueForm";
 import { PlusIcon } from "lucide-react";
 import { useState } from "react";
 

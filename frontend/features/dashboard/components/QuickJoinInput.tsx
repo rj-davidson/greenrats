@@ -44,10 +44,7 @@ export function QuickJoinInput() {
           className="w-28"
           maxLength={6}
         />
-        <InputGroupButton
-          type="submit"
-          disabled={!code.trim() || joinLeague.isPending}
-        >
+        <InputGroupButton type="submit" disabled={!code.trim() || joinLeague.isPending}>
           <ArrowRight className="size-4" />
         </InputGroupButton>
       </InputGroup>

@@ -14,7 +14,6 @@ import {
   SidebarMenuItem,
 } from "@/components/shadcn/sidebar";
 import { BotIcon, HomeIcon, SettingsIcon, TrophyIcon, UsersIcon } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -47,21 +46,9 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex w-full items-center justify-center">
-            <Link href="/">
-              <Image
-                src="/assets/logo.png"
-                alt="GreenRats"
-                width={220}
-                height={83}
-                className="group-data-[collapsible=icon]:hidden"
-              />
-              <Image
-                src="/assets/logo_square.png"
-                alt="GreenRats"
-                width={32}
-                height={32}
-                className="hidden group-data-[collapsible=icon]:block"
-              />
+            <Link href="/" className="font-serif text-xl tracking-wide">
+              <span className="group-data-[collapsible=icon]:hidden">GREEN RATS</span>
+              <span className="hidden group-data-[collapsible=icon]:block">GR</span>
             </Link>
           </SidebarMenuItem>
         </SidebarMenu>

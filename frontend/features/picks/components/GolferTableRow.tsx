@@ -1,9 +1,9 @@
 "use client";
 
-import type { AvailableGolfer } from "@/features/picks/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/shadcn/avatar";
 import { Button } from "@/components/shadcn/button";
 import { TableCell, TableRow } from "@/components/shadcn/table";
+import type { AvailableGolfer } from "@/features/picks/types";
 import { cn } from "@/lib/utils";
 
 interface GolferTableRowProps {

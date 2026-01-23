@@ -1,16 +1,22 @@
 "use client";
 
-import { useLeagueTournaments } from "@/features/leagues/queries";
-import { LeagueTournamentCard, type TournamentCardVariant } from "@/features/leagues/components/LeagueTournamentCard";
-import type { LeagueTournament } from "@/features/leagues/types";
 import { Skeleton } from "@/components/shadcn/skeleton";
+import {
+  LeagueTournamentCard,
+  type TournamentCardVariant,
+} from "@/features/leagues/components/LeagueTournamentCard";
+import { useLeagueTournaments } from "@/features/leagues/queries";
+import type { LeagueTournament } from "@/features/leagues/types";
 import { useMemo } from "react";
 
 interface LeagueTournamentListProps {
   leagueId: string;
 }
 
-function getVariant(tournament: LeagueTournament, firstUpcomingId: string | null): TournamentCardVariant {
+function getVariant(
+  tournament: LeagueTournament,
+  firstUpcomingId: string | null,
+): TournamentCardVariant {
   if (tournament.status === "active") {
     return "live";
   }

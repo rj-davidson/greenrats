@@ -5,8 +5,8 @@ import type {
   TriggerResponse,
 } from "@/features/admin/types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
-import type { Requestor } from "@/lib/query/requestor";
 import { QueryKey } from "@/lib/query/query-keys";
+import type { Requestor } from "@/lib/query/requestor";
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const adminKeys = {

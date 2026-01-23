@@ -128,7 +128,10 @@ export default function TournamentDetailPage() {
           {picksLoading ? (
             <Skeleton className="h-64 w-full" />
           ) : (
-            <LeaguePicksTable picks={picksData?.entries ?? []} tournamentStatus={tournament.status} />
+            <LeaguePicksTable
+              picks={picksData?.entries ?? []}
+              tournamentStatus={tournament.status}
+            />
           )}
         </TabsContent>
 

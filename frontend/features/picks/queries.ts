@@ -99,7 +99,11 @@ export function useUserPicks(leagueId?: string, seasonYear?: number) {
   return useQuery(buildGetUserPicksQueryOptions(leagueId, seasonYear));
 }
 
-export function useLeaguePicks(leagueId: string, tournamentId: string, options: LeaguePicksOptions = {}) {
+export function useLeaguePicks(
+  leagueId: string,
+  tournamentId: string,
+  options: LeaguePicksOptions = {},
+) {
   return useQuery(buildGetLeaguePicksQueryOptions(leagueId, tournamentId, options));
 }
 

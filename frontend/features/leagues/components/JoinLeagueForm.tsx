@@ -1,7 +1,5 @@
 "use client";
 
-import { useJoinLeague } from "@/features/leagues/queries";
-import { joinLeagueRequestSchema } from "@/features/leagues/types";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -20,6 +18,8 @@ import {
   FormMessage,
 } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input";
+import { useJoinLeague } from "@/features/leagues/queries";
+import { joinLeagueRequestSchema } from "@/features/leagues/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { UsersIcon } from "lucide-react";
 import { useRouter } from "next/navigation";

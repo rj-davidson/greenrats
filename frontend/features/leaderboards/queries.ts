@@ -1,4 +1,7 @@
-import type { LeagueLeaderboardResponse, LeagueStandingsResponse } from "@/features/leaderboards/types";
+import type {
+  LeagueLeaderboardResponse,
+  LeagueStandingsResponse,
+} from "@/features/leaderboards/types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";

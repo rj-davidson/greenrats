@@ -1,5 +1,20 @@
 "use client";
 
+import { Button } from "@/components/shadcn/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/shadcn/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/shadcn/select";
 import {
   useAdminTournaments,
   useTriggerSyncTournaments,
@@ -8,18 +23,9 @@ import {
   useTriggerSyncEarnings,
   useTriggerSyncField,
 } from "@/features/admin/queries";
-import { Button } from "@/components/shadcn/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/shadcn/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/shadcn/select";
+import { RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { RefreshCwIcon } from "lucide-react";
 
 export function AutomationsPage() {
   const { data: tournamentsData, isLoading: loadingTournaments } = useAdminTournaments();
@@ -113,16 +119,10 @@ export function AutomationsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Sync Players</CardTitle>
-            <CardDescription>
-              Fetch and update all golfer data from BallDontLie API
-            </CardDescription>
+            <CardDescription>Fetch and update all golfer data from BallDontLie API</CardDescription>
           </CardHeader>
           <CardContent>
-            <Button
-              onClick={handleSyncPlayers}
-              disabled={syncPlayers.isPending}
-              className="w-full"
-            >
+            <Button onClick={handleSyncPlayers} disabled={syncPlayers.isPending} className="w-full">
               <RefreshCwIcon className={syncPlayers.isPending ? "animate-spin" : ""} />
               {syncPlayers.isPending ? "Syncing..." : "Sync Players"}
             </Button>
@@ -140,7 +140,9 @@ export function AutomationsPage() {
         <CardContent className="space-y-4">
           <Select value={selectedTournament} onValueChange={setSelectedTournament}>
             <SelectTrigger>
-              <SelectValue placeholder={loadingTournaments ? "Loading..." : "Select a tournament"} />
+              <SelectValue
+                placeholder={loadingTournaments ? "Loading..." : "Select a tournament"}
+              />
             </SelectTrigger>
             <SelectContent>
               {tournamentsData?.tournaments.map((tournament) => (

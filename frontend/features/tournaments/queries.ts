@@ -29,8 +29,7 @@ export const buildTournamentActiveKey = () => [QueryKey.TOURNAMENTS, "active"] a
 export const buildLeaderboardKey = (id: string, include?: string) =>
   [QueryKey.TOURNAMENTS, "leaderboard", id, include] as const;
 
-export const buildFieldKey = (id: string) =>
-  [QueryKey.TOURNAMENTS, "field", id] as const;
+export const buildFieldKey = (id: string) => [QueryKey.TOURNAMENTS, "field", id] as const;
 
 // Query options builders
 export function buildGetTournamentsQueryOptions(
@@ -92,10 +91,7 @@ export function buildGetLeaderboardQueryOptions(
   });
 }
 
-export function buildGetFieldQueryOptions(
-  id: string,
-  requestor: Requestor = makeClientRequest,
-) {
+export function buildGetFieldQueryOptions(id: string, requestor: Requestor = makeClientRequest) {
   return queryOptions<GetFieldResponse>({
     queryKey: buildFieldKey(id),
     queryFn: () => requestor.get<GetFieldResponse>(`/api/v1/tournaments/${id}/field`),

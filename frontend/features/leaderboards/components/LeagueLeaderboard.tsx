@@ -1,6 +1,5 @@
 "use client";
 
-import { useLeagueLeaderboard } from "@/features/leaderboards/queries";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import {
   Table,
@@ -10,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/shadcn/table";
+import { useLeagueLeaderboard } from "@/features/leaderboards/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { cn } from "@/lib/utils";
 import { TrophyIcon } from "lucide-react";

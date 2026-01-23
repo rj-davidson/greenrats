@@ -1,15 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useAdminLeagues, useDeleteLeague } from "@/features/admin/queries";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/shadcn/table";
 import { Button } from "@/components/shadcn/button";
 import {
   Dialog,
@@ -19,7 +9,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/shadcn/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/shadcn/table";
+import { useAdminLeagues, useDeleteLeague } from "@/features/admin/queries";
 import { TrashIcon } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 export function LeaguesTable() {
@@ -102,11 +102,7 @@ export function LeaguesTable() {
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-              disabled={deleteLeague.isPending}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={deleteLeague.isPending}>
               {deleteLeague.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>

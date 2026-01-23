@@ -1,13 +1,13 @@
 "use client";
 
-import type { League } from "@/features/leagues/types";
-import { LeaguePicksTable } from "@/features/leagues/components/LeaguePicksTable";
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
-import { useLeaguePicks } from "@/features/picks/queries";
+import { LeaguePicksTable } from "@/features/leagues/components/LeaguePicksTable";
+import type { League } from "@/features/leagues/types";
 import { PickMaker } from "@/features/picks/components/PickMaker";
+import { useLeaguePicks } from "@/features/picks/queries";
 import { useTournament } from "@/features/tournaments/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { CalendarIcon } from "lucide-react";
@@ -141,16 +141,15 @@ export function LeagueTournamentView({
 
         <TabsContent value="picks" className="space-y-6">
           {tournament.status === "upcoming" && (
-            <PickMaker
-              leagueId={leagueId}
-              tournament={tournament}
-              currentPick={currentUserPick}
-            />
+            <PickMaker leagueId={leagueId} tournament={tournament} currentPick={currentUserPick} />
           )}
           {picksLoading ? (
             <Skeleton className="h-64 w-full" />
           ) : (
-            <LeaguePicksTable picks={picksData?.entries ?? []} tournamentStatus={tournament.status} />
+            <LeaguePicksTable
+              picks={picksData?.entries ?? []}
+              tournamentStatus={tournament.status}
+            />
           )}
         </TabsContent>
 

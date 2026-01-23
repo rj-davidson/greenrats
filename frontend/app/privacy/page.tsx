@@ -8,8 +8,8 @@ export default function PrivacyPage() {
 
       <section className="mt-8 space-y-3 text-sm leading-6 text-muted-foreground">
         <p>
-          This Privacy Policy explains how GreenRats collects, uses, and shares information when
-          you use our website, applications, and services (the "Service").
+          This Privacy Policy explains how GreenRats collects, uses, and shares information when you
+          use our website, applications, and services (the "Service").
         </p>
       </section>
 
@@ -23,12 +23,8 @@ export default function PrivacyPage() {
             Subscription and billing information: plan selection, billing status, and payment
             processor identifiers. We do not store full payment card numbers.
           </p>
-          <p>
-            League and gameplay data: league names, picks, and league membership details.
-          </p>
-          <p>
-            Usage and device data: log data, IP address, browser type, and pages viewed.
-          </p>
+          <p>League and gameplay data: league names, picks, and league membership details.</p>
+          <p>Usage and device data: log data, IP address, browser type, and pages viewed.</p>
         </div>
       </section>
 
@@ -107,15 +103,17 @@ export default function PrivacyPage() {
       <section className="mt-8 space-y-3 text-sm leading-6">
         <h2 className="text-lg font-semibold text-foreground">Changes to This Policy</h2>
         <p className="text-muted-foreground">
-          We may update this Privacy Policy from time to time. If we make material changes, we
-          will provide notice by updating the effective date and, if appropriate, by additional
-          notice within the Service.
+          We may update this Privacy Policy from time to time. If we make material changes, we will
+          provide notice by updating the effective date and, if appropriate, by additional notice
+          within the Service.
         </p>
       </section>
 
       <section className="mt-8 space-y-3 text-sm leading-6">
         <h2 className="text-lg font-semibold text-foreground">Contact</h2>
-        <p className="text-muted-foreground">Questions about this policy? Contact us at dev@greenrats.com.</p>
+        <p className="text-muted-foreground">
+          Questions about this policy? Contact us at dev@greenrats.com.
+        </p>
       </section>
     </main>
   );

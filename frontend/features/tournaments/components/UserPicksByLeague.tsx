@@ -50,7 +50,9 @@ function PickRow({ entry, showEarnings }: { entry: LeaderboardEntry; showEarning
       >
         {formatScore(entry.score)}
       </TableCell>
-      <TableCell className="text-muted-foreground">{formatThru(entry.thru, entry.status)}</TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatThru(entry.thru, entry.status)}
+      </TableCell>
       {showEarnings && (
         <TableCell className="text-right font-mono">
           {entry.earnings > 0 ? formatEarnings(entry.earnings) : "-"}

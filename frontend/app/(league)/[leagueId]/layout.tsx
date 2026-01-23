@@ -50,7 +50,9 @@ export default async function LeagueLayout({ children, params }: LeagueLayoutPro
     <HydrationBoundary state={dehydrate(queryClient)}>
       <SidebarProvider>
         <BreadcrumbsProvider>
-          <LeagueSidebar league={league as { id: string; name: string; role: "owner" | "member" }} />
+          <LeagueSidebar
+            league={league as { id: string; name: string; role: "owner" | "member" }}
+          />
           <SidebarInset>
             <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
               <SidebarTrigger className="-ml-1" />

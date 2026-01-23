@@ -4,13 +4,9 @@ import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
 import { queryOptions, useQuery } from "@tanstack/react-query";
 
-export const buildGolferDetailKey = (id: string) =>
-  [QueryKey.GOLFERS, "detail", id] as const;
+export const buildGolferDetailKey = (id: string) => [QueryKey.GOLFERS, "detail", id] as const;
 
-export function buildGetGolferQueryOptions(
-  id: string,
-  requestor: Requestor = makeClientRequest,
-) {
+export function buildGetGolferQueryOptions(id: string, requestor: Requestor = makeClientRequest) {
   return queryOptions<GetGolferResponse>({
     queryKey: buildGolferDetailKey(id),
     queryFn: () => requestor.get<GetGolferResponse>(`/api/v1/golfers/${id}`),

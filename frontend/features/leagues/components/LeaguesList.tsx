@@ -1,7 +1,5 @@
 "use client";
 
-import { useUserLeagues } from "@/features/leagues/queries";
-import type { League } from "@/features/leagues/types";
 import { Badge } from "@/components/shadcn/badge";
 import {
   Card,
@@ -10,6 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/shadcn/card";
+import { useUserLeagues } from "@/features/leagues/queries";
+import type { League } from "@/features/leagues/types";
 
 function RoleBadge({ role }: { role: string }) {
   const isOwner = role === "Owner";

@@ -1,12 +1,12 @@
 "use client";
 
-import type { LeagueTournament } from "@/features/leagues/types";
-import { formatPickWindowDate } from "@/features/picks/utils";
 import { Badge } from "@/components/shadcn/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/card";
+import type { LeagueTournament } from "@/features/leagues/types";
+import { formatPickWindowDate } from "@/features/picks/utils";
+import { cn } from "@/lib/utils";
 import { CalendarIcon, CheckCircle2Icon, ClockIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
 
 export type TournamentCardVariant = "live" | "next" | "upcoming" | "final";
 
@@ -92,9 +92,13 @@ function CompactRow({ tournament, leagueId, variant }: LeagueTournamentCardProps
               <div className="flex items-center gap-1 text-green-600">
                 <CheckCircle2Icon className="size-3" />
                 <span>{tournament.golfer_name}</span>
-                {variant === "final" && tournament.golfer_earnings !== undefined && tournament.golfer_earnings > 0 && (
-                  <span className="font-medium">{formatEarnings(tournament.golfer_earnings)}</span>
-                )}
+                {variant === "final" &&
+                  tournament.golfer_earnings !== undefined &&
+                  tournament.golfer_earnings > 0 && (
+                    <span className="font-medium">
+                      {formatEarnings(tournament.golfer_earnings)}
+                    </span>
+                  )}
               </div>
             ) : variant === "upcoming" ? (
               <span>No pick</span>

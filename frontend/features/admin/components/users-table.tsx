@@ -1,6 +1,6 @@
 "use client";
 
-import { useAdminUsers } from "@/features/admin/queries";
+import { Badge } from "@/components/shadcn/badge";
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/shadcn/table";
-import { Badge } from "@/components/shadcn/badge";
+import { useAdminUsers } from "@/features/admin/queries";
 
 export function UsersTable() {
   const { data, isLoading, error } = useAdminUsers();

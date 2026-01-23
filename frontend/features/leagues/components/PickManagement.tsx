@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -26,12 +25,17 @@ import {
 } from "@/components/shadcn/select";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { useLeagueMembers, useLeagueTournaments } from "@/features/leagues/queries";
-import { useAvailableGolfersForUser, useCreatePickForUser, useOverridePick } from "@/features/picks/queries";
 import type { LeagueMember } from "@/features/leagues/types";
+import {
+  useAvailableGolfersForUser,
+  useCreatePickForUser,
+  useOverridePick,
+} from "@/features/picks/queries";
 import type { AvailableGolfer } from "@/features/picks/types";
-import { AlertTriangleIcon, CheckIcon, EditIcon } from "lucide-react";
-import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AlertTriangleIcon, CheckIcon, EditIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface PickManagementProps {
   leagueId: string;
@@ -89,9 +93,7 @@ export function PickManagement({ leagueId }: PickManagementProps) {
           golferId: selectedGolfer.id,
           tournamentId: selectedTournamentId,
         });
-        toast.success(
-          `Changed ${selectedMember.display_name}'s pick to ${selectedGolfer.name}`,
-        );
+        toast.success(`Changed ${selectedMember.display_name}'s pick to ${selectedGolfer.name}`);
       } else {
         await createPickForUser.mutateAsync({
           leagueId,
@@ -99,9 +101,7 @@ export function PickManagement({ leagueId }: PickManagementProps) {
           tournamentId: selectedTournamentId,
           golferId: selectedGolfer.id,
         });
-        toast.success(
-          `Added ${selectedGolfer.name} as ${selectedMember.display_name}'s pick`,
-        );
+        toast.success(`Added ${selectedGolfer.name} as ${selectedMember.display_name}'s pick`);
       }
       setConfirmDialogOpen(false);
       setSelectedMember(null);
@@ -220,8 +220,7 @@ export function PickManagement({ leagueId }: PickManagementProps) {
                           "w-full rounded-md p-2 text-left transition-colors",
                           !golfer.is_used && !isCurrentPick && "hover:bg-accent",
                           selectedGolfer?.id === golfer.id && "bg-accent",
-                          (golfer.is_used || isCurrentPick) &&
-                            "cursor-not-allowed opacity-50",
+                          (golfer.is_used || isCurrentPick) && "cursor-not-allowed opacity-50",
                         )}
                       >
                         <div className="flex items-center justify-between">

@@ -65,8 +65,7 @@ function DetailItem({
       </ItemMedia>
       <ItemContent>
         <span className="text-sm">
-          <span className="text-muted-foreground">{label}:</span>{" "}
-          {children}
+          <span className="text-muted-foreground">{label}:</span> {children}
         </span>
       </ItemContent>
     </Item>
@@ -86,7 +85,8 @@ function PickWindowInfo({ tournament }: { tournament: Tournament }) {
       <DetailItem icon={ClockIcon} label="Picks close">
         <span className="font-medium text-primary">{countdown}</span>
         <span className="text-muted-foreground">
-          {" "}({formatPickWindowDate(tournament.pick_window_closes_at)})
+          {" "}
+          ({formatPickWindowDate(tournament.pick_window_closes_at)})
         </span>
       </DetailItem>
     );

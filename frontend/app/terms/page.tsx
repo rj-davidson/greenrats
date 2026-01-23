@@ -8,13 +8,13 @@ export default function TermsPage() {
 
       <section className="mt-8 space-y-3 text-sm leading-6 text-muted-foreground">
         <p>
-          These Terms of Service ("Terms") govern your access to and use of the GreenRats
-          website, applications, and services (the "Service"). By using the Service, you agree to
-          these Terms.
+          These Terms of Service ("Terms") govern your access to and use of the GreenRats website,
+          applications, and services (the "Service"). By using the Service, you agree to these
+          Terms.
         </p>
         <p>
-          The Service provides subscription-based league organization and automated scoring for
-          golf pick&apos;em leagues. Scoring is based on publicly available tournament results and
+          The Service provides subscription-based league organization and automated scoring for golf
+          pick&apos;em leagues. Scoring is based on publicly available tournament results and
           published prize money, and does not represent actual money earned by users.
         </p>
       </section>
@@ -101,9 +101,9 @@ export default function TermsPage() {
         <p className="text-muted-foreground">
           To the fullest extent permitted by law, GreenRats will not be liable for indirect,
           incidental, special, consequential, or punitive damages, or for any loss of profits,
-          revenues, data, or goodwill. Our total liability for any claims arising out of or
-          relating to the Service will not exceed the amount you paid to us for the Service in the
-          12 months before the event giving rise to the claim.
+          revenues, data, or goodwill. Our total liability for any claims arising out of or relating
+          to the Service will not exceed the amount you paid to us for the Service in the 12 months
+          before the event giving rise to the claim.
         </p>
       </section>
 
@@ -136,14 +136,16 @@ export default function TermsPage() {
         <h2 className="text-lg font-semibold text-foreground">Changes to These Terms</h2>
         <p className="text-muted-foreground">
           We may update these Terms from time to time. If we make material changes, we will provide
-          notice by updating the effective date and, if appropriate, by additional notice within
-          the Service.
+          notice by updating the effective date and, if appropriate, by additional notice within the
+          Service.
         </p>
       </section>
 
       <section className="mt-8 space-y-3 text-sm leading-6">
         <h2 className="text-lg font-semibold text-foreground">Contact</h2>
-        <p className="text-muted-foreground">Questions about these Terms? Contact us at dev@greenrats.com.</p>
+        <p className="text-muted-foreground">
+          Questions about these Terms? Contact us at dev@greenrats.com.
+        </p>
       </section>
     </main>
   );

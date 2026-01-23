@@ -1,6 +1,5 @@
 "use client";
 
-import type { AvailableGolfer } from "@/features/picks/types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/shadcn/avatar";
 import { Button } from "@/components/shadcn/button";
 import {
@@ -11,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/shadcn/dialog";
+import type { AvailableGolfer } from "@/features/picks/types";
 import { TriangleAlertIcon } from "lucide-react";
 
 interface PickConfirmDialogProps {

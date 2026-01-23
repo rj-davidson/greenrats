@@ -1,10 +1,10 @@
 "use client";
 
-import type { AvailableGolfer } from "@/features/picks/types";
-import { GolferTableRow } from "@/features/picks/components/GolferTableRow";
 import { Input } from "@/components/shadcn/input";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { Table, TableBody, TableHead, TableHeader, TableRow } from "@/components/shadcn/table";
+import { GolferTableRow } from "@/features/picks/components/GolferTableRow";
+import type { AvailableGolfer } from "@/features/picks/types";
 import { SearchIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 

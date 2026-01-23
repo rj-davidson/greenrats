@@ -1,7 +1,5 @@
 "use client";
 
-import { useCheckDisplayName, useSetDisplayName } from "@/features/users/queries";
-import { type SetDisplayNameRequest, setDisplayNameRequestSchema } from "@/features/users/types";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -20,6 +18,8 @@ import {
   FormMessage,
 } from "@/components/shadcn/form";
 import { Input } from "@/components/shadcn/input";
+import { useCheckDisplayName, useSetDisplayName } from "@/features/users/queries";
+import { type SetDisplayNameRequest, setDisplayNameRequestSchema } from "@/features/users/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";

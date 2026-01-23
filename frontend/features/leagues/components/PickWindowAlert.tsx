@@ -25,9 +25,7 @@ function formatLocalDateTime(isoString: string): string {
   });
 }
 
-function findRelevantTournament(
-  tournaments: LeagueTournament[],
-): LeagueTournament | null {
+function findRelevantTournament(tournaments: LeagueTournament[]): LeagueTournament | null {
   const sorted = [...tournaments].sort((a, b) => {
     const aTime = a.pick_window_closes_at
       ? new Date(a.pick_window_closes_at).getTime()
@@ -39,10 +37,7 @@ function findRelevantTournament(
   });
 
   const active = sorted.find(
-    (t) =>
-      t.status === "active" &&
-      t.pick_window_opens_at &&
-      t.pick_window_closes_at,
+    (t) => t.status === "active" && t.pick_window_opens_at && t.pick_window_closes_at,
   );
   if (active) {
     const state = getPickWindowState(active);
@@ -51,10 +46,7 @@ function findRelevantTournament(
 
   return (
     sorted.find(
-      (t) =>
-        t.status === "upcoming" &&
-        t.pick_window_opens_at &&
-        t.pick_window_closes_at,
+      (t) => t.status === "upcoming" && t.pick_window_opens_at && t.pick_window_closes_at,
     ) ?? null
   );
 }
@@ -84,9 +76,7 @@ function OpenWindowAlert({
               </p>
             </div>
             <Button asChild size="sm" variant="outline">
-              <Link href={`/${leagueId}/tournaments/${tournament.id}`}>
-                View Pick
-              </Link>
+              <Link href={`/${leagueId}/tournaments/${tournament.id}`}>View Pick</Link>
             </Button>
           </div>
         </AlertDescription>
@@ -104,9 +94,7 @@ function OpenWindowAlert({
             Closes in <span className="font-medium">{countdown}</span>
           </p>
           <Button asChild size="sm">
-            <Link href={`/${leagueId}/tournaments/${tournament.id}`}>
-              Make Your Pick
-            </Link>
+            <Link href={`/${leagueId}/tournaments/${tournament.id}`}>Make Your Pick</Link>
           </Button>
         </div>
       </AlertDescription>
@@ -114,11 +102,7 @@ function OpenWindowAlert({
   );
 }
 
-function NotOpenWindowAlert({
-  tournament,
-}: {
-  tournament: LeagueTournament;
-}) {
+function NotOpenWindowAlert({ tournament }: { tournament: LeagueTournament }) {
   const countdown = formatCountdown(tournament.pick_window_opens_at!);
   const localDateTime = formatLocalDateTime(tournament.pick_window_opens_at!);
 

@@ -5,7 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/ca
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { LeagueLeaderboard } from "@/features/leaderboards/components";
 import { useLeagueLeaderboard } from "@/features/leaderboards/queries";
-import { LeagueMonogram, LeagueTournamentCard, PickWindowAlert } from "@/features/leagues/components";
+import {
+  LeagueMonogram,
+  LeagueTournamentCard,
+  PickWindowAlert,
+} from "@/features/leagues/components";
 import { useLeague, useLeagueTournaments } from "@/features/leagues/queries";
 import type { LeagueTournament } from "@/features/leagues/types";
 import { PickMaker } from "@/features/picks/components/PickMaker";
@@ -94,7 +98,11 @@ function UpcomingTournamentPick({
   }
 
   return (
-    <PickMaker leagueId={leagueId} tournament={tournamentData.tournament} currentPick={currentUserPick} />
+    <PickMaker
+      leagueId={leagueId}
+      tournament={tournamentData.tournament}
+      currentPick={currentUserPick}
+    />
   );
 }
 
