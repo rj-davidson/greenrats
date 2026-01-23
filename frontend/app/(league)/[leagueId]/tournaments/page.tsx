@@ -4,7 +4,6 @@ import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { TournamentDataTable, TournamentSpotlightCards } from "@/features/leagues/components";
 import { useLeague, useLeagueTournaments } from "@/features/leagues/queries";
-import { TournamentSelector } from "@/features/tournaments/components";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
@@ -28,16 +27,13 @@ export default function TournamentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Tournaments</h1>
-          {league && (
-            <p className="text-muted-foreground">
-              {league.name} &middot; Season {league.season_year}
-            </p>
-          )}
-        </div>
-        <TournamentSelector leagueId={leagueId} />
+      <div>
+        <h1 className="text-2xl font-bold">Tournaments</h1>
+        {league && (
+          <p className="text-muted-foreground">
+            {league.name} &middot; Season {league.season_year}
+          </p>
+        )}
       </div>
 
       {isLoading ? (

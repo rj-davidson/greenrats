@@ -1,17 +1,12 @@
-export { ActionLog } from "@/features/leagues/components/ActionLog";
 export { CommissionerPanel } from "@/features/leagues/components/CommissionerPanel";
 export { LeagueActivity } from "@/features/leagues/components/LeagueActivity";
 export { PickManagement } from "@/features/leagues/components/PickManagement";
 export { CreateLeagueDialog } from "@/features/leagues/components/CreateLeagueDialog";
 export { CreateLeagueForm } from "@/features/leagues/components/CreateLeagueForm";
-export { JoinLeagueForm } from "@/features/leagues/components/JoinLeagueForm";
 export { LeagueMonogram } from "@/features/leagues/components/LeagueMonogram";
 export { LeaguesList } from "@/features/leagues/components/LeaguesList";
-export { LeaguesSection } from "@/features/leagues/components/LeaguesSection";
 export { LeaguePicksTable } from "@/features/leagues/components/LeaguePicksTable";
 export { LeagueTournamentCard } from "@/features/leagues/components/LeagueTournamentCard";
-export { LeagueTournamentList } from "@/features/leagues/components/LeagueTournamentList";
-export { LeagueTournamentView } from "@/features/leagues/components/LeagueTournamentView";
 export { PickWindowAlert } from "@/features/leagues/components/PickWindowAlert";
 export { TournamentDataTable } from "@/features/leagues/components/TournamentDataTable";
 export { TournamentSpotlightCards } from "@/features/leagues/components/TournamentSpotlightCards";
