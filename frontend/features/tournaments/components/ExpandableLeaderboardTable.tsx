@@ -150,7 +150,7 @@ function LeaderboardRow({
       className={cn(
         "cursor-pointer",
         isCut && "text-muted-foreground",
-        isHighlighted && "bg-primary/10 hover:bg-primary/15",
+        isHighlighted && "bg-primary/20 hover:bg-primary/25",
       )}
       onClick={onToggle}
       onPointerEnter={onHover}

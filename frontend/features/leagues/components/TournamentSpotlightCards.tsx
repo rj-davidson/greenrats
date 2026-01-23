@@ -7,7 +7,7 @@ import { getTournamentSpotlight } from "@/features/leagues/components/tournament
 import type { LeagueTournament } from "@/features/leagues/types";
 import { getPickWindowState } from "@/features/picks/utils";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, CheckCircle2Icon, CircleIcon, TrophyIcon } from "lucide-react";
+import { CalendarIcon, CheckCircle2Icon, ClockIcon, TrophyIcon, XCircleIcon } from "lucide-react";
 import Link from "next/link";
 
 interface TournamentSpotlightCardsProps {
@@ -36,6 +36,20 @@ function formatEarnings(earnings: number): string {
   return `$${earnings.toLocaleString()}`;
 }
 
+function formatCountdown(isoString: string): string {
+  const target = new Date(isoString);
+  const now = new Date();
+  const diffMs = target.getTime() - now.getTime();
+
+  if (diffMs <= 0) return "0d 0h 0m";
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  return `${days}d ${hours}h ${minutes}m`;
+}
+
 type CardVariant = "completed" | "active" | "upcoming";
 
 function getVariant(tournament: LeagueTournament): CardVariant {
@@ -45,18 +59,10 @@ function getVariant(tournament: LeagueTournament): CardVariant {
 }
 
 function getStatusBadge(variant: CardVariant) {
-  switch (variant) {
-    case "active":
-      return (
-        <Badge variant="destructive" className="animate-pulse">
-          LIVE
-        </Badge>
-      );
-    case "completed":
-      return <Badge variant="secondary">Final</Badge>;
-    case "upcoming":
-      return <Badge variant="outline">Upcoming</Badge>;
+  if (variant === "completed") {
+    return <Badge variant="secondary">Final</Badge>;
   }
+  return null;
 }
 
 interface SpotlightCardProps {
@@ -65,14 +71,71 @@ interface SpotlightCardProps {
   isCenter: boolean;
 }
 
+function PickStatus({
+  tournament,
+  pickWindowState,
+}: {
+  tournament: LeagueTournament;
+  pickWindowState: "not_open" | "open" | "closed";
+}) {
+  const hasEarnings =
+    tournament.status === "completed" &&
+    tournament.golfer_earnings !== undefined &&
+    tournament.golfer_earnings > 0;
+
+  if (tournament.has_user_pick) {
+    return (
+      <div className="space-y-1">
+        <div className="flex items-center gap-1.5 text-sm text-green-600">
+          <CheckCircle2Icon className="size-4 shrink-0" />
+          <span className="truncate">{tournament.golfer_name}</span>
+        </div>
+        {hasEarnings && (
+          <div className="flex items-center gap-1.5 text-sm">
+            <TrophyIcon className="size-4 shrink-0 text-yellow-500" />
+            <span className="font-medium">{formatEarnings(tournament.golfer_earnings!)}</span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  if (pickWindowState === "not_open" && tournament.pick_window_opens_at) {
+    return (
+      <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <ClockIcon className="size-4 shrink-0" />
+        <span>Picks open in {formatCountdown(tournament.pick_window_opens_at)}</span>
+      </div>
+    );
+  }
+
+  if (pickWindowState === "open") {
+    return (
+      <div className="space-y-2">
+        {tournament.pick_window_closes_at && (
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <ClockIcon className="size-4 shrink-0" />
+            <span>Picks close in {formatCountdown(tournament.pick_window_closes_at)}</span>
+          </div>
+        )}
+        <Button size="sm" className="w-full">
+          Make Pick
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 text-sm">
+      <XCircleIcon className="size-4 shrink-0" />
+      <span>Did not pick</span>
+    </div>
+  );
+}
+
 function SpotlightCard({ tournament, leagueId, isCenter }: SpotlightCardProps) {
   const variant = getVariant(tournament);
   const pickWindowState = getPickWindowState(tournament);
-  const canMakePick = !tournament.has_user_pick && pickWindowState === "open";
-  const hasEarnings =
-    variant === "completed" &&
-    tournament.golfer_earnings !== undefined &&
-    tournament.golfer_earnings > 0;
 
   return (
     <Link href={`/${leagueId}/tournaments/${tournament.id}`} className="block">
@@ -91,32 +154,7 @@ function SpotlightCard({ tournament, leagueId, isCenter }: SpotlightCardProps) {
             <CalendarIcon className="size-4 shrink-0" />
             {formatDateRange(tournament.start_date, tournament.end_date)}
           </div>
-
-          {tournament.has_user_pick ? (
-            <div className="space-y-1">
-              <div className="flex items-center gap-1.5 text-sm text-green-600">
-                <CheckCircle2Icon className="size-4 shrink-0" />
-                <span className="truncate">{tournament.golfer_name}</span>
-              </div>
-              {hasEarnings && (
-                <div className="flex items-center gap-1.5 text-sm">
-                  <TrophyIcon className="size-4 shrink-0 text-yellow-500" />
-                  <span className="font-medium">{formatEarnings(tournament.golfer_earnings!)}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-              <CircleIcon className="size-4 shrink-0" />
-              <span>No pick</span>
-            </div>
-          )}
-
-          {canMakePick && (
-            <Button size="sm" className="w-full">
-              Make Pick
-            </Button>
-          )}
+          <PickStatus tournament={tournament} pickWindowState={pickWindowState} />
         </CardContent>
       </Card>
     </Link>

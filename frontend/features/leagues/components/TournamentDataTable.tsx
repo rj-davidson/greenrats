@@ -120,7 +120,7 @@ export function TournamentDataTable({ tournaments, leagueId }: TournamentDataTab
                     key={tournament.id}
                     className={cn(
                       "cursor-pointer",
-                      isHighlighted && "bg-primary/10",
+                      isHighlighted && "bg-primary/20 font-medium",
                       isCompleted && "text-muted-foreground italic",
                     )}
                     onClick={() => router.push(`/${leagueId}/tournaments/${tournament.id}`)}
