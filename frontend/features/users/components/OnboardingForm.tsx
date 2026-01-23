@@ -1,4 +1,5 @@
 "use client";
+"use no memo";
 
 import { Button } from "@/components/shadcn/button";
 import {
@@ -36,6 +37,7 @@ export function OnboardingForm() {
     },
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- opted out with "use no memo"
   const watchedName = form.watch("display_name");
 
   // Debounce the name for availability check

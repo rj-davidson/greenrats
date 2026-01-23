@@ -656,6 +656,10 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 			StartDate:          t.StartDate,
 			EndDate:            t.EndDate,
 			Status:             status,
+			Course:             t.Course,
+			City:               t.City,
+			State:              t.State,
+			Country:            t.Country,
 			PickWindowOpensAt:  t.PickWindowOpensAt,
 			PickWindowClosesAt: t.PickWindowClosesAt,
 		}

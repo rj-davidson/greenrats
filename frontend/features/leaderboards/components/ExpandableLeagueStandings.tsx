@@ -174,9 +174,7 @@ function StandingsRow({
         {entry.user_display_name}
         {isCurrentUser && <span className="ml-2 text-sm text-muted-foreground">(you)</span>}
       </TableCell>
-      {showCurrentPick && (
-        <TableCell>{entry.current_pick?.golfer_name ?? "--"}</TableCell>
-      )}
+      {showCurrentPick && <TableCell>{entry.current_pick?.golfer_name ?? "--"}</TableCell>}
       <TableCell className="text-right">{formatEarnings(entry.total_earnings)}</TableCell>
     </TableRow>
   );

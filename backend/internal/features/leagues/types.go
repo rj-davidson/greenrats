@@ -73,6 +73,10 @@ type LeagueTournament struct {
 	StartDate          time.Time  `json:"start_date"`
 	EndDate            time.Time  `json:"end_date"`
 	Status             string     `json:"status"`
+	Course             string     `json:"course,omitempty"`
+	City               string     `json:"city,omitempty"`
+	State              string     `json:"state,omitempty"`
+	Country            string     `json:"country,omitempty"`
 	HasUserPick        bool       `json:"has_user_pick"`
 	UserPickID         uuid.UUID  `json:"user_pick_id,omitempty"`
 	GolferName         string     `json:"golfer_name,omitempty"`

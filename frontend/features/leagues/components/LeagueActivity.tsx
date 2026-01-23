@@ -1,20 +1,34 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/shadcn/card";
+import { Button } from "@/components/shadcn/button";
+import { Card, CardContent } from "@/components/shadcn/card";
 import { Skeleton } from "@/components/shadcn/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/shadcn/table";
 import { useCommissionerActions } from "@/features/leagues/queries";
 import type { CommissionerAction } from "@/features/leagues/types";
-import { ClockIcon, KeyIcon, RefreshCwIcon, UsersIcon, ActivityIcon } from "lucide-react";
+import {
+  ActivityIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ClockIcon,
+  KeyIcon,
+  RefreshCwIcon,
+  UsersIcon,
+} from "lucide-react";
+import { useState } from "react";
 
 interface LeagueActivityProps {
   leagueId: string;
 }
+
+const PAGE_SIZE = 20;
 
 function getActionIcon(actionType: CommissionerAction["action_type"]) {
   switch (actionType) {
@@ -45,24 +59,19 @@ function getActionDescription(action: CommissionerAction): string {
     const oldGolfer = action.metadata.old_golfer_name as string | undefined;
     const newGolfer = action.metadata.new_golfer_name as string | undefined;
     const tournamentName = action.metadata.tournament_name as string | undefined;
-    if (oldGolfer && newGolfer && action.affected_user_name) {
-      return `Changed ${action.affected_user_name}'s pick from ${oldGolfer} to ${newGolfer}${tournamentName ? ` for ${tournamentName}` : ""}`;
+    if (oldGolfer && newGolfer) {
+      return `Changed pick from ${oldGolfer} to ${newGolfer}${tournamentName ? ` for ${tournamentName}` : ""}`;
     }
   }
   return action.description;
 }
 
-function ActionItem({ action }: { action: CommissionerAction }) {
+function ActivitySkeleton() {
   return (
-    <div className="flex items-start gap-3 py-3">
-      <div className="mt-0.5 rounded-full bg-muted p-2">{getActionIcon(action.action_type)}</div>
-      <div className="min-w-0 flex-1">
-        <p className="text-sm">{getActionDescription(action)}</p>
-        <p className="text-xs text-muted-foreground">
-          {formatDate(action.created_at)}
-          {action.commissioner_name && ` by ${action.commissioner_name}`}
-        </p>
-      </div>
+    <div className="space-y-2">
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full" />
+      ))}
     </div>
   );
 }
@@ -76,8 +85,7 @@ function EmptyState() {
         </div>
         <h3 className="mb-2 text-lg font-medium">No activity yet</h3>
         <p className="max-w-sm text-sm text-muted-foreground">
-          This page tracks commissioner changes to picks and league settings. Activity will appear
-          here when commissioners make changes.
+          Activity will appear here when commissioners make changes to picks or league settings.
         </p>
       </CardContent>
     </Card>
@@ -85,59 +93,87 @@ function EmptyState() {
 }
 
 export function LeagueActivity({ leagueId }: LeagueActivityProps) {
+  const [page, setPage] = useState(0);
   const { data, isLoading, error } = useCommissionerActions(leagueId);
 
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader className="pb-3">
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-4 w-48" />
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-start gap-3">
-                <Skeleton className="size-8 rounded-full" />
-                <div className="flex-1 space-y-1">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <ActivitySkeleton />;
   }
 
   if (error) {
-    return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-muted-foreground">Failed to load activity</p>
-        </CardContent>
-      </Card>
-    );
+    return <div className="text-destructive">Failed to load activity</div>;
   }
 
   if (!data?.actions.length) {
     return <EmptyState />;
   }
 
+  const totalPages = Math.ceil(data.actions.length / PAGE_SIZE);
+  const showPagination = data.actions.length > PAGE_SIZE;
+  const paginatedActions = data.actions.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-base">League Activity</CardTitle>
-        <CardDescription>Commissioner actions and changes</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="divide-y">
-          {data.actions.map((action) => (
-            <ActionItem key={action.id} action={action} />
+    <div className="space-y-4">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-12">Type</TableHead>
+            <TableHead>Action</TableHead>
+            <TableHead>Affected</TableHead>
+            <TableHead>By</TableHead>
+            <TableHead className="text-right">Date</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {paginatedActions.map((action) => (
+            <TableRow key={action.id}>
+              <TableCell>
+                <div className="w-fit rounded-full bg-muted p-2">
+                  {getActionIcon(action.action_type)}
+                </div>
+              </TableCell>
+              <TableCell>{getActionDescription(action)}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {action.affected_user_name || "--"}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {action.commissioner_name || "--"}
+              </TableCell>
+              <TableCell className="text-right text-muted-foreground">
+                {formatDate(action.created_at)}
+              </TableCell>
+            </TableRow>
           ))}
+        </TableBody>
+      </Table>
+
+      {showPagination && (
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">
+            Page {page + 1} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p - 1)}
+              disabled={page === 0}
+            >
+              <ChevronLeftIcon className="size-4" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page >= totalPages - 1}
+            >
+              Next
+              <ChevronRightIcon className="size-4" />
+            </Button>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </div>
   );
 }

@@ -21,7 +21,6 @@ function formatDateRange(startDate: string, endDate: string): string {
   return `${start.toLocaleDateString("en-US", options)} - ${end.toLocaleDateString("en-US", options)}`;
 }
 
-
 export default function TournamentDetailPage() {
   const params = useParams<{ leagueId: string; tournamentId: string }>();
   const { leagueId, tournamentId } = params;
