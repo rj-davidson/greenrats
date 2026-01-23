@@ -43,7 +43,7 @@ export function LeagueMonogram({ league, size = 32, className = "" }: LeagueMono
 
   return (
     <div
-      className={`flex items-center justify-center text-white ${bgColor} ${className}`}
+      className={`flex shrink-0 items-center justify-center text-white ${bgColor} ${className}`}
       style={{
         width: size,
         height: size,

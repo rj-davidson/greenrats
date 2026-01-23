@@ -67,8 +67,8 @@ export function LeagueSidebar({ league, ...props }: LeagueSidebarProps) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem className="flex w-full items-center justify-center">
-            <Link href="/" className="font-serif text-xl tracking-wide">
+          <SidebarMenuItem className="flex w-full items-center justify-center py-3">
+            <Link href="/" className="font-serif text-xl tracking-wide text-primary-foreground">
               <span className="group-data-[collapsible=icon]:hidden">GREEN RATS</span>
               <span className="hidden group-data-[collapsible=icon]:block">GR</span>
             </Link>
