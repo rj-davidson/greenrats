@@ -13,6 +13,7 @@ import (
 
 	"github.com/rj-davidson/greenrats/internal/features/leaderboards"
 	"github.com/rj-davidson/greenrats/internal/features/leagues"
+	"github.com/rj-davidson/greenrats/internal/features/tournaments"
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
@@ -31,7 +32,8 @@ func TestLeaguesIntegration(t *testing.T) {
 
 	leagueService := leagues.NewService(db, 2026, discardLogger())
 	leagueHandler := leagues.NewHandler(leagueService, nil, discardLogger())
-	leaderboardService := leaderboards.NewService(db)
+	tournamentService := tournaments.NewService(db)
+	leaderboardService := leaderboards.NewService(db, tournamentService)
 	leaderboardHandler := leaderboards.NewHandler(leaderboardService)
 
 	t.Run("full league flow", func(t *testing.T) {

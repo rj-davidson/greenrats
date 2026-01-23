@@ -7,6 +7,7 @@ import {
   CardTitle,
 } from "@/components/shadcn/card";
 import { getSignInUrl } from "@workos-inc/authkit-nextjs";
+import { Rat } from "lucide-react";
 import { redirect } from "next/navigation";
 
 export default async function LoginPage() {
@@ -20,7 +21,9 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to greenrats</CardTitle>
+          <CardTitle className="text-2xl">
+            Welcome to greenrats <Rat className="text-primary" />
+          </CardTitle>
           <CardDescription>Sign in to start making your picks</CardDescription>
         </CardHeader>
         <CardContent>

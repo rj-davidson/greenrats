@@ -39,11 +39,7 @@ export function PickFieldRow({
   return (
     <Fragment>
       <TableRow
-        className={cn(
-          "cursor-pointer",
-          isUsed && "opacity-50",
-          isCurrentPick && "bg-primary/5"
-        )}
+        className={cn("cursor-pointer", isUsed && "opacity-50", isCurrentPick && "bg-primary/5")}
         onClick={onToggle}
       >
         <TableCell className="w-0" onClick={(e) => e.stopPropagation()}>

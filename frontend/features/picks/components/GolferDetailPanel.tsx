@@ -50,8 +50,12 @@ export function GolferDetailPanel({ stats, bio }: GolferDetailPanelProps) {
     );
   }
 
-  const birthplace = bio ? formatLocation(bio.birthplace_city, bio.birthplace_state, bio.birthplace_country) : null;
-  const residence = bio ? formatLocation(bio.residence_city, bio.residence_state, bio.residence_country) : null;
+  const birthplace = bio
+    ? formatLocation(bio.birthplace_city, bio.birthplace_state, bio.birthplace_country)
+    : null;
+  const residence = bio
+    ? formatLocation(bio.residence_city, bio.residence_state, bio.residence_country)
+    : null;
   const birthDate = bio?.birth_date ? formatBirthDate(bio.birth_date) : null;
 
   return (
@@ -102,13 +106,17 @@ export function GolferDetailPanel({ stats, bio }: GolferDetailPanelProps) {
             {stats.driving_distance != null && (
               <>
                 <span className="text-muted-foreground">Driving Dist</span>
-                <span className="text-right tabular-nums">{formatStat(stats.driving_distance, 1)} yds</span>
+                <span className="text-right tabular-nums">
+                  {formatStat(stats.driving_distance, 1)} yds
+                </span>
               </>
             )}
             {stats.driving_accuracy != null && (
               <>
                 <span className="text-muted-foreground">Driving Acc</span>
-                <span className="text-right tabular-nums">{formatStat(stats.driving_accuracy, 1)}%</span>
+                <span className="text-right tabular-nums">
+                  {formatStat(stats.driving_accuracy, 1)}%
+                </span>
               </>
             )}
             {stats.gir_pct != null && (
@@ -126,7 +134,9 @@ export function GolferDetailPanel({ stats, bio }: GolferDetailPanelProps) {
             {stats.scrambling_pct != null && (
               <>
                 <span className="text-muted-foreground">Scrambling</span>
-                <span className="text-right tabular-nums">{formatStat(stats.scrambling_pct, 1)}%</span>
+                <span className="text-right tabular-nums">
+                  {formatStat(stats.scrambling_pct, 1)}%
+                </span>
               </>
             )}
           </div>
@@ -167,12 +177,8 @@ export function GolferDetailPanel({ stats, bio }: GolferDetailPanelProps) {
                 <span>Turned Pro: {bio.turned_pro}</span>
               </div>
             )}
-            {bio.height && (
-              <div className="text-muted-foreground">Height: {bio.height}</div>
-            )}
-            {bio.weight && (
-              <div className="text-muted-foreground">Weight: {bio.weight}</div>
-            )}
+            {bio.height && <div className="text-muted-foreground">Height: {bio.height}</div>}
+            {bio.weight && <div className="text-muted-foreground">Weight: {bio.weight}</div>}
           </div>
         </div>
       )}

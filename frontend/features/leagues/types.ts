@@ -35,7 +35,10 @@ export const leagueSchema = z.object({
 export type League = z.infer<typeof leagueSchema>;
 
 export const createLeagueRequestSchema = z.object({
-  name: z.string().min(1, "League name is required").max(100),
+  name: z
+    .string()
+    .min(1, "League name is required")
+    .max(50, "League name must be 50 characters or less"),
 });
 
 export type CreateLeagueRequest = z.infer<typeof createLeagueRequestSchema>;

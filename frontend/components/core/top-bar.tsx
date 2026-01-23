@@ -111,8 +111,8 @@ export function TopBar() {
   return (
     <header className="flex h-16 items-center justify-between border-b px-4">
       <Link href="/" className="flex items-center gap-2 font-serif text-2xl tracking-wide">
-        <RatIcon className="size-6" />
         greenrats
+        <RatIcon className="size-6 text-primary" />
       </Link>
       <UserMenu />
     </header>

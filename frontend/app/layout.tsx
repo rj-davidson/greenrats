@@ -43,17 +43,18 @@ export default function RootLayout({
               <div className="flex-1">{children}</div>
               <footer className="border-t py-6">
                 <div className="mx-auto flex w-full max-w-6xl flex-col items-center gap-3 px-6 text-sm text-muted-foreground sm:flex-row sm:justify-between">
-                  <span className="order-2 sm:order-1">
-                    © {new Date().getFullYear()} greenrats
-                  </span>
+                  <span />
                   <Link
                     href="/"
                     className="order-1 flex items-center gap-2 font-serif text-base tracking-wide text-foreground transition hover:text-foreground/80 sm:order-2 sm:justify-center"
                   >
-                    <RatIcon className="size-4" />
+                    <RatIcon className="size-4 text-primary" />
                     <span>greenrats</span>
                   </Link>
                   <div className="order-3 flex gap-4">
+                    <span className="order-2 sm:order-1">
+                      © {new Date().getFullYear()} greenrats
+                    </span>
                     <Link className="transition hover:text-foreground" href="/terms">
                       Terms of Service
                     </Link>

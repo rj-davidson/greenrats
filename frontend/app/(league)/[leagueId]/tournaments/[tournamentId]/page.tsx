@@ -8,8 +8,7 @@ import { useLeaguePicks } from "@/features/picks/queries";
 import { ExpandableLeaderboardTable } from "@/features/tournaments/components/ExpandableLeaderboardTable";
 import { useTournament } from "@/features/tournaments/queries";
 import { useCurrentUser } from "@/features/users/queries";
-import { ArrowLeftIcon, CalendarIcon } from "lucide-react";
-import Link from "next/link";
+import { CalendarIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 
@@ -86,7 +85,6 @@ export default function TournamentDetailPage() {
           {formatDateRange(tournament.start_date, tournament.end_date)}
         </div>
       </div>
-
       <ExpandableLeaderboardTable
         tournamentId={tournamentId}
         leagueId={leagueId}

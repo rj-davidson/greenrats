@@ -30,7 +30,8 @@ func (User) Fields() []ent.Field {
 		field.String("display_name").
 			Unique().
 			Optional().
-			Nillable(),
+			Nillable().
+			MaxLen(20),
 		field.Bool("is_admin").
 			Default(false),
 	}

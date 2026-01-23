@@ -45,9 +45,7 @@ function PickRow({ entry, showEarnings }: { entry: LeaderboardEntry; showEarning
       <TableCell className="font-medium">{entry.position_display}</TableCell>
       <TableCell>{entry.golfer_name}</TableCell>
       <TableCell className="text-muted-foreground">{entry.country_code}</TableCell>
-      <TableCell
-        className={cn("font-mono", entry.score < 0 && "text-primary")}
-      >
+      <TableCell className={cn("font-mono", entry.score < 0 && "text-primary")}>
         {formatScore(entry.score)}
       </TableCell>
       <TableCell className="text-muted-foreground">

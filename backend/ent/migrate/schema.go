@@ -336,7 +336,7 @@ var (
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "name", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Size: 50},
 		{Name: "code", Type: field.TypeString, Unique: true},
 		{Name: "season_year", Type: field.TypeInt},
 		{Name: "joining_enabled", Type: field.TypeBool, Default: true},
@@ -586,7 +586,7 @@ var (
 		{Name: "updated_at", Type: field.TypeTime},
 		{Name: "workos_id", Type: field.TypeString, Unique: true},
 		{Name: "email", Type: field.TypeString},
-		{Name: "display_name", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "display_name", Type: field.TypeString, Unique: true, Nullable: true, Size: 20},
 		{Name: "is_admin", Type: field.TypeBool, Default: false},
 	}
 	// UsersTable holds the schema information for the "users" table.

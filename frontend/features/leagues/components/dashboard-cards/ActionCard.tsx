@@ -142,14 +142,21 @@ export function ActionCard({ leagueId }: ActionCardProps) {
 
     if (tournament.has_user_pick) {
       return (
-        <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />} className="animate-border-pulse border-2 border-primary">
+        <DashboardCard
+          title="Up Next"
+          icon={<ZapIcon className="size-4" />}
+          className="animate-border-pulse border-2 border-primary"
+        >
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <CheckCircle2Icon className="size-5 text-primary" />
               <span className="font-medium">{tournament.name}</span>
             </div>
             <TournamentDetails tournament={tournament} />
-            <Link href={`/${leagueId}/tournaments/${tournament.id}/pick`} className="bg-shimmer block rounded-lg p-3 transition-opacity hover:opacity-80">
+            <Link
+              href={`/${leagueId}/tournaments/${tournament.id}/pick`}
+              className="bg-shimmer block rounded-lg p-3 transition-opacity hover:opacity-80"
+            >
               <p className="text-sm text-muted-foreground">Your pick</p>
               <p className="font-semibold">{tournament.golfer_name}</p>
             </Link>
@@ -159,13 +166,20 @@ export function ActionCard({ leagueId }: ActionCardProps) {
                 Window closes in <span className="font-medium">{countdown}</span>
               </span>
             </div>
+            <Button asChild variant="outline" className="w-full">
+              <Link href={`/${leagueId}/tournaments/${tournament.id}`}>View</Link>
+            </Button>
           </div>
         </DashboardCard>
       );
     }
 
     return (
-      <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />} className="animate-border-pulse border-2 border-primary">
+      <DashboardCard
+        title="Up Next"
+        icon={<ZapIcon className="size-4" />}
+        className="animate-border-pulse border-2 border-primary"
+      >
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-medium">{tournament.name}</span>
@@ -216,11 +230,17 @@ export function ActionCard({ leagueId }: ActionCardProps) {
             <span className="font-medium">{tournament.name}</span>
           </div>
           <TournamentDetails tournament={tournament} />
-          <Link href={`/${leagueId}/tournaments/${tournament.id}/pick`} className="block rounded-lg bg-muted/50 p-3 transition-opacity hover:opacity-80">
+          <Link
+            href={`/${leagueId}/tournaments/${tournament.id}/pick`}
+            className="block rounded-lg bg-muted/50 p-3 transition-opacity hover:opacity-80"
+          >
             <p className="text-sm text-muted-foreground">Your pick</p>
             <p className="font-semibold">{tournament.golfer_name}</p>
           </Link>
           <p className="text-sm text-muted-foreground">Pick window closed</p>
+          <Button asChild variant="outline" className="w-full">
+            <Link href={`/${leagueId}/tournaments/${tournament.id}`}>View</Link>
+          </Button>
         </div>
       </DashboardCard>
     );

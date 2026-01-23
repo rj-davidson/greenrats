@@ -14,7 +14,6 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/internal/config"
-	"github.com/rj-davidson/greenrats/internal/demo"
 	"github.com/rj-davidson/greenrats/internal/server"
 )
 
@@ -62,10 +61,6 @@ func run() error {
 		if err := db.Schema.Create(context.Background()); err != nil {
 			return err
 		}
-	}
-
-	if err := demo.EnsureDemoLeague(context.Background(), db, logger); err != nil {
-		return err
 	}
 
 	srv := server.New(cfg, db)

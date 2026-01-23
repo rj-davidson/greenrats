@@ -267,7 +267,21 @@ func init() {
 	// leagueDescName is the schema descriptor for name field.
 	leagueDescName := leagueFields[0].Descriptor()
 	// league.NameValidator is a validator for the "name" field. It is called by the builders before save.
-	league.NameValidator = leagueDescName.Validators[0].(func(string) error)
+	league.NameValidator = func() func(string) error {
+		validators := leagueDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
 	// leagueDescCode is the schema descriptor for code field.
 	leagueDescCode := leagueFields[1].Descriptor()
 	// league.CodeValidator is a validator for the "code" field. It is called by the builders before save.
@@ -447,6 +461,10 @@ func init() {
 	userDescEmail := userFields[1].Descriptor()
 	// user.EmailValidator is a validator for the "email" field. It is called by the builders before save.
 	user.EmailValidator = userDescEmail.Validators[0].(func(string) error)
+	// userDescDisplayName is the schema descriptor for display_name field.
+	userDescDisplayName := userFields[2].Descriptor()
+	// user.DisplayNameValidator is a validator for the "display_name" field. It is called by the builders before save.
+	user.DisplayNameValidator = userDescDisplayName.Validators[0].(func(string) error)
 	// userDescIsAdmin is the schema descriptor for is_admin field.
 	userDescIsAdmin := userFields[3].Descriptor()
 	// user.DefaultIsAdmin holds the default value on creation for the is_admin field.

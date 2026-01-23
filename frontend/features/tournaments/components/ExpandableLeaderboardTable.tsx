@@ -188,9 +188,7 @@ function LeaderboardRow({
       <TableCell className="text-muted-foreground">
         {formatThru(entry.thru, entry.status)}
       </TableCell>
-      <TableCell
-        className={cn("font-mono", entry.score < 0 && "text-primary")}
-      >
+      <TableCell className={cn("font-mono", entry.score < 0 && "text-primary")}>
         {formatScoreToPar(entry.score)}
       </TableCell>
     </TableRow>

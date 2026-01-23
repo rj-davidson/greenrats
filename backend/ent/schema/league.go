@@ -23,7 +23,8 @@ func (League) Mixin() []ent.Mixin {
 func (League) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").
-			NotEmpty(),
+			NotEmpty().
+			MaxLen(50),
 		field.String("code").
 			Unique().
 			NotEmpty().

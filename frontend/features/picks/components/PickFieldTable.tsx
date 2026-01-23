@@ -46,7 +46,7 @@ export function PickFieldTable({ data, leagueId }: PickFieldTableProps) {
       (e) =>
         e.golfer_name.toLowerCase().includes(query) ||
         e.country?.toLowerCase().includes(query) ||
-        e.country_code.toLowerCase().includes(query)
+        e.country_code.toLowerCase().includes(query),
     );
   }, [data.entries, search]);
 
@@ -149,14 +149,18 @@ export function PickFieldTable({ data, leagueId }: PickFieldTableProps) {
       </div>
 
       <PickConfirmDialog
-        golfer={selectedEntry ? {
-          id: selectedEntry.golfer_id,
-          name: selectedEntry.golfer_name,
-          country_code: selectedEntry.country_code,
-          country: selectedEntry.country,
-          owgr: selectedEntry.owgr ?? undefined,
-          image_url: selectedEntry.image_url,
-        } : null}
+        golfer={
+          selectedEntry
+            ? {
+                id: selectedEntry.golfer_id,
+                name: selectedEntry.golfer_name,
+                country_code: selectedEntry.country_code,
+                country: selectedEntry.country,
+                owgr: selectedEntry.owgr ?? undefined,
+                image_url: selectedEntry.image_url,
+              }
+            : null
+        }
         tournamentName={data.tournament_name}
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
