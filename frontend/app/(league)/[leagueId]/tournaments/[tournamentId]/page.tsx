@@ -73,13 +73,6 @@ export default function TournamentDetailPage() {
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          href={`/${leagueId}/tournaments`}
-          className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ArrowLeftIcon className="size-4" />
-          Back to Tournaments
-        </Link>
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{tournament.name}</h1>
           {tournament.status === "active" && (
