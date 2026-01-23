@@ -28,11 +28,19 @@ import { useTheme } from "next-themes";
 import Link from "next/link";
 
 function UserMenu() {
-  const { data: user, isLoading } = useCurrentUser();
+  const { data: user, isLoading, isError } = useCurrentUser();
   const { setTheme, theme } = useTheme();
 
   if (isLoading) {
     return <Skeleton className="size-8 rounded-full" />;
+  }
+
+  if (isError || !user) {
+    return (
+      <Button asChild size="sm">
+        <Link href="/login">Sign in</Link>
+      </Button>
+    );
   }
 
   const displayName = user?.display_name || user?.email || "User";
