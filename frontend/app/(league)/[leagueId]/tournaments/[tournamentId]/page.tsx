@@ -5,11 +5,11 @@ import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { useLeague } from "@/features/leagues/queries";
 import { useLeaguePicks } from "@/features/picks/queries";
-import { TournamentSelector } from "@/features/tournaments/components";
 import { ExpandableLeaderboardTable } from "@/features/tournaments/components/ExpandableLeaderboardTable";
 import { useTournament } from "@/features/tournaments/queries";
 import { useCurrentUser } from "@/features/users/queries";
-import { CalendarIcon } from "lucide-react";
+import { ArrowLeftIcon, CalendarIcon } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 
@@ -21,22 +21,6 @@ function formatDateRange(startDate: string, endDate: string): string {
   return `${start.toLocaleDateString("en-US", options)} - ${end.toLocaleDateString("en-US", options)}`;
 }
 
-function getStatusBadge(status: string) {
-  switch (status) {
-    case "active":
-      return (
-        <Badge variant="destructive" className="animate-pulse">
-          LIVE
-        </Badge>
-      );
-    case "completed":
-      return <Badge variant="secondary">Final</Badge>;
-    case "upcoming":
-      return <Badge variant="outline">Upcoming</Badge>;
-    default:
-      return <Badge variant="outline">{status}</Badge>;
-  }
-}
 
 export default function TournamentDetailPage() {
   const params = useParams<{ leagueId: string; tournamentId: string }>();
@@ -89,18 +73,26 @@ export default function TournamentDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <div className="mb-2">
-            <TournamentSelector leagueId={leagueId} currentTournamentId={tournamentId} />
-          </div>
+      <div>
+        <Link
+          href={`/${leagueId}/tournaments`}
+          className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeftIcon className="size-4" />
+          Back to Tournaments
+        </Link>
+        <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{tournament.name}</h1>
-          <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-            <CalendarIcon className="size-4" />
-            {formatDateRange(tournament.start_date, tournament.end_date)}
-          </div>
+          {tournament.status === "active" && (
+            <Badge variant="default" className="text-xs">
+              Live
+            </Badge>
+          )}
         </div>
-        {getStatusBadge(tournament.status)}
+        <div className="mt-1 flex items-center gap-2 text-muted-foreground">
+          <CalendarIcon className="size-4" />
+          {formatDateRange(tournament.start_date, tournament.end_date)}
+        </div>
       </div>
 
       <ExpandableLeaderboardTable
