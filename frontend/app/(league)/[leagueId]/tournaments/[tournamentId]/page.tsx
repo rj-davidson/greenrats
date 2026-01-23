@@ -96,6 +96,7 @@ export default function TournamentDetailPage() {
 
       <ExpandableLeaderboardTable
         tournamentId={tournamentId}
+        leagueId={leagueId}
         highlightedGolferId={userPickedGolferId}
       />
     </div>

@@ -9,6 +9,8 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/league"
+	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
@@ -130,7 +132,7 @@ func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 }
 
 // GetLeaderboard returns the leaderboard entries for a tournament.
-func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bool) (*GetLeaderboardResponse, error) {
+func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bool, leagueID string) (*GetLeaderboardResponse, error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {
 		return nil, ErrInvalidTournamentID
@@ -142,6 +144,33 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bo
 			return nil, ErrTournamentNotFound
 		}
 		return nil, fmt.Errorf("failed to get tournament: %w", err)
+	}
+
+	// Build golfer picks map if league_id provided and pick window closed
+	golferPicksMap := make(map[uuid.UUID][]string)
+	if leagueID != "" {
+		leagueUUID, err := uuid.FromString(leagueID)
+		if err == nil && t.PickWindowClosesAt != nil && time.Now().UTC().After(*t.PickWindowClosesAt) {
+			picks, _ := s.db.Pick.Query().
+				Where(
+					pick.HasLeagueWith(league.IDEQ(leagueUUID)),
+					pick.HasTournamentWith(tournament.IDEQ(uid)),
+				).
+				WithUser().
+				WithGolfer().
+				All(ctx)
+
+			for _, p := range picks {
+				if p.Edges.Golfer != nil && p.Edges.User != nil {
+					golferID := p.Edges.Golfer.ID
+					displayName := p.Edges.User.Email
+					if p.Edges.User.DisplayName != nil && *p.Edges.User.DisplayName != "" {
+						displayName = *p.Edges.User.DisplayName
+					}
+					golferPicksMap[golferID] = append(golferPicksMap[golferID], displayName)
+				}
+			}
+		}
 	}
 
 	query := t.QueryLeaderboardEntries().
@@ -250,6 +279,9 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bo
 		}
 		if golfer.ImageURL != nil {
 			entry.ImageURL = *golfer.ImageURL
+		}
+		if pickedBy, ok := golferPicksMap[golfer.ID]; ok {
+			entry.PickedBy = pickedBy
 		}
 
 		for _, r := range e.Edges.Rounds {

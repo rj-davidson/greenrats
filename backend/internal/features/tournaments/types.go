@@ -81,11 +81,13 @@ type LeaderboardEntry struct {
 	Status          string       `json:"status"`
 	Earnings        int          `json:"earnings"`
 	Rounds          []RoundScore `json:"rounds"`
+	PickedBy        []string     `json:"picked_by,omitempty"`
 }
 
 // GetLeaderboardRequest represents optional query parameters for leaderboard.
 type GetLeaderboardRequest struct {
-	Include string `query:"include"` // "holes" for hole-by-hole data
+	Include  string `query:"include"`   // "holes" for hole-by-hole data
+	LeagueID string `query:"league_id"` // optional league context for picks
 }
 
 // GetLeaderboardResponse represents the response for getting a tournament leaderboard.

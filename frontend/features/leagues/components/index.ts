@@ -4,10 +4,6 @@ export { PickManagement } from "@/features/leagues/components/PickManagement";
 export { CreateLeagueDialog } from "@/features/leagues/components/CreateLeagueDialog";
 export { CreateLeagueForm } from "@/features/leagues/components/CreateLeagueForm";
 export { LeagueMonogram } from "@/features/leagues/components/LeagueMonogram";
-export { LeaguesList } from "@/features/leagues/components/LeaguesList";
-export { LeaguePicksTable } from "@/features/leagues/components/LeaguePicksTable";
-export { LeagueTournamentCard } from "@/features/leagues/components/LeagueTournamentCard";
-export { PickWindowAlert } from "@/features/leagues/components/PickWindowAlert";
 export { TournamentDataTable } from "@/features/leagues/components/TournamentDataTable";
 export { TournamentSpotlightCards } from "@/features/leagues/components/TournamentSpotlightCards";
 

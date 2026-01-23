@@ -24,6 +24,7 @@ import { Fragment, useCallback, useState } from "react";
 
 interface ExpandableLeaderboardTableProps {
   tournamentId: string;
+  leagueId?: string;
   highlightedGolferId?: string;
 }
 
@@ -39,13 +40,14 @@ function LeaderboardSkeleton() {
 
 export function ExpandableLeaderboardTable({
   tournamentId,
+  leagueId,
   highlightedGolferId,
 }: ExpandableLeaderboardTableProps) {
   const [expandedGolferId, setExpandedGolferId] = useState<string | null>(null);
 
-  const { data, isLoading, error } = useLeaderboard(tournamentId);
-  const { data: dataWithHoles } = useLeaderboard(tournamentId, { include: "holes" });
-  const prefetch = usePrefetchLeaderboardWithHoles(tournamentId);
+  const { data, isLoading, error } = useLeaderboard(tournamentId, { leagueId });
+  const { data: dataWithHoles } = useLeaderboard(tournamentId, { include: "holes", leagueId });
+  const prefetch = usePrefetchLeaderboardWithHoles(tournamentId, leagueId);
 
   const toggleExpand = useCallback((golferId: string) => {
     setExpandedGolferId((prev) => (prev === golferId ? null : golferId));
@@ -72,6 +74,7 @@ export function ExpandableLeaderboardTable({
   }
 
   const currentRound = data.current_round;
+  const showPicksColumn = data.entries.some((e) => e.picked_by && e.picked_by.length > 0);
 
   return (
     <Table>
@@ -83,6 +86,7 @@ export function ExpandableLeaderboardTable({
           <TableHead className="w-16">{getRoundLabel(currentRound)}</TableHead>
           <TableHead className="w-16">Thru</TableHead>
           <TableHead className="w-20">Total</TableHead>
+          {showPicksColumn && <TableHead className="w-32">Picks</TableHead>}
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -98,12 +102,13 @@ export function ExpandableLeaderboardTable({
                 entry={entry}
                 isExpanded={isExpanded}
                 isHighlighted={entry.golfer_id === highlightedGolferId}
+                showPicksColumn={showPicksColumn}
                 onToggle={() => toggleExpand(entry.golfer_id)}
                 onHover={prefetch}
               />
               {isExpanded && entryWithHoles && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="px-2 py-0">
+                  <TableCell colSpan={showPicksColumn ? 7 : 6} className="px-2 py-0">
                     <GolfScorecard
                       rounds={entryWithHoles.rounds}
                       onClose={() => setExpandedGolferId(null)}
@@ -113,7 +118,7 @@ export function ExpandableLeaderboardTable({
               )}
               {isExpanded && !entryWithHoles && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="p-4">
+                  <TableCell colSpan={showPicksColumn ? 7 : 6} className="p-4">
                     <div className="flex justify-center">
                       <Skeleton className="h-32 w-full max-w-2xl" />
                     </div>
@@ -132,6 +137,7 @@ interface LeaderboardRowProps {
   entry: LeaderboardEntry;
   isExpanded: boolean;
   isHighlighted: boolean;
+  showPicksColumn: boolean;
   onToggle: () => void;
   onHover: () => void;
 }
@@ -140,6 +146,7 @@ function LeaderboardRow({
   entry,
   isExpanded,
   isHighlighted,
+  showPicksColumn,
   onToggle,
   onHover,
 }: LeaderboardRowProps) {
@@ -177,6 +184,15 @@ function LeaderboardRow({
       >
         {formatScoreToPar(entry.score)}
       </TableCell>
+      {showPicksColumn && (
+        <TableCell className="align-top">
+          <div className="flex flex-col text-xs text-muted-foreground">
+            {entry.picked_by?.map((name, i) => (
+              <span key={i}>{name}</span>
+            ))}
+          </div>
+        </TableCell>
+      )}
     </TableRow>
   );
 }

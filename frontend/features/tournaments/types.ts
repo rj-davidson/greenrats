@@ -59,6 +59,7 @@ export const leaderboardEntrySchema = z.object({
   status: z.string(),
   earnings: z.number(),
   rounds: z.array(roundScoreSchema),
+  picked_by: z.array(z.string()).optional(),
 });
 
 export const getLeaderboardResponseSchema = z.object({

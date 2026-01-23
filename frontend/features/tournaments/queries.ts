@@ -27,8 +27,8 @@ export const buildTournamentDetailKey = (id: string) =>
 
 export const buildTournamentActiveKey = () => [QueryKey.TOURNAMENTS, "active"] as const;
 
-export const buildLeaderboardKey = (id: string, include?: string) =>
-  [QueryKey.TOURNAMENTS, "leaderboard", id, include] as const;
+export const buildLeaderboardKey = (id: string, include?: string, leagueId?: string) =>
+  [QueryKey.TOURNAMENTS, "leaderboard", id, include, leagueId] as const;
 
 export const buildFieldKey = (id: string) => [QueryKey.TOURNAMENTS, "field", id] as const;
 
@@ -72,6 +72,7 @@ export function buildGetActiveTournamentQueryOptions(requestor: Requestor = make
 
 interface LeaderboardOptions {
   include?: "holes";
+  leagueId?: string;
 }
 
 export function buildGetLeaderboardQueryOptions(
@@ -81,9 +82,10 @@ export function buildGetLeaderboardQueryOptions(
 ) {
   const params: Record<string, string> = {};
   if (options.include) params.include = options.include;
+  if (options.leagueId) params.league_id = options.leagueId;
 
   return queryOptions<GetLeaderboardResponse>({
-    queryKey: buildLeaderboardKey(id, options.include),
+    queryKey: buildLeaderboardKey(id, options.include, options.leagueId),
     queryFn: () =>
       requestor.get<GetLeaderboardResponse>(`/api/v1/tournaments/${id}/leaderboard`, {
         params: Object.keys(params).length > 0 ? params : undefined,
@@ -121,13 +123,13 @@ export function useTournamentField(id: string) {
   return useQuery(buildGetFieldQueryOptions(id));
 }
 
-export function usePrefetchLeaderboardWithHoles(tournamentId: string) {
+export function usePrefetchLeaderboardWithHoles(tournamentId: string, leagueId?: string) {
   const queryClient = useQueryClient();
   return useCallback(() => {
     void queryClient.prefetchQuery(
-      buildGetLeaderboardQueryOptions(tournamentId, { include: "holes" }),
+      buildGetLeaderboardQueryOptions(tournamentId, { include: "holes", leagueId }),
     );
-  }, [queryClient, tournamentId]);
+  }, [queryClient, tournamentId, leagueId]);
 }
 
 export function useCurrentTournament() {

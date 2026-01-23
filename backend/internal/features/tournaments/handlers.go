@@ -108,8 +108,9 @@ func (h *Handler) GetLeaderboard(c *fiber.Ctx) error {
 	}
 
 	includeHoles := c.Query("include") == "holes"
+	leagueID := c.Query("league_id")
 
-	resp, err := h.service.GetLeaderboard(c.UserContext(), id, includeHoles)
+	resp, err := h.service.GetLeaderboard(c.UserContext(), id, includeHoles, leagueID)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrInvalidTournamentID):
