@@ -55,8 +55,8 @@ export function getHoleScoreClass(score: number | null, par: number): string {
   if (score === null) return "";
   const diff = score - par;
   if (diff <= -2) return "text-amber-600 dark:text-amber-400 font-semibold";
-  if (diff === -1) return "text-green-600 dark:text-green-400";
-  if (diff === 1) return "text-red-500 dark:text-red-400";
-  if (diff >= 2) return "text-red-600 dark:text-red-400 font-semibold";
+  if (diff === -1) return "text-primary";
+  if (diff === 1) return "text-destructive";
+  if (diff >= 2) return "text-destructive font-semibold";
   return "";
 }

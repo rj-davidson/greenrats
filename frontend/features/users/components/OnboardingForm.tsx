@@ -94,7 +94,7 @@ export function OnboardingForm() {
                       3-20 characters. Letters, numbers, and underscores only.
                     </span>
                     {showAvailability && (
-                      <span className={isAvailable ? "text-green-600" : "text-red-600"}>
+                      <span className={isAvailable ? "text-primary" : "text-destructive"}>
                         {isAvailable ? "This name is available!" : "This name is already taken."}
                       </span>
                     )}

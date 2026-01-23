@@ -1,6 +1,7 @@
 "use client";
 
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
+import { Card, CardContent, CardHeader } from "@/components/shadcn/card";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import {
   ActionCard,
@@ -44,8 +45,28 @@ export default function LeagueDashboardPage() {
   if (leagueLoading) {
     return (
       <div className="space-y-6">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-64 w-full" />
+        <div className="flex items-center gap-4">
+          <Skeleton className="size-12 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-32" />
+          </div>
+        </div>
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <Card key={i} className="flex flex-col gap-3 py-4">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-0">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent className="flex-1 px-4">
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     );
   }

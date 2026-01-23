@@ -142,27 +142,22 @@ export function ActionCard({ leagueId }: ActionCardProps) {
 
     if (tournament.has_user_pick) {
       return (
-        <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
+        <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />} className="animate-border-pulse border-2 border-primary">
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <CheckCircle2Icon className="size-5 text-green-600" />
+              <CheckCircle2Icon className="size-5 text-primary" />
               <span className="font-medium">{tournament.name}</span>
             </div>
             <TournamentDetails tournament={tournament} />
-            <div className="rounded-lg bg-muted/50 p-3">
+            <Link href={`/${leagueId}/tournaments/${tournament.id}/pick`} className="bg-shimmer block rounded-lg p-3 transition-opacity hover:opacity-80">
               <p className="text-sm text-muted-foreground">Your pick</p>
               <p className="font-semibold">{tournament.golfer_name}</p>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <ClockIcon className="size-4" />
-                <span>
-                  Window closes in <span className="font-medium">{countdown}</span>
-                </span>
-              </div>
-              <Button asChild size="sm" variant="outline">
-                <Link href={`/${leagueId}/tournaments/${tournament.id}`}>View Field</Link>
-              </Button>
+            </Link>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <ClockIcon className="size-4" />
+              <span>
+                Window closes in <span className="font-medium">{countdown}</span>
+              </span>
             </div>
           </div>
         </DashboardCard>
@@ -170,7 +165,7 @@ export function ActionCard({ leagueId }: ActionCardProps) {
     }
 
     return (
-      <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
+      <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />} className="animate-border-pulse border-2 border-primary">
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-medium">{tournament.name}</span>
@@ -186,7 +181,7 @@ export function ActionCard({ leagueId }: ActionCardProps) {
             </span>
           </div>
           <Button asChild className="w-full">
-            <Link href={`/${leagueId}/tournaments/${tournament.id}`}>Make Your Pick</Link>
+            <Link href={`/${leagueId}/tournaments/${tournament.id}/pick`}>Make Your Pick</Link>
           </Button>
         </div>
       </DashboardCard>
@@ -217,14 +212,14 @@ export function ActionCard({ leagueId }: ActionCardProps) {
       <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <CheckCircle2Icon className="size-5 text-green-600" />
+            <CheckCircle2Icon className="size-5 text-primary" />
             <span className="font-medium">{tournament.name}</span>
           </div>
           <TournamentDetails tournament={tournament} />
-          <div className="rounded-lg bg-muted/50 p-3">
+          <Link href={`/${leagueId}/tournaments/${tournament.id}/pick`} className="block rounded-lg bg-muted/50 p-3 transition-opacity hover:opacity-80">
             <p className="text-sm text-muted-foreground">Your pick</p>
             <p className="font-semibold">{tournament.golfer_name}</p>
-          </div>
+          </Link>
           <p className="text-sm text-muted-foreground">Pick window closed</p>
         </div>
       </DashboardCard>

@@ -13,6 +13,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/golferseason"
 	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
@@ -1063,6 +1064,246 @@ func deriveTournamentStatus(t *ent.Tournament, hasChampion bool) string {
 		return "active"
 	}
 	return "upcoming"
+}
+
+type GetPickFieldParams struct {
+	UserID       uuid.UUID
+	LeagueID     uuid.UUID
+	TournamentID uuid.UUID
+}
+
+func (s *Service) GetPickField(ctx context.Context, params GetPickFieldParams) (*GetPickFieldResponse, error) {
+	tournamentEnt, err := s.db.Tournament.Query().
+		Where(tournament.IDEQ(params.TournamentID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrTournamentNotFound
+		}
+		return nil, fmt.Errorf("failed to get tournament: %w", err)
+	}
+
+	isMember, err := s.db.LeagueMembership.Query().
+		Where(
+			leaguemembership.HasUserWith(user.IDEQ(params.UserID)),
+			leaguemembership.HasLeagueWith(league.IDEQ(params.LeagueID)),
+		).
+		Exist(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check membership: %w", err)
+	}
+	if !isMember {
+		return nil, ErrNotLeagueMember
+	}
+
+	entries, err := s.db.FieldEntry.Query().
+		Where(fieldentry.HasTournamentWith(tournament.IDEQ(params.TournamentID))).
+		WithGolfer(func(q *ent.GolferQuery) {
+			q.WithSeasons(func(sq *ent.GolferSeasonQuery) {
+				sq.Where(golferseason.HasSeasonWith(season.YearEQ(tournamentEnt.SeasonYear)))
+			})
+		}).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get field entries: %w", err)
+	}
+
+	usedGolfers := make(map[uuid.UUID]usedGolferInfo)
+	usedPicks, err := s.db.Pick.Query().
+		Where(
+			pick.HasUserWith(user.IDEQ(params.UserID)),
+			pick.HasLeagueWith(league.IDEQ(params.LeagueID)),
+			pick.HasTournamentWith(tournament.IDNEQ(params.TournamentID)),
+			pick.SeasonYearEQ(tournamentEnt.SeasonYear),
+		).
+		WithGolfer().
+		WithTournament().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get used picks: %w", err)
+	}
+	for _, p := range usedPicks {
+		if p.Edges.Golfer != nil && p.Edges.Tournament != nil {
+			usedGolfers[p.Edges.Golfer.ID] = usedGolferInfo{
+				TournamentID:   p.Edges.Tournament.ID,
+				TournamentName: p.Edges.Tournament.Name,
+			}
+		}
+	}
+
+	var currentPick *ent.Pick
+	currentPickEnt, err := s.db.Pick.Query().
+		Where(
+			pick.HasUserWith(user.IDEQ(params.UserID)),
+			pick.HasLeagueWith(league.IDEQ(params.LeagueID)),
+			pick.HasTournamentWith(tournament.IDEQ(params.TournamentID)),
+		).
+		WithGolfer().
+		Only(ctx)
+	if err == nil {
+		currentPick = currentPickEnt
+	} else if !ent.IsNotFound(err) {
+		return nil, fmt.Errorf("failed to get current pick: %w", err)
+	}
+
+	windowStatus := s.getPickWindowStatus(tournamentEnt)
+	pickWindowState := "closed"
+	if windowStatus.IsOpen {
+		pickWindowState = "open"
+	} else if time.Now().UTC().Before(windowStatus.OpensAt) {
+		pickWindowState = "not_open"
+	}
+
+	resultEntries := make([]PickFieldEntry, 0, len(entries))
+	availableCount := 0
+
+	for _, entry := range entries {
+		if entry.Edges.Golfer == nil {
+			continue
+		}
+		g := entry.Edges.Golfer
+
+		pfe := PickFieldEntry{
+			GolferID:    g.ID,
+			GolferName:  g.Name,
+			CountryCode: g.CountryCode,
+			EntryStatus: string(entry.EntryStatus),
+			IsAmateur:   entry.IsAmateur,
+		}
+
+		if g.Country != nil {
+			pfe.Country = *g.Country
+		}
+		if g.ImageURL != nil {
+			pfe.ImageURL = *g.ImageURL
+		}
+		if g.Owgr != nil {
+			pfe.OWGR = g.Owgr
+		}
+		if entry.OwgrAtEntry != nil {
+			pfe.OWGRAtEntry = entry.OwgrAtEntry
+		}
+		if entry.Qualifier != nil {
+			pfe.Qualifier = *entry.Qualifier
+		}
+
+		if info, used := usedGolfers[g.ID]; used {
+			pfe.IsUsed = true
+			pfe.UsedForTournamentID = &info.TournamentID
+			pfe.UsedForTournamentName = info.TournamentName
+		} else {
+			availableCount++
+		}
+
+		if len(g.Edges.Seasons) > 0 {
+			gs := g.Edges.Seasons[0]
+			stats := &GolferSeasonStats{
+				ScoringAvg:      gs.ScoringAvg,
+				DrivingDistance: gs.DrivingDistance,
+				DrivingAccuracy: gs.DrivingAccuracy,
+				GIRPct:          gs.GirPct,
+				PuttingAvg:      gs.PuttingAvg,
+				ScramblingPct:   gs.ScramblingPct,
+				Top10s:          gs.Top10s,
+				CutsMade:        gs.CutsMade,
+				EventsPlayed:    gs.EventsPlayed,
+				Wins:            gs.Wins,
+				Earnings:        gs.Earnings,
+			}
+			pfe.SeasonStats = stats
+			pfe.SeasonEarnings = gs.Earnings
+		}
+
+		bio := &GolferBio{}
+		hasBio := false
+		if g.Height != nil {
+			bio.Height = *g.Height
+			hasBio = true
+		}
+		if g.Weight != nil {
+			bio.Weight = *g.Weight
+			hasBio = true
+		}
+		if g.BirthDate != nil {
+			bio.BirthDate = g.BirthDate
+			hasBio = true
+		}
+		if g.BirthplaceCity != nil {
+			bio.BirthplaceCity = *g.BirthplaceCity
+			hasBio = true
+		}
+		if g.BirthplaceState != nil {
+			bio.BirthplaceState = *g.BirthplaceState
+			hasBio = true
+		}
+		if g.BirthplaceCountry != nil {
+			bio.BirthplaceCountry = *g.BirthplaceCountry
+			hasBio = true
+		}
+		if g.TurnedPro != nil {
+			bio.TurnedPro = g.TurnedPro
+			hasBio = true
+		}
+		if g.School != nil {
+			bio.School = *g.School
+			hasBio = true
+		}
+		if g.ResidenceCity != nil {
+			bio.ResidenceCity = *g.ResidenceCity
+			hasBio = true
+		}
+		if g.ResidenceState != nil {
+			bio.ResidenceState = *g.ResidenceState
+			hasBio = true
+		}
+		if g.ResidenceCountry != nil {
+			bio.ResidenceCountry = *g.ResidenceCountry
+			hasBio = true
+		}
+		if hasBio {
+			pfe.Bio = bio
+		}
+
+		resultEntries = append(resultEntries, pfe)
+	}
+
+	resp := &GetPickFieldResponse{
+		TournamentID:       tournamentEnt.ID,
+		TournamentName:     tournamentEnt.Name,
+		StartDate:          tournamentEnt.StartDate,
+		EndDate:            tournamentEnt.EndDate,
+		PickWindowState:    pickWindowState,
+		PickWindowOpensAt:  &windowStatus.OpensAt,
+		PickWindowClosesAt: &windowStatus.ClosesAt,
+		Entries:            resultEntries,
+		Total:              len(resultEntries),
+		AvailableCount:     availableCount,
+	}
+
+	if tournamentEnt.Course != nil {
+		resp.Course = *tournamentEnt.Course
+	}
+	if tournamentEnt.City != nil {
+		resp.City = *tournamentEnt.City
+	}
+	if tournamentEnt.State != nil {
+		resp.State = *tournamentEnt.State
+	}
+	if tournamentEnt.Country != nil {
+		resp.Country = *tournamentEnt.Country
+	}
+	if tournamentEnt.Purse != nil {
+		resp.Purse = tournamentEnt.Purse
+	}
+
+	if currentPick != nil {
+		resp.CurrentPickID = &currentPick.ID
+		if currentPick.Edges.Golfer != nil {
+			resp.CurrentPickGolferID = &currentPick.Edges.Golfer.ID
+		}
+	}
+
+	return resp, nil
 }
 
 func (s *Service) GetUserPublicPicks(ctx context.Context, leagueID, userID uuid.UUID) (*UserPublicPicksResponse, error) {

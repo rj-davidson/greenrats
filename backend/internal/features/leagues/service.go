@@ -656,12 +656,20 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 			StartDate:          t.StartDate,
 			EndDate:            t.EndDate,
 			Status:             status,
-			Course:             t.Course,
-			City:               t.City,
-			State:              t.State,
-			Country:            t.Country,
 			PickWindowOpensAt:  t.PickWindowOpensAt,
 			PickWindowClosesAt: t.PickWindowClosesAt,
+		}
+		if t.Course != nil {
+			lt.Course = *t.Course
+		}
+		if t.City != nil {
+			lt.City = *t.City
+		}
+		if t.State != nil {
+			lt.State = *t.State
+		}
+		if t.Country != nil {
+			lt.Country = *t.Country
 		}
 
 		pickCount, _ := s.db.Pick.

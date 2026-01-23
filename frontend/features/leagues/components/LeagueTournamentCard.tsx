@@ -89,7 +89,7 @@ function CompactRow({ tournament, leagueId, variant }: LeagueTournamentCardProps
           </span>
           <div className="shrink-0 sm:ml-auto">
             {tournament.has_user_pick ? (
-              <div className="flex items-center gap-1 text-green-600">
+              <div className="flex items-center gap-1 text-primary">
                 <CheckCircle2Icon className="size-3" />
                 <span>{tournament.golfer_name}</span>
                 {variant === "final" &&
@@ -143,7 +143,7 @@ function FullCard({ tournament, leagueId, variant }: LeagueTournamentCardProps) 
               {tournament.pick_count} {tournament.pick_count === 1 ? "pick" : "picks"}
             </div>
             {tournament.has_user_pick ? (
-              <div className="flex items-center gap-1.5 text-sm text-green-600">
+              <div className="flex items-center gap-1.5 text-sm text-primary">
                 <CheckCircle2Icon className="size-4" />
                 <span>{tournament.golfer_name || "Pick made"}</span>
               </div>

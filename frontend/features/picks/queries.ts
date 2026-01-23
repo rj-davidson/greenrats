@@ -4,6 +4,7 @@ import type {
   CreatePickRequest,
   CreatePickResponse,
   GetLeaguePicksResponse,
+  GetPickFieldResponse,
   ListPicksResponse,
   OverridePickResponse,
   UserPublicPicksResponse,
@@ -32,6 +33,9 @@ export const buildAvailableGolfersForUserKey = (
   tournamentId: string,
   userId: string,
 ) => [QueryKey.PICKS, "available-golfers-for-user", leagueId, tournamentId, userId] as const;
+
+export const buildPickFieldKey = (leagueId: string, tournamentId: string) =>
+  [QueryKey.PICKS, "pick-field", leagueId, tournamentId] as const;
 
 export function buildGetUserPicksQueryOptions(
   leagueId?: string,
@@ -136,6 +140,25 @@ export function useAvailableGolfersForUser(leagueId: string, tournamentId: strin
   return useQuery(buildGetAvailableGolfersForUserQueryOptions(leagueId, tournamentId, userId));
 }
 
+export function buildGetPickFieldQueryOptions(
+  leagueId: string,
+  tournamentId: string,
+  requestor: Requestor = makeClientRequest,
+) {
+  return queryOptions<GetPickFieldResponse>({
+    queryKey: buildPickFieldKey(leagueId, tournamentId),
+    queryFn: () =>
+      requestor.get<GetPickFieldResponse>(
+        `/api/v1/leagues/${leagueId}/tournaments/${tournamentId}/pick-field`,
+      ),
+    enabled: !!leagueId && !!tournamentId,
+  });
+}
+
+export function usePickField(leagueId: string, tournamentId: string) {
+  return useQuery(buildGetPickFieldQueryOptions(leagueId, tournamentId));
+}
+
 export function useCreatePick() {
   const queryClient = useQueryClient();
 
@@ -150,6 +173,9 @@ export function useCreatePick() {
       });
       void queryClient.invalidateQueries({
         queryKey: buildAvailableGolfersKey(variables.league_id, variables.tournament_id),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: buildPickFieldKey(variables.league_id, variables.tournament_id),
       });
     },
   });
@@ -244,6 +270,9 @@ export function useUpdatePick() {
       });
       void queryClient.invalidateQueries({
         queryKey: buildAvailableGolfersKey(leagueId, tournamentId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: buildPickFieldKey(leagueId, tournamentId),
       });
     },
   });

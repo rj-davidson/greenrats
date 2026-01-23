@@ -1,4 +1,5 @@
-export { GolferSelector } from "@/features/picks/components/GolferSelector";
-export { GolferTableRow } from "@/features/picks/components/GolferTableRow";
+export { GolferDetailPanel } from "@/features/picks/components/GolferDetailPanel";
 export { PickConfirmDialog } from "@/features/picks/components/PickConfirmDialog";
-export { PickMaker } from "@/features/picks/components/PickMaker";
+export { PickFieldRow } from "@/features/picks/components/PickFieldRow";
+export { PickFieldTable, PickFieldSkeleton } from "@/features/picks/components/PickFieldTable";
+export { TournamentPickHeader } from "@/features/picks/components/TournamentPickHeader";

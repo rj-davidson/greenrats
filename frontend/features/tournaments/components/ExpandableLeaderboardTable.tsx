@@ -173,7 +173,7 @@ function LeaderboardRow({
         {formatThru(entry.thru, entry.status)}
       </TableCell>
       <TableCell
-        className={cn("font-mono", entry.score < 0 && "text-green-600 dark:text-green-400")}
+        className={cn("font-mono", entry.score < 0 && "text-primary")}
       >
         {formatScoreToPar(entry.score)}
       </TableCell>

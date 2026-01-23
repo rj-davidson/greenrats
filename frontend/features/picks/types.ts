@@ -142,3 +142,78 @@ export const userPublicPicksResponseSchema = z.object({
 
 export type UserPublicPick = z.infer<typeof userPublicPickSchema>;
 export type UserPublicPicksResponse = z.infer<typeof userPublicPicksResponseSchema>;
+
+export const golferSeasonStatsSchema = z.object({
+  scoring_avg: z.number().nullable().optional(),
+  driving_distance: z.number().nullable().optional(),
+  driving_accuracy: z.number().nullable().optional(),
+  gir_pct: z.number().nullable().optional(),
+  putting_avg: z.number().nullable().optional(),
+  scrambling_pct: z.number().nullable().optional(),
+  top_10s: z.number().nullable().optional(),
+  cuts_made: z.number().nullable().optional(),
+  events_played: z.number().nullable().optional(),
+  wins: z.number().nullable().optional(),
+  earnings: z.number().nullable().optional(),
+});
+
+export const golferBioSchema = z.object({
+  height: z.string().optional(),
+  weight: z.string().optional(),
+  birth_date: z.string().nullable().optional(),
+  birthplace_city: z.string().optional(),
+  birthplace_state: z.string().optional(),
+  birthplace_country: z.string().optional(),
+  turned_pro: z.number().nullable().optional(),
+  school: z.string().optional(),
+  residence_city: z.string().optional(),
+  residence_state: z.string().optional(),
+  residence_country: z.string().optional(),
+});
+
+export const pickFieldEntrySchema = z.object({
+  golfer_id: z.string(),
+  golfer_name: z.string(),
+  country_code: z.string(),
+  country: z.string().optional(),
+  image_url: z.string().optional(),
+  entry_status: z.string(),
+  qualifier: z.string().optional(),
+  owgr: z.number().nullable().optional(),
+  owgr_at_entry: z.number().nullable().optional(),
+  season_earnings: z.number().nullable().optional(),
+  is_amateur: z.boolean(),
+  is_used: z.boolean(),
+  used_for_tournament_id: z.string().optional(),
+  used_for_tournament_name: z.string().optional(),
+  season_stats: golferSeasonStatsSchema.nullable().optional(),
+  bio: golferBioSchema.nullable().optional(),
+});
+
+export const pickWindowStateSchema = z.enum(["not_open", "open", "closed"]);
+
+export const getPickFieldResponseSchema = z.object({
+  tournament_id: z.string(),
+  tournament_name: z.string(),
+  course: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  purse: z.number().nullable().optional(),
+  start_date: z.string(),
+  end_date: z.string(),
+  pick_window_state: pickWindowStateSchema,
+  pick_window_opens_at: z.string().nullable().optional(),
+  pick_window_closes_at: z.string().nullable().optional(),
+  current_pick_id: z.string().optional(),
+  current_pick_golfer_id: z.string().optional(),
+  entries: z.array(pickFieldEntrySchema),
+  total: z.number(),
+  available_count: z.number(),
+});
+
+export type GolferSeasonStats = z.infer<typeof golferSeasonStatsSchema>;
+export type GolferBio = z.infer<typeof golferBioSchema>;
+export type PickFieldEntry = z.infer<typeof pickFieldEntrySchema>;
+export type PickWindowState = z.infer<typeof pickWindowStateSchema>;
+export type GetPickFieldResponse = z.infer<typeof getPickFieldResponseSchema>;

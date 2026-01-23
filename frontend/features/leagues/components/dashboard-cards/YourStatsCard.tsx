@@ -51,7 +51,7 @@ export function YourStatsCard({ leagueId }: YourStatsCardProps) {
               {formatEarnings(gapFromFirst)} behind leader
             </p>
           ) : userEntry.rank === 1 ? (
-            <p className="text-sm font-medium text-green-600">You&apos;re in the lead!</p>
+            <p className="text-sm font-medium text-primary">You&apos;re in the lead!</p>
           ) : null}
         </div>
       ) : (

@@ -141,3 +141,70 @@ type UserPublicPick struct {
 type UserPublicPicksResponse struct {
 	Picks []UserPublicPick `json:"picks"`
 }
+
+type GolferSeasonStats struct {
+	ScoringAvg      *float64 `json:"scoring_avg,omitempty"`
+	DrivingDistance *float64 `json:"driving_distance,omitempty"`
+	DrivingAccuracy *float64 `json:"driving_accuracy,omitempty"`
+	GIRPct          *float64 `json:"gir_pct,omitempty"`
+	PuttingAvg      *float64 `json:"putting_avg,omitempty"`
+	ScramblingPct   *float64 `json:"scrambling_pct,omitempty"`
+	Top10s          *int     `json:"top_10s,omitempty"`
+	CutsMade        *int     `json:"cuts_made,omitempty"`
+	EventsPlayed    *int     `json:"events_played,omitempty"`
+	Wins            *int     `json:"wins,omitempty"`
+	Earnings        *int     `json:"earnings,omitempty"`
+}
+
+type GolferBio struct {
+	Height            string     `json:"height,omitempty"`
+	Weight            string     `json:"weight,omitempty"`
+	BirthDate         *time.Time `json:"birth_date,omitempty"`
+	BirthplaceCity    string     `json:"birthplace_city,omitempty"`
+	BirthplaceState   string     `json:"birthplace_state,omitempty"`
+	BirthplaceCountry string     `json:"birthplace_country,omitempty"`
+	TurnedPro         *int       `json:"turned_pro,omitempty"`
+	School            string     `json:"school,omitempty"`
+	ResidenceCity     string     `json:"residence_city,omitempty"`
+	ResidenceState    string     `json:"residence_state,omitempty"`
+	ResidenceCountry  string     `json:"residence_country,omitempty"`
+}
+
+type PickFieldEntry struct {
+	GolferID              uuid.UUID          `json:"golfer_id"`
+	GolferName            string             `json:"golfer_name"`
+	CountryCode           string             `json:"country_code"`
+	Country               string             `json:"country,omitempty"`
+	ImageURL              string             `json:"image_url,omitempty"`
+	EntryStatus           string             `json:"entry_status"`
+	Qualifier             string             `json:"qualifier,omitempty"`
+	OWGR                  *int               `json:"owgr,omitempty"`
+	OWGRAtEntry           *int               `json:"owgr_at_entry,omitempty"`
+	SeasonEarnings        *int               `json:"season_earnings,omitempty"`
+	IsAmateur             bool               `json:"is_amateur"`
+	IsUsed                bool               `json:"is_used"`
+	UsedForTournamentID   *uuid.UUID         `json:"used_for_tournament_id,omitempty"`
+	UsedForTournamentName string             `json:"used_for_tournament_name,omitempty"`
+	SeasonStats           *GolferSeasonStats `json:"season_stats,omitempty"`
+	Bio                   *GolferBio         `json:"bio,omitempty"`
+}
+
+type GetPickFieldResponse struct {
+	TournamentID        uuid.UUID        `json:"tournament_id"`
+	TournamentName      string           `json:"tournament_name"`
+	Course              string           `json:"course,omitempty"`
+	City                string           `json:"city,omitempty"`
+	State               string           `json:"state,omitempty"`
+	Country             string           `json:"country,omitempty"`
+	Purse               *int             `json:"purse,omitempty"`
+	StartDate           time.Time        `json:"start_date"`
+	EndDate             time.Time        `json:"end_date"`
+	PickWindowState     string           `json:"pick_window_state"`
+	PickWindowOpensAt   *time.Time       `json:"pick_window_opens_at,omitempty"`
+	PickWindowClosesAt  *time.Time       `json:"pick_window_closes_at,omitempty"`
+	CurrentPickID       *uuid.UUID       `json:"current_pick_id,omitempty"`
+	CurrentPickGolferID *uuid.UUID       `json:"current_pick_golfer_id,omitempty"`
+	Entries             []PickFieldEntry `json:"entries"`
+	Total               int              `json:"total"`
+	AvailableCount      int              `json:"available_count"`
+}

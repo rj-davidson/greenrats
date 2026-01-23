@@ -77,7 +77,7 @@ export function LeaguePicksTable({ picks, tournamentStatus }: LeaguePicksTablePr
               </>
             ) : (
               <TableCell>
-                <div className="flex items-center gap-1.5 text-green-600">
+                <div className="flex items-center gap-1.5 text-primary">
                   <CheckCircle2Icon className="size-4" />
                   Pick made
                 </div>

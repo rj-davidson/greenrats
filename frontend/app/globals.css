@@ -229,3 +229,28 @@
   background-size: 200% 100%;
   animation: shimmer 2s ease-in-out infinite;
 }
+
+@keyframes border-pulse {
+  0%,
+  100% {
+    border-color: var(--primary);
+  }
+  50% {
+    border-color: color-mix(in oklch, var(--primary) 50%, transparent);
+  }
+}
+
+.animate-border-pulse {
+  animation: border-pulse 2s ease-in-out infinite;
+}
+
+.bg-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--muted) 25%,
+    color-mix(in oklch, var(--primary) 20%, var(--muted)) 50%,
+    var(--muted) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 3s ease-in-out infinite;
+}

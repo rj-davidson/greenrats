@@ -86,7 +86,7 @@ function PickStatus({
   if (tournament.has_user_pick) {
     return (
       <div className="space-y-1">
-        <div className="flex items-center gap-1.5 text-sm text-green-600">
+        <div className="flex items-center gap-1.5 text-sm text-primary">
           <CheckCircle2Icon className="size-4 shrink-0" />
           <span className="truncate">{tournament.golfer_name}</span>
         </div>

@@ -60,7 +60,7 @@ function LeaderboardRow({
       </TableCell>
       <TableCell className="text-muted-foreground">{entry.country_code}</TableCell>
       <TableCell
-        className={cn("font-mono", entry.score < 0 && "text-green-600 dark:text-green-400")}
+        className={cn("font-mono", entry.score < 0 && "text-primary")}
       >
         {formatScore(entry.score)}
       </TableCell>

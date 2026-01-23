@@ -147,11 +147,11 @@ export function TournamentDataTable({ tournaments, leagueId }: TournamentDataTab
                         <div
                           className={cn(
                             "flex items-center gap-1.5",
-                            !isCompleted && "text-green-600",
+                            !isCompleted && "text-primary",
                           )}
                         >
                           <CheckCircle2Icon
-                            className={cn("size-4 shrink-0", !isCompleted && "text-green-600")}
+                            className={cn("size-4 shrink-0", !isCompleted && "text-primary")}
                           />
                           <span className="truncate">{tournament.golfer_name}</span>
                         </div>
