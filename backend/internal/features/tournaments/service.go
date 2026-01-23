@@ -356,7 +356,7 @@ func (s *Service) GetField(ctx context.Context, id string) (*GetFieldResponse, e
 
 func toTournament(t *ent.Tournament) Tournament {
 	hasChampion := t.Edges.Champion != nil
-	status := DeriveStatus(t, hasChampion)
+	status := DeriveStatus(t)
 
 	result := Tournament{
 		ID:                 t.ID.String(),

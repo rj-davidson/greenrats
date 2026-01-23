@@ -3,12 +3,10 @@
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/shadcn/tabs";
-import { LeaguePicksTable } from "@/features/leagues/components/LeaguePicksTable";
 import { useLeague } from "@/features/leagues/queries";
-import { PickMaker } from "@/features/picks/components/PickMaker";
 import { useLeaguePicks } from "@/features/picks/queries";
 import { TournamentSelector } from "@/features/tournaments/components";
+import { ExpandableLeaderboardTable } from "@/features/tournaments/components/ExpandableLeaderboardTable";
 import { useTournament } from "@/features/tournaments/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { CalendarIcon } from "lucide-react";
@@ -46,28 +44,18 @@ export default function TournamentDetailPage() {
 
   const { data: leagueData } = useLeague(leagueId);
   const { data: tournamentData, isLoading: tournamentLoading } = useTournament(tournamentId);
-  const { data: picksData, isLoading: picksLoading } = useLeaguePicks(leagueId, tournamentId);
+  const { data: picksData } = useLeaguePicks(leagueId, tournamentId);
   const { data: currentUser } = useCurrentUser();
   const { setExtraCrumbs } = useBreadcrumbs();
 
   const league = leagueData?.league;
   const tournament = tournamentData?.tournament;
 
-  const currentUserPick = useMemo(() => {
+  const userPickedGolferId = useMemo(() => {
     if (!currentUser || !picksData?.entries) return undefined;
     const entry = picksData.entries.find((p) => p.user_id === currentUser.id);
-    if (!entry) return undefined;
-    return {
-      id: entry.pick_id,
-      user_id: entry.user_id,
-      golfer_id: entry.golfer_id,
-      golfer_name: entry.golfer_name,
-      tournament_id: tournamentId,
-      league_id: leagueId,
-      season_year: 0,
-      created_at: entry.created_at,
-    };
-  }, [currentUser, picksData, tournamentId, leagueId]);
+    return entry?.golfer_id;
+  }, [currentUser, picksData]);
 
   useEffect(() => {
     const crumbs: { name: string; path?: string }[] = [];
@@ -115,32 +103,10 @@ export default function TournamentDetailPage() {
         {getStatusBadge(tournament.status)}
       </div>
 
-      <Tabs defaultValue="picks" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="picks">Picks</TabsTrigger>
-          <TabsTrigger value="leaderboard">Leaderboard</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="picks" className="space-y-6">
-          {tournament.status === "upcoming" && (
-            <PickMaker leagueId={leagueId} tournament={tournament} currentPick={currentUserPick} />
-          )}
-          {picksLoading ? (
-            <Skeleton className="h-64 w-full" />
-          ) : (
-            <LeaguePicksTable
-              picks={picksData?.entries ?? []}
-              tournamentStatus={tournament.status}
-            />
-          )}
-        </TabsContent>
-
-        <TabsContent value="leaderboard">
-          <div className="rounded-lg border border-dashed p-12 text-center">
-            <p className="text-muted-foreground">Full tournament leaderboard coming soon</p>
-          </div>
-        </TabsContent>
-      </Tabs>
+      <ExpandableLeaderboardTable
+        tournamentId={tournamentId}
+        highlightedGolferId={userPickedGolferId}
+      />
     </div>
   );
 }

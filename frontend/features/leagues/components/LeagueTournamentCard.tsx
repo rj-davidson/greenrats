@@ -48,7 +48,7 @@ function getStatusBadge(variant: TournamentCardVariant, compact = false) {
       );
     case "next":
       return (
-        <Badge variant="outline" className={cn("border-primary text-primary", size)}>
+        <Badge variant="outline" className={size}>
           Up Next
         </Badge>
       );

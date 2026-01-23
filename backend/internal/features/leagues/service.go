@@ -651,11 +651,13 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 	for _, t := range tournaments {
 		status := deriveLeagueTournamentStatus(t, now)
 		lt := LeagueTournament{
-			ID:        t.ID,
-			Name:      t.Name,
-			StartDate: t.StartDate,
-			EndDate:   t.EndDate,
-			Status:    status,
+			ID:                 t.ID,
+			Name:               t.Name,
+			StartDate:          t.StartDate,
+			EndDate:            t.EndDate,
+			Status:             status,
+			PickWindowOpensAt:  t.PickWindowOpensAt,
+			PickWindowClosesAt: t.PickWindowClosesAt,
 		}
 
 		pickCount, _ := s.db.Pick.
@@ -705,12 +707,22 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 }
 
 func deriveLeagueTournamentStatus(t *ent.Tournament, now time.Time) string {
-	if t.Edges.Champion != nil {
+	referenceTime := t.StartDate
+	if t.PickWindowOpensAt != nil {
+		referenceTime = *t.PickWindowOpensAt
+	}
+
+	endDateMidnight := time.Date(t.EndDate.Year(), t.EndDate.Month(), t.EndDate.Day(), 0, 0, 0, 0, time.UTC)
+	completedThreshold := endDateMidnight.AddDate(0, 0, 2)
+
+	if !now.Before(completedThreshold) {
 		return "completed"
 	}
 
-	if t.PickWindowClosesAt != nil && now.After(*t.PickWindowClosesAt) {
-		return "active"
+	upcomingThreshold := referenceTime.Add(-24 * time.Hour)
+	if now.Before(upcomingThreshold) {
+		return "upcoming"
 	}
-	return "upcoming"
+
+	return "active"
 }

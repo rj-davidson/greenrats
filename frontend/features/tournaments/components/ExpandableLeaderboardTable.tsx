@@ -1,0 +1,182 @@
+"use client";
+
+import { GolfScorecard } from "./GolfScorecard";
+import {
+  formatScoreToPar,
+  formatThru,
+  getCurrentRoundScore,
+  getRoundLabel,
+} from "./leaderboard-utils";
+import { Skeleton } from "@/components/shadcn/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/shadcn/table";
+import { useLeaderboard, usePrefetchLeaderboardWithHoles } from "@/features/tournaments/queries";
+import type { LeaderboardEntry } from "@/features/tournaments/types";
+import { cn } from "@/lib/utils";
+import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { Fragment, useCallback, useState } from "react";
+
+interface ExpandableLeaderboardTableProps {
+  tournamentId: string;
+  highlightedGolferId?: string;
+}
+
+function LeaderboardSkeleton() {
+  return (
+    <div className="space-y-2">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <Skeleton key={i} className="h-12 w-full" />
+      ))}
+    </div>
+  );
+}
+
+export function ExpandableLeaderboardTable({
+  tournamentId,
+  highlightedGolferId,
+}: ExpandableLeaderboardTableProps) {
+  const [expandedGolferId, setExpandedGolferId] = useState<string | null>(null);
+
+  const { data, isLoading, error } = useLeaderboard(tournamentId);
+  const { data: dataWithHoles } = useLeaderboard(tournamentId, { include: "holes" });
+  const prefetch = usePrefetchLeaderboardWithHoles(tournamentId);
+
+  const toggleExpand = useCallback((golferId: string) => {
+    setExpandedGolferId((prev) => (prev === golferId ? null : golferId));
+  }, []);
+
+  if (isLoading) {
+    return <LeaderboardSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-lg border border-dashed p-8 text-center">
+        <p className="text-muted-foreground">Failed to load leaderboard. Please try again.</p>
+      </div>
+    );
+  }
+
+  if (!data || data.entries.length === 0) {
+    return (
+      <div className="rounded-lg border border-dashed p-8 text-center">
+        <p className="text-muted-foreground">No leaderboard data available yet.</p>
+      </div>
+    );
+  }
+
+  const currentRound = data.current_round;
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-12"></TableHead>
+          <TableHead className="w-16">Pos</TableHead>
+          <TableHead>Player</TableHead>
+          <TableHead className="w-16">{getRoundLabel(currentRound)}</TableHead>
+          <TableHead className="w-16">Thru</TableHead>
+          <TableHead className="w-20">Total</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {data.entries.map((entry) => {
+          const isExpanded = expandedGolferId === entry.golfer_id;
+          const entryWithHoles = dataWithHoles?.entries.find(
+            (e) => e.golfer_id === entry.golfer_id,
+          );
+
+          return (
+            <Fragment key={entry.golfer_id}>
+              <LeaderboardRow
+                entry={entry}
+                isExpanded={isExpanded}
+                isHighlighted={entry.golfer_id === highlightedGolferId}
+                onToggle={() => toggleExpand(entry.golfer_id)}
+                onHover={prefetch}
+              />
+              {isExpanded && entryWithHoles && (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={6} className="px-2 py-0">
+                    <GolfScorecard
+                      rounds={entryWithHoles.rounds}
+                      onClose={() => setExpandedGolferId(null)}
+                    />
+                  </TableCell>
+                </TableRow>
+              )}
+              {isExpanded && !entryWithHoles && (
+                <TableRow className="hover:bg-transparent">
+                  <TableCell colSpan={6} className="p-4">
+                    <div className="flex justify-center">
+                      <Skeleton className="h-32 w-full max-w-2xl" />
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </Fragment>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+}
+
+interface LeaderboardRowProps {
+  entry: LeaderboardEntry;
+  isExpanded: boolean;
+  isHighlighted: boolean;
+  onToggle: () => void;
+  onHover: () => void;
+}
+
+function LeaderboardRow({
+  entry,
+  isExpanded,
+  isHighlighted,
+  onToggle,
+  onHover,
+}: LeaderboardRowProps) {
+  const isCut = entry.cut;
+
+  return (
+    <TableRow
+      className={cn(
+        "cursor-pointer",
+        isCut && "text-muted-foreground",
+        isHighlighted && "bg-primary/10 hover:bg-primary/15",
+      )}
+      onClick={onToggle}
+      onPointerEnter={onHover}
+    >
+      <TableCell className="text-muted-foreground">
+        {isExpanded ? (
+          <ChevronDownIcon className="h-4 w-4" />
+        ) : (
+          <ChevronRightIcon className="h-4 w-4" />
+        )}
+      </TableCell>
+      <TableCell className={cn("font-medium", isHighlighted && "font-bold")}>
+        {entry.position_display}
+      </TableCell>
+      <TableCell>
+        <span className={cn(isHighlighted && "font-bold")}>{entry.golfer_name}</span>
+      </TableCell>
+      <TableCell className="font-mono">{getCurrentRoundScore(entry)}</TableCell>
+      <TableCell className="text-muted-foreground">
+        {formatThru(entry.thru, entry.status)}
+      </TableCell>
+      <TableCell
+        className={cn("font-mono", entry.score < 0 && "text-green-600 dark:text-green-400")}
+      >
+        {formatScoreToPar(entry.score)}
+      </TableCell>
+    </TableRow>
+  );
+}

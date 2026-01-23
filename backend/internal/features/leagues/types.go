@@ -68,16 +68,18 @@ type RegenerateCodeResponse struct {
 }
 
 type LeagueTournament struct {
-	ID             uuid.UUID `json:"id"`
-	Name           string    `json:"name"`
-	StartDate      time.Time `json:"start_date"`
-	EndDate        time.Time `json:"end_date"`
-	Status         string    `json:"status"`
-	HasUserPick    bool      `json:"has_user_pick"`
-	UserPickID     uuid.UUID `json:"user_pick_id,omitempty"`
-	GolferName     string    `json:"golfer_name,omitempty"`
-	GolferEarnings int       `json:"golfer_earnings,omitempty"`
-	PickCount      int       `json:"pick_count"`
+	ID                 uuid.UUID  `json:"id"`
+	Name               string     `json:"name"`
+	StartDate          time.Time  `json:"start_date"`
+	EndDate            time.Time  `json:"end_date"`
+	Status             string     `json:"status"`
+	HasUserPick        bool       `json:"has_user_pick"`
+	UserPickID         uuid.UUID  `json:"user_pick_id,omitempty"`
+	GolferName         string     `json:"golfer_name,omitempty"`
+	GolferEarnings     int        `json:"golfer_earnings,omitempty"`
+	PickCount          int        `json:"pick_count"`
+	PickWindowOpensAt  *time.Time `json:"pick_window_opens_at,omitempty"`
+	PickWindowClosesAt *time.Time `json:"pick_window_closes_at,omitempty"`
 }
 
 type ListLeagueTournamentsResponse struct {

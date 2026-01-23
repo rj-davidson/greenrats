@@ -8,7 +8,8 @@ import type {
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
-import { queryOptions, useQuery } from "@tanstack/react-query";
+import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 interface ListTournamentsParams {
   season?: number;
@@ -118,6 +119,15 @@ export function useLeaderboard(id: string, options: LeaderboardOptions = {}) {
 
 export function useTournamentField(id: string) {
   return useQuery(buildGetFieldQueryOptions(id));
+}
+
+export function usePrefetchLeaderboardWithHoles(tournamentId: string) {
+  const queryClient = useQueryClient();
+  return useCallback(() => {
+    void queryClient.prefetchQuery(
+      buildGetLeaderboardQueryOptions(tournamentId, { include: "holes" }),
+    );
+  }, [queryClient, tournamentId]);
 }
 
 export function useCurrentTournament() {

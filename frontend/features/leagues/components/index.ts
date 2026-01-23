@@ -13,3 +13,5 @@ export { LeagueTournamentCard } from "@/features/leagues/components/LeagueTourna
 export { LeagueTournamentList } from "@/features/leagues/components/LeagueTournamentList";
 export { LeagueTournamentView } from "@/features/leagues/components/LeagueTournamentView";
 export { PickWindowAlert } from "@/features/leagues/components/PickWindowAlert";
+export { TournamentDataTable } from "@/features/leagues/components/TournamentDataTable";
+export { TournamentSpotlightCards } from "@/features/leagues/components/TournamentSpotlightCards";
