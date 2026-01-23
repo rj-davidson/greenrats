@@ -280,6 +280,83 @@ func (s *Service) UpsertPlayer(ctx context.Context, p *balldontlie.Player) error
 	return nil
 }
 
+func (s *Service) UpsertTournamentFieldEntry(ctx context.Context, t *ent.Tournament, f *balldontlie.TournamentField) error {
+	g, err := s.db.Golfer.Query().
+		Where(golfer.BdlID(f.Player.ID)).
+		Only(ctx)
+
+	if ent.IsNotFound(err) {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to query golfer: %w", err)
+	}
+
+	entryStatus := mapEntryStatus(f.EntryStatus)
+
+	existing, err := s.db.TournamentEntry.Query().
+		Where(
+			tournamententry.HasTournamentWith(tournament.ID(t.ID)),
+			tournamententry.HasGolferWith(golfer.ID(g.ID)),
+		).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		builder := s.db.TournamentEntry.Create().
+			SetTournament(t).
+			SetGolfer(g).
+			SetEntryStatus(entryStatus).
+			SetIsAmateur(f.IsAmateur)
+
+		if f.Qualifier != "" {
+			builder.SetQualifier(f.Qualifier)
+		}
+		if f.OWGR != nil {
+			builder.SetOwgrAtEntry(*f.OWGR)
+		}
+
+		_, err = builder.Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create tournament field entry: %w", err)
+		}
+
+	case err != nil:
+		return fmt.Errorf("failed to query tournament entry: %w", err)
+
+	default:
+		updater := existing.Update().
+			SetEntryStatus(entryStatus).
+			SetIsAmateur(f.IsAmateur)
+
+		if f.Qualifier != "" {
+			updater.SetQualifier(f.Qualifier)
+		}
+		if f.OWGR != nil {
+			updater.SetOwgrAtEntry(*f.OWGR)
+		}
+
+		_, err = updater.Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update tournament field entry: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func mapEntryStatus(status string) tournamententry.EntryStatus {
+	switch strings.ToLower(status) {
+	case "committed", "confirmed":
+		return tournamententry.EntryStatusConfirmed
+	case "alternate":
+		return tournamententry.EntryStatusAlternate
+	case "withdrawn", "wd":
+		return tournamententry.EntryStatusWithdrawn
+	default:
+		return tournamententry.EntryStatusPending
+	}
+}
+
 func (s *Service) UpsertTournamentEntry(ctx context.Context, t *ent.Tournament, r *balldontlie.TournamentResult) error {
 	g, err := s.db.Golfer.Query().
 		Where(golfer.BdlID(r.Player.ID)).
@@ -319,7 +396,7 @@ func (s *Service) UpsertTournamentEntry(ctx context.Context, t *ent.Tournament, 
 
 	earnings := 0
 	if r.Earnings != nil {
-		earnings = *r.Earnings
+		earnings = int(*r.Earnings)
 	}
 
 	existing, err := s.db.TournamentEntry.Query().

@@ -87,3 +87,30 @@ func (m *MockClient) GetPlayerSeasonStats(ctx context.Context, season int, statI
 	result, _ := args.Get(0).([]PlayerSeasonStat)
 	return result, args.Error(1)
 }
+
+func (m *MockClient) GetTournamentCourseStats(ctx context.Context, tournamentID int) ([]TournamentCourseStats, error) {
+	args := m.Called(ctx, tournamentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, _ := args.Get(0).([]TournamentCourseStats)
+	return result, args.Error(1)
+}
+
+func (m *MockClient) GetTournamentField(ctx context.Context, tournamentID int) ([]TournamentField, error) {
+	args := m.Called(ctx, tournamentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, _ := args.Get(0).([]TournamentField)
+	return result, args.Error(1)
+}
+
+func (m *MockClient) GetPlayerRoundStats(ctx context.Context, tournamentID int) ([]PlayerRoundStats, error) {
+	args := m.Called(ctx, tournamentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, _ := args.Get(0).([]PlayerRoundStats)
+	return result, args.Error(1)
+}

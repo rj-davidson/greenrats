@@ -295,10 +295,159 @@ func TestGetPlayerSeasonStats_Success(t *testing.T) {
 	assert.Equal(t, "Driving Distance", stats[1].StatName)
 }
 
+func TestGetTournamentCourseStats_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/pga/v1/tournament_course_stats", r.URL.Path)
+		assert.Equal(t, "456", r.URL.Query().Get("tournament_ids[]"))
+
+		response := TournamentCourseStatsResponse{
+			Data: []TournamentCourseStats{
+				{
+					Tournament:     TournamentRef{ID: 456, Name: "Masters"},
+					Course:         CourseRef{ID: 1, Name: "Augusta National"},
+					HoleNumber:     1,
+					RoundNumber:    intPtr(1),
+					ScoringAverage: floatPtr(4.25),
+					DifficultyRank: intPtr(3),
+					Birdies:        intPtr(12),
+					Pars:           intPtr(45),
+				},
+				{
+					Tournament:     TournamentRef{ID: 456, Name: "Masters"},
+					Course:         CourseRef{ID: 1, Name: "Augusta National"},
+					HoleNumber:     2,
+					RoundNumber:    intPtr(1),
+					ScoringAverage: floatPtr(4.85),
+					DifficultyRank: intPtr(1),
+					Eagles:         intPtr(2),
+				},
+			},
+			Meta: Meta{NextCursor: 0, PerPage: 100},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	client := newTestClient(server.URL)
+	stats, err := client.GetTournamentCourseStats(context.Background(), 456)
+
+	require.NoError(t, err)
+	require.Len(t, stats, 2)
+	assert.Equal(t, 1, stats[0].HoleNumber)
+	assert.Equal(t, 4.25, *stats[0].ScoringAverage)
+	assert.Equal(t, 3, *stats[0].DifficultyRank)
+	assert.Equal(t, 2, stats[1].HoleNumber)
+}
+
+func TestGetTournamentField_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/pga/v1/tournament_field", r.URL.Path)
+		assert.Equal(t, "456", r.URL.Query().Get("tournament_ids[]"))
+
+		response := TournamentFieldResponse{
+			Data: []TournamentField{
+				{
+					ID:          1,
+					Tournament:  Tournament{ID: 456, Name: "Masters", Season: 2025},
+					Player:      Player{ID: 1, DisplayName: "Scottie Scheffler"},
+					EntryStatus: "Committed",
+					Qualifier:   "Exempt",
+					OWGR:        intPtr(1),
+					IsAmateur:   false,
+				},
+				{
+					ID:          2,
+					Tournament:  Tournament{ID: 456, Name: "Masters", Season: 2025},
+					Player:      Player{ID: 2, DisplayName: "Rory McIlroy"},
+					EntryStatus: "Committed",
+					Qualifier:   "Exempt",
+					OWGR:        intPtr(3),
+					IsAmateur:   false,
+				},
+			},
+			Meta: Meta{NextCursor: 0, PerPage: 100},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	client := newTestClient(server.URL)
+	field, err := client.GetTournamentField(context.Background(), 456)
+
+	require.NoError(t, err)
+	require.Len(t, field, 2)
+	assert.Equal(t, "Scottie Scheffler", field[0].Player.DisplayName)
+	assert.Equal(t, "Committed", field[0].EntryStatus)
+	assert.Equal(t, 1, *field[0].OWGR)
+	assert.Equal(t, "Rory McIlroy", field[1].Player.DisplayName)
+}
+
+func TestGetPlayerRoundStats_Success(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.Equal(t, "/pga/v1/player_round_stats", r.URL.Path)
+		assert.Equal(t, "456", r.URL.Query().Get("tournament_ids[]"))
+
+		response := PlayerRoundStatsResponse{
+			Data: []PlayerRoundStats{
+				{
+					Tournament:         TournamentRef{ID: 456, Name: "Masters"},
+					Player:             Player{ID: 1, DisplayName: "Scottie Scheffler"},
+					RoundNumber:        1,
+					SGTotal:            floatPtr(2.5),
+					SGTotalRank:        intPtr(1),
+					SGOffTee:           floatPtr(0.8),
+					SGApproach:         floatPtr(1.2),
+					SGAroundGreen:      floatPtr(0.3),
+					SGPutting:          floatPtr(0.2),
+					DrivingDistance:    floatPtr(310.5),
+					GreensInRegulation: floatPtr(77.8),
+					Birdies:            intPtr(5),
+					Pars:               intPtr(11),
+					Bogeys:             intPtr(2),
+				},
+				{
+					Tournament:  TournamentRef{ID: 456, Name: "Masters"},
+					Player:      Player{ID: 1, DisplayName: "Scottie Scheffler"},
+					RoundNumber: 2,
+					SGTotal:     floatPtr(1.8),
+					SGTotalRank: intPtr(5),
+					Birdies:     intPtr(4),
+					Pars:        intPtr(12),
+					Bogeys:      intPtr(2),
+				},
+			},
+			Meta: Meta{NextCursor: 0, PerPage: 100},
+		}
+
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(response)
+	}))
+	defer server.Close()
+
+	client := newTestClient(server.URL)
+	stats, err := client.GetPlayerRoundStats(context.Background(), 456)
+
+	require.NoError(t, err)
+	require.Len(t, stats, 2)
+	assert.Equal(t, 1, stats[0].RoundNumber)
+	assert.Equal(t, 2.5, *stats[0].SGTotal)
+	assert.Equal(t, 1, *stats[0].SGTotalRank)
+	assert.Equal(t, 5, *stats[0].Birdies)
+	assert.Equal(t, 2, stats[1].RoundNumber)
+}
+
 func strPtr(s string) *string {
 	return &s
 }
 
 func intPtr(i int) *int {
 	return &i
+}
+
+func floatPtr(f float64) *float64 {
+	return &f
 }

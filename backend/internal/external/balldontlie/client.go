@@ -400,3 +400,138 @@ func (c *Client) GetPlayerSeasonStats(ctx context.Context, season int, statIDs [
 	c.logger.Info("player season stats fetch complete", "total", len(allStats))
 	return allStats, nil
 }
+
+func (c *Client) GetTournamentCourseStats(ctx context.Context, tournamentID int) ([]TournamentCourseStats, error) {
+	c.logger.Info("fetching tournament course stats", "tournament_id", tournamentID)
+
+	var allStats []TournamentCourseStats
+	cursor := 0
+
+	for {
+		if err := c.wait(ctx); err != nil {
+			return nil, fmt.Errorf("rate limiter: %w", err)
+		}
+
+		var response TournamentCourseStatsResponse
+
+		req := c.client.R().
+			SetContext(ctx).
+			SetResult(&response).
+			SetQueryParam("tournament_ids[]", fmt.Sprintf("%d", tournamentID)).
+			SetQueryParam("per_page", "100")
+
+		if cursor > 0 {
+			req.SetQueryParam("cursor", fmt.Sprintf("%d", cursor))
+		}
+
+		resp, err := req.Get("/pga/v1/tournament_course_stats")
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch tournament course stats: %w", err)
+		}
+
+		if resp.IsError() {
+			return nil, fmt.Errorf("API error fetching tournament course stats: %s", resp.Status())
+		}
+
+		allStats = append(allStats, response.Data...)
+		c.logger.Debug("fetched course stats page", "cursor", cursor, "count", len(response.Data))
+
+		if response.Meta.NextCursor == 0 {
+			break
+		}
+		cursor = response.Meta.NextCursor
+	}
+
+	c.logger.Info("tournament course stats fetch complete", "total", len(allStats))
+	return allStats, nil
+}
+
+func (c *Client) GetTournamentField(ctx context.Context, tournamentID int) ([]TournamentField, error) {
+	c.logger.Info("fetching tournament field", "tournament_id", tournamentID)
+
+	var allEntries []TournamentField
+	cursor := 0
+
+	for {
+		if err := c.wait(ctx); err != nil {
+			return nil, fmt.Errorf("rate limiter: %w", err)
+		}
+
+		var response TournamentFieldResponse
+
+		req := c.client.R().
+			SetContext(ctx).
+			SetResult(&response).
+			SetQueryParam("tournament_ids[]", fmt.Sprintf("%d", tournamentID)).
+			SetQueryParam("per_page", "100")
+
+		if cursor > 0 {
+			req.SetQueryParam("cursor", fmt.Sprintf("%d", cursor))
+		}
+
+		resp, err := req.Get("/pga/v1/tournament_field")
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch tournament field: %w", err)
+		}
+
+		if resp.IsError() {
+			return nil, fmt.Errorf("API error fetching tournament field: %s", resp.Status())
+		}
+
+		allEntries = append(allEntries, response.Data...)
+		c.logger.Debug("fetched field page", "cursor", cursor, "count", len(response.Data))
+
+		if response.Meta.NextCursor == 0 {
+			break
+		}
+		cursor = response.Meta.NextCursor
+	}
+
+	c.logger.Info("tournament field fetch complete", "total", len(allEntries))
+	return allEntries, nil
+}
+
+func (c *Client) GetPlayerRoundStats(ctx context.Context, tournamentID int) ([]PlayerRoundStats, error) {
+	c.logger.Info("fetching player round stats", "tournament_id", tournamentID)
+
+	var allStats []PlayerRoundStats
+	cursor := 0
+
+	for {
+		if err := c.wait(ctx); err != nil {
+			return nil, fmt.Errorf("rate limiter: %w", err)
+		}
+
+		var response PlayerRoundStatsResponse
+
+		req := c.client.R().
+			SetContext(ctx).
+			SetResult(&response).
+			SetQueryParam("tournament_ids[]", fmt.Sprintf("%d", tournamentID)).
+			SetQueryParam("per_page", "100")
+
+		if cursor > 0 {
+			req.SetQueryParam("cursor", fmt.Sprintf("%d", cursor))
+		}
+
+		resp, err := req.Get("/pga/v1/player_round_stats")
+		if err != nil {
+			return nil, fmt.Errorf("failed to fetch player round stats: %w", err)
+		}
+
+		if resp.IsError() {
+			return nil, fmt.Errorf("API error fetching player round stats: %s", resp.Status())
+		}
+
+		allStats = append(allStats, response.Data...)
+		c.logger.Debug("fetched round stats page", "cursor", cursor, "count", len(response.Data))
+
+		if response.Meta.NextCursor == 0 {
+			break
+		}
+		cursor = response.Meta.NextCursor
+	}
+
+	c.logger.Info("player round stats fetch complete", "total", len(allStats))
+	return allStats, nil
+}
