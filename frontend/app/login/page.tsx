@@ -20,7 +20,7 @@ export default async function LoginPage() {
     <main className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Welcome to GreenRats</CardTitle>
+          <CardTitle className="text-2xl">Welcome to greenrats</CardTitle>
           <CardDescription>Sign in to start making your picks</CardDescription>
         </CardHeader>
         <CardContent>

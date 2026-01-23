@@ -15,7 +15,7 @@ func TestHandler_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("returns leaderboard", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		handler := NewHandler(service)
 
 		owner := factory.CreateUser()
@@ -44,7 +44,7 @@ func TestHandler_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("filters by season year query param", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		handler := NewHandler(service)
 
 		owner := factory.CreateUser()
@@ -73,7 +73,7 @@ func TestHandler_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("returns empty leaderboard when no picks", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		handler := NewHandler(service)
 
 		owner := factory.CreateUser()
@@ -95,7 +95,7 @@ func TestHandler_GetLeagueLeaderboard(t *testing.T) {
 		t.Skip("TODO: investigate SQLite context issue with Fiber handlers")
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		handler := NewHandler(service)
 
 		user := factory.CreateUser()
@@ -111,7 +111,7 @@ func TestHandler_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("returns 400 for invalid league ID", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		handler := NewHandler(service)
 
 		user := factory.CreateUser()

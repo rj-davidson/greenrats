@@ -1,5 +1,22 @@
 import { z } from "zod";
 
+export const currentPickSchema = z.object({
+  tournament_id: z.string(),
+  tournament_name: z.string(),
+  golfer_id: z.string(),
+  golfer_name: z.string(),
+});
+
+export const activeTournamentSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  is_pick_window_closed: z.boolean(),
+  start_date: z.string(),
+});
+
+export type CurrentPick = z.infer<typeof currentPickSchema>;
+export type ActiveTournament = z.infer<typeof activeTournamentSchema>;
+
 export const leaderboardEntrySchema = z.object({
   rank: z.number(),
   user_id: z.string(),
@@ -33,6 +50,7 @@ export const standingsEntrySchema = z.object({
   user_display_name: z.string(),
   total_earnings: z.number(),
   pick_count: z.number(),
+  current_pick: currentPickSchema.optional(),
   picks: z.array(pickHistorySchema).optional(),
 });
 
@@ -40,6 +58,7 @@ export const leagueStandingsResponseSchema = z.object({
   entries: z.array(standingsEntrySchema),
   total: z.number(),
   season_year: z.number(),
+  active_tournament: activeTournamentSchema.optional(),
 });
 
 export type PickHistory = z.infer<typeof pickHistorySchema>;

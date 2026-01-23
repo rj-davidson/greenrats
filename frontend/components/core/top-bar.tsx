@@ -15,7 +15,15 @@ import {
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { useCurrentUser } from "@/features/users/queries";
 import { signOut } from "@workos-inc/authkit-nextjs";
-import { BookOpenIcon, LogOutIcon, MailIcon, MonitorIcon, MoonIcon, SunIcon } from "lucide-react";
+import {
+  BookOpenIcon,
+  LogOutIcon,
+  MailIcon,
+  MonitorIcon,
+  MoonIcon,
+  RatIcon,
+  SunIcon,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 
@@ -102,8 +110,9 @@ function UserMenu() {
 export function TopBar() {
   return (
     <header className="flex h-16 items-center justify-between border-b px-4">
-      <Link href="/" className="font-serif text-2xl tracking-wide">
-        GREEN RATS
+      <Link href="/" className="flex items-center gap-2 font-serif text-2xl tracking-wide">
+        <RatIcon className="size-6" />
+        greenrats
       </Link>
       <UserMenu />
     </header>

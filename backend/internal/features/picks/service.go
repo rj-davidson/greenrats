@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -1062,4 +1063,147 @@ func deriveTournamentStatus(t *ent.Tournament, hasChampion bool) string {
 		return "active"
 	}
 	return "upcoming"
+}
+
+func (s *Service) GetUserPublicPicks(ctx context.Context, leagueID, userID uuid.UUID) (*UserPublicPicksResponse, error) {
+	entLeague, err := s.db.League.
+		Query().
+		Where(league.IDEQ(leagueID)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrLeagueNotFound
+		}
+		return nil, fmt.Errorf("failed to get league: %w", err)
+	}
+
+	now := time.Now().UTC()
+
+	picks, err := s.db.Pick.
+		Query().
+		Where(
+			pick.HasLeagueWith(league.IDEQ(leagueID)),
+			pick.HasUserWith(user.IDEQ(userID)),
+			pick.SeasonYearEQ(entLeague.SeasonYear),
+			pick.HasTournamentWith(tournament.PickWindowClosesAtLT(now)),
+		).
+		WithTournament().
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user picks: %w", err)
+	}
+
+	if len(picks) == 0 {
+		return &UserPublicPicksResponse{Picks: []UserPublicPick{}}, nil
+	}
+
+	type pickKey struct {
+		TournamentID uuid.UUID
+		GolferID     uuid.UUID
+	}
+	leaderboardKeys := make([]pickKey, 0, len(picks))
+	for _, p := range picks {
+		if p.Edges.Golfer != nil && p.Edges.Tournament != nil {
+			leaderboardKeys = append(leaderboardKeys, pickKey{
+				TournamentID: p.Edges.Tournament.ID,
+				GolferID:     p.Edges.Golfer.ID,
+			})
+		}
+	}
+
+	leaderboardMap := make(map[pickKey]*ent.LeaderboardEntry)
+	if len(leaderboardKeys) > 0 {
+		tournamentIDs := make([]uuid.UUID, 0)
+		golferIDs := make([]uuid.UUID, 0)
+		seen := make(map[uuid.UUID]bool)
+		for _, k := range leaderboardKeys {
+			if !seen[k.TournamentID] {
+				tournamentIDs = append(tournamentIDs, k.TournamentID)
+				seen[k.TournamentID] = true
+			}
+		}
+		seen = make(map[uuid.UUID]bool)
+		for _, k := range leaderboardKeys {
+			if !seen[k.GolferID] {
+				golferIDs = append(golferIDs, k.GolferID)
+				seen[k.GolferID] = true
+			}
+		}
+
+		entries, err := s.db.LeaderboardEntry.
+			Query().
+			Where(
+				leaderboardentry.HasTournamentWith(tournament.IDIn(tournamentIDs...)),
+				leaderboardentry.HasGolferWith(golfer.IDIn(golferIDs...)),
+			).
+			WithTournament().
+			WithGolfer().
+			All(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get leaderboard entries: %w", err)
+		}
+
+		for _, e := range entries {
+			if e.Edges.Tournament != nil && e.Edges.Golfer != nil {
+				key := pickKey{TournamentID: e.Edges.Tournament.ID, GolferID: e.Edges.Golfer.ID}
+				leaderboardMap[key] = e
+			}
+		}
+	}
+
+	positionCounts := make(map[uuid.UUID]map[int]int)
+	for _, e := range leaderboardMap {
+		if e.Edges.Tournament == nil {
+			continue
+		}
+		tid := e.Edges.Tournament.ID
+		if positionCounts[tid] == nil {
+			positionCounts[tid] = make(map[int]int)
+		}
+		if !e.Cut && e.Position > 0 {
+			positionCounts[tid][e.Position]++
+		}
+	}
+
+	result := make([]UserPublicPick, 0, len(picks))
+	for _, p := range picks {
+		if p.Edges.Tournament == nil || p.Edges.Golfer == nil {
+			continue
+		}
+
+		key := pickKey{TournamentID: p.Edges.Tournament.ID, GolferID: p.Edges.Golfer.ID}
+		var earnings int
+		var posDisplay string
+
+		if lbEntry, ok := leaderboardMap[key]; ok {
+			earnings = lbEntry.Earnings
+			if lbEntry.Cut {
+				posDisplay = "CUT"
+			} else if lbEntry.Position > 0 {
+				tid := p.Edges.Tournament.ID
+				if positionCounts[tid] != nil && positionCounts[tid][lbEntry.Position] > 1 {
+					posDisplay = fmt.Sprintf("T%d", lbEntry.Position)
+				} else {
+					posDisplay = fmt.Sprintf("%d", lbEntry.Position)
+				}
+			}
+		}
+
+		result = append(result, UserPublicPick{
+			TournamentID:        p.Edges.Tournament.ID,
+			TournamentName:      p.Edges.Tournament.Name,
+			TournamentStartDate: p.Edges.Tournament.StartDate,
+			GolferID:            p.Edges.Golfer.ID,
+			GolferName:          p.Edges.Golfer.Name,
+			PositionDisplay:     posDisplay,
+			Earnings:            earnings,
+		})
+	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].TournamentStartDate.After(result[j].TournamentStartDate)
+	})
+
+	return &UserPublicPicksResponse{Picks: result}, nil
 }

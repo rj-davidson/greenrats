@@ -127,3 +127,17 @@ type CreatePickForUserRequest struct {
 type CreatePickForUserResponse struct {
 	Pick Pick `json:"pick"`
 }
+
+type UserPublicPick struct {
+	TournamentID        uuid.UUID `json:"tournament_id"`
+	TournamentName      string    `json:"tournament_name"`
+	TournamentStartDate time.Time `json:"tournament_start_date"`
+	GolferID            uuid.UUID `json:"golfer_id"`
+	GolferName          string    `json:"golfer_name"`
+	PositionDisplay     string    `json:"position_display,omitempty"`
+	Earnings            int       `json:"earnings"`
+}
+
+type UserPublicPicksResponse struct {
+	Picks []UserPublicPick `json:"picks"`
+}

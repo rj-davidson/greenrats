@@ -20,6 +20,7 @@ import {
   CalendarIcon,
   HistoryIcon,
   LayoutDashboardIcon,
+  RatIcon,
   SettingsIcon,
   TrophyIcon,
 } from "lucide-react";
@@ -68,9 +69,12 @@ export function LeagueSidebar({ league, ...props }: LeagueSidebarProps) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex w-full items-center justify-center py-3">
-            <Link href="/" className="font-serif text-xl tracking-wide text-primary-foreground">
-              <span className="group-data-[collapsible=icon]:hidden">GREEN RATS</span>
-              <span className="hidden group-data-[collapsible=icon]:block">GR</span>
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 font-serif text-xl tracking-wide text-primary-foreground"
+            >
+              <span className="group-data-[collapsible=icon]:hidden">greenrats</span>
+              <RatIcon className="size-5" />
             </Link>
           </SidebarMenuItem>
         </SidebarMenu>

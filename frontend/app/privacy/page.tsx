@@ -8,7 +8,7 @@ export default function PrivacyPage() {
 
       <section className="mt-8 space-y-3 text-sm leading-6 text-muted-foreground">
         <p>
-          This Privacy Policy explains how GreenRats collects, uses, and shares information when you
+          This Privacy Policy explains how greenrats collects, uses, and shares information when you
           use our website, applications, and services (the "Service").
         </p>
       </section>

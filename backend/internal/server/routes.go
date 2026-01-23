@@ -51,7 +51,7 @@ func (s *Server) setupRoutes() {
 	leagueHandler := leagues.NewHandler(leagueService, s.emailClient, s.logger)
 	leagueHandler.RegisterRoutesWithGroup(leagueGroup)
 
-	leaderboardService := leaderboards.NewService(s.db)
+	leaderboardService := leaderboards.NewService(s.db, tournamentService)
 	leaderboardHandler := leaderboards.NewHandler(leaderboardService)
 	leaderboardHandler.RegisterLeagueRoutes(leagueGroup)
 

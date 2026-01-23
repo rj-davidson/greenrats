@@ -22,7 +22,7 @@ const imFellFrenchCanon = IM_Fell_French_Canon({
 });
 
 export const metadata: Metadata = {
-  title: "GreenRats - Golf Pick'em",
+  title: "greenrats - Golf Pick'em",
   description: "Pick one golfer per tournament. Compete with friends. Track your earnings.",
 };
 
@@ -42,7 +42,7 @@ export default function RootLayout({
               <div className="flex-1">{children}</div>
               <footer className="border-t py-6">
                 <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-6 text-sm text-muted-foreground sm:flex-row">
-                  <span>© {new Date().getFullYear()} GreenRats</span>
+                  <span>© {new Date().getFullYear()} greenrats</span>
                   <div className="flex gap-4">
                     <Link className="transition hover:text-foreground" href="/terms">
                       Terms of Service

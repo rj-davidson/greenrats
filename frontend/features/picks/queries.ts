@@ -6,11 +6,13 @@ import type {
   GetLeaguePicksResponse,
   ListPicksResponse,
   OverridePickResponse,
+  UserPublicPicksResponse,
 } from "@/features/picks/types";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
 
 export const buildUserPicksKey = (leagueId?: string, seasonYear?: number) => {
   const key: (string | number)[] = [QueryKey.PICKS, "user"];
@@ -245,4 +247,35 @@ export function useUpdatePick() {
       });
     },
   });
+}
+
+export const buildUserPublicPicksKey = (leagueId: string, userId: string) =>
+  [QueryKey.PICKS, "public", leagueId, userId] as const;
+
+export function buildGetUserPublicPicksQueryOptions(
+  leagueId: string,
+  userId: string,
+  requestor: Requestor = makeClientRequest,
+) {
+  return queryOptions<UserPublicPicksResponse>({
+    queryKey: buildUserPublicPicksKey(leagueId, userId),
+    queryFn: () =>
+      requestor.get<UserPublicPicksResponse>(`/api/v1/leagues/${leagueId}/users/${userId}/picks`),
+    enabled: !!leagueId && !!userId,
+  });
+}
+
+export function useUserPublicPicks(leagueId: string, userId: string) {
+  return useQuery(buildGetUserPublicPicksQueryOptions(leagueId, userId));
+}
+
+export function usePrefetchUserPublicPicks(leagueId: string) {
+  const queryClient = useQueryClient();
+
+  return useCallback(
+    (userId: string) => {
+      void queryClient.prefetchQuery(buildGetUserPublicPicksQueryOptions(leagueId, userId));
+    },
+    [queryClient, leagueId],
+  );
 }

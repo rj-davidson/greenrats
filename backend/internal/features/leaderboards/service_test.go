@@ -15,7 +15,7 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("returns leaderboard with cumulative earnings", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -56,7 +56,7 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("assigns ranks correctly", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -92,7 +92,7 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("sorts ties alphabetically", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -122,7 +122,7 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("filters by season year", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -153,7 +153,7 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("returns error for invalid league", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		ctx := context.Background()
 
 		_, err := service.GetLeagueLeaderboard(ctx, factory.RandomUUID(), 0)
@@ -165,7 +165,7 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("handles picks with no earnings", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -189,7 +189,7 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 	t.Run("counts picks correctly", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db)
+		service := NewService(db, nil)
 		ctx := context.Background()
 
 		owner := factory.CreateUser()

@@ -27,6 +27,7 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 
 func (h *Handler) RegisterLeagueRoutes(group fiber.Router) {
 	group.Get("/:id/picks", h.GetLeaguePicksEnhanced)
+	group.Get("/:id/users/:userId/picks", h.GetUserPublicPicks)
 	group.Get("/:id/available-golfers", h.GetAvailableGolfers)
 	group.Get("/:id/available-golfers-for-user", h.GetAvailableGolfersForUser)
 	group.Put("/:id/picks/:pickId", h.OverridePick)
@@ -157,6 +158,36 @@ func (h *Handler) GetLeaguePicksEnhanced(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get league picks",
 		})
+	}
+
+	return c.JSON(resp)
+}
+
+func (h *Handler) GetUserPublicPicks(c *fiber.Ctx) error {
+	authUserID := auth.GetDBUserID(c)
+	if authUserID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	leagueID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid league id",
+		})
+	}
+
+	userID, err := uuid.FromString(c.Params("userId"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user id",
+		})
+	}
+
+	resp, err := h.service.GetUserPublicPicks(c.UserContext(), leagueID, userID)
+	if err != nil {
+		return h.handleServiceError(c, err)
 	}
 
 	return c.JSON(resp)

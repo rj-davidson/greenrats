@@ -125,3 +125,20 @@ export const createPickForUserResponseSchema = z.object({
 });
 
 export type CreatePickForUserResponse = z.infer<typeof createPickForUserResponseSchema>;
+
+export const userPublicPickSchema = z.object({
+  tournament_id: z.string(),
+  tournament_name: z.string(),
+  tournament_start_date: z.string(),
+  golfer_id: z.string(),
+  golfer_name: z.string(),
+  position_display: z.string().optional(),
+  earnings: z.number(),
+});
+
+export const userPublicPicksResponseSchema = z.object({
+  picks: z.array(userPublicPickSchema),
+});
+
+export type UserPublicPick = z.infer<typeof userPublicPickSchema>;
+export type UserPublicPicksResponse = z.infer<typeof userPublicPicksResponseSchema>;

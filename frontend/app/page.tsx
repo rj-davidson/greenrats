@@ -13,7 +13,7 @@ function LandingPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="max-w-2xl text-center">
-        <h1 className="mb-4 text-5xl font-bold">GreenRats</h1>
+        <h1 className="mb-4 text-5xl font-bold">greenrats</h1>
         <p className="mb-8 text-xl text-muted-foreground">
           Pick one golfer per tournament. Compete with friends. Track your earnings throughout the
           PGA Tour season.

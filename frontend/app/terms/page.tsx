@@ -8,7 +8,7 @@ export default function TermsPage() {
 
       <section className="mt-8 space-y-3 text-sm leading-6 text-muted-foreground">
         <p>
-          These Terms of Service ("Terms") govern your access to and use of the GreenRats website,
+          These Terms of Service ("Terms") govern your access to and use of the greenrats website,
           applications, and services (the "Service"). By using the Service, you agree to these
           Terms.
         </p>
@@ -66,7 +66,7 @@ export default function TermsPage() {
         <h2 className="text-lg font-semibold text-foreground">User Content</h2>
         <p className="text-muted-foreground">
           You retain ownership of content you submit to the Service (such as league names and
-          picks). You grant GreenRats a limited, non-exclusive, worldwide license to use that
+          picks). You grant greenrats a limited, non-exclusive, worldwide license to use that
           content to operate and improve the Service.
         </p>
       </section>
@@ -74,7 +74,7 @@ export default function TermsPage() {
       <section className="mt-8 space-y-3 text-sm leading-6">
         <h2 className="text-lg font-semibold text-foreground">Intellectual Property</h2>
         <p className="text-muted-foreground">
-          The Service, including its software, design, and content, is owned by GreenRats or its
+          The Service, including its software, design, and content, is owned by greenrats or its
           licensors and is protected by intellectual property laws. You may not copy, modify, or
           distribute any part of the Service without permission.
         </p>
@@ -99,7 +99,7 @@ export default function TermsPage() {
       <section className="mt-8 space-y-3 text-sm leading-6">
         <h2 className="text-lg font-semibold text-foreground">Limitation of Liability</h2>
         <p className="text-muted-foreground">
-          To the fullest extent permitted by law, GreenRats will not be liable for indirect,
+          To the fullest extent permitted by law, greenrats will not be liable for indirect,
           incidental, special, consequential, or punitive damages, or for any loss of profits,
           revenues, data, or goodwill. Our total liability for any claims arising out of or relating
           to the Service will not exceed the amount you paid to us for the Service in the 12 months
@@ -110,7 +110,7 @@ export default function TermsPage() {
       <section className="mt-8 space-y-3 text-sm leading-6">
         <h2 className="text-lg font-semibold text-foreground">Indemnification</h2>
         <p className="text-muted-foreground">
-          You agree to indemnify and hold harmless GreenRats from any claims, damages, liabilities,
+          You agree to indemnify and hold harmless greenrats from any claims, damages, liabilities,
           and expenses arising from your use of the Service or violation of these Terms.
         </p>
       </section>

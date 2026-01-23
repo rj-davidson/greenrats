@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"time"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -13,14 +14,16 @@ import (
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/internal/features/tournaments"
 )
 
 type Service struct {
-	db *ent.Client
+	db                *ent.Client
+	tournamentService *tournaments.Service
 }
 
-func NewService(db *ent.Client) *Service {
-	return &Service{db: db}
+func NewService(db *ent.Client, tournamentService *tournaments.Service) *Service {
+	return &Service{db: db, tournamentService: tournamentService}
 }
 
 func (s *Service) GetLeagueLeaderboard(ctx context.Context, leagueID uuid.UUID, seasonYear int) (*LeagueLeaderboardResponse, error) {
@@ -61,6 +64,14 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 
 	if seasonYear == 0 {
 		seasonYear = entLeague.SeasonYear
+	}
+
+	var activeTournament *tournaments.Tournament
+	if s.tournamentService != nil {
+		activeTournament, err = s.tournamentService.GetActive(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get active tournament: %w", err)
+		}
 	}
 
 	picks, err := s.db.Pick.
@@ -149,6 +160,7 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		DisplayName string
 		Earnings    int
 		Picks       []PickHistory
+		CurrentPick *CurrentPick
 	}
 
 	userData := make(map[uuid.UUID]*userPickData)
@@ -194,6 +206,15 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 				}
 			}
 
+			if activeTournament != nil && p.Edges.Tournament.ID.String() == activeTournament.ID {
+				data.CurrentPick = &CurrentPick{
+					TournamentID:   p.Edges.Tournament.ID,
+					TournamentName: p.Edges.Tournament.Name,
+					GolferID:       p.Edges.Golfer.ID,
+					GolferName:     p.Edges.Golfer.Name,
+				}
+			}
+
 			if includePicks {
 				data.Picks = append(data.Picks, PickHistory{
 					TournamentID:    p.Edges.Tournament.ID,
@@ -221,6 +242,7 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 			UserDisplayName: data.DisplayName,
 			TotalEarnings:   data.Earnings,
 			PickCount:       pickCountByUser[userID],
+			CurrentPick:     data.CurrentPick,
 		}
 		if includePicks {
 			entry.Picks = data.Picks
@@ -243,9 +265,23 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		entries[i].Rank = currentRank
 	}
 
+	var activeTournamentResponse *ActiveTournament
+	if activeTournament != nil {
+		now := time.Now().UTC()
+		isWindowClosed := activeTournament.PickWindowClosesAt != nil && now.After(*activeTournament.PickWindowClosesAt)
+		tournamentID, _ := uuid.FromString(activeTournament.ID)
+		activeTournamentResponse = &ActiveTournament{
+			ID:                 tournamentID,
+			Name:               activeTournament.Name,
+			IsPickWindowClosed: isWindowClosed,
+			StartDate:          activeTournament.StartDate,
+		}
+	}
+
 	return &LeagueStandingsResponse{
-		Entries:    entries,
-		Total:      len(entries),
-		SeasonYear: seasonYear,
+		Entries:          entries,
+		Total:            len(entries),
+		SeasonYear:       seasonYear,
+		ActiveTournament: activeTournamentResponse,
 	}, nil
 }

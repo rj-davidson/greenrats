@@ -1,10 +1,10 @@
 "use client";
 
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/card";
-import { LeagueLeaderboard } from "@/features/leaderboards/components";
-import { LeagueMonogram } from "@/features/leagues/components";
+import { ExpandableLeagueStandings } from "@/features/leaderboards/components";
 import { useLeague } from "@/features/leagues/queries";
+import { ArrowLeftIcon, TrophyIcon } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
@@ -26,26 +26,26 @@ export default function StandingsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        {league && <LeagueMonogram league={league} size={40} />}
-        <div>
+      <div>
+        <Link
+          href={`/${leagueId}`}
+          className="mb-3 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeftIcon className="size-4" />
+          Back to League
+        </Link>
+        <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">Season Standings</h1>
-          {league && (
-            <p className="text-muted-foreground">
-              {league.name} &middot; Season {league.season_year}
-            </p>
-          )}
         </div>
+        {league && (
+          <div className="mt-1 flex items-center gap-2 text-muted-foreground">
+            <TrophyIcon className="size-4" />
+            {league.name} &middot; Season {league.season_year}
+          </div>
+        )}
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Leaderboard</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <LeagueLeaderboard leagueId={leagueId} />
-        </CardContent>
-      </Card>
+      <ExpandableLeagueStandings leagueId={leagueId} />
     </div>
   );
 }

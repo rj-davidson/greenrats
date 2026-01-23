@@ -13,7 +13,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/shadcn/sidebar";
-import { BotIcon, HomeIcon, SettingsIcon, TrophyIcon, UsersIcon } from "lucide-react";
+import { BotIcon, HomeIcon, RatIcon, SettingsIcon, TrophyIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -46,9 +46,9 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="flex w-full items-center justify-center">
-            <Link href="/" className="font-serif text-xl tracking-wide">
-              <span className="group-data-[collapsible=icon]:hidden">GREEN RATS</span>
-              <span className="hidden group-data-[collapsible=icon]:block">GR</span>
+            <Link href="/" className="flex items-center gap-1.5 font-serif text-xl tracking-wide">
+              <RatIcon className="size-5" />
+              <span className="group-data-[collapsible=icon]:hidden">greenrats</span>
             </Link>
           </SidebarMenuItem>
         </SidebarMenu>

@@ -16,7 +16,7 @@ export default function RulesPage() {
         <div className="mb-8 text-center">
           <h1 className="mb-2 text-4xl font-bold">How to Play</h1>
           <p className="text-lg text-muted-foreground">
-            Learn the rules of GreenRats golf pick&apos;em
+            Learn the rules of greenrats golf pick&apos;em
           </p>
         </div>
 
