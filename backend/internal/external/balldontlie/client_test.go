@@ -361,7 +361,7 @@ func TestGetTournamentCourseStats_Success(t *testing.T) {
 func TestGetTournamentField_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/pga/v1/tournament_field", r.URL.Path)
-		assert.Equal(t, "456", r.URL.Query().Get("tournament_ids[]"))
+		assert.Equal(t, "456", r.URL.Query().Get("tournament_id"))
 
 		response := TournamentFieldResponse{
 			Data: []TournamentField{

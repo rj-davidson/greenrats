@@ -629,7 +629,7 @@ func (c *Client) GetTournamentField(ctx context.Context, tournamentID int) ([]To
 			req := c.client.R().
 				SetContext(ctx).
 				SetResult(&response).
-				SetQueryParam("tournament_ids[]", fmt.Sprintf("%d", tournamentID)).
+				SetQueryParam("tournament_id", fmt.Sprintf("%d", tournamentID)).
 				SetQueryParam("per_page", "100")
 
 			if cursor > 0 {
