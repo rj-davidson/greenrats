@@ -3,6 +3,7 @@ package users
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -15,10 +16,14 @@ import (
 	"github.com/rj-davidson/greenrats/ent"
 )
 
+func discardLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
 func TestHandler_GetMe(t *testing.T) {
 	t.Run("returns user when authenticated", func(t *testing.T) {
 		app := fiber.New()
-		handler := NewHandler(nil, nil) // service not needed for this test
+		handler := NewHandler(nil, nil, discardLogger()) // service not needed for this test
 
 		// Create a mock user
 		userID := uuid.Must(uuid.NewV4())
@@ -58,7 +63,7 @@ func TestHandler_GetMe(t *testing.T) {
 
 	t.Run("returns 401 when not authenticated", func(t *testing.T) {
 		app := fiber.New()
-		handler := NewHandler(nil, nil)
+		handler := NewHandler(nil, nil, discardLogger())
 
 		app.Get("/users/me", handler.GetMe)
 
@@ -81,7 +86,7 @@ func TestHandler_GetMe(t *testing.T) {
 
 func TestHandler_RegisterRoutesWithGroup(t *testing.T) {
 	app := fiber.New()
-	handler := NewHandler(nil, nil)
+	handler := NewHandler(nil, nil, discardLogger())
 
 	group := app.Group("/users")
 	handler.RegisterRoutesWithGroup(group)

@@ -3,7 +3,7 @@ package email
 import (
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/resend/resend-go/v2"
 
@@ -14,9 +14,10 @@ type Client struct {
 	resend    *resend.Client
 	fromEmail string
 	enabled   bool
+	logger    *slog.Logger
 }
 
-func New(cfg *config.Config) *Client {
+func New(cfg *config.Config, logger *slog.Logger) *Client {
 	var resendClient *resend.Client
 	if cfg.ResendAPIKey != "" {
 		resendClient = resend.NewClient(cfg.ResendAPIKey)
@@ -26,12 +27,13 @@ func New(cfg *config.Config) *Client {
 		resend:    resendClient,
 		fromEmail: cfg.FromEmail,
 		enabled:   cfg.SendEmails && cfg.ResendAPIKey != "",
+		logger:    logger,
 	}
 }
 
 func (c *Client) Send(to, subject, html string) error {
 	if !c.enabled {
-		log.Printf("[EMAIL DISABLED] To: %s, Subject: %s", to, subject)
+		c.logger.Info("email disabled, skipping send", "to", to, "subject", subject)
 		return nil
 	}
 
@@ -51,7 +53,7 @@ func (c *Client) Send(to, subject, html string) error {
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 
-	log.Printf("[EMAIL SENT] To: %s, Subject: %s", to, subject)
+	c.logger.Info("email sent", "to", to, "subject", subject)
 	return nil
 }
 

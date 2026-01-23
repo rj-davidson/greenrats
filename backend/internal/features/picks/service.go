@@ -14,6 +14,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -34,6 +35,7 @@ var (
 	ErrPickNotFound          = errors.New("pick not found")
 	ErrNotCommissioner       = errors.New("only the commissioner can perform this action")
 	ErrTournamentCompleted   = errors.New("tournament has already completed")
+	ErrSeasonNotFound        = errors.New("season not found")
 )
 
 type Service struct {
@@ -141,12 +143,23 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*Pick, error
 		return nil, ErrPickAlreadyExists
 	}
 
+	seasonEnt, err := s.db.Season.Query().
+		Where(season.YearEQ(tournamentEnt.SeasonYear)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrSeasonNotFound
+		}
+		return nil, fmt.Errorf("failed to query season: %w", err)
+	}
+
 	pickEnt, err := s.db.Pick.Create().
 		SetUserID(params.UserID).
 		SetTournamentID(params.TournamentID).
 		SetGolferID(params.GolferID).
 		SetLeagueID(params.LeagueID).
 		SetSeasonYear(tournamentEnt.SeasonYear).
+		SetSeasonID(seasonEnt.ID).
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pick: %w", err)
@@ -266,12 +279,23 @@ func (s *Service) CreatePickForUser(ctx context.Context, params *CreatePickForUs
 		return nil, ErrPickAlreadyExists
 	}
 
+	seasonEnt, err := s.db.Season.Query().
+		Where(season.YearEQ(tournamentEnt.SeasonYear)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrSeasonNotFound
+		}
+		return nil, fmt.Errorf("failed to query season: %w", err)
+	}
+
 	pickEnt, err := s.db.Pick.Create().
 		SetUserID(params.TargetUserID).
 		SetTournamentID(params.TournamentID).
 		SetGolferID(params.GolferID).
 		SetLeagueID(params.LeagueID).
 		SetSeasonYear(tournamentEnt.SeasonYear).
+		SetSeasonID(seasonEnt.ID).
 		Save(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pick: %w", err)

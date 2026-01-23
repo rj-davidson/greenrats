@@ -24,7 +24,7 @@ func (s *Server) setupRoutes() {
 	v1.Get("/sse/:topic", s.sseHandler.HandleSSE)
 	v1.Get("/tournaments/:id/live", s.sseHandler.HandleTournamentSSE)
 
-	ensureUserCfg := auth.EnsureUserConfig{UserService: s.userService}
+	ensureUserCfg := auth.EnsureUserConfig{UserService: s.userService, Logger: s.logger}
 
 	tournamentGroup := v1.Group("/tournaments",
 		auth.OptionalMiddleware(*s.authConfig),
@@ -38,8 +38,8 @@ func (s *Server) setupRoutes() {
 		auth.Middleware(*s.authConfig),
 		auth.EnsureUserMiddleware(ensureUserCfg),
 	)
-	leagueService := leagues.NewService(s.db, s.config.CurrentSeason)
-	leagueHandler := leagues.NewHandler(leagueService, s.emailClient)
+	leagueService := leagues.NewService(s.db, s.config.CurrentSeason, s.logger)
+	leagueHandler := leagues.NewHandler(leagueService, s.emailClient, s.logger)
 	leagueHandler.RegisterRoutesWithGroup(leagueGroup)
 
 	leaderboardService := leaderboards.NewService(s.db)
@@ -59,7 +59,7 @@ func (s *Server) setupRoutes() {
 		auth.Middleware(*s.authConfig),
 		auth.EnsureUserMiddleware(ensureUserCfg),
 	)
-	userHandler := users.NewHandler(s.userService, s.emailClient)
+	userHandler := users.NewHandler(s.userService, s.emailClient, s.logger)
 	userHandler.RegisterRoutesWithGroup(userGroup)
 
 	adminGroup := v1.Group("/admin",

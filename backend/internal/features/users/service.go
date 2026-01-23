@@ -3,7 +3,7 @@ package users
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -17,15 +17,14 @@ import (
 	"github.com/rj-davidson/greenrats/internal/config"
 )
 
-// Service handles user business logic.
 type Service struct {
 	db     *ent.Client
 	config *config.Config
+	logger *slog.Logger
 }
 
-// New creates a new user service.
-func New(db *ent.Client, cfg *config.Config) *Service {
-	return &Service{db: db, config: cfg}
+func New(db *ent.Client, cfg *config.Config, logger *slog.Logger) *Service {
+	return &Service{db: db, config: cfg, logger: logger}
 }
 
 // GetOrCreateParams contains the parameters for GetOrCreate.
@@ -68,7 +67,7 @@ func (s *Service) GetOrCreate(ctx context.Context, params GetOrCreateParams) (*G
 		Save(ctx)
 
 	if err == nil {
-		log.Printf("Created new user: workos_id=%s, email=%s", params.WorkOSID, params.Email)
+		s.logger.Info("created new user", "workos_id", params.WorkOSID, "email", params.Email)
 		return &GetOrCreateResult{User: newUser, Created: true}, nil
 	}
 

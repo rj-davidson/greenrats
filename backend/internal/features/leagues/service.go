@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"errors"
 	"fmt"
-	"log"
+	"log/slog"
 	"math/big"
 	"time"
 
@@ -17,6 +17,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -36,15 +37,17 @@ var (
 	ErrLeagueFull      = errors.New("league has reached maximum members")
 	ErrNotCommissioner = errors.New("only the commissioner can perform this action")
 	ErrUserNotFound    = errors.New("user not found")
+	ErrSeasonNotFound  = errors.New("season not found")
 )
 
 type Service struct {
 	db            *ent.Client
 	currentSeason int
+	logger        *slog.Logger
 }
 
-func NewService(db *ent.Client, currentSeason int) *Service {
-	return &Service{db: db, currentSeason: currentSeason}
+func NewService(db *ent.Client, currentSeason int, logger *slog.Logger) *Service {
+	return &Service{db: db, currentSeason: currentSeason, logger: logger}
 }
 
 type CreateParams struct {
@@ -59,6 +62,16 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*League, err
 	}
 
 	seasonYear := s.currentSeason
+
+	seasonEnt, err := s.db.Season.Query().
+		Where(season.YearEQ(seasonYear)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrSeasonNotFound
+		}
+		return nil, fmt.Errorf("failed to query season: %w", err)
+	}
 
 	tx, err := s.db.Tx(ctx)
 	if err != nil {
@@ -75,6 +88,7 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*League, err
 		SetName(params.Name).
 		SetCode(code).
 		SetSeasonYear(seasonYear).
+		SetSeasonID(seasonEnt.ID).
 		SetCreatedByID(params.UserID).
 		Save(ctx)
 	if err != nil {
@@ -200,7 +214,7 @@ func (s *Service) GetByID(ctx context.Context, id uuid.UUID) (*League, error) {
 		Where(leaguemembership.HasLeagueWith(league.IDEQ(id))).
 		Count(ctx)
 	if err != nil {
-		log.Printf("warning: failed to count members for league %s: %v", id, err)
+		s.logger.Warn("failed to count members for league", "league_id", id, "error", err)
 	}
 
 	return &League{
@@ -231,7 +245,7 @@ func (s *Service) GetByIDWithRole(ctx context.Context, id, userID uuid.UUID) (*L
 		Where(leaguemembership.HasLeagueWith(league.IDEQ(id))).
 		Count(ctx)
 	if err != nil {
-		log.Printf("warning: failed to count members for league %s: %v", id, err)
+		s.logger.Warn("failed to count members for league", "league_id", id, "error", err)
 	}
 
 	l := &League{
@@ -359,7 +373,7 @@ func (s *Service) RegenerateJoinCode(ctx context.Context, leagueID, commissioner
 		Where(leaguemembership.HasLeagueWith(league.IDEQ(leagueID))).
 		Count(ctx)
 	if err != nil {
-		log.Printf("warning: failed to count members for league %s: %v", leagueID, err)
+		s.logger.Warn("failed to count members for league", "league_id", leagueID, "error", err)
 	}
 
 	return &League{
@@ -417,7 +431,7 @@ func (s *Service) SetJoiningEnabled(ctx context.Context, leagueID, commissionerI
 		Where(leaguemembership.HasLeagueWith(league.IDEQ(leagueID))).
 		Count(ctx)
 	if err != nil {
-		log.Printf("warning: failed to count members for league %s: %v", leagueID, err)
+		s.logger.Warn("failed to count members for league", "league_id", leagueID, "error", err)
 	}
 
 	return &League{

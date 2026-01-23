@@ -243,7 +243,7 @@ var (
 		{Name: "season_year", Type: field.TypeInt},
 		{Name: "joining_enabled", Type: field.TypeBool, Default: true},
 		{Name: "league_created_by", Type: field.TypeUUID},
-		{Name: "season_leagues", Type: field.TypeUUID, Nullable: true},
+		{Name: "season_leagues", Type: field.TypeUUID},
 	}
 	// LeaguesTable holds the schema information for the "leagues" table.
 	LeaguesTable = &schema.Table{
@@ -261,7 +261,7 @@ var (
 				Symbol:     "leagues_seasons_leagues",
 				Columns:    []*schema.Column{LeaguesColumns[8]},
 				RefColumns: []*schema.Column{SeasonsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 		},
 	}
@@ -309,7 +309,7 @@ var (
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "golfer_picks", Type: field.TypeUUID},
 		{Name: "league_picks", Type: field.TypeUUID},
-		{Name: "season_picks", Type: field.TypeUUID, Nullable: true},
+		{Name: "season_picks", Type: field.TypeUUID},
 		{Name: "tournament_picks", Type: field.TypeUUID},
 		{Name: "user_picks", Type: field.TypeUUID},
 	}
@@ -335,7 +335,7 @@ var (
 				Symbol:     "picks_seasons_picks",
 				Columns:    []*schema.Column{PicksColumns[5]},
 				RefColumns: []*schema.Column{SeasonsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "picks_tournaments_picks",
@@ -452,7 +452,7 @@ var (
 		{Name: "pick_window_closes_at", Type: field.TypeTime, Nullable: true},
 		{Name: "purse", Type: field.TypeInt, Nullable: true},
 		{Name: "course_tournaments", Type: field.TypeUUID, Nullable: true},
-		{Name: "season_tournaments", Type: field.TypeUUID, Nullable: true},
+		{Name: "season_tournaments", Type: field.TypeUUID},
 		{Name: "tournament_champion", Type: field.TypeUUID, Nullable: true},
 	}
 	// TournamentsTable holds the schema information for the "tournaments" table.
@@ -471,7 +471,7 @@ var (
 				Symbol:     "tournaments_seasons_tournaments",
 				Columns:    []*schema.Column{TournamentsColumns[18]},
 				RefColumns: []*schema.Column{SeasonsColumns[0]},
-				OnDelete:   schema.SetNull,
+				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "tournaments_golfers_champion",

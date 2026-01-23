@@ -78,7 +78,8 @@ func (Tournament) Edges() []ent.Edge {
 			Unique(),
 		edge.From("season", Season.Type).
 			Ref("tournaments").
-			Unique(),
+			Unique().
+			Required(),
 		edge.From("course_ref", Course.Type).
 			Ref("tournaments").
 			Unique(),

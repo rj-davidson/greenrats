@@ -1,6 +1,8 @@
 package leagues
 
 import (
+	"io"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -11,13 +13,18 @@ import (
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
+func discardLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
 func TestHandler_Create(t *testing.T) {
 	t.Run("creates league successfully", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
+		factory.EnsureSeason(2026)
 		user := factory.CreateUser()
 
 		app := testutil.NewTestApp(t).WithDBUser(user)
@@ -36,8 +43,8 @@ func TestHandler_Create(t *testing.T) {
 
 	t.Run("returns 401 when not authenticated", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		app := testutil.NewTestApp(t)
 		app.App.Post("/leagues", handler.Create)
@@ -50,8 +57,8 @@ func TestHandler_Create(t *testing.T) {
 	t.Run("returns 400 when name missing", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		user := factory.CreateUser()
 
@@ -68,8 +75,8 @@ func TestHandler_ListUserLeagues(t *testing.T) {
 	t.Run("returns user leagues", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		user := factory.CreateUser()
 		factory.CreateLeague(user, time.Now().Year())
@@ -88,8 +95,8 @@ func TestHandler_ListUserLeagues(t *testing.T) {
 
 	t.Run("returns 401 when not authenticated", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		app := testutil.NewTestApp(t)
 		app.App.Get("/leagues", handler.ListUserLeagues)
@@ -104,8 +111,8 @@ func TestHandler_GetByID(t *testing.T) {
 	t.Run("returns league when found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		user := factory.CreateUser()
 		league := factory.CreateLeague(user, time.Now().Year(), testutil.WithLeagueName("Test League"))
@@ -125,8 +132,8 @@ func TestHandler_GetByID(t *testing.T) {
 	t.Run("returns 404 when not found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		user := factory.CreateUser()
 
@@ -143,8 +150,8 @@ func TestHandler_JoinLeague(t *testing.T) {
 	t.Run("joins league successfully", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		owner := factory.CreateUser()
 		league := factory.CreateLeague(owner, time.Now().Year())
@@ -165,8 +172,8 @@ func TestHandler_JoinLeague(t *testing.T) {
 	t.Run("returns 400 for invalid code", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		user := factory.CreateUser()
 
@@ -181,8 +188,8 @@ func TestHandler_JoinLeague(t *testing.T) {
 	t.Run("returns 409 when already member", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		owner := factory.CreateUser()
 		league := factory.CreateLeague(owner, time.Now().Year())
@@ -202,8 +209,8 @@ func TestHandler_RegenerateJoinCode(t *testing.T) {
 	t.Run("regenerates code successfully", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		owner := factory.CreateUser()
 		league := factory.CreateLeague(owner, time.Now().Year())
@@ -224,8 +231,8 @@ func TestHandler_RegenerateJoinCode(t *testing.T) {
 	t.Run("returns 403 when not commissioner", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		owner := factory.CreateUser()
 		league := factory.CreateLeague(owner, time.Now().Year())
@@ -245,8 +252,8 @@ func TestHandler_SetJoiningEnabled(t *testing.T) {
 	t.Run("updates joining enabled successfully", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		owner := factory.CreateUser()
 		league := factory.CreateLeague(owner, time.Now().Year())
@@ -266,8 +273,8 @@ func TestHandler_SetJoiningEnabled(t *testing.T) {
 	t.Run("returns 403 when not commissioner", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
-		handler := NewHandler(service, nil)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
 
 		owner := factory.CreateUser()
 		league := factory.CreateLeague(owner, time.Now().Year())

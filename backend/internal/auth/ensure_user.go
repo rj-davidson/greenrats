@@ -1,26 +1,22 @@
 package auth
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/gofiber/fiber/v2"
 
 	"github.com/rj-davidson/greenrats/internal/features/users"
 )
 
-// EnsureUserConfig holds configuration for user provisioning middleware.
 type EnsureUserConfig struct {
 	UserService *users.Service
+	Logger      *slog.Logger
 }
 
-// EnsureUserMiddleware creates a middleware that provisions a database user.
-// This middleware REQUIRES that auth middleware has already run and set user context.
-// Returns 401 if no authenticated user is present.
 func EnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		workosID := GetUserID(c)
 		if workosID == "" {
-			log.Printf("[ENSURE_USER] No workos ID in context - auth middleware may not have run")
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "authentication required",
 			})
@@ -28,7 +24,6 @@ func EnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 
 		email := GetUserEmail(c)
 		if email == "" {
-			log.Printf("[ENSURE_USER] No email in JWT for user %s", workosID)
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "email claim missing from token",
 			})
@@ -39,7 +34,7 @@ func EnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 			Email:    email,
 		})
 		if err != nil {
-			log.Printf("[ENSURE_USER] Failed to get/create user: %v", err)
+			cfg.Logger.Error("failed to get/create user", "workos_id", workosID, "error", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "failed to provision user",
 			})

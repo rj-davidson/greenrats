@@ -1,7 +1,7 @@
 package users
 
 import (
-	"log"
+	"log/slog"
 	"regexp"
 	"strings"
 
@@ -13,15 +13,14 @@ import (
 
 var displayNameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]+$`)
 
-// Handler handles HTTP requests for users.
 type Handler struct {
 	service *Service
 	email   *email.Client
+	logger  *slog.Logger
 }
 
-// NewHandler creates a new user handler.
-func NewHandler(service *Service, emailClient *email.Client) *Handler {
-	return &Handler{service: service, email: emailClient}
+func NewHandler(service *Service, emailClient *email.Client, logger *slog.Logger) *Handler {
+	return &Handler{service: service, email: emailClient, logger: logger}
 }
 
 // RegisterRoutes registers user routes on the given router.
@@ -61,31 +60,21 @@ func (h *Handler) GetMe(c *fiber.Ctx) error {
 	})
 }
 
-// SetDisplayName handles POST /users/me/display-name - sets the user's display name.
 func (h *Handler) SetDisplayName(c *fiber.Ctx) error {
-	log.Printf("[USERS] SetDisplayName request received")
-
 	user, ok := c.Locals(DBUserKey).(*ent.User)
 	if !ok || user == nil {
-		log.Printf("[USERS] SetDisplayName: no authenticated user in context")
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "authentication required",
 		})
 	}
 
-	log.Printf("[USERS] SetDisplayName: user=%s, current_display_name=%v", user.ID, user.DisplayName)
-
 	var req SetDisplayNameRequest
 	if err := c.BodyParser(&req); err != nil {
-		log.Printf("[USERS] SetDisplayName: failed to parse body: %v", err)
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
 		})
 	}
 
-	log.Printf("[USERS] SetDisplayName: requested display_name=%q", req.DisplayName)
-
-	// Validate display name
 	displayName := strings.TrimSpace(req.DisplayName)
 	if displayName == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -113,7 +102,7 @@ func (h *Handler) SetDisplayName(c *fiber.Ctx) error {
 
 	updated, err := h.service.SetDisplayName(c.UserContext(), user.ID.String(), displayName)
 	if err != nil {
-		log.Printf("[USERS] SetDisplayName: service error: %v", err)
+		h.logger.Error("failed to set display name", "user_id", user.ID, "error", err)
 		if strings.Contains(err.Error(), "already set") {
 			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
 				"error": "display name is already set and cannot be changed",
@@ -129,14 +118,14 @@ func (h *Handler) SetDisplayName(c *fiber.Ctx) error {
 		})
 	}
 
-	log.Printf("[USERS] SetDisplayName: success user=%s display_name=%s", user.ID, displayName)
+	h.logger.Info("display name set", "user_id", user.ID, "display_name", displayName)
 
 	if h.email != nil {
 		go func() {
 			if err := h.email.SendWelcome(updated.Email, email.WelcomeData{
 				DisplayName: displayName,
 			}); err != nil {
-				log.Printf("[USERS] Failed to send welcome email: %v", err)
+				h.logger.Error("failed to send welcome email", "user_id", user.ID, "error", err)
 			}
 		}()
 	}
@@ -151,29 +140,21 @@ func (h *Handler) SetDisplayName(c *fiber.Ctx) error {
 	})
 }
 
-// CheckDisplayName handles GET /users/check-display-name - checks if a display name is available.
 func (h *Handler) CheckDisplayName(c *fiber.Ctx) error {
-	log.Printf("[USERS] CheckDisplayName request received")
-
 	name := strings.TrimSpace(c.Query("name"))
 	if name == "" {
-		log.Printf("[USERS] CheckDisplayName: missing name parameter")
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "name query parameter is required",
 		})
 	}
 
-	log.Printf("[USERS] CheckDisplayName: checking name=%q", name)
-
 	available, err := h.service.IsDisplayNameAvailable(c.UserContext(), name)
 	if err != nil {
-		log.Printf("[USERS] CheckDisplayName: error checking availability: %v", err)
+		h.logger.Error("failed to check display name availability", "name", name, "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to check display name availability",
 		})
 	}
-
-	log.Printf("[USERS] CheckDisplayName: name=%q available=%v", name, available)
 
 	return c.JSON(CheckDisplayNameResponse{
 		Available: available,
@@ -191,7 +172,7 @@ func (h *Handler) GetPendingActions(c *fiber.Ctx) error {
 
 	resp, err := h.service.GetPendingActions(c.UserContext(), user.ID)
 	if err != nil {
-		log.Printf("[USERS] GetPendingActions: error: %v", err)
+		h.logger.Error("failed to get pending actions", "user_id", user.ID, "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get pending actions",
 		})

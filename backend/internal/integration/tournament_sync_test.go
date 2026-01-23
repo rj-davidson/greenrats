@@ -14,6 +14,10 @@ import (
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
+func ensureSeason(t *testing.T, db *ent.Client, year int) *ent.Season {
+	return testutil.CreateSeason(t, db, year)
+}
+
 func upcomingStartDate() time.Time {
 	return time.Now().AddDate(0, 0, 7)
 }
@@ -30,6 +34,7 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 		bdlID := 8
 		expectedPGAID := "R2026002"
 		startDate := upcomingStartDate()
+		seasonEnt := ensureSeason(t, db, 2026)
 
 		created, err := db.Tournament.Create().
 			SetBdlID(bdlID).
@@ -37,6 +42,7 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 			SetStartDate(startDate).
 			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
+			SetSeason(seasonEnt).
 			SetNillablePgaTourID(getPGATourIDPtr(bdlID)).
 			Save(ctx)
 
@@ -48,6 +54,7 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 	t.Run("creates tournament without PGA Tour ID when not in mapping", func(t *testing.T) {
 		bdlID := 9999
 		startDate := upcomingStartDate()
+		seasonEnt := ensureSeason(t, db, 2026)
 
 		created, err := db.Tournament.Create().
 			SetBdlID(bdlID).
@@ -55,6 +62,7 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 			SetStartDate(startDate).
 			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
+			SetSeason(seasonEnt).
 			SetNillablePgaTourID(getPGATourIDPtr(bdlID)).
 			Save(ctx)
 
@@ -66,6 +74,7 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 		bdlID := 10
 		expectedPGAID := "R2026003"
 		startDate := upcomingStartDate()
+		seasonEnt := ensureSeason(t, db, 2026)
 
 		existing, err := db.Tournament.Create().
 			SetBdlID(bdlID).
@@ -73,6 +82,7 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 			SetStartDate(startDate).
 			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
+			SetSeason(seasonEnt).
 			Save(ctx)
 		require.NoError(t, err)
 		assert.Nil(t, existing.PgaTourID)
@@ -90,6 +100,7 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 		bdlID := 11
 		manualPGAID := "MANUAL123"
 		startDate := upcomingStartDate()
+		seasonEnt := ensureSeason(t, db, 2026)
 
 		existing, err := db.Tournament.Create().
 			SetBdlID(bdlID).
@@ -97,6 +108,7 @@ func TestTournamentSync_SetsPGATourID(t *testing.T) {
 			SetStartDate(startDate).
 			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
+			SetSeason(seasonEnt).
 			SetPgaTourID(manualPGAID).
 			Save(ctx)
 		require.NoError(t, err)
@@ -124,19 +136,21 @@ func getPGATourIDPtr(bdlID int) *string {
 	return &pgaID
 }
 
-func upsertTournament(ctx context.Context, db *ent.Client, bdlID int, name string) (*ent.Tournament, error) {
+func upsertTournament(ctx context.Context, t *testing.T, db *ent.Client, bdlID int, name string) (*ent.Tournament, error) {
 	existing, err := db.Tournament.Query().
 		Where(tournament.BdlID(bdlID)).
 		Only(ctx)
 
 	if ent.IsNotFound(err) {
+		seasonEnt := ensureSeason(t, db, 2026)
 		startDate := upcomingStartDate()
 		builder := db.Tournament.Create().
 			SetBdlID(bdlID).
 			SetName(name).
 			SetStartDate(startDate).
 			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
-			SetSeasonYear(2026)
+			SetSeasonYear(2026).
+			SetSeason(seasonEnt)
 
 		if pgaTourID := pgatour.GetPGATourID(bdlID); pgaTourID != "" {
 			builder.SetPgaTourID(pgaTourID)
@@ -170,7 +184,7 @@ func TestUpsertTournament(t *testing.T) {
 
 	t.Run("upsert creates with PGA Tour ID", func(t *testing.T) {
 		bdlID := 7
-		tournament, err := upsertTournament(ctx, db, bdlID, "Sony Open in Hawaii")
+		tournament, err := upsertTournament(ctx, t, db, bdlID, "Sony Open in Hawaii")
 
 		require.NoError(t, err)
 		require.NotNil(t, tournament.PgaTourID)
@@ -180,6 +194,7 @@ func TestUpsertTournament(t *testing.T) {
 	t.Run("upsert updates existing without PGA Tour ID", func(t *testing.T) {
 		bdlID := 20
 		startDate := upcomingStartDate()
+		seasonEnt := ensureSeason(t, db, 2026)
 
 		_, err := db.Tournament.Create().
 			SetBdlID(bdlID).
@@ -187,10 +202,11 @@ func TestUpsertTournament(t *testing.T) {
 			SetStartDate(startDate).
 			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
+			SetSeason(seasonEnt).
 			Save(ctx)
 		require.NoError(t, err)
 
-		updated, err := upsertTournament(ctx, db, bdlID, "Masters Tournament")
+		updated, err := upsertTournament(ctx, t, db, bdlID, "Masters Tournament")
 
 		require.NoError(t, err)
 		require.NotNil(t, updated.PgaTourID)
@@ -201,6 +217,7 @@ func TestUpsertTournament(t *testing.T) {
 		bdlID := 31
 		manualID := "CUSTOM_US_OPEN"
 		startDate := upcomingStartDate()
+		seasonEnt := ensureSeason(t, db, 2026)
 
 		_, err := db.Tournament.Create().
 			SetBdlID(bdlID).
@@ -208,11 +225,12 @@ func TestUpsertTournament(t *testing.T) {
 			SetStartDate(startDate).
 			SetEndDate(startDate.Add(4 * 24 * time.Hour)).
 			SetSeasonYear(2026).
+			SetSeason(seasonEnt).
 			SetPgaTourID(manualID).
 			Save(ctx)
 		require.NoError(t, err)
 
-		updated, err := upsertTournament(ctx, db, bdlID, "U.S. Open")
+		updated, err := upsertTournament(ctx, t, db, bdlID, "U.S. Open")
 
 		require.NoError(t, err)
 		require.NotNil(t, updated.PgaTourID)

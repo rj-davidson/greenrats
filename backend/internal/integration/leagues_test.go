@@ -2,6 +2,8 @@ package integration
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -14,6 +16,10 @@ import (
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
+func discardLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
 func TestLeaguesIntegration(t *testing.T) {
 	if testing.Short() {
 		t.Skip("skipping integration test")
@@ -23,12 +29,13 @@ func TestLeaguesIntegration(t *testing.T) {
 	db := testutil.NewPostgresTestDB(ctx, t)
 	factory := testutil.NewFactory(t, db)
 
-	leagueService := leagues.NewService(db, 2026)
-	leagueHandler := leagues.NewHandler(leagueService, nil)
+	leagueService := leagues.NewService(db, 2026, discardLogger())
+	leagueHandler := leagues.NewHandler(leagueService, nil, discardLogger())
 	leaderboardService := leaderboards.NewService(db)
 	leaderboardHandler := leaderboards.NewHandler(leaderboardService)
 
 	t.Run("full league flow", func(t *testing.T) {
+		factory.EnsureSeason(2026)
 		owner := factory.CreateUser(testutil.WithDisplayName("League Owner"))
 
 		app := testutil.NewTestApp(t).WithDBUser(owner)

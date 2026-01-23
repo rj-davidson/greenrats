@@ -181,14 +181,6 @@ func (_u *LeagueUpdate) SetSeasonID(id uuid.UUID) *LeagueUpdate {
 	return _u
 }
 
-// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
-func (_u *LeagueUpdate) SetNillableSeasonID(id *uuid.UUID) *LeagueUpdate {
-	if id != nil {
-		_u = _u.SetSeasonID(*id)
-	}
-	return _u
-}
-
 // SetSeason sets the "season" edge to the Season entity.
 func (_u *LeagueUpdate) SetSeason(v *Season) *LeagueUpdate {
 	return _u.SetSeasonID(v.ID)
@@ -345,6 +337,9 @@ func (_u *LeagueUpdate) check() error {
 	}
 	if _u.mutation.CreatedByCleared() && len(_u.mutation.CreatedByIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "League.created_by"`)
+	}
+	if _u.mutation.SeasonCleared() && len(_u.mutation.SeasonIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "League.season"`)
 	}
 	return nil
 }
@@ -783,14 +778,6 @@ func (_u *LeagueUpdateOne) SetSeasonID(id uuid.UUID) *LeagueUpdateOne {
 	return _u
 }
 
-// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
-func (_u *LeagueUpdateOne) SetNillableSeasonID(id *uuid.UUID) *LeagueUpdateOne {
-	if id != nil {
-		_u = _u.SetSeasonID(*id)
-	}
-	return _u
-}
-
 // SetSeason sets the "season" edge to the Season entity.
 func (_u *LeagueUpdateOne) SetSeason(v *Season) *LeagueUpdateOne {
 	return _u.SetSeasonID(v.ID)
@@ -960,6 +947,9 @@ func (_u *LeagueUpdateOne) check() error {
 	}
 	if _u.mutation.CreatedByCleared() && len(_u.mutation.CreatedByIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "League.created_by"`)
+	}
+	if _u.mutation.SeasonCleared() && len(_u.mutation.SeasonIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "League.season"`)
 	}
 	return nil
 }

@@ -119,7 +119,6 @@ func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
 
 		_ = result
 		allPlayers = append(allPlayers, response.Data...)
-		c.logger.Debug("fetched player page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -184,7 +183,6 @@ func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, 
 			}
 			allTournaments = append(allTournaments, tournament)
 		}
-		c.logger.Debug("fetched tournament page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -244,7 +242,6 @@ func (c *Client) GetTournamentResults(ctx context.Context, tournamentID int) ([]
 
 		_ = result
 		allResults = append(allResults, response.Data...)
-		c.logger.Debug("fetched results page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -303,7 +300,6 @@ func (c *Client) GetCourses(ctx context.Context) ([]Course, error) {
 
 		_ = result
 		allCourses = append(allCourses, response.Data...)
-		c.logger.Debug("fetched courses page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -363,7 +359,6 @@ func (c *Client) GetCourseHoles(ctx context.Context, courseID int) ([]CourseHole
 
 		_ = result
 		allHoles = append(allHoles, response.Data...)
-		c.logger.Debug("fetched holes page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -423,7 +418,6 @@ func (c *Client) GetPlayerRoundResults(ctx context.Context, tournamentID int) ([
 
 		_ = result
 		allResults = append(allResults, response.Data...)
-		c.logger.Debug("fetched round results page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -483,7 +477,6 @@ func (c *Client) GetPlayerScorecards(ctx context.Context, tournamentID int) ([]P
 
 		_ = result
 		allScorecards = append(allScorecards, response.Data...)
-		c.logger.Debug("fetched scorecards page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -547,7 +540,6 @@ func (c *Client) GetPlayerSeasonStats(ctx context.Context, season int, statIDs [
 
 		_ = result
 		allStats = append(allStats, response.Data...)
-		c.logger.Debug("fetched season stats page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -607,7 +599,6 @@ func (c *Client) GetTournamentCourseStats(ctx context.Context, tournamentID int)
 
 		_ = result
 		allStats = append(allStats, response.Data...)
-		c.logger.Debug("fetched course stats page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -667,7 +658,6 @@ func (c *Client) GetTournamentField(ctx context.Context, tournamentID int) ([]To
 
 		_ = result
 		allEntries = append(allEntries, response.Data...)
-		c.logger.Debug("fetched field page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break
@@ -727,7 +717,6 @@ func (c *Client) GetPlayerRoundStats(ctx context.Context, tournamentID int) ([]P
 
 		_ = result
 		allStats = append(allStats, response.Data...)
-		c.logger.Debug("fetched round stats page", "cursor", cursor, "count", len(response.Data))
 
 		if response.Meta.NextCursor == 0 {
 			break

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 
@@ -40,6 +39,14 @@ type Server struct {
 }
 
 func New(cfg *config.Config, db *ent.Client) *Server {
+	logLevel := slog.LevelInfo
+	if cfg.IsDevelopment() {
+		logLevel = slog.LevelDebug
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	}))
+
 	app := fiber.New(fiber.Config{
 		AppName:      "GreenRats API",
 		ErrorHandler: errorHandler,
@@ -59,31 +66,23 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 		jwksProvider, err = auth.NewJWKSProvider(cfg.WorkOSClientID)
 		if err != nil {
 			if cfg.IsProduction() {
-				log.Fatalf("Failed to initialize JWKS provider in production: %v", err)
+				logger.Error("failed to initialize JWKS provider in production", "error", err)
+				os.Exit(1)
 			}
-			log.Printf("Warning: failed to initialize JWKS provider: %v", err)
-			log.Printf("Auth will use SkipVerify mode (development only)")
+			logger.Warn("failed to initialize JWKS provider, using SkipVerify mode", "error", err)
 			authCfg.SkipVerify = true
 		} else {
 			authCfg.JWKSProvider = jwksProvider
-			log.Printf("JWKS provider initialized for client ID: %s", cfg.WorkOSClientID)
+			logger.Info("JWKS provider initialized", "client_id", cfg.WorkOSClientID)
 		}
 	} else {
-		log.Printf("Warning: WORKOS_CLIENT_ID not set - auth verification disabled (development only)")
+		logger.Warn("WORKOS_CLIENT_ID not set, auth verification disabled")
 		authCfg.SkipVerify = true
 	}
 
-	userService := users.New(db, cfg)
+	userService := users.New(db, cfg, logger)
 
-	emailClient := email.New(cfg)
-
-	logLevel := slog.LevelInfo
-	if cfg.IsDevelopment() {
-		logLevel = slog.LevelDebug
-	}
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: logLevel,
-	}))
+	emailClient := email.New(cfg, logger)
 
 	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, cfg.IsDevelopment(), logger)
 	pgatourClient := pgatour.New(cfg.PGATourAPIKey, logger)
@@ -96,7 +95,7 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 		var err error
 		gmapsClient, err = googlemaps.New(cfg.GoogleMapsAPIKey, logger)
 		if err != nil {
-			log.Printf("Warning: failed to create Google Maps client: %v", err)
+			logger.Warn("failed to create Google Maps client", "error", err)
 		}
 	}
 

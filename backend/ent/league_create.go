@@ -178,14 +178,6 @@ func (_c *LeagueCreate) SetSeasonID(id uuid.UUID) *LeagueCreate {
 	return _c
 }
 
-// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
-func (_c *LeagueCreate) SetNillableSeasonID(id *uuid.UUID) *LeagueCreate {
-	if id != nil {
-		_c = _c.SetSeasonID(*id)
-	}
-	return _c
-}
-
 // SetSeason sets the "season" edge to the Season entity.
 func (_c *LeagueCreate) SetSeason(v *Season) *LeagueCreate {
 	return _c.SetSeasonID(v.ID)
@@ -276,6 +268,9 @@ func (_c *LeagueCreate) check() error {
 	}
 	if len(_c.mutation.CreatedByIDs()) == 0 {
 		return &ValidationError{Name: "created_by", err: errors.New(`ent: missing required edge "League.created_by"`)}
+	}
+	if len(_c.mutation.SeasonIDs()) == 0 {
+		return &ValidationError{Name: "season", err: errors.New(`ent: missing required edge "League.season"`)}
 	}
 	return nil
 }

@@ -43,6 +43,7 @@ func (League) Edges() []ent.Edge {
 		edge.To("email_reminders", EmailReminder.Type),
 		edge.From("season", Season.Type).
 			Ref("leagues").
-			Unique(),
+			Unique().
+			Required(),
 	}
 }

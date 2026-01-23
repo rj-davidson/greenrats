@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"log/slog"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,6 +30,14 @@ func run() error {
 		return err
 	}
 
+	logLevel := slog.LevelInfo
+	if cfg.IsDevelopment() {
+		logLevel = slog.LevelDebug
+	}
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: logLevel,
+	}))
+
 	if cfg.SentryDSN != "" {
 		if err := sentry.Init(sentry.ClientOptions{
 			Dsn:              cfg.SentryDSN,
@@ -36,10 +45,10 @@ func run() error {
 			EnableTracing:    true,
 			TracesSampleRate: 0.1,
 		}); err != nil {
-			log.Printf("Sentry initialization failed: %v", err)
+			logger.Warn("sentry initialization failed", "error", err)
 		} else {
 			defer sentry.Flush(2 * time.Second)
-			log.Println("Sentry initialized")
+			logger.Info("sentry initialized")
 		}
 	}
 
@@ -49,21 +58,18 @@ func run() error {
 	}
 	defer db.Close()
 
-	// Run auto-migration in development (use Atlas in production)
 	if cfg.IsDevelopment() {
 		if err := db.Schema.Create(context.Background()); err != nil {
 			return err
 		}
 	}
 
-	if err := demo.EnsureDemoLeague(context.Background(), db); err != nil {
+	if err := demo.EnsureDemoLeague(context.Background(), db, logger); err != nil {
 		return err
 	}
 
-	// Create and start server
 	srv := server.New(cfg, db)
 
-	// Start server in goroutine
 	errChan := make(chan error, 1)
 	go func() {
 		if err := srv.Start(); err != nil {
@@ -71,20 +77,18 @@ func run() error {
 		}
 	}()
 
-	log.Printf("GreenRats API started on port %d", cfg.Port)
+	logger.Info("GreenRats API started", "port", cfg.Port)
 
-	// Wait for interrupt signal or server error
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
 	select {
 	case <-quit:
-		log.Println("Shutting down server...")
+		logger.Info("shutting down server")
 	case err := <-errChan:
 		return err
 	}
 
-	// Give outstanding requests 10 seconds to complete
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -92,6 +96,6 @@ func run() error {
 		return err
 	}
 
-	log.Println("Server exited gracefully")
+	logger.Info("server exited gracefully")
 	return nil
 }

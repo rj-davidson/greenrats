@@ -2,6 +2,8 @@ package users
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -15,10 +17,14 @@ func testConfig() *config.Config {
 	return &config.Config{}
 }
 
+func testLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
 func TestService_GetOrCreate(t *testing.T) {
 	t.Run("creates new user when not exists", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		result, err := service.GetOrCreate(ctx, GetOrCreateParams{
@@ -35,7 +41,7 @@ func TestService_GetOrCreate(t *testing.T) {
 	t.Run("returns existing user when found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		existing := factory.CreateUser(
@@ -58,7 +64,7 @@ func TestService_SetDisplayName(t *testing.T) {
 	t.Run("sets display name when not already set", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		user := factory.CreateUserWithoutDisplayName()
@@ -73,7 +79,7 @@ func TestService_SetDisplayName(t *testing.T) {
 	t.Run("returns error when display name already set", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		user := factory.CreateUser(testutil.WithDisplayName("Existing Name"))
@@ -87,7 +93,7 @@ func TestService_SetDisplayName(t *testing.T) {
 	t.Run("returns error when display name already taken", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		factory.CreateUser(testutil.WithDisplayName("Taken Name"))
@@ -101,7 +107,7 @@ func TestService_SetDisplayName(t *testing.T) {
 
 	t.Run("returns error for invalid user ID", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		_, err := service.SetDisplayName(ctx, "invalid-uuid", "Name")
@@ -114,7 +120,7 @@ func TestService_SetDisplayName(t *testing.T) {
 func TestService_IsDisplayNameAvailable(t *testing.T) {
 	t.Run("returns true when name is available", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		available, err := service.IsDisplayNameAvailable(ctx, "Available Name")
@@ -126,7 +132,7 @@ func TestService_IsDisplayNameAvailable(t *testing.T) {
 	t.Run("returns false when name is taken", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		factory.CreateUser(testutil.WithDisplayName("Taken Name"))
@@ -140,7 +146,7 @@ func TestService_IsDisplayNameAvailable(t *testing.T) {
 	t.Run("case insensitive check", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		factory.CreateUser(testutil.WithDisplayName("Test Name"))
@@ -156,7 +162,7 @@ func TestService_GetByID(t *testing.T) {
 	t.Run("returns user when found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		user := factory.CreateUser()
@@ -169,7 +175,7 @@ func TestService_GetByID(t *testing.T) {
 
 	t.Run("returns error for invalid ID", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		_, err := service.GetByID(ctx, "invalid")
@@ -181,7 +187,7 @@ func TestService_GetByID(t *testing.T) {
 	t.Run("returns error when user not found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		_, err := service.GetByID(ctx, factory.RandomUUID().String())
@@ -194,7 +200,7 @@ func TestService_GetByWorkOSID(t *testing.T) {
 	t.Run("returns user when found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		user := factory.CreateUser(testutil.WithWorkOSID("user_abc123"))
@@ -207,7 +213,7 @@ func TestService_GetByWorkOSID(t *testing.T) {
 
 	t.Run("returns error when user not found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
-		service := New(db, testConfig())
+		service := New(db, testConfig(), testLogger())
 		ctx := context.Background()
 
 		_, err := service.GetByWorkOSID(ctx, "nonexistent")

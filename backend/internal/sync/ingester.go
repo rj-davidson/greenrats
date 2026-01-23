@@ -73,20 +73,16 @@ func (i *Ingester) Run(ctx context.Context) {
 		i.syncTournaments(ctx)
 		lastTournamentSync = time.Now()
 	} else {
-		i.logger.Debug("skipping tournament sync (data is fresh)")
 		lastTournamentSync = time.Now()
 	}
 	if i.shouldSyncPlayersNow() {
 		i.syncPlayers(ctx)
 		lastPlayerSync = time.Now()
-	} else {
-		i.logger.Debug("skipping player sync (not scheduled time)")
 	}
 	if i.shouldSync(ctx, "leaderboards", i.getLeaderboardInterval(ctx)) {
 		i.syncLeaderboards(ctx)
 		lastLeaderboardSync = time.Now()
 	} else {
-		i.logger.Debug("skipping leaderboard sync (data is fresh)")
 		lastLeaderboardSync = time.Now()
 	}
 	if i.isAnyTournamentInPlayHours(ctx) {
@@ -99,14 +95,11 @@ func (i *Ingester) Run(ctx context.Context) {
 		i.syncEarnings(ctx)
 		lastEarningsSync = time.Now()
 	} else {
-		i.logger.Debug("skipping earnings sync (data is fresh)")
 		lastEarningsSync = time.Now()
 	}
 	if i.shouldSyncFieldsNow() {
 		i.syncFields(ctx)
 		lastFieldSync = time.Now()
-	} else {
-		i.logger.Debug("skipping field sync (not scheduled time)")
 	}
 	i.sendPickReminders(ctx)
 	lastReminderSync = time.Now()

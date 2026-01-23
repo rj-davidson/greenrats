@@ -61,6 +61,11 @@ func NewIngestService(
 func (s *IngestService) SyncTournaments(ctx context.Context) error {
 	s.logger.Info("starting tournament sync")
 
+	seasonEnt, err := s.syncService.UpsertSeason(ctx, s.config.CurrentSeason)
+	if err != nil {
+		return fmt.Errorf("failed to ensure season exists: %w", err)
+	}
+
 	tournaments, err := s.ballDontLie.GetTournaments(ctx, s.config.CurrentSeason)
 	if err != nil {
 		return fmt.Errorf("failed to fetch tournaments: %w", err)
@@ -69,7 +74,7 @@ func (s *IngestService) SyncTournaments(ctx context.Context) error {
 	s.logger.Info("fetched tournaments", "count", len(tournaments), "season", s.config.CurrentSeason)
 
 	for idx := range tournaments {
-		if _, err := s.syncService.UpsertTournament(ctx, &tournaments[idx]); err != nil {
+		if _, err := s.syncService.UpsertTournament(ctx, &tournaments[idx], seasonEnt); err != nil {
 			s.logger.Warn("failed to upsert tournament", "name", tournaments[idx].Name, "error", err)
 			continue
 		}

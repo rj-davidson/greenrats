@@ -47,9 +47,9 @@ CREATE TABLE "leagues" (
   "season_year" bigint NOT NULL,
   "joining_enabled" boolean NOT NULL DEFAULT true,
   "league_created_by" uuid NOT NULL,
-  "season_leagues" uuid NULL,
+  "season_leagues" uuid NOT NULL,
   PRIMARY KEY ("id"),
-  CONSTRAINT "leagues_seasons_leagues" FOREIGN KEY ("season_leagues") REFERENCES "seasons" ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
+  CONSTRAINT "leagues_seasons_leagues" FOREIGN KEY ("season_leagues") REFERENCES "seasons" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT "leagues_users_created_by" FOREIGN KEY ("league_created_by") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 -- Create index "leagues_code_key" to table: "leagues"
@@ -138,12 +138,12 @@ CREATE TABLE "tournaments" (
   "pick_window_closes_at" timestamptz NULL,
   "purse" bigint NULL,
   "course_tournaments" uuid NULL,
-  "season_tournaments" uuid NULL,
+  "season_tournaments" uuid NOT NULL,
   "tournament_champion" uuid NULL,
   PRIMARY KEY ("id"),
   CONSTRAINT "tournaments_courses_tournaments" FOREIGN KEY ("course_tournaments") REFERENCES "courses" ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
   CONSTRAINT "tournaments_golfers_champion" FOREIGN KEY ("tournament_champion") REFERENCES "golfers" ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
-  CONSTRAINT "tournaments_seasons_tournaments" FOREIGN KEY ("season_tournaments") REFERENCES "seasons" ("id") ON UPDATE NO ACTION ON DELETE SET NULL
+  CONSTRAINT "tournaments_seasons_tournaments" FOREIGN KEY ("season_tournaments") REFERENCES "seasons" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 );
 -- Create index "tournaments_bdl_id_key" to table: "tournaments"
 CREATE UNIQUE INDEX "tournaments_bdl_id_key" ON "tournaments" ("bdl_id");
@@ -265,13 +265,13 @@ CREATE TABLE "picks" (
   "created_at" timestamptz NOT NULL,
   "golfer_picks" uuid NOT NULL,
   "league_picks" uuid NOT NULL,
-  "season_picks" uuid NULL,
+  "season_picks" uuid NOT NULL,
   "tournament_picks" uuid NOT NULL,
   "user_picks" uuid NOT NULL,
   PRIMARY KEY ("id"),
   CONSTRAINT "picks_golfers_picks" FOREIGN KEY ("golfer_picks") REFERENCES "golfers" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT "picks_leagues_picks" FOREIGN KEY ("league_picks") REFERENCES "leagues" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT "picks_seasons_picks" FOREIGN KEY ("season_picks") REFERENCES "seasons" ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
+  CONSTRAINT "picks_seasons_picks" FOREIGN KEY ("season_picks") REFERENCES "seasons" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT "picks_tournaments_picks" FOREIGN KEY ("tournament_picks") REFERENCES "tournaments" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
   CONSTRAINT "picks_users_picks" FOREIGN KEY ("user_picks") REFERENCES "users" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 );

@@ -9,6 +9,15 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "tournaments", "season", i.config.CurrentSeason)
 
+	seasonEnt, err := i.syncService.UpsertSeason(ctx, i.config.CurrentSeason)
+	if err != nil {
+		i.logger.Error("failed to ensure season exists", "error", err)
+		i.captureJobError("sync_tournaments", err)
+		SyncErrors.WithLabelValues("tournaments").Inc()
+		SyncRunsTotal.WithLabelValues("tournaments", "error").Inc()
+		return
+	}
+
 	tournaments, err := i.ballDontLie.GetTournaments(ctx, i.config.CurrentSeason)
 	if err != nil {
 		i.logger.Error("failed to fetch tournaments from BallDontLie", "error", err)
@@ -22,7 +31,7 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 
 	created, updated := 0, 0
 	for idx := range tournaments {
-		result, err := i.syncService.UpsertTournament(ctx, &tournaments[idx])
+		result, err := i.syncService.UpsertTournament(ctx, &tournaments[idx], seasonEnt)
 		if err != nil {
 			i.logger.Error("failed to upsert tournament", "tournament", tournaments[idx].Name, "error", err)
 			i.captureJobError("sync_tournaments", err)

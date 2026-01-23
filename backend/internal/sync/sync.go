@@ -40,13 +40,43 @@ func NewService(db *ent.Client, googlemaps *googlemaps.Client, logger *slog.Logg
 	}
 }
 
+func (s *Service) UpsertSeason(ctx context.Context, year int) (*ent.Season, error) {
+	existing, err := s.db.Season.Query().
+		Where(season.YearEQ(year)).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		startDate := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+		endDate := time.Date(year, time.December, 31, 23, 59, 59, 0, time.UTC)
+
+		created, err := s.db.Season.Create().
+			SetYear(year).
+			SetStartDate(startDate).
+			SetEndDate(endDate).
+			SetIsCurrent(true).
+			Save(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create season: %w", err)
+		}
+		s.logger.Info("created season", "year", year)
+		return created, nil
+
+	case err != nil:
+		return nil, fmt.Errorf("failed to query season: %w", err)
+
+	default:
+		return existing, nil
+	}
+}
+
 type TournamentUpsertResult struct {
 	Created         bool
 	BecameCompleted bool
 	Tournament      *ent.Tournament
 }
 
-func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournament) (*TournamentUpsertResult, error) {
+func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournament, seasonEnt *ent.Season) (*TournamentUpsertResult, error) {
 	startDate, err := time.Parse(balldontlie.DateFormat, t.StartDate)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse start date: %w", err)
@@ -86,7 +116,8 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 			SetName(t.Name).
 			SetStartDate(startDate).
 			SetEndDate(endDate).
-			SetSeasonYear(t.Season)
+			SetSeasonYear(t.Season).
+			SetSeason(seasonEnt)
 
 		if pgaTourID := pgatour.GetPGATourID(t.ID); pgaTourID != "" {
 			builder.SetPgaTourID(pgaTourID)
@@ -145,7 +176,8 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 		updater := existing.Update().
 			SetName(t.Name).
 			SetStartDate(startDate).
-			SetEndDate(endDate)
+			SetEndDate(endDate).
+			SetSeason(seasonEnt)
 
 		if t.CourseName != nil && *t.CourseName != "" {
 			updater.SetCourse(*t.CourseName)

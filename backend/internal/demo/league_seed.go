@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
+	"log/slog"
 	"strings"
 
 	"github.com/gofrs/uuid/v5"
@@ -16,6 +16,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -37,7 +38,7 @@ type demoPickRow struct {
 	golferName string
 }
 
-func EnsureDemoLeague(ctx context.Context, db *ent.Client) error {
+func EnsureDemoLeague(ctx context.Context, db *ent.Client, logger *slog.Logger) error {
 	demoLeagueID, err := uuid.FromString(demoLeagueIDString)
 	if err != nil {
 		return fmt.Errorf("invalid demo league id: %w", err)
@@ -69,6 +70,16 @@ func EnsureDemoLeague(ctx context.Context, db *ent.Client) error {
 		return fmt.Errorf("failed to load demo tournament: %w", err)
 	}
 
+	seasonEnt, err := db.Season.Query().
+		Where(season.YearEQ(tournamentEnt.SeasonYear)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return fmt.Errorf("season for year %d not found", tournamentEnt.SeasonYear)
+		}
+		return fmt.Errorf("failed to load season: %w", err)
+	}
+
 	rows, err := loadDemoPicks()
 	if err != nil {
 		return err
@@ -95,6 +106,7 @@ func EnsureDemoLeague(ctx context.Context, db *ent.Client) error {
 		SetName(demoLeagueName).
 		SetCode(demoJoinCode).
 		SetSeasonYear(tournamentEnt.SeasonYear).
+		SetSeasonID(seasonEnt.ID).
 		SetJoiningEnabled(true).
 		SetCreatedByID(owner.ID).
 		Save(ctx)
@@ -157,6 +169,7 @@ func EnsureDemoLeague(ctx context.Context, db *ent.Client) error {
 			SetTournamentID(tournamentEnt.ID).
 			SetGolferID(golferEnt.ID).
 			SetSeasonYear(tournamentEnt.SeasonYear).
+			SetSeasonID(seasonEnt.ID).
 			Save(ctx); err != nil {
 			return fmt.Errorf("failed to create pick for %s: %w", row.username, err)
 		}
@@ -168,12 +181,11 @@ func EnsureDemoLeague(ctx context.Context, db *ent.Client) error {
 	}
 	committed = true
 
-	log.Printf(
-		"Demo league seeded: league_id=%s picks=%d skipped_golfers=%d skipped_entries=%d",
-		demoLeagueIDString,
-		created,
-		skippedGolfer,
-		skippedEntry,
+	logger.Info("demo league seeded",
+		"league_id", demoLeagueIDString,
+		"picks", created,
+		"skipped_golfers", skippedGolfer,
+		"skipped_entries", skippedEntry,
 	)
 
 	return nil

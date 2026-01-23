@@ -2,7 +2,6 @@ package auth
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -37,7 +36,6 @@ func Middleware(cfg Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
-			log.Printf("[AUTH] Missing authorization header for %s %s", c.Method(), c.Path())
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "missing authorization header",
 			})
@@ -45,7 +43,6 @@ func Middleware(cfg Config) fiber.Handler {
 
 		parts := strings.Split(authHeader, " ")
 		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
-			log.Printf("[AUTH] Invalid auth header format")
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": "invalid authorization header format",
 			})
@@ -55,7 +52,6 @@ func Middleware(cfg Config) fiber.Handler {
 
 		claims, err := verifyToken(tokenString, cfg)
 		if err != nil {
-			log.Printf("[AUTH] Token verification failed: %v", err)
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 				"error": fmt.Sprintf("invalid token: %v", err),
 			})

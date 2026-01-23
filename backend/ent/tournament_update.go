@@ -388,14 +388,6 @@ func (_u *TournamentUpdate) SetSeasonID(id uuid.UUID) *TournamentUpdate {
 	return _u
 }
 
-// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
-func (_u *TournamentUpdate) SetNillableSeasonID(id *uuid.UUID) *TournamentUpdate {
-	if id != nil {
-		_u = _u.SetSeasonID(*id)
-	}
-	return _u
-}
-
 // SetSeason sets the "season" edge to the Season entity.
 func (_u *TournamentUpdate) SetSeason(v *Season) *TournamentUpdate {
 	return _u.SetSeasonID(v.ID)
@@ -548,6 +540,9 @@ func (_u *TournamentUpdate) check() error {
 		if err := tournament.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Tournament.name": %w`, err)}
 		}
+	}
+	if _u.mutation.SeasonCleared() && len(_u.mutation.SeasonIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Tournament.season"`)
 	}
 	return nil
 }
@@ -1243,14 +1238,6 @@ func (_u *TournamentUpdateOne) SetSeasonID(id uuid.UUID) *TournamentUpdateOne {
 	return _u
 }
 
-// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
-func (_u *TournamentUpdateOne) SetNillableSeasonID(id *uuid.UUID) *TournamentUpdateOne {
-	if id != nil {
-		_u = _u.SetSeasonID(*id)
-	}
-	return _u
-}
-
 // SetSeason sets the "season" edge to the Season entity.
 func (_u *TournamentUpdateOne) SetSeason(v *Season) *TournamentUpdateOne {
 	return _u.SetSeasonID(v.ID)
@@ -1416,6 +1403,9 @@ func (_u *TournamentUpdateOne) check() error {
 		if err := tournament.NameValidator(v); err != nil {
 			return &ValidationError{Name: "name", err: fmt.Errorf(`ent: validator failed for field "Tournament.name": %w`, err)}
 		}
+	}
+	if _u.mutation.SeasonCleared() && len(_u.mutation.SeasonIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Tournament.season"`)
 	}
 	return nil
 }

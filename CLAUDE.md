@@ -172,18 +172,24 @@ Each feature is self-contained:
 - Errors should be wrapped with context: `fmt.Errorf("failed to get pick: %w", err)`
 
 **Logging**:
-- Use Go's built-in `log/slog` package for structured logging
-- External service clients receive a `*slog.Logger` via constructor injection
+- Use Go's built-in `log/slog` package exclusively (no standard `log` package)
+- All services and clients receive a `*slog.Logger` via constructor injection
 - Log levels:
-  - **Info**: API call start (operation name, key parameters like tournament name, year)
-  - **Debug**: Pagination progress, response details, counts
-  - **Warn**: Retryable errors, unexpected but handled conditions
+  - **Info**: Service startup, sync start/completion, significant business operations
+  - **Debug**: Detailed progress (use sparingly - avoid per-iteration logs)
+  - **Warn**: Degraded operations, fallback behavior, missing optional data
   - **Error**: Leave to callers—they have more context
 - Development mode uses `slog.LevelDebug`, production uses `slog.LevelInfo`
 - For tests, use a discard logger: `slog.New(slog.NewTextHandler(io.Discard, nil))`
 
+**What NOT to log**:
+- Expected client failures (missing auth headers, invalid tokens, validation errors)
+- Per-iteration progress in loops (log start/end with totals instead)
+- Skipped operations (silence is fine when nothing happens)
+- Redundant context already in the response to client
+
 ```go
-// External client pattern
+// Service/client pattern with injected logger
 type Client struct {
     client *resty.Client
     logger *slog.Logger
@@ -193,11 +199,11 @@ func New(apiKey string, logger *slog.Logger) *Client {
     return &Client{client: client, logger: logger}
 }
 
-func (c *Client) FetchData(ctx context.Context, id string) (*Data, error) {
-    c.logger.Info("fetching data", "id", id)
-    // ... implementation ...
-    c.logger.Debug("fetch complete", "results", len(data))
-    return data, nil
+func (c *Client) FetchData(ctx context.Context) ([]Data, error) {
+    c.logger.Info("fetching data")
+    // ... pagination loop without per-page logging ...
+    c.logger.Info("fetch complete", "total", len(all), "duration", time.Since(start))
+    return all, nil
 }
 ```
 

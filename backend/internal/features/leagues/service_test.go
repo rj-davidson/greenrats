@@ -2,6 +2,8 @@ package leagues
 
 import (
 	"context"
+	"io"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -11,13 +13,18 @@ import (
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
+func testLogger() *slog.Logger {
+	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
 func TestService_Create(t *testing.T) {
 	t.Run("creates league with owner membership", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
+		factory.EnsureSeason(2026)
 		owner := factory.CreateUser()
 
 		league, err := service.Create(ctx, CreateParams{
@@ -28,7 +35,7 @@ func TestService_Create(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "Test League", league.Name)
 		assert.Len(t, league.Code, 6)
-		assert.Equal(t, time.Now().Year(), league.SeasonYear)
+		assert.Equal(t, 2026, league.SeasonYear)
 		assert.Equal(t, "owner", league.Role)
 		assert.Equal(t, 1, league.MemberCount)
 	})
@@ -38,7 +45,7 @@ func TestService_JoinLeague(t *testing.T) {
 	t.Run("joins league with valid code", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -56,7 +63,7 @@ func TestService_JoinLeague(t *testing.T) {
 	t.Run("returns error for invalid code", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		user := factory.CreateUser()
@@ -69,7 +76,7 @@ func TestService_JoinLeague(t *testing.T) {
 	t.Run("returns error when already member", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -85,7 +92,7 @@ func TestService_JoinLeague(t *testing.T) {
 	t.Run("returns error when joining disabled", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -102,7 +109,7 @@ func TestService_GetByID(t *testing.T) {
 	t.Run("returns league when found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -118,7 +125,7 @@ func TestService_GetByID(t *testing.T) {
 	t.Run("returns nil when not found", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		found, err := service.GetByID(ctx, factory.RandomUUID())
@@ -132,7 +139,7 @@ func TestService_GetByIDWithRole(t *testing.T) {
 	t.Run("returns league with user role", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -148,7 +155,7 @@ func TestService_GetByIDWithRole(t *testing.T) {
 	t.Run("returns league with member role", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -166,7 +173,7 @@ func TestService_GetByIDWithRole(t *testing.T) {
 	t.Run("returns league without role for non-member", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -185,7 +192,7 @@ func TestService_ListUserLeagues(t *testing.T) {
 	t.Run("returns all user leagues", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -201,7 +208,7 @@ func TestService_ListUserLeagues(t *testing.T) {
 	t.Run("returns empty for user with no leagues", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		user := factory.CreateUser()
@@ -217,7 +224,7 @@ func TestService_RegenerateJoinCode(t *testing.T) {
 	t.Run("owner can regenerate code", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -234,7 +241,7 @@ func TestService_RegenerateJoinCode(t *testing.T) {
 	t.Run("returns error when not commissioner", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -252,7 +259,7 @@ func TestService_SetJoiningEnabled(t *testing.T) {
 	t.Run("owner can disable joining", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -267,7 +274,7 @@ func TestService_SetJoiningEnabled(t *testing.T) {
 	t.Run("owner can enable joining", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -282,7 +289,7 @@ func TestService_SetJoiningEnabled(t *testing.T) {
 	t.Run("returns error when not commissioner", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -300,7 +307,7 @@ func TestService_GetLeagueTournaments(t *testing.T) {
 	t.Run("returns tournaments for league season", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -317,7 +324,7 @@ func TestService_GetLeagueTournaments(t *testing.T) {
 	t.Run("marks tournaments with user picks", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -336,7 +343,7 @@ func TestService_GetLeagueTournaments(t *testing.T) {
 	t.Run("returns error for invalid league", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		user := factory.CreateUser()
@@ -351,7 +358,7 @@ func TestService_GetCommissionerActions(t *testing.T) {
 	t.Run("returns actions for league members", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -371,7 +378,7 @@ func TestService_GetCommissionerActions(t *testing.T) {
 	t.Run("returns error when not member", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -388,7 +395,7 @@ func TestService_GetLeagueMembers(t *testing.T) {
 	t.Run("returns all league members", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -405,7 +412,7 @@ func TestService_GetLeagueMembers(t *testing.T) {
 	t.Run("includes pick for tournament when provided", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()
@@ -437,7 +444,7 @@ func TestService_GetLeagueMembers(t *testing.T) {
 	t.Run("returns error when not commissioner", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
-		service := NewService(db, 2026)
+		service := NewService(db, 2026, testLogger())
 		ctx := context.Background()
 
 		owner := factory.CreateUser()

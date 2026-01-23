@@ -280,6 +280,22 @@ railway up --service frontend
 
 See [CLAUDE.md](./CLAUDE.md) for detailed development instructions, coding conventions, and workflow guidance.
 
+### Logging
+
+Backend uses Go's `log/slog` for structured logging:
+
+- **Info**: Business operations (service start, sync completion)
+- **Debug**: Development details (hidden in production)
+- **Warn**: Degraded but functional states
+- **Error**: Failures requiring attention
+
+Guidelines:
+- Don't log expected failures (auth rejections, validation errors)
+- Don't log per-iteration progress (log totals at end instead)
+- Don't log when nothing happens (skipped operations)
+
+See [CLAUDE.md](./CLAUDE.md) for detailed logging patterns.
+
 ## Future Data Sources
 
 Potential APIs for future integration:

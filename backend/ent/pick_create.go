@@ -110,14 +110,6 @@ func (_c *PickCreate) SetSeasonID(id uuid.UUID) *PickCreate {
 	return _c
 }
 
-// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
-func (_c *PickCreate) SetNillableSeasonID(id *uuid.UUID) *PickCreate {
-	if id != nil {
-		_c = _c.SetSeasonID(*id)
-	}
-	return _c
-}
-
 // SetSeason sets the "season" edge to the Season entity.
 func (_c *PickCreate) SetSeason(v *Season) *PickCreate {
 	return _c.SetSeasonID(v.ID)
@@ -187,6 +179,9 @@ func (_c *PickCreate) check() error {
 	}
 	if len(_c.mutation.LeagueIDs()) == 0 {
 		return &ValidationError{Name: "league", err: errors.New(`ent: missing required edge "Pick.league"`)}
+	}
+	if len(_c.mutation.SeasonIDs()) == 0 {
+		return &ValidationError{Name: "season", err: errors.New(`ent: missing required edge "Pick.season"`)}
 	}
 	return nil
 }

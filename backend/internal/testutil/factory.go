@@ -11,6 +11,7 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
@@ -32,6 +33,39 @@ func NewFactory(t *testing.T, db *ent.Client) *Factory {
 func (f *Factory) WithContext(ctx context.Context) *Factory {
 	f.ctx = ctx
 	return f
+}
+
+func (f *Factory) getOrCreateSeason(year int) *ent.Season {
+	f.t.Helper()
+
+	existing, err := f.db.Season.Query().
+		Where(season.YearEQ(year)).
+		Only(f.ctx)
+	if err == nil {
+		return existing
+	}
+	if !ent.IsNotFound(err) {
+		f.t.Fatalf("failed to query season: %v", err)
+	}
+
+	startDate := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(year, time.December, 31, 23, 59, 59, 0, time.UTC)
+
+	created, err := f.db.Season.Create().
+		SetYear(year).
+		SetStartDate(startDate).
+		SetEndDate(endDate).
+		SetIsCurrent(true).
+		Save(f.ctx)
+	if err != nil {
+		f.t.Fatalf("failed to create season: %v", err)
+	}
+	return created
+}
+
+func (f *Factory) EnsureSeason(year int) *ent.Season {
+	f.t.Helper()
+	return f.getOrCreateSeason(year)
 }
 
 type UserOption func(*ent.UserCreate)
@@ -117,12 +151,6 @@ func WithChampion(golferID uuid.UUID) TournamentOption {
 	}
 }
 
-func WithSeasonYear(year int) TournamentOption {
-	return func(tc *ent.TournamentCreate) {
-		tc.SetSeasonYear(year)
-	}
-}
-
 func WithCourse(course string) TournamentOption {
 	return func(tc *ent.TournamentCreate) {
 		tc.SetCourse(course)
@@ -141,8 +169,29 @@ func WithPgaTourID(id string) TournamentOption {
 	}
 }
 
+var trackedSeasonYear *int
+
+func WithSeasonYear(year int) TournamentOption {
+	return func(tc *ent.TournamentCreate) {
+		tc.SetSeasonYear(year)
+		if trackedSeasonYear != nil {
+			*trackedSeasonYear = year
+		}
+	}
+}
+
 func (f *Factory) CreateTournament(opts ...TournamentOption) *ent.Tournament {
 	f.t.Helper()
+
+	seasonYear := time.Now().Year()
+	trackedSeasonYear = &seasonYear
+
+	for _, opt := range opts {
+		opt(f.db.Tournament.Create())
+	}
+
+	trackedSeasonYear = nil
+	seasonEnt := f.getOrCreateSeason(seasonYear)
 
 	startDate := time.Now().AddDate(0, 0, 7)
 	endDate := startDate.AddDate(0, 0, 4)
@@ -153,7 +202,8 @@ func (f *Factory) CreateTournament(opts ...TournamentOption) *ent.Tournament {
 		SetName(gofakeit.Company() + " Championship").
 		SetStartDate(startDate).
 		SetEndDate(endDate).
-		SetSeasonYear(time.Now().Year()).
+		SetSeasonYear(seasonYear).
+		SetSeason(seasonEnt).
 		SetCourse(gofakeit.City() + " Golf Club").
 		SetPickWindowOpensAt(pickWindowOpens).
 		SetPickWindowClosesAt(pickWindowCloses)
@@ -321,11 +371,13 @@ func (f *Factory) CreateLeague(owner *ent.User, seasonYear int, opts ...LeagueOp
 	f.t.Helper()
 
 	code := generateJoinCode()
+	seasonEnt := f.getOrCreateSeason(seasonYear)
 
 	create := f.db.League.Create().
 		SetName(gofakeit.Company() + " League").
 		SetCode(code).
 		SetSeasonYear(seasonYear).
+		SetSeason(seasonEnt).
 		SetJoiningEnabled(true).
 		SetCreatedBy(owner)
 
@@ -453,12 +505,15 @@ type PickOption func(*ent.PickCreate)
 func (f *Factory) CreatePick(user *ent.User, t *ent.Tournament, g *ent.Golfer, league *ent.League, opts ...PickOption) *ent.Pick {
 	f.t.Helper()
 
+	seasonEnt := f.getOrCreateSeason(t.SeasonYear)
+
 	create := f.db.Pick.Create().
 		SetUser(user).
 		SetTournament(t).
 		SetGolfer(g).
 		SetLeague(league).
-		SetSeasonYear(t.SeasonYear)
+		SetSeasonYear(t.SeasonYear).
+		SetSeason(seasonEnt)
 
 	for _, opt := range opts {
 		opt(create)
@@ -499,6 +554,8 @@ func CreateTournament(t *testing.T, db *ent.Client, name string, seasonYear int)
 	t.Helper()
 	ctx := context.Background()
 
+	seasonEnt := CreateSeason(t, db, seasonYear)
+
 	startDate := time.Now().AddDate(0, 0, 7)
 	endDate := startDate.AddDate(0, 0, 4)
 
@@ -507,6 +564,7 @@ func CreateTournament(t *testing.T, db *ent.Client, name string, seasonYear int)
 		SetStartDate(startDate).
 		SetEndDate(endDate).
 		SetSeasonYear(seasonYear).
+		SetSeason(seasonEnt).
 		Save(ctx)
 	if err != nil {
 		t.Fatalf("failed to create tournament: %v", err)
@@ -549,10 +607,20 @@ func CreateSeason(t *testing.T, db *ent.Client, year int) *ent.Season {
 	t.Helper()
 	ctx := context.Background()
 
-	startDate := time.Date(year-1, time.October, 1, 0, 0, 0, 0, time.UTC)
-	endDate := time.Date(year, time.September, 30, 23, 59, 59, 0, time.UTC)
+	existing, err := db.Season.Query().
+		Where(season.YearEQ(year)).
+		Only(ctx)
+	if err == nil {
+		return existing
+	}
+	if !ent.IsNotFound(err) {
+		t.Fatalf("failed to query season: %v", err)
+	}
 
-	season, err := db.Season.Create().
+	startDate := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+	endDate := time.Date(year, time.December, 31, 23, 59, 59, 0, time.UTC)
+
+	created, err := db.Season.Create().
 		SetYear(year).
 		SetStartDate(startDate).
 		SetEndDate(endDate).
@@ -561,5 +629,5 @@ func CreateSeason(t *testing.T, db *ent.Client, year int) *ent.Season {
 	if err != nil {
 		t.Fatalf("failed to create season: %v", err)
 	}
-	return season
+	return created
 }

@@ -303,14 +303,6 @@ func (_c *TournamentCreate) SetSeasonID(id uuid.UUID) *TournamentCreate {
 	return _c
 }
 
-// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
-func (_c *TournamentCreate) SetNillableSeasonID(id *uuid.UUID) *TournamentCreate {
-	if id != nil {
-		_c = _c.SetSeasonID(*id)
-	}
-	return _c
-}
-
 // SetSeason sets the "season" edge to the Season entity.
 func (_c *TournamentCreate) SetSeason(v *Season) *TournamentCreate {
 	return _c.SetSeasonID(v.ID)
@@ -408,6 +400,9 @@ func (_c *TournamentCreate) check() error {
 	}
 	if _, ok := _c.mutation.SeasonYear(); !ok {
 		return &ValidationError{Name: "season_year", err: errors.New(`ent: missing required field "Tournament.season_year"`)}
+	}
+	if len(_c.mutation.SeasonIDs()) == 0 {
+		return &ValidationError{Name: "season", err: errors.New(`ent: missing required edge "Tournament.season"`)}
 	}
 	return nil
 }

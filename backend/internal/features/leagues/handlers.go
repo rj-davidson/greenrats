@@ -2,7 +2,7 @@ package leagues
 
 import (
 	"errors"
-	"log"
+	"log/slog"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -15,10 +15,11 @@ import (
 type Handler struct {
 	service *Service
 	email   *email.Client
+	logger  *slog.Logger
 }
 
-func NewHandler(service *Service, emailClient *email.Client) *Handler {
-	return &Handler{service: service, email: emailClient}
+func NewHandler(service *Service, emailClient *email.Client, logger *slog.Logger) *Handler {
+	return &Handler{service: service, email: emailClient, logger: logger}
 }
 
 func (h *Handler) RegisterRoutes(router fiber.Router) {
@@ -191,7 +192,7 @@ func (h *Handler) JoinLeague(c *fiber.Ctx) error {
 					LeagueName:  league.Name,
 					IsNewMember: true,
 				}); err != nil {
-					log.Printf("[LEAGUES] Failed to send league join email: %v", err)
+					h.logger.Error("failed to send league join email", "user_id", user.ID, "error", err)
 				}
 			}()
 		}

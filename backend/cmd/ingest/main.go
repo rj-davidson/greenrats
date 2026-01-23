@@ -50,10 +50,10 @@ func run() error {
 			EnableTracing:    true,
 			TracesSampleRate: 0.1,
 		}); err != nil {
-			log.Printf("Sentry initialization failed: %v", err)
+			logger.Warn("sentry initialization failed", "error", err)
 		} else {
 			defer sentry.Flush(2 * time.Second)
-			log.Println("Sentry initialized")
+			logger.Info("sentry initialized")
 		}
 	}
 
@@ -64,7 +64,7 @@ func run() error {
 	defer db.Close()
 
 	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, cfg.IsDevelopment(), logger)
-	emailClient := email.New(cfg)
+	emailClient := email.New(cfg, logger)
 	pgatourClient := pgatour.New(cfg.PGATourAPIKey, logger)
 	fieldsService := fields.NewService(db, pgatourClient, logger)
 
@@ -73,7 +73,7 @@ func run() error {
 		var err error
 		gmapsClient, err = googlemaps.New(cfg.GoogleMapsAPIKey, logger)
 		if err != nil {
-			log.Printf("Warning: failed to create Google Maps client: %v", err)
+			logger.Warn("failed to create Google Maps client", "error", err)
 		}
 	}
 
@@ -95,18 +95,21 @@ func run() error {
 
 	go ingester.Run(ctx)
 
-	log.Println("GreenRats Ingest Service started")
-	log.Printf("Sync intervals: tournaments=%v, leaderboards(play)=%v, leaderboards(idle)=%v, scorecards=%v",
-		sync.TournamentSyncInterval, sync.LeaderboardPlayInterval, sync.LeaderboardIdleInterval, sync.ScorecardSyncInterval)
+	logger.Info("GreenRats Ingest Service started",
+		"tournament_interval", sync.TournamentSyncInterval,
+		"leaderboard_play_interval", sync.LeaderboardPlayInterval,
+		"leaderboard_idle_interval", sync.LeaderboardIdleInterval,
+		"scorecard_interval", sync.ScorecardSyncInterval,
+	)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
-	log.Println("Shutting down ingest service...")
+	logger.Info("shutting down ingest service")
 	cancel()
 
 	time.Sleep(2 * time.Second)
-	log.Println("Ingest service exited gracefully")
+	logger.Info("ingest service exited gracefully")
 	return nil
 }

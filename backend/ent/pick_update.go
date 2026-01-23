@@ -104,14 +104,6 @@ func (_u *PickUpdate) SetSeasonID(id uuid.UUID) *PickUpdate {
 	return _u
 }
 
-// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
-func (_u *PickUpdate) SetNillableSeasonID(id *uuid.UUID) *PickUpdate {
-	if id != nil {
-		_u = _u.SetSeasonID(*id)
-	}
-	return _u
-}
-
 // SetSeason sets the "season" edge to the Season entity.
 func (_u *PickUpdate) SetSeason(v *Season) *PickUpdate {
 	return _u.SetSeasonID(v.ID)
@@ -192,6 +184,9 @@ func (_u *PickUpdate) check() error {
 	}
 	if _u.mutation.LeagueCleared() && len(_u.mutation.LeagueIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Pick.league"`)
+	}
+	if _u.mutation.SeasonCleared() && len(_u.mutation.SeasonIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Pick.season"`)
 	}
 	return nil
 }
@@ -450,14 +445,6 @@ func (_u *PickUpdateOne) SetSeasonID(id uuid.UUID) *PickUpdateOne {
 	return _u
 }
 
-// SetNillableSeasonID sets the "season" edge to the Season entity by ID if the given value is not nil.
-func (_u *PickUpdateOne) SetNillableSeasonID(id *uuid.UUID) *PickUpdateOne {
-	if id != nil {
-		_u = _u.SetSeasonID(*id)
-	}
-	return _u
-}
-
 // SetSeason sets the "season" edge to the Season entity.
 func (_u *PickUpdateOne) SetSeason(v *Season) *PickUpdateOne {
 	return _u.SetSeasonID(v.ID)
@@ -551,6 +538,9 @@ func (_u *PickUpdateOne) check() error {
 	}
 	if _u.mutation.LeagueCleared() && len(_u.mutation.LeagueIDs()) > 0 {
 		return errors.New(`ent: clearing a required unique edge "Pick.league"`)
+	}
+	if _u.mutation.SeasonCleared() && len(_u.mutation.SeasonIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Pick.season"`)
 	}
 	return nil
 }

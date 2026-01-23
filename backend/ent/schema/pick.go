@@ -52,7 +52,8 @@ func (Pick) Edges() []ent.Edge {
 			Required(),
 		edge.From("season", Season.Type).
 			Ref("picks").
-			Unique(),
+			Unique().
+			Required(),
 	}
 }
 
