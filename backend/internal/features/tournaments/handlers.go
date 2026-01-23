@@ -28,6 +28,7 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Get("/active", h.GetActive)
 	group.Get("/:id", h.GetByID)
 	group.Get("/:id/leaderboard", h.GetLeaderboard)
+	group.Get("/:id/field", h.GetField)
 }
 
 // List handles GET /tournaments
@@ -106,7 +107,9 @@ func (h *Handler) GetLeaderboard(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.GetLeaderboard(c.UserContext(), id)
+	includeHoles := c.Query("include") == "holes"
+
+	resp, err := h.service.GetLeaderboard(c.UserContext(), id, includeHoles)
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrInvalidTournamentID):
@@ -120,6 +123,36 @@ func (h *Handler) GetLeaderboard(c *fiber.Ctx) error {
 		default:
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "failed to get leaderboard",
+			})
+		}
+	}
+
+	return c.JSON(resp)
+}
+
+// GetField handles GET /tournaments/:id/field
+func (h *Handler) GetField(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "tournament id is required",
+		})
+	}
+
+	resp, err := h.service.GetField(c.UserContext(), id)
+	if err != nil {
+		switch {
+		case errors.Is(err, ErrInvalidTournamentID):
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "invalid tournament id",
+			})
+		case errors.Is(err, ErrTournamentNotFound):
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": "tournament not found",
+			})
+		default:
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "failed to get field",
 			})
 		}
 	}

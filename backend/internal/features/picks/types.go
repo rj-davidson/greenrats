@@ -21,6 +21,46 @@ type Pick struct {
 	GolferEarnings int       `json:"golfer_earnings,omitempty"`
 }
 
+type PickRoundScore struct {
+	RoundNumber      int  `json:"round_number"`
+	Score            *int `json:"score"`
+	ParRelativeScore *int `json:"par_relative_score"`
+}
+
+type PickLeaderboardData struct {
+	Position        int              `json:"position"`
+	PositionDisplay string           `json:"position_display"`
+	Score           int              `json:"score"`
+	Thru            int              `json:"thru"`
+	CurrentRound    int              `json:"current_round"`
+	Cut             bool             `json:"cut"`
+	Status          string           `json:"status"`
+	Earnings        int              `json:"earnings"`
+	Rounds          []PickRoundScore `json:"rounds,omitempty"`
+}
+
+type LeaguePickEntry struct {
+	PickID            uuid.UUID            `json:"pick_id"`
+	UserID            uuid.UUID            `json:"user_id"`
+	UserDisplayName   string               `json:"user_display_name"`
+	GolferID          uuid.UUID            `json:"golfer_id"`
+	GolferName        string               `json:"golfer_name"`
+	GolferCountryCode string               `json:"golfer_country_code"`
+	GolferImageURL    string               `json:"golfer_image_url,omitempty"`
+	CreatedAt         time.Time            `json:"created_at"`
+	Leaderboard       *PickLeaderboardData `json:"leaderboard,omitempty"`
+}
+
+type GetLeaguePicksRequest struct {
+	Include string `query:"include"` // "rounds" for round-by-round data
+}
+
+type GetLeaguePicksResponse struct {
+	Entries             []LeaguePickEntry `json:"entries"`
+	Total               int               `json:"total"`
+	MembersWithoutPicks int               `json:"members_without_picks"`
+}
+
 type CreatePickRequest struct {
 	TournamentID uuid.UUID `json:"tournament_id"`
 	GolferID     uuid.UUID `json:"golfer_id"`

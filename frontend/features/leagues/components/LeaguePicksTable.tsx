@@ -8,11 +8,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/shadcn/table";
-import type { Pick } from "@/features/picks/types";
+import type { LeaguePickEntry } from "@/features/picks/types";
 import { CheckCircle2Icon } from "lucide-react";
 
 interface LeaguePicksTableProps {
-  picks: Pick[];
+  picks: LeaguePickEntry[];
   tournamentStatus: string;
 }
 
@@ -25,24 +25,16 @@ function formatEarnings(amount?: number): string {
   }).format(amount);
 }
 
-function formatPosition(position?: number): string {
-  if (!position) return "-";
-  if (position === 1) return "1st";
-  if (position === 2) return "2nd";
-  if (position === 3) return "3rd";
-  return `${position}th`;
-}
-
 export function LeaguePicksTable({ picks, tournamentStatus }: LeaguePicksTableProps) {
   const showGolferDetails = tournamentStatus !== "upcoming";
 
   const sortedPicks = [...picks].sort((a, b) => {
     if (showGolferDetails) {
-      const posA = a.golfer_position ?? Infinity;
-      const posB = b.golfer_position ?? Infinity;
+      const posA = a.leaderboard?.position ?? Infinity;
+      const posB = b.leaderboard?.position ?? Infinity;
       return posA - posB;
     }
-    return (a.user_name ?? "").localeCompare(b.user_name ?? "");
+    return a.user_display_name.localeCompare(b.user_display_name);
   });
 
   if (picks.length === 0) {
@@ -71,13 +63,17 @@ export function LeaguePicksTable({ picks, tournamentStatus }: LeaguePicksTablePr
       </TableHeader>
       <TableBody>
         {sortedPicks.map((pick) => (
-          <TableRow key={pick.id}>
-            <TableCell className="font-medium">{pick.user_name || "Unknown"}</TableCell>
+          <TableRow key={pick.pick_id}>
+            <TableCell className="font-medium">{pick.user_display_name || "Unknown"}</TableCell>
             {showGolferDetails ? (
               <>
                 <TableCell>{pick.golfer_name}</TableCell>
-                <TableCell className="text-right">{formatPosition(pick.golfer_position)}</TableCell>
-                <TableCell className="text-right">{formatEarnings(pick.golfer_earnings)}</TableCell>
+                <TableCell className="text-right">
+                  {pick.leaderboard?.position_display ?? "-"}
+                </TableCell>
+                <TableCell className="text-right">
+                  {formatEarnings(pick.leaderboard?.earnings)}
+                </TableCell>
               </>
             ) : (
               <TableCell>

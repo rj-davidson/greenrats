@@ -1,4 +1,5 @@
 import type {
+  GetFieldResponse,
   GetLeaderboardResponse,
   GetTournamentResponse,
   ListTournamentsResponse,
@@ -25,8 +26,11 @@ export const buildTournamentDetailKey = (id: string) =>
 
 export const buildTournamentActiveKey = () => [QueryKey.TOURNAMENTS, "active"] as const;
 
-export const buildLeaderboardKey = (id: string) =>
-  [QueryKey.TOURNAMENTS, "leaderboard", id] as const;
+export const buildLeaderboardKey = (id: string, include?: string) =>
+  [QueryKey.TOURNAMENTS, "leaderboard", id, include] as const;
+
+export const buildFieldKey = (id: string) =>
+  [QueryKey.TOURNAMENTS, "field", id] as const;
 
 // Query options builders
 export function buildGetTournamentsQueryOptions(
@@ -66,13 +70,35 @@ export function buildGetActiveTournamentQueryOptions(requestor: Requestor = make
   });
 }
 
+interface LeaderboardOptions {
+  include?: "holes";
+}
+
 export function buildGetLeaderboardQueryOptions(
+  id: string,
+  options: LeaderboardOptions = {},
+  requestor: Requestor = makeClientRequest,
+) {
+  const params: Record<string, string> = {};
+  if (options.include) params.include = options.include;
+
+  return queryOptions<GetLeaderboardResponse>({
+    queryKey: buildLeaderboardKey(id, options.include),
+    queryFn: () =>
+      requestor.get<GetLeaderboardResponse>(`/api/v1/tournaments/${id}/leaderboard`, {
+        params: Object.keys(params).length > 0 ? params : undefined,
+      }),
+    enabled: !!id,
+  });
+}
+
+export function buildGetFieldQueryOptions(
   id: string,
   requestor: Requestor = makeClientRequest,
 ) {
-  return queryOptions<GetLeaderboardResponse>({
-    queryKey: buildLeaderboardKey(id),
-    queryFn: () => requestor.get<GetLeaderboardResponse>(`/api/v1/tournaments/${id}/leaderboard`),
+  return queryOptions<GetFieldResponse>({
+    queryKey: buildFieldKey(id),
+    queryFn: () => requestor.get<GetFieldResponse>(`/api/v1/tournaments/${id}/field`),
     enabled: !!id,
   });
 }
@@ -90,8 +116,12 @@ export function useActiveTournament() {
   return useQuery(buildGetActiveTournamentQueryOptions());
 }
 
-export function useLeaderboard(id: string) {
-  return useQuery(buildGetLeaderboardQueryOptions(id));
+export function useLeaderboard(id: string, options: LeaderboardOptions = {}) {
+  return useQuery(buildGetLeaderboardQueryOptions(id, options));
+}
+
+export function useTournamentField(id: string) {
+  return useQuery(buildGetFieldQueryOptions(id));
 }
 
 export function useCurrentTournament() {

@@ -165,7 +165,7 @@ func TestService_GetLeaderboard(t *testing.T) {
 		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithPosition(1), testutil.WithScore(-10))
 		factory.CreateLeaderboardEntry(tourn, golfer3, testutil.WithPosition(2), testutil.WithScore(-7))
 
-		resp, err := service.GetLeaderboard(ctx, tourn.ID.String())
+		resp, err := service.GetLeaderboard(ctx, tourn.ID.String(), false)
 
 		require.NoError(t, err)
 		assert.Equal(t, 3, resp.Total)
@@ -187,7 +187,7 @@ func TestService_GetLeaderboard(t *testing.T) {
 		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithPosition(2), testutil.WithScore(-5))
 		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithPosition(2), testutil.WithScore(-5))
 
-		resp, err := service.GetLeaderboard(ctx, tourn.ID.String())
+		resp, err := service.GetLeaderboard(ctx, tourn.ID.String(), false)
 
 		require.NoError(t, err)
 		assert.Equal(t, "T2", resp.Entries[0].PositionDisplay)
@@ -207,7 +207,7 @@ func TestService_GetLeaderboard(t *testing.T) {
 		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithPosition(10), testutil.WithScore(-5))
 		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithCut(true), testutil.WithScore(5))
 
-		resp, err := service.GetLeaderboard(ctx, tourn.ID.String())
+		resp, err := service.GetLeaderboard(ctx, tourn.ID.String(), false)
 
 		require.NoError(t, err)
 		assert.Equal(t, 2, resp.Total)
@@ -221,7 +221,7 @@ func TestService_GetLeaderboard(t *testing.T) {
 		service := NewService(db)
 		ctx := context.Background()
 
-		resp, err := service.GetLeaderboard(ctx, factory.RandomUUID().String())
+		resp, err := service.GetLeaderboard(ctx, factory.RandomUUID().String(), false)
 
 		assert.Nil(t, resp)
 		assert.True(t, errors.Is(err, ErrTournamentNotFound))

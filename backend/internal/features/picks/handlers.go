@@ -26,7 +26,7 @@ func (h *Handler) RegisterRoutes(router fiber.Router) {
 }
 
 func (h *Handler) RegisterLeagueRoutes(group fiber.Router) {
-	group.Get("/:id/picks", h.GetLeaguePicks)
+	group.Get("/:id/picks", h.GetLeaguePicksEnhanced)
 	group.Get("/:id/available-golfers", h.GetAvailableGolfers)
 	group.Get("/:id/available-golfers-for-user", h.GetAvailableGolfersForUser)
 	group.Put("/:id/picks/:pickId", h.OverridePick)
@@ -121,7 +121,7 @@ func (h *Handler) GetUserPicks(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func (h *Handler) GetLeaguePicks(c *fiber.Ctx) error {
+func (h *Handler) GetLeaguePicksEnhanced(c *fiber.Ctx) error {
 	userID := auth.GetDBUserID(c)
 	if userID == uuid.Nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -150,7 +150,9 @@ func (h *Handler) GetLeaguePicks(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.GetLeaguePicks(c.UserContext(), leagueID, tournamentID)
+	includeRounds := c.Query("include") == "rounds"
+
+	resp, err := h.service.GetLeaguePicksEnhanced(c.UserContext(), leagueID, tournamentID, includeRounds)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get league picks",

@@ -3,6 +3,7 @@ import type {
   CreatePickForUserResponse,
   CreatePickRequest,
   CreatePickResponse,
+  GetLeaguePicksResponse,
   ListPicksResponse,
   OverridePickResponse,
 } from "@/features/picks/types";
@@ -48,16 +49,32 @@ export function buildGetUserPicksQueryOptions(
   });
 }
 
+interface LeaguePicksOptions {
+  include?: "rounds";
+}
+
 export function buildGetLeaguePicksQueryOptions(
   leagueId: string,
   tournamentId: string,
-  requestor: Requestor = makeClientRequest,
+  optionsOrRequestor: LeaguePicksOptions | Requestor = {},
+  maybeRequestor?: Requestor,
 ) {
-  return queryOptions<ListPicksResponse>({
+  const isRequestor = (val: unknown): val is Requestor =>
+    typeof val === "object" && val !== null && "get" in val;
+
+  const options: LeaguePicksOptions = isRequestor(optionsOrRequestor) ? {} : optionsOrRequestor;
+  const requestor: Requestor = isRequestor(optionsOrRequestor)
+    ? optionsOrRequestor
+    : (maybeRequestor ?? makeClientRequest);
+
+  const params: Record<string, string> = { tournament_id: tournamentId };
+  if (options.include) params.include = options.include;
+
+  return queryOptions<GetLeaguePicksResponse>({
     queryKey: buildLeaguePicksKey(leagueId, tournamentId),
     queryFn: () =>
-      requestor.get<ListPicksResponse>(`/api/v1/leagues/${leagueId}/picks`, {
-        params: { tournament_id: tournamentId },
+      requestor.get<GetLeaguePicksResponse>(`/api/v1/leagues/${leagueId}/picks`, {
+        params,
       }),
     enabled: !!leagueId && !!tournamentId,
   });
@@ -82,8 +99,8 @@ export function useUserPicks(leagueId?: string, seasonYear?: number) {
   return useQuery(buildGetUserPicksQueryOptions(leagueId, seasonYear));
 }
 
-export function useLeaguePicks(leagueId: string, tournamentId: string) {
-  return useQuery(buildGetLeaguePicksQueryOptions(leagueId, tournamentId));
+export function useLeaguePicks(leagueId: string, tournamentId: string, options: LeaguePicksOptions = {}) {
+  return useQuery(buildGetLeaguePicksQueryOptions(leagueId, tournamentId, options));
 }
 
 export function useAvailableGolfers(leagueId: string, tournamentId: string) {

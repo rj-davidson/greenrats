@@ -130,7 +130,7 @@ func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 }
 
 // GetLeaderboard returns the leaderboard entries for a tournament.
-func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboardResponse, error) {
+func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bool) (*GetLeaderboardResponse, error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {
 		return nil, ErrInvalidTournamentID
@@ -144,9 +144,18 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboar
 		return nil, fmt.Errorf("failed to get tournament: %w", err)
 	}
 
-	entries, err := t.QueryLeaderboardEntries().
+	query := t.QueryLeaderboardEntries().
 		WithGolfer().
-		All(ctx)
+		WithRounds(func(q *ent.RoundQuery) {
+			q.Order(ent.Asc("round_number"))
+			if includeHoles {
+				q.WithHoleScores(func(hq *ent.HoleScoreQuery) {
+					hq.Order(ent.Asc("hole_number"))
+				})
+			}
+		})
+
+	entries, err := query.All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get leaderboard entries: %w", err)
 	}
@@ -197,9 +206,16 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboar
 		}
 	}
 
+	// Track max current round for tournament metadata
+	maxRound := 0
+
 	result := make([]LeaderboardEntry, len(entries))
 	for i, e := range entries {
 		golfer := e.Edges.Golfer
+
+		if e.CurrentRound > maxRound {
+			maxRound = e.CurrentRound
+		}
 
 		// Format position display
 		posDisplay := "-"
@@ -213,7 +229,7 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboar
 			}
 		}
 
-		result[i] = LeaderboardEntry{
+		entry := LeaderboardEntry{
 			Position:        e.Position,
 			PositionDisplay: posDisplay,
 			GolferID:        golfer.ID.String(),
@@ -226,12 +242,115 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboar
 			Cut:             e.Cut,
 			Status:          string(e.Status),
 			Earnings:        e.Earnings,
+			Rounds:          make([]RoundScore, 0, 4),
 		}
+
+		if golfer.Country != nil {
+			entry.Country = *golfer.Country
+		}
+		if golfer.ImageURL != nil {
+			entry.ImageURL = *golfer.ImageURL
+		}
+
+		for _, r := range e.Edges.Rounds {
+			round := RoundScore{
+				RoundNumber: r.RoundNumber,
+				Score:       r.Score,
+			}
+			if r.ParRelativeScore != nil {
+				round.ParRelativeScore = r.ParRelativeScore
+			}
+			if r.TeeTime != nil {
+				round.TeeTime = r.TeeTime
+			}
+
+			if includeHoles && len(r.Edges.HoleScores) > 0 {
+				round.Holes = make([]HoleScore, 0, len(r.Edges.HoleScores))
+				for _, h := range r.Edges.HoleScores {
+					round.Holes = append(round.Holes, HoleScore{
+						HoleNumber: h.HoleNumber,
+						Par:        h.Par,
+						Score:      h.Score,
+					})
+				}
+			}
+
+			entry.Rounds = append(entry.Rounds, round)
+		}
+
+		result[i] = entry
 	}
 
 	return &GetLeaderboardResponse{
-		Entries: result,
-		Total:   len(result),
+		TournamentID:   t.ID.String(),
+		TournamentName: t.Name,
+		CurrentRound:   maxRound,
+		Entries:        result,
+		Total:          len(result),
+	}, nil
+}
+
+// GetField returns the field entries for a tournament.
+func (s *Service) GetField(ctx context.Context, id string) (*GetFieldResponse, error) {
+	uid, err := uuid.FromString(id)
+	if err != nil {
+		return nil, ErrInvalidTournamentID
+	}
+
+	t, err := s.db.Tournament.Get(ctx, uid)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, ErrTournamentNotFound
+		}
+		return nil, fmt.Errorf("failed to get tournament: %w", err)
+	}
+
+	entries, err := t.QueryFieldEntries().
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get field entries: %w", err)
+	}
+
+	result := make([]FieldEntry, 0, len(entries))
+	for _, e := range entries {
+		golfer := e.Edges.Golfer
+		if golfer == nil {
+			continue
+		}
+
+		entry := FieldEntry{
+			GolferID:    golfer.ID.String(),
+			GolferName:  golfer.Name,
+			CountryCode: golfer.CountryCode,
+			EntryStatus: string(e.EntryStatus),
+			IsAmateur:   e.IsAmateur,
+		}
+
+		if golfer.Country != nil {
+			entry.Country = *golfer.Country
+		}
+		if golfer.Owgr != nil {
+			entry.OWGR = golfer.Owgr
+		}
+		if e.OwgrAtEntry != nil {
+			entry.OWGRAtEntry = e.OwgrAtEntry
+		}
+		if e.Qualifier != nil {
+			entry.Qualifier = *e.Qualifier
+		}
+		if golfer.ImageURL != nil {
+			entry.ImageURL = *golfer.ImageURL
+		}
+
+		result = append(result, entry)
+	}
+
+	return &GetFieldResponse{
+		TournamentID:   t.ID.String(),
+		TournamentName: t.Name,
+		Entries:        result,
+		Total:          len(result),
 	}, nil
 }
 

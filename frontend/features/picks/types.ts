@@ -17,6 +17,47 @@ export const pickSchema = z.object({
 
 export type Pick = z.infer<typeof pickSchema>;
 
+export const pickRoundScoreSchema = z.object({
+  round_number: z.number(),
+  score: z.number().nullable(),
+  par_relative_score: z.number().nullable(),
+});
+
+export const pickLeaderboardDataSchema = z.object({
+  position: z.number(),
+  position_display: z.string(),
+  score: z.number(),
+  thru: z.number(),
+  current_round: z.number(),
+  cut: z.boolean(),
+  status: z.string(),
+  earnings: z.number(),
+  rounds: z.array(pickRoundScoreSchema).optional(),
+});
+
+export const leaguePickEntrySchema = z.object({
+  pick_id: z.string(),
+  user_id: z.string(),
+  user_display_name: z.string(),
+  golfer_id: z.string(),
+  golfer_name: z.string(),
+  golfer_country_code: z.string(),
+  golfer_image_url: z.string().optional(),
+  created_at: z.string(),
+  leaderboard: pickLeaderboardDataSchema.nullable().optional(),
+});
+
+export const getLeaguePicksResponseSchema = z.object({
+  entries: z.array(leaguePickEntrySchema),
+  total: z.number(),
+  members_without_picks: z.number(),
+});
+
+export type PickRoundScore = z.infer<typeof pickRoundScoreSchema>;
+export type PickLeaderboardData = z.infer<typeof pickLeaderboardDataSchema>;
+export type LeaguePickEntry = z.infer<typeof leaguePickEntrySchema>;
+export type GetLeaguePicksResponse = z.infer<typeof getLeaguePicksResponseSchema>;
+
 export const createPickRequestSchema = z.object({
   tournament_id: z.string().min(1, "Tournament is required"),
   golfer_id: z.string().min(1, "Golfer is required"),

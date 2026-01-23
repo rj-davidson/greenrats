@@ -5,6 +5,7 @@ import (
 
 	"github.com/rj-davidson/greenrats/internal/auth"
 	"github.com/rj-davidson/greenrats/internal/features/admin"
+	"github.com/rj-davidson/greenrats/internal/features/golfers"
 	"github.com/rj-davidson/greenrats/internal/features/leaderboards"
 	"github.com/rj-davidson/greenrats/internal/features/leagues"
 	"github.com/rj-davidson/greenrats/internal/features/picks"
@@ -33,6 +34,14 @@ func (s *Server) setupRoutes() {
 	tournamentService := tournaments.NewService(s.db)
 	tournamentHandler := tournaments.NewHandler(tournamentService)
 	tournamentHandler.RegisterRoutesWithGroup(tournamentGroup)
+
+	golferGroup := v1.Group("/golfers",
+		auth.OptionalMiddleware(*s.authConfig),
+		auth.OptionalEnsureUserMiddleware(ensureUserCfg),
+	)
+	golferService := golfers.NewService(s.db)
+	golferHandler := golfers.NewHandler(golferService)
+	golferHandler.RegisterRoutesWithGroup(golferGroup)
 
 	leagueGroup := v1.Group("/leagues",
 		auth.Middleware(*s.authConfig),

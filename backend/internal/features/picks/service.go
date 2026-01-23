@@ -389,6 +389,37 @@ func (s *Service) GetUserPicks(ctx context.Context, userID, leagueID uuid.UUID, 
 }
 
 func (s *Service) GetLeaguePicks(ctx context.Context, leagueID, tournamentID uuid.UUID) (*ListPicksResponse, error) {
+	resp, err := s.GetLeaguePicksEnhanced(ctx, leagueID, tournamentID, false)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]Pick, 0, len(resp.Entries))
+	for i := range resp.Entries {
+		e := &resp.Entries[i]
+		item := Pick{
+			ID:         e.PickID,
+			UserID:     e.UserID,
+			GolferID:   e.GolferID,
+			LeagueID:   leagueID,
+			CreatedAt:  e.CreatedAt,
+			UserName:   e.UserDisplayName,
+			GolferName: e.GolferName,
+		}
+		if e.Leaderboard != nil {
+			item.GolferPosition = e.Leaderboard.Position
+			item.GolferEarnings = e.Leaderboard.Earnings
+		}
+		result = append(result, item)
+	}
+
+	return &ListPicksResponse{
+		Picks: result,
+		Total: len(result),
+	}, nil
+}
+
+func (s *Service) GetLeaguePicksEnhanced(ctx context.Context, leagueID, tournamentID uuid.UUID, includeRounds bool) (*GetLeaguePicksResponse, error) {
 	picks, err := s.db.Pick.Query().
 		Where(
 			pick.HasLeagueWith(league.IDEQ(leagueID)),
@@ -396,7 +427,6 @@ func (s *Service) GetLeaguePicks(ctx context.Context, leagueID, tournamentID uui
 		).
 		WithUser().
 		WithGolfer().
-		WithTournament().
 		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get league picks: %w", err)
@@ -410,53 +440,138 @@ func (s *Service) GetLeaguePicks(ctx context.Context, leagueID, tournamentID uui
 		return nil, fmt.Errorf("failed to get tournament: %w", err)
 	}
 
-	result := make([]Pick, 0, len(picks))
-	for _, p := range picks {
-		item := Pick{
-			ID:         p.ID,
-			LeagueID:   leagueID,
-			SeasonYear: p.SeasonYear,
-			CreatedAt:  p.CreatedAt,
-		}
+	totalMembers, err := s.db.LeagueMembership.Query().
+		Where(leaguemembership.HasLeagueWith(league.IDEQ(leagueID))).
+		Count(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to count league members: %w", err)
+	}
 
-		if p.Edges.User != nil {
-			item.UserID = p.Edges.User.ID
-			if p.Edges.User.DisplayName != nil {
-				item.UserName = *p.Edges.User.DisplayName
+	var leaderboardMap map[uuid.UUID]*ent.LeaderboardEntry
+	var roundsMap map[uuid.UUID][]*ent.Round
+	hasChampion := tournamentEnt != nil && tournamentEnt.Edges.Champion != nil
+	status := "upcoming"
+	if tournamentEnt != nil {
+		status = deriveTournamentStatus(tournamentEnt, hasChampion)
+	}
+
+	if status != "upcoming" {
+		golferIDs := make([]uuid.UUID, 0, len(picks))
+		for _, p := range picks {
+			if p.Edges.Golfer != nil {
+				golferIDs = append(golferIDs, p.Edges.Golfer.ID)
 			}
 		}
-		if p.Edges.Tournament != nil {
-			item.TournamentID = p.Edges.Tournament.ID
-			item.TournamentName = p.Edges.Tournament.Name
-		}
-		if p.Edges.Golfer != nil {
-			item.GolferID = p.Edges.Golfer.ID
-			item.GolferName = p.Edges.Golfer.Name
 
-			if tournamentEnt != nil {
-				hasChampion := tournamentEnt.Edges.Champion != nil
-				status := deriveTournamentStatus(tournamentEnt, hasChampion)
-				if status != "upcoming" {
-					entry, err := s.db.LeaderboardEntry.Query().
-						Where(
-							leaderboardentry.HasTournamentWith(tournament.IDEQ(tournamentID)),
-							leaderboardentry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
-						).
-						Only(ctx)
-					if err == nil {
-						item.GolferPosition = entry.Position
-						item.GolferEarnings = entry.Earnings
+		if len(golferIDs) > 0 {
+			query := s.db.LeaderboardEntry.Query().
+				Where(
+					leaderboardentry.HasTournamentWith(tournament.IDEQ(tournamentID)),
+					leaderboardentry.HasGolferWith(golfer.IDIn(golferIDs...)),
+				).
+				WithGolfer()
+
+			if includeRounds {
+				query = query.WithRounds(func(q *ent.RoundQuery) {
+					q.Order(ent.Asc("round_number"))
+				})
+			}
+
+			entries, err := query.All(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get leaderboard entries: %w", err)
+			}
+
+			leaderboardMap = make(map[uuid.UUID]*ent.LeaderboardEntry, len(entries))
+			if includeRounds {
+				roundsMap = make(map[uuid.UUID][]*ent.Round, len(entries))
+			}
+			for _, e := range entries {
+				if e.Edges.Golfer != nil {
+					leaderboardMap[e.Edges.Golfer.ID] = e
+					if includeRounds {
+						roundsMap[e.Edges.Golfer.ID] = e.Edges.Rounds
 					}
 				}
 			}
 		}
-
-		result = append(result, item)
 	}
 
-	return &ListPicksResponse{
-		Picks: result,
-		Total: len(result),
+	positionCounts := make(map[int]int)
+	for _, e := range leaderboardMap {
+		if !e.Cut && e.Position > 0 {
+			positionCounts[e.Position]++
+		}
+	}
+
+	result := make([]LeaguePickEntry, 0, len(picks))
+	for _, p := range picks {
+		if p.Edges.User == nil || p.Edges.Golfer == nil {
+			continue
+		}
+
+		entry := LeaguePickEntry{
+			PickID:            p.ID,
+			UserID:            p.Edges.User.ID,
+			GolferID:          p.Edges.Golfer.ID,
+			GolferName:        p.Edges.Golfer.Name,
+			GolferCountryCode: p.Edges.Golfer.CountryCode,
+			CreatedAt:         p.CreatedAt,
+		}
+
+		if p.Edges.User.DisplayName != nil {
+			entry.UserDisplayName = *p.Edges.User.DisplayName
+		}
+		if p.Edges.Golfer.ImageURL != nil {
+			entry.GolferImageURL = *p.Edges.Golfer.ImageURL
+		}
+
+		if lb, ok := leaderboardMap[p.Edges.Golfer.ID]; ok {
+			posDisplay := "-"
+			if lb.Cut {
+				posDisplay = "CUT"
+			} else if lb.Position > 0 {
+				if positionCounts[lb.Position] > 1 {
+					posDisplay = fmt.Sprintf("T%d", lb.Position)
+				} else {
+					posDisplay = fmt.Sprintf("%d", lb.Position)
+				}
+			}
+
+			leaderboardData := &PickLeaderboardData{
+				Position:        lb.Position,
+				PositionDisplay: posDisplay,
+				Score:           lb.Score,
+				Thru:            lb.Thru,
+				CurrentRound:    lb.CurrentRound,
+				Cut:             lb.Cut,
+				Status:          string(lb.Status),
+				Earnings:        lb.Earnings,
+			}
+
+			if includeRounds {
+				if rounds, ok := roundsMap[p.Edges.Golfer.ID]; ok {
+					leaderboardData.Rounds = make([]PickRoundScore, 0, len(rounds))
+					for _, r := range rounds {
+						leaderboardData.Rounds = append(leaderboardData.Rounds, PickRoundScore{
+							RoundNumber:      r.RoundNumber,
+							Score:            r.Score,
+							ParRelativeScore: r.ParRelativeScore,
+						})
+					}
+				}
+			}
+
+			entry.Leaderboard = leaderboardData
+		}
+
+		result = append(result, entry)
+	}
+
+	return &GetLeaguePicksResponse{
+		Entries:             result,
+		Total:               len(result),
+		MembersWithoutPicks: totalMembers - len(result),
 	}, nil
 }
 

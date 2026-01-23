@@ -48,24 +48,73 @@ type GetTournamentResponse struct {
 	Tournament Tournament `json:"tournament"`
 }
 
+// RoundScore represents a golfer's score for a single round.
+type RoundScore struct {
+	RoundNumber      int         `json:"round_number"`
+	Score            *int        `json:"score"`
+	ParRelativeScore *int        `json:"par_relative_score"`
+	TeeTime          *time.Time  `json:"tee_time,omitempty"`
+	Holes            []HoleScore `json:"holes,omitempty"`
+}
+
+// HoleScore represents a golfer's score on a single hole.
+type HoleScore struct {
+	HoleNumber int  `json:"hole_number"`
+	Par        int  `json:"par"`
+	Score      *int `json:"score"`
+}
+
 // LeaderboardEntry represents a golfer's position on the tournament leaderboard.
 type LeaderboardEntry struct {
-	Position        int    `json:"position"`
-	PositionDisplay string `json:"position_display"`
-	GolferID        string `json:"golfer_id"`
-	GolferName      string `json:"golfer_name"`
-	CountryCode     string `json:"country_code"`
-	Score           int    `json:"score"`
-	TotalStrokes    int    `json:"total_strokes"`
-	Thru            int    `json:"thru"`
-	CurrentRound    int    `json:"current_round"`
-	Cut             bool   `json:"cut"`
-	Status          string `json:"status"`
-	Earnings        int    `json:"earnings"`
+	Position        int          `json:"position"`
+	PositionDisplay string       `json:"position_display"`
+	GolferID        string       `json:"golfer_id"`
+	GolferName      string       `json:"golfer_name"`
+	CountryCode     string       `json:"country_code"`
+	Country         string       `json:"country,omitempty"`
+	ImageURL        string       `json:"image_url,omitempty"`
+	Score           int          `json:"score"`
+	TotalStrokes    int          `json:"total_strokes"`
+	Thru            int          `json:"thru"`
+	CurrentRound    int          `json:"current_round"`
+	Cut             bool         `json:"cut"`
+	Status          string       `json:"status"`
+	Earnings        int          `json:"earnings"`
+	Rounds          []RoundScore `json:"rounds"`
+}
+
+// GetLeaderboardRequest represents optional query parameters for leaderboard.
+type GetLeaderboardRequest struct {
+	Include string `query:"include"` // "holes" for hole-by-hole data
 }
 
 // GetLeaderboardResponse represents the response for getting a tournament leaderboard.
 type GetLeaderboardResponse struct {
-	Entries []LeaderboardEntry `json:"entries"`
-	Total   int                `json:"total"`
+	TournamentID   string             `json:"tournament_id"`
+	TournamentName string             `json:"tournament_name"`
+	CurrentRound   int                `json:"current_round"`
+	Entries        []LeaderboardEntry `json:"entries"`
+	Total          int                `json:"total"`
+}
+
+// FieldEntry represents a golfer in the tournament field.
+type FieldEntry struct {
+	GolferID    string `json:"golfer_id"`
+	GolferName  string `json:"golfer_name"`
+	CountryCode string `json:"country_code"`
+	Country     string `json:"country,omitempty"`
+	OWGR        *int   `json:"owgr,omitempty"`
+	OWGRAtEntry *int   `json:"owgr_at_entry,omitempty"`
+	EntryStatus string `json:"entry_status"`
+	Qualifier   string `json:"qualifier,omitempty"`
+	IsAmateur   bool   `json:"is_amateur"`
+	ImageURL    string `json:"image_url,omitempty"`
+}
+
+// GetFieldResponse represents the response for getting a tournament field.
+type GetFieldResponse struct {
+	TournamentID   string       `json:"tournament_id"`
+	TournamentName string       `json:"tournament_name"`
+	Entries        []FieldEntry `json:"entries"`
+	Total          int          `json:"total"`
 }

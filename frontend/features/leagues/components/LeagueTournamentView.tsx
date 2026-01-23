@@ -59,9 +59,20 @@ export function LeagueTournamentView({
   const tournamentName = tournamentData?.tournament.name.trim();
 
   const currentUserPick = useMemo(() => {
-    if (!currentUser || !picksData?.picks) return undefined;
-    return picksData.picks.find((p) => p.user_id === currentUser.id);
-  }, [currentUser, picksData]);
+    if (!currentUser || !picksData?.entries) return undefined;
+    const entry = picksData.entries.find((p) => p.user_id === currentUser.id);
+    if (!entry) return undefined;
+    return {
+      id: entry.pick_id,
+      user_id: entry.user_id,
+      golfer_id: entry.golfer_id,
+      golfer_name: entry.golfer_name,
+      tournament_id: tournamentId,
+      league_id: leagueId,
+      season_year: 0,
+      created_at: entry.created_at,
+    };
+  }, [currentUser, picksData, tournamentId, leagueId]);
 
   useEffect(() => {
     const crumbs: { name: string; path?: string }[] = [];
@@ -139,7 +150,7 @@ export function LeagueTournamentView({
           {picksLoading ? (
             <Skeleton className="h-64 w-full" />
           ) : (
-            <LeaguePicksTable picks={picksData?.picks ?? []} tournamentStatus={tournament.status} />
+            <LeaguePicksTable picks={picksData?.entries ?? []} tournamentStatus={tournament.status} />
           )}
         </TabsContent>
 
