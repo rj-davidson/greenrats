@@ -85,7 +85,7 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 		Level: logLevel,
 	}))
 
-	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, logger)
+	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, cfg.IsDevelopment(), logger)
 	pgatourClient := pgatour.New(cfg.PGATourAPIKey, logger)
 	exaClient := exa.New(cfg.ExaAPIKey, logger)
 	openaiClient := openai.New(cfg.OpenAIAPIKey, cfg.OpenAIModel, logger)

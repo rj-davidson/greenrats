@@ -63,7 +63,7 @@ func run() error {
 	}
 	defer db.Close()
 
-	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, logger)
+	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, cfg.IsDevelopment(), logger)
 	emailClient := email.New(cfg)
 	pgatourClient := pgatour.New(cfg.PGATourAPIKey, logger)
 	fieldsService := fields.NewService(db, pgatourClient, logger)

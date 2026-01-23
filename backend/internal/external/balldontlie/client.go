@@ -21,13 +21,19 @@ type Client struct {
 	logger  *slog.Logger
 }
 
-func New(apiKey, baseURL string, logger *slog.Logger) *Client {
+func New(apiKey, baseURL string, isDevelopment bool, logger *slog.Logger) *Client {
 	client := resty.New().
 		SetBaseURL(baseURL).
 		SetHeader("Authorization", apiKey).
 		SetHeader("Content-Type", "application/json")
 
-	limiter := rate.NewLimiter(rate.Limit(APIRateLimitPerSecond), APIRateBurst)
+	rateLimit := APIRateLimitPerSecond
+	rateBurst := APIRateBurst
+	if isDevelopment {
+		rateLimit = APIRateLimitPerSecondDev
+		rateBurst = APIRateBurstDev
+	}
+	limiter := rate.NewLimiter(rate.Limit(rateLimit), rateBurst)
 
 	breaker := gobreaker.NewCircuitBreaker(gobreaker.Settings{
 		Name:        "balldontlie",

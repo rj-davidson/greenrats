@@ -37,11 +37,20 @@ func newTestClient(serverURL string) *Client {
 
 func TestNewClientCreatesRateLimiter(t *testing.T) {
 	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
-	client := New("test-api-key", "https://api.example.com", logger)
+	client := New("test-api-key", "https://api.example.com", false, logger)
 
 	assert.NotNil(t, client.limiter)
 	assert.Equal(t, rate.Limit(APIRateLimitPerSecond), client.limiter.Limit())
 	assert.Equal(t, APIRateBurst, client.limiter.Burst())
+}
+
+func TestNewClientCreatesRateLimiter_Development(t *testing.T) {
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	client := New("test-api-key", "https://api.example.com", true, logger)
+
+	assert.NotNil(t, client.limiter)
+	assert.Equal(t, rate.Limit(APIRateLimitPerSecondDev), client.limiter.Limit())
+	assert.Equal(t, APIRateBurstDev, client.limiter.Burst())
 }
 
 func TestRateLimiterThrottlesRequests(t *testing.T) {
@@ -60,7 +69,9 @@ func TestRateLimiterThrottlesRequests(t *testing.T) {
 
 func TestConfigConstants(t *testing.T) {
 	assert.Equal(t, 5.0, APIRateLimitPerSecond)
+	assert.Equal(t, 3.0, APIRateLimitPerSecondDev)
 	assert.Equal(t, 10, APIRateBurst)
+	assert.Equal(t, 5, APIRateBurstDev)
 }
 
 func TestGetCourses_Success(t *testing.T) {
