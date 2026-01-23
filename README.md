@@ -96,6 +96,15 @@ atlas migrate apply --env local
 - Leaderboards track cumulative earnings across all tournaments
 - Users compete within leagues
 
+## Product Safety Checklist (No Wagering + Brand Safety)
+
+- No entry fees, prize pools, payouts, escrow, or pot tracking anywhere in the product
+- Avoid gambling language (bet, wager, odds, parlay, payout) in UI/UX and copy
+- Subscription fees are strictly for software access and league organization
+- League rules and Terms must explicitly prohibit wagering or cash prizes on-platform
+- Do not use PGA TOUR logos or marks; use descriptive references and avoid any implied endorsement
+- If a feature might touch prizes or payments between users, require legal review before build
+
 ## Architecture
 
 ### Backend Services
