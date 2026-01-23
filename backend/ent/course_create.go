@@ -156,6 +156,76 @@ func (_c *CourseCreate) SetNillableCountry(v *string) *CourseCreate {
 	return _c
 }
 
+// SetEstablished sets the "established" field.
+func (_c *CourseCreate) SetEstablished(v int) *CourseCreate {
+	_c.mutation.SetEstablished(v)
+	return _c
+}
+
+// SetNillableEstablished sets the "established" field if the given value is not nil.
+func (_c *CourseCreate) SetNillableEstablished(v *int) *CourseCreate {
+	if v != nil {
+		_c.SetEstablished(*v)
+	}
+	return _c
+}
+
+// SetArchitect sets the "architect" field.
+func (_c *CourseCreate) SetArchitect(v string) *CourseCreate {
+	_c.mutation.SetArchitect(v)
+	return _c
+}
+
+// SetNillableArchitect sets the "architect" field if the given value is not nil.
+func (_c *CourseCreate) SetNillableArchitect(v *string) *CourseCreate {
+	if v != nil {
+		_c.SetArchitect(*v)
+	}
+	return _c
+}
+
+// SetFairwayGrass sets the "fairway_grass" field.
+func (_c *CourseCreate) SetFairwayGrass(v string) *CourseCreate {
+	_c.mutation.SetFairwayGrass(v)
+	return _c
+}
+
+// SetNillableFairwayGrass sets the "fairway_grass" field if the given value is not nil.
+func (_c *CourseCreate) SetNillableFairwayGrass(v *string) *CourseCreate {
+	if v != nil {
+		_c.SetFairwayGrass(*v)
+	}
+	return _c
+}
+
+// SetRoughGrass sets the "rough_grass" field.
+func (_c *CourseCreate) SetRoughGrass(v string) *CourseCreate {
+	_c.mutation.SetRoughGrass(v)
+	return _c
+}
+
+// SetNillableRoughGrass sets the "rough_grass" field if the given value is not nil.
+func (_c *CourseCreate) SetNillableRoughGrass(v *string) *CourseCreate {
+	if v != nil {
+		_c.SetRoughGrass(*v)
+	}
+	return _c
+}
+
+// SetGreenGrass sets the "green_grass" field.
+func (_c *CourseCreate) SetGreenGrass(v string) *CourseCreate {
+	_c.mutation.SetGreenGrass(v)
+	return _c
+}
+
+// SetNillableGreenGrass sets the "green_grass" field if the given value is not nil.
+func (_c *CourseCreate) SetNillableGreenGrass(v *string) *CourseCreate {
+	if v != nil {
+		_c.SetGreenGrass(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *CourseCreate) SetID(v uuid.UUID) *CourseCreate {
 	_c.mutation.SetID(v)
@@ -354,6 +424,26 @@ func (_c *CourseCreate) createSpec() (*Course, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.Country(); ok {
 		_spec.SetField(course.FieldCountry, field.TypeString, value)
 		_node.Country = &value
+	}
+	if value, ok := _c.mutation.Established(); ok {
+		_spec.SetField(course.FieldEstablished, field.TypeInt, value)
+		_node.Established = &value
+	}
+	if value, ok := _c.mutation.Architect(); ok {
+		_spec.SetField(course.FieldArchitect, field.TypeString, value)
+		_node.Architect = &value
+	}
+	if value, ok := _c.mutation.FairwayGrass(); ok {
+		_spec.SetField(course.FieldFairwayGrass, field.TypeString, value)
+		_node.FairwayGrass = &value
+	}
+	if value, ok := _c.mutation.RoughGrass(); ok {
+		_spec.SetField(course.FieldRoughGrass, field.TypeString, value)
+		_node.RoughGrass = &value
+	}
+	if value, ok := _c.mutation.GreenGrass(); ok {
+		_spec.SetField(course.FieldGreenGrass, field.TypeString, value)
+		_node.GreenGrass = &value
 	}
 	if nodes := _c.mutation.HolesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

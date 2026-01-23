@@ -25,7 +25,7 @@ func TestHandler_Create(t *testing.T) {
 
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer)
+		factory.CreateFieldEntry(tourn, golfer)
 
 		app := testutil.NewTestApp(t).WithDBUser(user)
 		app.App.Post("/picks", handler.Create)
@@ -113,8 +113,8 @@ func TestHandler_Create(t *testing.T) {
 		tourn1 := factory.CreateUpcomingTournament(2)
 		tourn2 := factory.CreateUpcomingTournament(2, testutil.WithTournamentName("Second"))
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn1, golfer)
-		factory.CreateTournamentEntry(tourn2, golfer)
+		factory.CreateFieldEntry(tourn1, golfer)
+		factory.CreateFieldEntry(tourn2, golfer)
 		factory.CreatePick(user, tourn1, golfer, league)
 
 		app := testutil.NewTestApp(t).WithDBUser(user)
@@ -223,8 +223,8 @@ func TestHandler_UpdateUserPick(t *testing.T) {
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
 		app := testutil.NewTestApp(t).WithDBUser(user)
@@ -257,8 +257,8 @@ func TestHandler_UpdateUserPick(t *testing.T) {
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
 		app := testutil.NewTestApp(t).WithDBUser(otherUser)

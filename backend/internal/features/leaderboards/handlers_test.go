@@ -25,7 +25,7 @@ func TestHandler_GetLeagueLeaderboard(t *testing.T) {
 
 		tourn := factory.CreateCompletedTournament(testutil.WithSeasonYear(time.Now().Year()))
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer, testutil.WithEarnings(100000))
+		factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithEarnings(100000))
 		factory.CreatePick(user, tourn, golfer, league)
 
 		app := testutil.NewTestApp(t).WithDBUser(user)
@@ -54,7 +54,7 @@ func TestHandler_GetLeagueLeaderboard(t *testing.T) {
 
 		tourn := factory.CreateCompletedTournament(testutil.WithSeasonYear(2024))
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer, testutil.WithEarnings(100000))
+		factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithEarnings(100000))
 		factory.CreatePick(user, tourn, golfer, league)
 
 		app := testutil.NewTestApp(t).WithDBUser(user)

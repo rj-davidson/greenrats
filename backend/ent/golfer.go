@@ -40,6 +40,28 @@ type Golfer struct {
 	Active bool `json:"active,omitempty"`
 	// ImageURL holds the value of the "image_url" field.
 	ImageURL *string `json:"image_url,omitempty"`
+	// Height (e.g., '6-1')
+	Height *string `json:"height,omitempty"`
+	// Weight (e.g., '175 lbs')
+	Weight *string `json:"weight,omitempty"`
+	// BirthDate holds the value of the "birth_date" field.
+	BirthDate *time.Time `json:"birth_date,omitempty"`
+	// BirthplaceCity holds the value of the "birthplace_city" field.
+	BirthplaceCity *string `json:"birthplace_city,omitempty"`
+	// BirthplaceState holds the value of the "birthplace_state" field.
+	BirthplaceState *string `json:"birthplace_state,omitempty"`
+	// BirthplaceCountry holds the value of the "birthplace_country" field.
+	BirthplaceCountry *string `json:"birthplace_country,omitempty"`
+	// Year turned professional
+	TurnedPro *int `json:"turned_pro,omitempty"`
+	// College/university attended
+	School *string `json:"school,omitempty"`
+	// ResidenceCity holds the value of the "residence_city" field.
+	ResidenceCity *string `json:"residence_city,omitempty"`
+	// ResidenceState holds the value of the "residence_state" field.
+	ResidenceState *string `json:"residence_state,omitempty"`
+	// ResidenceCountry holds the value of the "residence_country" field.
+	ResidenceCountry *string `json:"residence_country,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the GolferQuery when eager-loading is set.
 	Edges        GolferEdges `json:"edges"`
@@ -50,13 +72,15 @@ type Golfer struct {
 type GolferEdges struct {
 	// Picks holds the value of the picks edge.
 	Picks []*Pick `json:"picks,omitempty"`
-	// Entries holds the value of the entries edge.
-	Entries []*TournamentEntry `json:"entries,omitempty"`
+	// FieldEntries holds the value of the field_entries edge.
+	FieldEntries []*FieldEntry `json:"field_entries,omitempty"`
+	// LeaderboardEntries holds the value of the leaderboard_entries edge.
+	LeaderboardEntries []*LeaderboardEntry `json:"leaderboard_entries,omitempty"`
 	// Seasons holds the value of the seasons edge.
 	Seasons []*GolferSeason `json:"seasons,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -68,19 +92,28 @@ func (e GolferEdges) PicksOrErr() ([]*Pick, error) {
 	return nil, &NotLoadedError{edge: "picks"}
 }
 
-// EntriesOrErr returns the Entries value or an error if the edge
+// FieldEntriesOrErr returns the FieldEntries value or an error if the edge
 // was not loaded in eager-loading.
-func (e GolferEdges) EntriesOrErr() ([]*TournamentEntry, error) {
+func (e GolferEdges) FieldEntriesOrErr() ([]*FieldEntry, error) {
 	if e.loadedTypes[1] {
-		return e.Entries, nil
+		return e.FieldEntries, nil
 	}
-	return nil, &NotLoadedError{edge: "entries"}
+	return nil, &NotLoadedError{edge: "field_entries"}
+}
+
+// LeaderboardEntriesOrErr returns the LeaderboardEntries value or an error if the edge
+// was not loaded in eager-loading.
+func (e GolferEdges) LeaderboardEntriesOrErr() ([]*LeaderboardEntry, error) {
+	if e.loadedTypes[2] {
+		return e.LeaderboardEntries, nil
+	}
+	return nil, &NotLoadedError{edge: "leaderboard_entries"}
 }
 
 // SeasonsOrErr returns the Seasons value or an error if the edge
 // was not loaded in eager-loading.
 func (e GolferEdges) SeasonsOrErr() ([]*GolferSeason, error) {
-	if e.loadedTypes[2] {
+	if e.loadedTypes[3] {
 		return e.Seasons, nil
 	}
 	return nil, &NotLoadedError{edge: "seasons"}
@@ -93,11 +126,11 @@ func (*Golfer) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case golfer.FieldActive:
 			values[i] = new(sql.NullBool)
-		case golfer.FieldBdlID, golfer.FieldOwgr:
+		case golfer.FieldBdlID, golfer.FieldOwgr, golfer.FieldTurnedPro:
 			values[i] = new(sql.NullInt64)
-		case golfer.FieldFirstName, golfer.FieldLastName, golfer.FieldName, golfer.FieldCountry, golfer.FieldCountryCode, golfer.FieldImageURL:
+		case golfer.FieldFirstName, golfer.FieldLastName, golfer.FieldName, golfer.FieldCountry, golfer.FieldCountryCode, golfer.FieldImageURL, golfer.FieldHeight, golfer.FieldWeight, golfer.FieldBirthplaceCity, golfer.FieldBirthplaceState, golfer.FieldBirthplaceCountry, golfer.FieldSchool, golfer.FieldResidenceCity, golfer.FieldResidenceState, golfer.FieldResidenceCountry:
 			values[i] = new(sql.NullString)
-		case golfer.FieldCreatedAt, golfer.FieldUpdatedAt:
+		case golfer.FieldCreatedAt, golfer.FieldUpdatedAt, golfer.FieldBirthDate:
 			values[i] = new(sql.NullTime)
 		case golfer.FieldID:
 			values[i] = new(uuid.UUID)
@@ -194,6 +227,83 @@ func (_m *Golfer) assignValues(columns []string, values []any) error {
 				_m.ImageURL = new(string)
 				*_m.ImageURL = value.String
 			}
+		case golfer.FieldHeight:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field height", values[i])
+			} else if value.Valid {
+				_m.Height = new(string)
+				*_m.Height = value.String
+			}
+		case golfer.FieldWeight:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field weight", values[i])
+			} else if value.Valid {
+				_m.Weight = new(string)
+				*_m.Weight = value.String
+			}
+		case golfer.FieldBirthDate:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field birth_date", values[i])
+			} else if value.Valid {
+				_m.BirthDate = new(time.Time)
+				*_m.BirthDate = value.Time
+			}
+		case golfer.FieldBirthplaceCity:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field birthplace_city", values[i])
+			} else if value.Valid {
+				_m.BirthplaceCity = new(string)
+				*_m.BirthplaceCity = value.String
+			}
+		case golfer.FieldBirthplaceState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field birthplace_state", values[i])
+			} else if value.Valid {
+				_m.BirthplaceState = new(string)
+				*_m.BirthplaceState = value.String
+			}
+		case golfer.FieldBirthplaceCountry:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field birthplace_country", values[i])
+			} else if value.Valid {
+				_m.BirthplaceCountry = new(string)
+				*_m.BirthplaceCountry = value.String
+			}
+		case golfer.FieldTurnedPro:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field turned_pro", values[i])
+			} else if value.Valid {
+				_m.TurnedPro = new(int)
+				*_m.TurnedPro = int(value.Int64)
+			}
+		case golfer.FieldSchool:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field school", values[i])
+			} else if value.Valid {
+				_m.School = new(string)
+				*_m.School = value.String
+			}
+		case golfer.FieldResidenceCity:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field residence_city", values[i])
+			} else if value.Valid {
+				_m.ResidenceCity = new(string)
+				*_m.ResidenceCity = value.String
+			}
+		case golfer.FieldResidenceState:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field residence_state", values[i])
+			} else if value.Valid {
+				_m.ResidenceState = new(string)
+				*_m.ResidenceState = value.String
+			}
+		case golfer.FieldResidenceCountry:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field residence_country", values[i])
+			} else if value.Valid {
+				_m.ResidenceCountry = new(string)
+				*_m.ResidenceCountry = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -212,9 +322,14 @@ func (_m *Golfer) QueryPicks() *PickQuery {
 	return NewGolferClient(_m.config).QueryPicks(_m)
 }
 
-// QueryEntries queries the "entries" edge of the Golfer entity.
-func (_m *Golfer) QueryEntries() *TournamentEntryQuery {
-	return NewGolferClient(_m.config).QueryEntries(_m)
+// QueryFieldEntries queries the "field_entries" edge of the Golfer entity.
+func (_m *Golfer) QueryFieldEntries() *FieldEntryQuery {
+	return NewGolferClient(_m.config).QueryFieldEntries(_m)
+}
+
+// QueryLeaderboardEntries queries the "leaderboard_entries" edge of the Golfer entity.
+func (_m *Golfer) QueryLeaderboardEntries() *LeaderboardEntryQuery {
+	return NewGolferClient(_m.config).QueryLeaderboardEntries(_m)
 }
 
 // QuerySeasons queries the "seasons" edge of the Golfer entity.
@@ -287,6 +402,61 @@ func (_m *Golfer) String() string {
 	builder.WriteString(", ")
 	if v := _m.ImageURL; v != nil {
 		builder.WriteString("image_url=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Height; v != nil {
+		builder.WriteString("height=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Weight; v != nil {
+		builder.WriteString("weight=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.BirthDate; v != nil {
+		builder.WriteString("birth_date=")
+		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.BirthplaceCity; v != nil {
+		builder.WriteString("birthplace_city=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.BirthplaceState; v != nil {
+		builder.WriteString("birthplace_state=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.BirthplaceCountry; v != nil {
+		builder.WriteString("birthplace_country=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.TurnedPro; v != nil {
+		builder.WriteString("turned_pro=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.School; v != nil {
+		builder.WriteString("school=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.ResidenceCity; v != nil {
+		builder.WriteString("residence_city=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.ResidenceState; v != nil {
+		builder.WriteString("residence_state=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.ResidenceCountry; v != nil {
+		builder.WriteString("residence_country=")
 		builder.WriteString(*v)
 	}
 	builder.WriteByte(')')

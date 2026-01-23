@@ -111,6 +111,61 @@ func ImageURL(v string) predicate.Golfer {
 	return predicate.Golfer(sql.FieldEQ(FieldImageURL, v))
 }
 
+// Height applies equality check predicate on the "height" field. It's identical to HeightEQ.
+func Height(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldHeight, v))
+}
+
+// Weight applies equality check predicate on the "weight" field. It's identical to WeightEQ.
+func Weight(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldWeight, v))
+}
+
+// BirthDate applies equality check predicate on the "birth_date" field. It's identical to BirthDateEQ.
+func BirthDate(v time.Time) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldBirthDate, v))
+}
+
+// BirthplaceCity applies equality check predicate on the "birthplace_city" field. It's identical to BirthplaceCityEQ.
+func BirthplaceCity(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldBirthplaceCity, v))
+}
+
+// BirthplaceState applies equality check predicate on the "birthplace_state" field. It's identical to BirthplaceStateEQ.
+func BirthplaceState(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldBirthplaceState, v))
+}
+
+// BirthplaceCountry applies equality check predicate on the "birthplace_country" field. It's identical to BirthplaceCountryEQ.
+func BirthplaceCountry(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldBirthplaceCountry, v))
+}
+
+// TurnedPro applies equality check predicate on the "turned_pro" field. It's identical to TurnedProEQ.
+func TurnedPro(v int) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldTurnedPro, v))
+}
+
+// School applies equality check predicate on the "school" field. It's identical to SchoolEQ.
+func School(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldSchool, v))
+}
+
+// ResidenceCity applies equality check predicate on the "residence_city" field. It's identical to ResidenceCityEQ.
+func ResidenceCity(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldResidenceCity, v))
+}
+
+// ResidenceState applies equality check predicate on the "residence_state" field. It's identical to ResidenceStateEQ.
+func ResidenceState(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldResidenceState, v))
+}
+
+// ResidenceCountry applies equality check predicate on the "residence_country" field. It's identical to ResidenceCountryEQ.
+func ResidenceCountry(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldResidenceCountry, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Golfer {
 	return predicate.Golfer(sql.FieldEQ(FieldCreatedAt, v))
@@ -731,6 +786,781 @@ func ImageURLContainsFold(v string) predicate.Golfer {
 	return predicate.Golfer(sql.FieldContainsFold(FieldImageURL, v))
 }
 
+// HeightEQ applies the EQ predicate on the "height" field.
+func HeightEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldHeight, v))
+}
+
+// HeightNEQ applies the NEQ predicate on the "height" field.
+func HeightNEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldHeight, v))
+}
+
+// HeightIn applies the In predicate on the "height" field.
+func HeightIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldHeight, vs...))
+}
+
+// HeightNotIn applies the NotIn predicate on the "height" field.
+func HeightNotIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldHeight, vs...))
+}
+
+// HeightGT applies the GT predicate on the "height" field.
+func HeightGT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldHeight, v))
+}
+
+// HeightGTE applies the GTE predicate on the "height" field.
+func HeightGTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldHeight, v))
+}
+
+// HeightLT applies the LT predicate on the "height" field.
+func HeightLT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldHeight, v))
+}
+
+// HeightLTE applies the LTE predicate on the "height" field.
+func HeightLTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldHeight, v))
+}
+
+// HeightContains applies the Contains predicate on the "height" field.
+func HeightContains(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContains(FieldHeight, v))
+}
+
+// HeightHasPrefix applies the HasPrefix predicate on the "height" field.
+func HeightHasPrefix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasPrefix(FieldHeight, v))
+}
+
+// HeightHasSuffix applies the HasSuffix predicate on the "height" field.
+func HeightHasSuffix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasSuffix(FieldHeight, v))
+}
+
+// HeightIsNil applies the IsNil predicate on the "height" field.
+func HeightIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldHeight))
+}
+
+// HeightNotNil applies the NotNil predicate on the "height" field.
+func HeightNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldHeight))
+}
+
+// HeightEqualFold applies the EqualFold predicate on the "height" field.
+func HeightEqualFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEqualFold(FieldHeight, v))
+}
+
+// HeightContainsFold applies the ContainsFold predicate on the "height" field.
+func HeightContainsFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContainsFold(FieldHeight, v))
+}
+
+// WeightEQ applies the EQ predicate on the "weight" field.
+func WeightEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldWeight, v))
+}
+
+// WeightNEQ applies the NEQ predicate on the "weight" field.
+func WeightNEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldWeight, v))
+}
+
+// WeightIn applies the In predicate on the "weight" field.
+func WeightIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldWeight, vs...))
+}
+
+// WeightNotIn applies the NotIn predicate on the "weight" field.
+func WeightNotIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldWeight, vs...))
+}
+
+// WeightGT applies the GT predicate on the "weight" field.
+func WeightGT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldWeight, v))
+}
+
+// WeightGTE applies the GTE predicate on the "weight" field.
+func WeightGTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldWeight, v))
+}
+
+// WeightLT applies the LT predicate on the "weight" field.
+func WeightLT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldWeight, v))
+}
+
+// WeightLTE applies the LTE predicate on the "weight" field.
+func WeightLTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldWeight, v))
+}
+
+// WeightContains applies the Contains predicate on the "weight" field.
+func WeightContains(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContains(FieldWeight, v))
+}
+
+// WeightHasPrefix applies the HasPrefix predicate on the "weight" field.
+func WeightHasPrefix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasPrefix(FieldWeight, v))
+}
+
+// WeightHasSuffix applies the HasSuffix predicate on the "weight" field.
+func WeightHasSuffix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasSuffix(FieldWeight, v))
+}
+
+// WeightIsNil applies the IsNil predicate on the "weight" field.
+func WeightIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldWeight))
+}
+
+// WeightNotNil applies the NotNil predicate on the "weight" field.
+func WeightNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldWeight))
+}
+
+// WeightEqualFold applies the EqualFold predicate on the "weight" field.
+func WeightEqualFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEqualFold(FieldWeight, v))
+}
+
+// WeightContainsFold applies the ContainsFold predicate on the "weight" field.
+func WeightContainsFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContainsFold(FieldWeight, v))
+}
+
+// BirthDateEQ applies the EQ predicate on the "birth_date" field.
+func BirthDateEQ(v time.Time) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldBirthDate, v))
+}
+
+// BirthDateNEQ applies the NEQ predicate on the "birth_date" field.
+func BirthDateNEQ(v time.Time) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldBirthDate, v))
+}
+
+// BirthDateIn applies the In predicate on the "birth_date" field.
+func BirthDateIn(vs ...time.Time) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldBirthDate, vs...))
+}
+
+// BirthDateNotIn applies the NotIn predicate on the "birth_date" field.
+func BirthDateNotIn(vs ...time.Time) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldBirthDate, vs...))
+}
+
+// BirthDateGT applies the GT predicate on the "birth_date" field.
+func BirthDateGT(v time.Time) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldBirthDate, v))
+}
+
+// BirthDateGTE applies the GTE predicate on the "birth_date" field.
+func BirthDateGTE(v time.Time) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldBirthDate, v))
+}
+
+// BirthDateLT applies the LT predicate on the "birth_date" field.
+func BirthDateLT(v time.Time) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldBirthDate, v))
+}
+
+// BirthDateLTE applies the LTE predicate on the "birth_date" field.
+func BirthDateLTE(v time.Time) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldBirthDate, v))
+}
+
+// BirthDateIsNil applies the IsNil predicate on the "birth_date" field.
+func BirthDateIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldBirthDate))
+}
+
+// BirthDateNotNil applies the NotNil predicate on the "birth_date" field.
+func BirthDateNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldBirthDate))
+}
+
+// BirthplaceCityEQ applies the EQ predicate on the "birthplace_city" field.
+func BirthplaceCityEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityNEQ applies the NEQ predicate on the "birthplace_city" field.
+func BirthplaceCityNEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityIn applies the In predicate on the "birthplace_city" field.
+func BirthplaceCityIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldBirthplaceCity, vs...))
+}
+
+// BirthplaceCityNotIn applies the NotIn predicate on the "birthplace_city" field.
+func BirthplaceCityNotIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldBirthplaceCity, vs...))
+}
+
+// BirthplaceCityGT applies the GT predicate on the "birthplace_city" field.
+func BirthplaceCityGT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityGTE applies the GTE predicate on the "birthplace_city" field.
+func BirthplaceCityGTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityLT applies the LT predicate on the "birthplace_city" field.
+func BirthplaceCityLT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityLTE applies the LTE predicate on the "birthplace_city" field.
+func BirthplaceCityLTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityContains applies the Contains predicate on the "birthplace_city" field.
+func BirthplaceCityContains(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContains(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityHasPrefix applies the HasPrefix predicate on the "birthplace_city" field.
+func BirthplaceCityHasPrefix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasPrefix(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityHasSuffix applies the HasSuffix predicate on the "birthplace_city" field.
+func BirthplaceCityHasSuffix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasSuffix(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityIsNil applies the IsNil predicate on the "birthplace_city" field.
+func BirthplaceCityIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldBirthplaceCity))
+}
+
+// BirthplaceCityNotNil applies the NotNil predicate on the "birthplace_city" field.
+func BirthplaceCityNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldBirthplaceCity))
+}
+
+// BirthplaceCityEqualFold applies the EqualFold predicate on the "birthplace_city" field.
+func BirthplaceCityEqualFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEqualFold(FieldBirthplaceCity, v))
+}
+
+// BirthplaceCityContainsFold applies the ContainsFold predicate on the "birthplace_city" field.
+func BirthplaceCityContainsFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContainsFold(FieldBirthplaceCity, v))
+}
+
+// BirthplaceStateEQ applies the EQ predicate on the "birthplace_state" field.
+func BirthplaceStateEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateNEQ applies the NEQ predicate on the "birthplace_state" field.
+func BirthplaceStateNEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateIn applies the In predicate on the "birthplace_state" field.
+func BirthplaceStateIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldBirthplaceState, vs...))
+}
+
+// BirthplaceStateNotIn applies the NotIn predicate on the "birthplace_state" field.
+func BirthplaceStateNotIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldBirthplaceState, vs...))
+}
+
+// BirthplaceStateGT applies the GT predicate on the "birthplace_state" field.
+func BirthplaceStateGT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateGTE applies the GTE predicate on the "birthplace_state" field.
+func BirthplaceStateGTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateLT applies the LT predicate on the "birthplace_state" field.
+func BirthplaceStateLT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateLTE applies the LTE predicate on the "birthplace_state" field.
+func BirthplaceStateLTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateContains applies the Contains predicate on the "birthplace_state" field.
+func BirthplaceStateContains(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContains(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateHasPrefix applies the HasPrefix predicate on the "birthplace_state" field.
+func BirthplaceStateHasPrefix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasPrefix(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateHasSuffix applies the HasSuffix predicate on the "birthplace_state" field.
+func BirthplaceStateHasSuffix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasSuffix(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateIsNil applies the IsNil predicate on the "birthplace_state" field.
+func BirthplaceStateIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldBirthplaceState))
+}
+
+// BirthplaceStateNotNil applies the NotNil predicate on the "birthplace_state" field.
+func BirthplaceStateNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldBirthplaceState))
+}
+
+// BirthplaceStateEqualFold applies the EqualFold predicate on the "birthplace_state" field.
+func BirthplaceStateEqualFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEqualFold(FieldBirthplaceState, v))
+}
+
+// BirthplaceStateContainsFold applies the ContainsFold predicate on the "birthplace_state" field.
+func BirthplaceStateContainsFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContainsFold(FieldBirthplaceState, v))
+}
+
+// BirthplaceCountryEQ applies the EQ predicate on the "birthplace_country" field.
+func BirthplaceCountryEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryNEQ applies the NEQ predicate on the "birthplace_country" field.
+func BirthplaceCountryNEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryIn applies the In predicate on the "birthplace_country" field.
+func BirthplaceCountryIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldBirthplaceCountry, vs...))
+}
+
+// BirthplaceCountryNotIn applies the NotIn predicate on the "birthplace_country" field.
+func BirthplaceCountryNotIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldBirthplaceCountry, vs...))
+}
+
+// BirthplaceCountryGT applies the GT predicate on the "birthplace_country" field.
+func BirthplaceCountryGT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryGTE applies the GTE predicate on the "birthplace_country" field.
+func BirthplaceCountryGTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryLT applies the LT predicate on the "birthplace_country" field.
+func BirthplaceCountryLT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryLTE applies the LTE predicate on the "birthplace_country" field.
+func BirthplaceCountryLTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryContains applies the Contains predicate on the "birthplace_country" field.
+func BirthplaceCountryContains(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContains(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryHasPrefix applies the HasPrefix predicate on the "birthplace_country" field.
+func BirthplaceCountryHasPrefix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasPrefix(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryHasSuffix applies the HasSuffix predicate on the "birthplace_country" field.
+func BirthplaceCountryHasSuffix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasSuffix(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryIsNil applies the IsNil predicate on the "birthplace_country" field.
+func BirthplaceCountryIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldBirthplaceCountry))
+}
+
+// BirthplaceCountryNotNil applies the NotNil predicate on the "birthplace_country" field.
+func BirthplaceCountryNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldBirthplaceCountry))
+}
+
+// BirthplaceCountryEqualFold applies the EqualFold predicate on the "birthplace_country" field.
+func BirthplaceCountryEqualFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEqualFold(FieldBirthplaceCountry, v))
+}
+
+// BirthplaceCountryContainsFold applies the ContainsFold predicate on the "birthplace_country" field.
+func BirthplaceCountryContainsFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContainsFold(FieldBirthplaceCountry, v))
+}
+
+// TurnedProEQ applies the EQ predicate on the "turned_pro" field.
+func TurnedProEQ(v int) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldTurnedPro, v))
+}
+
+// TurnedProNEQ applies the NEQ predicate on the "turned_pro" field.
+func TurnedProNEQ(v int) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldTurnedPro, v))
+}
+
+// TurnedProIn applies the In predicate on the "turned_pro" field.
+func TurnedProIn(vs ...int) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldTurnedPro, vs...))
+}
+
+// TurnedProNotIn applies the NotIn predicate on the "turned_pro" field.
+func TurnedProNotIn(vs ...int) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldTurnedPro, vs...))
+}
+
+// TurnedProGT applies the GT predicate on the "turned_pro" field.
+func TurnedProGT(v int) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldTurnedPro, v))
+}
+
+// TurnedProGTE applies the GTE predicate on the "turned_pro" field.
+func TurnedProGTE(v int) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldTurnedPro, v))
+}
+
+// TurnedProLT applies the LT predicate on the "turned_pro" field.
+func TurnedProLT(v int) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldTurnedPro, v))
+}
+
+// TurnedProLTE applies the LTE predicate on the "turned_pro" field.
+func TurnedProLTE(v int) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldTurnedPro, v))
+}
+
+// TurnedProIsNil applies the IsNil predicate on the "turned_pro" field.
+func TurnedProIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldTurnedPro))
+}
+
+// TurnedProNotNil applies the NotNil predicate on the "turned_pro" field.
+func TurnedProNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldTurnedPro))
+}
+
+// SchoolEQ applies the EQ predicate on the "school" field.
+func SchoolEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldSchool, v))
+}
+
+// SchoolNEQ applies the NEQ predicate on the "school" field.
+func SchoolNEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldSchool, v))
+}
+
+// SchoolIn applies the In predicate on the "school" field.
+func SchoolIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldSchool, vs...))
+}
+
+// SchoolNotIn applies the NotIn predicate on the "school" field.
+func SchoolNotIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldSchool, vs...))
+}
+
+// SchoolGT applies the GT predicate on the "school" field.
+func SchoolGT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldSchool, v))
+}
+
+// SchoolGTE applies the GTE predicate on the "school" field.
+func SchoolGTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldSchool, v))
+}
+
+// SchoolLT applies the LT predicate on the "school" field.
+func SchoolLT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldSchool, v))
+}
+
+// SchoolLTE applies the LTE predicate on the "school" field.
+func SchoolLTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldSchool, v))
+}
+
+// SchoolContains applies the Contains predicate on the "school" field.
+func SchoolContains(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContains(FieldSchool, v))
+}
+
+// SchoolHasPrefix applies the HasPrefix predicate on the "school" field.
+func SchoolHasPrefix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasPrefix(FieldSchool, v))
+}
+
+// SchoolHasSuffix applies the HasSuffix predicate on the "school" field.
+func SchoolHasSuffix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasSuffix(FieldSchool, v))
+}
+
+// SchoolIsNil applies the IsNil predicate on the "school" field.
+func SchoolIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldSchool))
+}
+
+// SchoolNotNil applies the NotNil predicate on the "school" field.
+func SchoolNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldSchool))
+}
+
+// SchoolEqualFold applies the EqualFold predicate on the "school" field.
+func SchoolEqualFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEqualFold(FieldSchool, v))
+}
+
+// SchoolContainsFold applies the ContainsFold predicate on the "school" field.
+func SchoolContainsFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContainsFold(FieldSchool, v))
+}
+
+// ResidenceCityEQ applies the EQ predicate on the "residence_city" field.
+func ResidenceCityEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldResidenceCity, v))
+}
+
+// ResidenceCityNEQ applies the NEQ predicate on the "residence_city" field.
+func ResidenceCityNEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldResidenceCity, v))
+}
+
+// ResidenceCityIn applies the In predicate on the "residence_city" field.
+func ResidenceCityIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldResidenceCity, vs...))
+}
+
+// ResidenceCityNotIn applies the NotIn predicate on the "residence_city" field.
+func ResidenceCityNotIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldResidenceCity, vs...))
+}
+
+// ResidenceCityGT applies the GT predicate on the "residence_city" field.
+func ResidenceCityGT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldResidenceCity, v))
+}
+
+// ResidenceCityGTE applies the GTE predicate on the "residence_city" field.
+func ResidenceCityGTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldResidenceCity, v))
+}
+
+// ResidenceCityLT applies the LT predicate on the "residence_city" field.
+func ResidenceCityLT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldResidenceCity, v))
+}
+
+// ResidenceCityLTE applies the LTE predicate on the "residence_city" field.
+func ResidenceCityLTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldResidenceCity, v))
+}
+
+// ResidenceCityContains applies the Contains predicate on the "residence_city" field.
+func ResidenceCityContains(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContains(FieldResidenceCity, v))
+}
+
+// ResidenceCityHasPrefix applies the HasPrefix predicate on the "residence_city" field.
+func ResidenceCityHasPrefix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasPrefix(FieldResidenceCity, v))
+}
+
+// ResidenceCityHasSuffix applies the HasSuffix predicate on the "residence_city" field.
+func ResidenceCityHasSuffix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasSuffix(FieldResidenceCity, v))
+}
+
+// ResidenceCityIsNil applies the IsNil predicate on the "residence_city" field.
+func ResidenceCityIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldResidenceCity))
+}
+
+// ResidenceCityNotNil applies the NotNil predicate on the "residence_city" field.
+func ResidenceCityNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldResidenceCity))
+}
+
+// ResidenceCityEqualFold applies the EqualFold predicate on the "residence_city" field.
+func ResidenceCityEqualFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEqualFold(FieldResidenceCity, v))
+}
+
+// ResidenceCityContainsFold applies the ContainsFold predicate on the "residence_city" field.
+func ResidenceCityContainsFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContainsFold(FieldResidenceCity, v))
+}
+
+// ResidenceStateEQ applies the EQ predicate on the "residence_state" field.
+func ResidenceStateEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldResidenceState, v))
+}
+
+// ResidenceStateNEQ applies the NEQ predicate on the "residence_state" field.
+func ResidenceStateNEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldResidenceState, v))
+}
+
+// ResidenceStateIn applies the In predicate on the "residence_state" field.
+func ResidenceStateIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldResidenceState, vs...))
+}
+
+// ResidenceStateNotIn applies the NotIn predicate on the "residence_state" field.
+func ResidenceStateNotIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldResidenceState, vs...))
+}
+
+// ResidenceStateGT applies the GT predicate on the "residence_state" field.
+func ResidenceStateGT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldResidenceState, v))
+}
+
+// ResidenceStateGTE applies the GTE predicate on the "residence_state" field.
+func ResidenceStateGTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldResidenceState, v))
+}
+
+// ResidenceStateLT applies the LT predicate on the "residence_state" field.
+func ResidenceStateLT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldResidenceState, v))
+}
+
+// ResidenceStateLTE applies the LTE predicate on the "residence_state" field.
+func ResidenceStateLTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldResidenceState, v))
+}
+
+// ResidenceStateContains applies the Contains predicate on the "residence_state" field.
+func ResidenceStateContains(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContains(FieldResidenceState, v))
+}
+
+// ResidenceStateHasPrefix applies the HasPrefix predicate on the "residence_state" field.
+func ResidenceStateHasPrefix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasPrefix(FieldResidenceState, v))
+}
+
+// ResidenceStateHasSuffix applies the HasSuffix predicate on the "residence_state" field.
+func ResidenceStateHasSuffix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasSuffix(FieldResidenceState, v))
+}
+
+// ResidenceStateIsNil applies the IsNil predicate on the "residence_state" field.
+func ResidenceStateIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldResidenceState))
+}
+
+// ResidenceStateNotNil applies the NotNil predicate on the "residence_state" field.
+func ResidenceStateNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldResidenceState))
+}
+
+// ResidenceStateEqualFold applies the EqualFold predicate on the "residence_state" field.
+func ResidenceStateEqualFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEqualFold(FieldResidenceState, v))
+}
+
+// ResidenceStateContainsFold applies the ContainsFold predicate on the "residence_state" field.
+func ResidenceStateContainsFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContainsFold(FieldResidenceState, v))
+}
+
+// ResidenceCountryEQ applies the EQ predicate on the "residence_country" field.
+func ResidenceCountryEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEQ(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryNEQ applies the NEQ predicate on the "residence_country" field.
+func ResidenceCountryNEQ(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNEQ(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryIn applies the In predicate on the "residence_country" field.
+func ResidenceCountryIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldIn(FieldResidenceCountry, vs...))
+}
+
+// ResidenceCountryNotIn applies the NotIn predicate on the "residence_country" field.
+func ResidenceCountryNotIn(vs ...string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotIn(FieldResidenceCountry, vs...))
+}
+
+// ResidenceCountryGT applies the GT predicate on the "residence_country" field.
+func ResidenceCountryGT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGT(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryGTE applies the GTE predicate on the "residence_country" field.
+func ResidenceCountryGTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldGTE(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryLT applies the LT predicate on the "residence_country" field.
+func ResidenceCountryLT(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLT(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryLTE applies the LTE predicate on the "residence_country" field.
+func ResidenceCountryLTE(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldLTE(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryContains applies the Contains predicate on the "residence_country" field.
+func ResidenceCountryContains(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContains(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryHasPrefix applies the HasPrefix predicate on the "residence_country" field.
+func ResidenceCountryHasPrefix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasPrefix(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryHasSuffix applies the HasSuffix predicate on the "residence_country" field.
+func ResidenceCountryHasSuffix(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldHasSuffix(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryIsNil applies the IsNil predicate on the "residence_country" field.
+func ResidenceCountryIsNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldIsNull(FieldResidenceCountry))
+}
+
+// ResidenceCountryNotNil applies the NotNil predicate on the "residence_country" field.
+func ResidenceCountryNotNil() predicate.Golfer {
+	return predicate.Golfer(sql.FieldNotNull(FieldResidenceCountry))
+}
+
+// ResidenceCountryEqualFold applies the EqualFold predicate on the "residence_country" field.
+func ResidenceCountryEqualFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldEqualFold(FieldResidenceCountry, v))
+}
+
+// ResidenceCountryContainsFold applies the ContainsFold predicate on the "residence_country" field.
+func ResidenceCountryContainsFold(v string) predicate.Golfer {
+	return predicate.Golfer(sql.FieldContainsFold(FieldResidenceCountry, v))
+}
+
 // HasPicks applies the HasEdge predicate on the "picks" edge.
 func HasPicks() predicate.Golfer {
 	return predicate.Golfer(func(s *sql.Selector) {
@@ -754,21 +1584,44 @@ func HasPicksWith(preds ...predicate.Pick) predicate.Golfer {
 	})
 }
 
-// HasEntries applies the HasEdge predicate on the "entries" edge.
-func HasEntries() predicate.Golfer {
+// HasFieldEntries applies the HasEdge predicate on the "field_entries" edge.
+func HasFieldEntries() predicate.Golfer {
 	return predicate.Golfer(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, FieldEntriesTable, FieldEntriesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasEntriesWith applies the HasEdge predicate on the "entries" edge with a given conditions (other predicates).
-func HasEntriesWith(preds ...predicate.TournamentEntry) predicate.Golfer {
+// HasFieldEntriesWith applies the HasEdge predicate on the "field_entries" edge with a given conditions (other predicates).
+func HasFieldEntriesWith(preds ...predicate.FieldEntry) predicate.Golfer {
 	return predicate.Golfer(func(s *sql.Selector) {
-		step := newEntriesStep()
+		step := newFieldEntriesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasLeaderboardEntries applies the HasEdge predicate on the "leaderboard_entries" edge.
+func HasLeaderboardEntries() predicate.Golfer {
+	return predicate.Golfer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LeaderboardEntriesTable, LeaderboardEntriesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLeaderboardEntriesWith applies the HasEdge predicate on the "leaderboard_entries" edge with a given conditions (other predicates).
+func HasLeaderboardEntriesWith(preds ...predicate.LeaderboardEntry) predicate.Golfer {
+	return predicate.Golfer(func(s *sql.Selector) {
+		step := newLeaderboardEntriesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

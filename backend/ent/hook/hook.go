@@ -57,6 +57,18 @@ func (f EmailReminderFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Valu
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.EmailReminderMutation", m)
 }
 
+// The FieldEntryFunc type is an adapter to allow the use of ordinary
+// function as FieldEntry mutator.
+type FieldEntryFunc func(context.Context, *ent.FieldEntryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f FieldEntryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.FieldEntryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.FieldEntryMutation", m)
+}
+
 // The GolferFunc type is an adapter to allow the use of ordinary
 // function as Golfer mutator.
 type GolferFunc func(context.Context, *ent.GolferMutation) (ent.Value, error)
@@ -91,6 +103,18 @@ func (f HoleScoreFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.HoleScoreMutation", m)
+}
+
+// The LeaderboardEntryFunc type is an adapter to allow the use of ordinary
+// function as LeaderboardEntry mutator.
+type LeaderboardEntryFunc func(context.Context, *ent.LeaderboardEntryMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f LeaderboardEntryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.LeaderboardEntryMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeaderboardEntryMutation", m)
 }
 
 // The LeagueFunc type is an adapter to allow the use of ordinary
@@ -175,18 +199,6 @@ func (f TournamentFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, 
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TournamentMutation", m)
-}
-
-// The TournamentEntryFunc type is an adapter to allow the use of ordinary
-// function as TournamentEntry mutator.
-type TournamentEntryFunc func(context.Context, *ent.TournamentEntryMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f TournamentEntryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.TournamentEntryMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.TournamentEntryMutation", m)
 }
 
 // The UserFunc type is an adapter to allow the use of ordinary

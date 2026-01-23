@@ -53,6 +53,43 @@ func (Golfer) Fields() []ent.Field {
 		field.String("image_url").
 			Optional().
 			Nillable(),
+		field.String("height").
+			Optional().
+			Nillable().
+			Comment("Height (e.g., '6-1')"),
+		field.String("weight").
+			Optional().
+			Nillable().
+			Comment("Weight (e.g., '175 lbs')"),
+		field.Time("birth_date").
+			Optional().
+			Nillable(),
+		field.String("birthplace_city").
+			Optional().
+			Nillable(),
+		field.String("birthplace_state").
+			Optional().
+			Nillable(),
+		field.String("birthplace_country").
+			Optional().
+			Nillable(),
+		field.Int("turned_pro").
+			Optional().
+			Nillable().
+			Comment("Year turned professional"),
+		field.String("school").
+			Optional().
+			Nillable().
+			Comment("College/university attended"),
+		field.String("residence_city").
+			Optional().
+			Nillable(),
+		field.String("residence_state").
+			Optional().
+			Nillable(),
+		field.String("residence_country").
+			Optional().
+			Nillable(),
 	}
 }
 
@@ -60,7 +97,8 @@ func (Golfer) Fields() []ent.Field {
 func (Golfer) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("picks", Pick.Type),
-		edge.To("entries", TournamentEntry.Type),
+		edge.To("field_entries", FieldEntry.Type),
+		edge.To("leaderboard_entries", LeaderboardEntry.Type),
 		edge.To("seasons", GolferSeason.Type),
 	}
 }

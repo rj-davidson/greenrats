@@ -9,10 +9,10 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -136,12 +136,12 @@ var ErrGolferNotFound = errors.New("golfer not found")
 var ErrEntryNotFound = errors.New("entry not found")
 
 func (s *Service) ListTournamentField(ctx context.Context, tournamentID uuid.UUID) (*ListFieldResponse, error) {
-	entries, err := s.db.TournamentEntry.Query().
-		Where(tournamententry.HasTournamentWith(tournament.ID(tournamentID))).
+	entries, err := s.db.FieldEntry.Query().
+		Where(fieldentry.HasTournamentWith(tournament.ID(tournamentID))).
 		WithGolfer().
 		All(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to query tournament entries: %w", err)
+		return nil, fmt.Errorf("failed to query field entries: %w", err)
 	}
 
 	result := make([]FieldEntryResponse, 0, len(entries))
@@ -186,10 +186,10 @@ func (s *Service) AddFieldEntry(ctx context.Context, tournamentID uuid.UUID, req
 		return nil, fmt.Errorf("failed to get golfer: %w", err)
 	}
 
-	existing, err := s.db.TournamentEntry.Query().
+	existing, err := s.db.FieldEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.ID(t.ID)),
-			tournamententry.HasGolferWith(golfer.ID(g.ID)),
+			fieldentry.HasTournamentWith(tournament.ID(t.ID)),
+			fieldentry.HasGolferWith(golfer.ID(g.ID)),
 		).
 		Only(ctx)
 
@@ -209,12 +209,12 @@ func (s *Service) AddFieldEntry(ctx context.Context, tournamentID uuid.UUID, req
 		return nil, fmt.Errorf("failed to check existing entry: %w", err)
 	}
 
-	entryStatus := tournamententry.EntryStatusConfirmed
+	entryStatus := fieldentry.EntryStatusConfirmed
 	if req.EntryStatus != "" {
 		entryStatus = mapEntryStatus(req.EntryStatus)
 	}
 
-	entry, err := s.db.TournamentEntry.Create().
+	entry, err := s.db.FieldEntry.Create().
 		SetTournament(t).
 		SetGolfer(g).
 		SetEntryStatus(entryStatus).
@@ -238,8 +238,8 @@ func (s *Service) AddFieldEntry(ctx context.Context, tournamentID uuid.UUID, req
 }
 
 func (s *Service) UpdateFieldEntry(ctx context.Context, entryID uuid.UUID, req *UpdateFieldEntryRequest) (*FieldEntryResponse, error) {
-	entry, err := s.db.TournamentEntry.Query().
-		Where(tournamententry.ID(entryID)).
+	entry, err := s.db.FieldEntry.Query().
+		Where(fieldentry.ID(entryID)).
 		WithGolfer().
 		Only(ctx)
 	if err != nil {
@@ -296,7 +296,7 @@ func (s *Service) UpdateFieldEntry(ctx context.Context, entryID uuid.UUID, req *
 }
 
 func (s *Service) DeleteFieldEntry(ctx context.Context, entryID uuid.UUID) error {
-	err := s.db.TournamentEntry.DeleteOneID(entryID).Exec(ctx)
+	err := s.db.FieldEntry.DeleteOneID(entryID).Exec(ctx)
 	if ent.IsNotFound(err) {
 		return ErrEntryNotFound
 	}
@@ -306,17 +306,17 @@ func (s *Service) DeleteFieldEntry(ctx context.Context, entryID uuid.UUID) error
 	return nil
 }
 
-func mapEntryStatus(status string) tournamententry.EntryStatus {
+func mapEntryStatus(status string) fieldentry.EntryStatus {
 	switch status {
 	case "confirmed":
-		return tournamententry.EntryStatusConfirmed
+		return fieldentry.EntryStatusConfirmed
 	case "alternate":
-		return tournamententry.EntryStatusAlternate
+		return fieldentry.EntryStatusAlternate
 	case "withdrawn":
-		return tournamententry.EntryStatusWithdrawn
+		return fieldentry.EntryStatusWithdrawn
 	case "pending":
-		return tournamententry.EntryStatusPending
+		return fieldentry.EntryStatusPending
 	default:
-		return tournamententry.EntryStatusConfirmed
+		return fieldentry.EntryStatusConfirmed
 	}
 }

@@ -106,6 +106,31 @@ func Country(v string) predicate.Course {
 	return predicate.Course(sql.FieldEQ(FieldCountry, v))
 }
 
+// Established applies equality check predicate on the "established" field. It's identical to EstablishedEQ.
+func Established(v int) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldEstablished, v))
+}
+
+// Architect applies equality check predicate on the "architect" field. It's identical to ArchitectEQ.
+func Architect(v string) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldArchitect, v))
+}
+
+// FairwayGrass applies equality check predicate on the "fairway_grass" field. It's identical to FairwayGrassEQ.
+func FairwayGrass(v string) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldFairwayGrass, v))
+}
+
+// RoughGrass applies equality check predicate on the "rough_grass" field. It's identical to RoughGrassEQ.
+func RoughGrass(v string) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldRoughGrass, v))
+}
+
+// GreenGrass applies equality check predicate on the "green_grass" field. It's identical to GreenGrassEQ.
+func GreenGrass(v string) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldGreenGrass, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Course {
 	return predicate.Course(sql.FieldEQ(FieldCreatedAt, v))
@@ -699,6 +724,356 @@ func CountryEqualFold(v string) predicate.Course {
 // CountryContainsFold applies the ContainsFold predicate on the "country" field.
 func CountryContainsFold(v string) predicate.Course {
 	return predicate.Course(sql.FieldContainsFold(FieldCountry, v))
+}
+
+// EstablishedEQ applies the EQ predicate on the "established" field.
+func EstablishedEQ(v int) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldEstablished, v))
+}
+
+// EstablishedNEQ applies the NEQ predicate on the "established" field.
+func EstablishedNEQ(v int) predicate.Course {
+	return predicate.Course(sql.FieldNEQ(FieldEstablished, v))
+}
+
+// EstablishedIn applies the In predicate on the "established" field.
+func EstablishedIn(vs ...int) predicate.Course {
+	return predicate.Course(sql.FieldIn(FieldEstablished, vs...))
+}
+
+// EstablishedNotIn applies the NotIn predicate on the "established" field.
+func EstablishedNotIn(vs ...int) predicate.Course {
+	return predicate.Course(sql.FieldNotIn(FieldEstablished, vs...))
+}
+
+// EstablishedGT applies the GT predicate on the "established" field.
+func EstablishedGT(v int) predicate.Course {
+	return predicate.Course(sql.FieldGT(FieldEstablished, v))
+}
+
+// EstablishedGTE applies the GTE predicate on the "established" field.
+func EstablishedGTE(v int) predicate.Course {
+	return predicate.Course(sql.FieldGTE(FieldEstablished, v))
+}
+
+// EstablishedLT applies the LT predicate on the "established" field.
+func EstablishedLT(v int) predicate.Course {
+	return predicate.Course(sql.FieldLT(FieldEstablished, v))
+}
+
+// EstablishedLTE applies the LTE predicate on the "established" field.
+func EstablishedLTE(v int) predicate.Course {
+	return predicate.Course(sql.FieldLTE(FieldEstablished, v))
+}
+
+// EstablishedIsNil applies the IsNil predicate on the "established" field.
+func EstablishedIsNil() predicate.Course {
+	return predicate.Course(sql.FieldIsNull(FieldEstablished))
+}
+
+// EstablishedNotNil applies the NotNil predicate on the "established" field.
+func EstablishedNotNil() predicate.Course {
+	return predicate.Course(sql.FieldNotNull(FieldEstablished))
+}
+
+// ArchitectEQ applies the EQ predicate on the "architect" field.
+func ArchitectEQ(v string) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldArchitect, v))
+}
+
+// ArchitectNEQ applies the NEQ predicate on the "architect" field.
+func ArchitectNEQ(v string) predicate.Course {
+	return predicate.Course(sql.FieldNEQ(FieldArchitect, v))
+}
+
+// ArchitectIn applies the In predicate on the "architect" field.
+func ArchitectIn(vs ...string) predicate.Course {
+	return predicate.Course(sql.FieldIn(FieldArchitect, vs...))
+}
+
+// ArchitectNotIn applies the NotIn predicate on the "architect" field.
+func ArchitectNotIn(vs ...string) predicate.Course {
+	return predicate.Course(sql.FieldNotIn(FieldArchitect, vs...))
+}
+
+// ArchitectGT applies the GT predicate on the "architect" field.
+func ArchitectGT(v string) predicate.Course {
+	return predicate.Course(sql.FieldGT(FieldArchitect, v))
+}
+
+// ArchitectGTE applies the GTE predicate on the "architect" field.
+func ArchitectGTE(v string) predicate.Course {
+	return predicate.Course(sql.FieldGTE(FieldArchitect, v))
+}
+
+// ArchitectLT applies the LT predicate on the "architect" field.
+func ArchitectLT(v string) predicate.Course {
+	return predicate.Course(sql.FieldLT(FieldArchitect, v))
+}
+
+// ArchitectLTE applies the LTE predicate on the "architect" field.
+func ArchitectLTE(v string) predicate.Course {
+	return predicate.Course(sql.FieldLTE(FieldArchitect, v))
+}
+
+// ArchitectContains applies the Contains predicate on the "architect" field.
+func ArchitectContains(v string) predicate.Course {
+	return predicate.Course(sql.FieldContains(FieldArchitect, v))
+}
+
+// ArchitectHasPrefix applies the HasPrefix predicate on the "architect" field.
+func ArchitectHasPrefix(v string) predicate.Course {
+	return predicate.Course(sql.FieldHasPrefix(FieldArchitect, v))
+}
+
+// ArchitectHasSuffix applies the HasSuffix predicate on the "architect" field.
+func ArchitectHasSuffix(v string) predicate.Course {
+	return predicate.Course(sql.FieldHasSuffix(FieldArchitect, v))
+}
+
+// ArchitectIsNil applies the IsNil predicate on the "architect" field.
+func ArchitectIsNil() predicate.Course {
+	return predicate.Course(sql.FieldIsNull(FieldArchitect))
+}
+
+// ArchitectNotNil applies the NotNil predicate on the "architect" field.
+func ArchitectNotNil() predicate.Course {
+	return predicate.Course(sql.FieldNotNull(FieldArchitect))
+}
+
+// ArchitectEqualFold applies the EqualFold predicate on the "architect" field.
+func ArchitectEqualFold(v string) predicate.Course {
+	return predicate.Course(sql.FieldEqualFold(FieldArchitect, v))
+}
+
+// ArchitectContainsFold applies the ContainsFold predicate on the "architect" field.
+func ArchitectContainsFold(v string) predicate.Course {
+	return predicate.Course(sql.FieldContainsFold(FieldArchitect, v))
+}
+
+// FairwayGrassEQ applies the EQ predicate on the "fairway_grass" field.
+func FairwayGrassEQ(v string) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldFairwayGrass, v))
+}
+
+// FairwayGrassNEQ applies the NEQ predicate on the "fairway_grass" field.
+func FairwayGrassNEQ(v string) predicate.Course {
+	return predicate.Course(sql.FieldNEQ(FieldFairwayGrass, v))
+}
+
+// FairwayGrassIn applies the In predicate on the "fairway_grass" field.
+func FairwayGrassIn(vs ...string) predicate.Course {
+	return predicate.Course(sql.FieldIn(FieldFairwayGrass, vs...))
+}
+
+// FairwayGrassNotIn applies the NotIn predicate on the "fairway_grass" field.
+func FairwayGrassNotIn(vs ...string) predicate.Course {
+	return predicate.Course(sql.FieldNotIn(FieldFairwayGrass, vs...))
+}
+
+// FairwayGrassGT applies the GT predicate on the "fairway_grass" field.
+func FairwayGrassGT(v string) predicate.Course {
+	return predicate.Course(sql.FieldGT(FieldFairwayGrass, v))
+}
+
+// FairwayGrassGTE applies the GTE predicate on the "fairway_grass" field.
+func FairwayGrassGTE(v string) predicate.Course {
+	return predicate.Course(sql.FieldGTE(FieldFairwayGrass, v))
+}
+
+// FairwayGrassLT applies the LT predicate on the "fairway_grass" field.
+func FairwayGrassLT(v string) predicate.Course {
+	return predicate.Course(sql.FieldLT(FieldFairwayGrass, v))
+}
+
+// FairwayGrassLTE applies the LTE predicate on the "fairway_grass" field.
+func FairwayGrassLTE(v string) predicate.Course {
+	return predicate.Course(sql.FieldLTE(FieldFairwayGrass, v))
+}
+
+// FairwayGrassContains applies the Contains predicate on the "fairway_grass" field.
+func FairwayGrassContains(v string) predicate.Course {
+	return predicate.Course(sql.FieldContains(FieldFairwayGrass, v))
+}
+
+// FairwayGrassHasPrefix applies the HasPrefix predicate on the "fairway_grass" field.
+func FairwayGrassHasPrefix(v string) predicate.Course {
+	return predicate.Course(sql.FieldHasPrefix(FieldFairwayGrass, v))
+}
+
+// FairwayGrassHasSuffix applies the HasSuffix predicate on the "fairway_grass" field.
+func FairwayGrassHasSuffix(v string) predicate.Course {
+	return predicate.Course(sql.FieldHasSuffix(FieldFairwayGrass, v))
+}
+
+// FairwayGrassIsNil applies the IsNil predicate on the "fairway_grass" field.
+func FairwayGrassIsNil() predicate.Course {
+	return predicate.Course(sql.FieldIsNull(FieldFairwayGrass))
+}
+
+// FairwayGrassNotNil applies the NotNil predicate on the "fairway_grass" field.
+func FairwayGrassNotNil() predicate.Course {
+	return predicate.Course(sql.FieldNotNull(FieldFairwayGrass))
+}
+
+// FairwayGrassEqualFold applies the EqualFold predicate on the "fairway_grass" field.
+func FairwayGrassEqualFold(v string) predicate.Course {
+	return predicate.Course(sql.FieldEqualFold(FieldFairwayGrass, v))
+}
+
+// FairwayGrassContainsFold applies the ContainsFold predicate on the "fairway_grass" field.
+func FairwayGrassContainsFold(v string) predicate.Course {
+	return predicate.Course(sql.FieldContainsFold(FieldFairwayGrass, v))
+}
+
+// RoughGrassEQ applies the EQ predicate on the "rough_grass" field.
+func RoughGrassEQ(v string) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldRoughGrass, v))
+}
+
+// RoughGrassNEQ applies the NEQ predicate on the "rough_grass" field.
+func RoughGrassNEQ(v string) predicate.Course {
+	return predicate.Course(sql.FieldNEQ(FieldRoughGrass, v))
+}
+
+// RoughGrassIn applies the In predicate on the "rough_grass" field.
+func RoughGrassIn(vs ...string) predicate.Course {
+	return predicate.Course(sql.FieldIn(FieldRoughGrass, vs...))
+}
+
+// RoughGrassNotIn applies the NotIn predicate on the "rough_grass" field.
+func RoughGrassNotIn(vs ...string) predicate.Course {
+	return predicate.Course(sql.FieldNotIn(FieldRoughGrass, vs...))
+}
+
+// RoughGrassGT applies the GT predicate on the "rough_grass" field.
+func RoughGrassGT(v string) predicate.Course {
+	return predicate.Course(sql.FieldGT(FieldRoughGrass, v))
+}
+
+// RoughGrassGTE applies the GTE predicate on the "rough_grass" field.
+func RoughGrassGTE(v string) predicate.Course {
+	return predicate.Course(sql.FieldGTE(FieldRoughGrass, v))
+}
+
+// RoughGrassLT applies the LT predicate on the "rough_grass" field.
+func RoughGrassLT(v string) predicate.Course {
+	return predicate.Course(sql.FieldLT(FieldRoughGrass, v))
+}
+
+// RoughGrassLTE applies the LTE predicate on the "rough_grass" field.
+func RoughGrassLTE(v string) predicate.Course {
+	return predicate.Course(sql.FieldLTE(FieldRoughGrass, v))
+}
+
+// RoughGrassContains applies the Contains predicate on the "rough_grass" field.
+func RoughGrassContains(v string) predicate.Course {
+	return predicate.Course(sql.FieldContains(FieldRoughGrass, v))
+}
+
+// RoughGrassHasPrefix applies the HasPrefix predicate on the "rough_grass" field.
+func RoughGrassHasPrefix(v string) predicate.Course {
+	return predicate.Course(sql.FieldHasPrefix(FieldRoughGrass, v))
+}
+
+// RoughGrassHasSuffix applies the HasSuffix predicate on the "rough_grass" field.
+func RoughGrassHasSuffix(v string) predicate.Course {
+	return predicate.Course(sql.FieldHasSuffix(FieldRoughGrass, v))
+}
+
+// RoughGrassIsNil applies the IsNil predicate on the "rough_grass" field.
+func RoughGrassIsNil() predicate.Course {
+	return predicate.Course(sql.FieldIsNull(FieldRoughGrass))
+}
+
+// RoughGrassNotNil applies the NotNil predicate on the "rough_grass" field.
+func RoughGrassNotNil() predicate.Course {
+	return predicate.Course(sql.FieldNotNull(FieldRoughGrass))
+}
+
+// RoughGrassEqualFold applies the EqualFold predicate on the "rough_grass" field.
+func RoughGrassEqualFold(v string) predicate.Course {
+	return predicate.Course(sql.FieldEqualFold(FieldRoughGrass, v))
+}
+
+// RoughGrassContainsFold applies the ContainsFold predicate on the "rough_grass" field.
+func RoughGrassContainsFold(v string) predicate.Course {
+	return predicate.Course(sql.FieldContainsFold(FieldRoughGrass, v))
+}
+
+// GreenGrassEQ applies the EQ predicate on the "green_grass" field.
+func GreenGrassEQ(v string) predicate.Course {
+	return predicate.Course(sql.FieldEQ(FieldGreenGrass, v))
+}
+
+// GreenGrassNEQ applies the NEQ predicate on the "green_grass" field.
+func GreenGrassNEQ(v string) predicate.Course {
+	return predicate.Course(sql.FieldNEQ(FieldGreenGrass, v))
+}
+
+// GreenGrassIn applies the In predicate on the "green_grass" field.
+func GreenGrassIn(vs ...string) predicate.Course {
+	return predicate.Course(sql.FieldIn(FieldGreenGrass, vs...))
+}
+
+// GreenGrassNotIn applies the NotIn predicate on the "green_grass" field.
+func GreenGrassNotIn(vs ...string) predicate.Course {
+	return predicate.Course(sql.FieldNotIn(FieldGreenGrass, vs...))
+}
+
+// GreenGrassGT applies the GT predicate on the "green_grass" field.
+func GreenGrassGT(v string) predicate.Course {
+	return predicate.Course(sql.FieldGT(FieldGreenGrass, v))
+}
+
+// GreenGrassGTE applies the GTE predicate on the "green_grass" field.
+func GreenGrassGTE(v string) predicate.Course {
+	return predicate.Course(sql.FieldGTE(FieldGreenGrass, v))
+}
+
+// GreenGrassLT applies the LT predicate on the "green_grass" field.
+func GreenGrassLT(v string) predicate.Course {
+	return predicate.Course(sql.FieldLT(FieldGreenGrass, v))
+}
+
+// GreenGrassLTE applies the LTE predicate on the "green_grass" field.
+func GreenGrassLTE(v string) predicate.Course {
+	return predicate.Course(sql.FieldLTE(FieldGreenGrass, v))
+}
+
+// GreenGrassContains applies the Contains predicate on the "green_grass" field.
+func GreenGrassContains(v string) predicate.Course {
+	return predicate.Course(sql.FieldContains(FieldGreenGrass, v))
+}
+
+// GreenGrassHasPrefix applies the HasPrefix predicate on the "green_grass" field.
+func GreenGrassHasPrefix(v string) predicate.Course {
+	return predicate.Course(sql.FieldHasPrefix(FieldGreenGrass, v))
+}
+
+// GreenGrassHasSuffix applies the HasSuffix predicate on the "green_grass" field.
+func GreenGrassHasSuffix(v string) predicate.Course {
+	return predicate.Course(sql.FieldHasSuffix(FieldGreenGrass, v))
+}
+
+// GreenGrassIsNil applies the IsNil predicate on the "green_grass" field.
+func GreenGrassIsNil() predicate.Course {
+	return predicate.Course(sql.FieldIsNull(FieldGreenGrass))
+}
+
+// GreenGrassNotNil applies the NotNil predicate on the "green_grass" field.
+func GreenGrassNotNil() predicate.Course {
+	return predicate.Course(sql.FieldNotNull(FieldGreenGrass))
+}
+
+// GreenGrassEqualFold applies the EqualFold predicate on the "green_grass" field.
+func GreenGrassEqualFold(v string) predicate.Course {
+	return predicate.Course(sql.FieldEqualFold(FieldGreenGrass, v))
+}
+
+// GreenGrassContainsFold applies the ContainsFold predicate on the "green_grass" field.
+func GreenGrassContainsFold(v string) predicate.Course {
+	return predicate.Course(sql.FieldContainsFold(FieldGreenGrass, v))
 }
 
 // HasHoles applies the HasEdge predicate on the "holes" edge.

@@ -10,13 +10,14 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -102,10 +103,10 @@ func (s *Service) Create(ctx context.Context, params CreateParams) (*Pick, error
 		return nil, ErrNotLeagueMember
 	}
 
-	inField, err := s.db.TournamentEntry.Query().
+	inField, err := s.db.FieldEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.IDEQ(params.TournamentID)),
-			tournamententry.HasGolferWith(golfer.IDEQ(params.GolferID)),
+			fieldentry.HasTournamentWith(tournament.IDEQ(params.TournamentID)),
+			fieldentry.HasGolferWith(golfer.IDEQ(params.GolferID)),
 		).
 		Exist(ctx)
 	if err != nil {
@@ -238,10 +239,10 @@ func (s *Service) CreatePickForUser(ctx context.Context, params *CreatePickForUs
 		return nil, fmt.Errorf("failed to get golfer: %w", err)
 	}
 
-	inField, err := s.db.TournamentEntry.Query().
+	inField, err := s.db.FieldEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.IDEQ(params.TournamentID)),
-			tournamententry.HasGolferWith(golfer.IDEQ(params.GolferID)),
+			fieldentry.HasTournamentWith(tournament.IDEQ(params.TournamentID)),
+			fieldentry.HasGolferWith(golfer.IDEQ(params.GolferID)),
 		).
 		Exist(ctx)
 	if err != nil {
@@ -436,10 +437,10 @@ func (s *Service) GetLeaguePicks(ctx context.Context, leagueID, tournamentID uui
 				hasChampion := tournamentEnt.Edges.Champion != nil
 				status := deriveTournamentStatus(tournamentEnt, hasChampion)
 				if status != "upcoming" {
-					entry, err := s.db.TournamentEntry.Query().
+					entry, err := s.db.LeaderboardEntry.Query().
 						Where(
-							tournamententry.HasTournamentWith(tournament.IDEQ(tournamentID)),
-							tournamententry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
+							leaderboardentry.HasTournamentWith(tournament.IDEQ(tournamentID)),
+							leaderboardentry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
 						).
 						Only(ctx)
 					if err == nil {
@@ -523,12 +524,12 @@ func (s *Service) GetAvailableGolfers(ctx context.Context, userID, leagueID, tou
 		return nil, ErrTournamentNotFound
 	}
 
-	entries, err := s.db.TournamentEntry.Query().
-		Where(tournamententry.HasTournamentWith(tournament.IDEQ(tournamentID))).
+	entries, err := s.db.FieldEntry.Query().
+		Where(fieldentry.HasTournamentWith(tournament.IDEQ(tournamentID))).
 		WithGolfer().
 		All(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get tournament entries: %w", err)
+		return nil, fmt.Errorf("failed to get field entries: %w", err)
 	}
 
 	usedGolfers := make(map[uuid.UUID]usedGolferInfo)
@@ -616,12 +617,12 @@ func (s *Service) GetAvailableGolfersForUserOverride(ctx context.Context, params
 		return nil, ErrTournamentNotFound
 	}
 
-	entries, err := s.db.TournamentEntry.Query().
-		Where(tournamententry.HasTournamentWith(tournament.IDEQ(params.TournamentID))).
+	entries, err := s.db.FieldEntry.Query().
+		Where(fieldentry.HasTournamentWith(tournament.IDEQ(params.TournamentID))).
 		WithGolfer().
 		All(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get tournament entries: %w", err)
+		return nil, fmt.Errorf("failed to get field entries: %w", err)
 	}
 
 	usedGolfers := make(map[uuid.UUID]usedGolferInfo)
@@ -730,10 +731,10 @@ func (s *Service) OverridePick(ctx context.Context, params OverridePickParams) (
 		return nil, fmt.Errorf("failed to get golfer: %w", err)
 	}
 
-	inField, err := s.db.TournamentEntry.Query().
+	inField, err := s.db.FieldEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.IDEQ(tournamentEnt.ID)),
-			tournamententry.HasGolferWith(golfer.IDEQ(params.NewGolferID)),
+			fieldentry.HasTournamentWith(tournament.IDEQ(tournamentEnt.ID)),
+			fieldentry.HasGolferWith(golfer.IDEQ(params.NewGolferID)),
 		).
 		Exist(ctx)
 	if err != nil {
@@ -882,10 +883,10 @@ func (s *Service) UpdateUserPick(ctx context.Context, params UpdatePickParams) (
 		return nil, fmt.Errorf("failed to get golfer: %w", err)
 	}
 
-	inField, err := s.db.TournamentEntry.Query().
+	inField, err := s.db.FieldEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.IDEQ(tournamentEnt.ID)),
-			tournamententry.HasGolferWith(golfer.IDEQ(params.NewGolferID)),
+			fieldentry.HasTournamentWith(tournament.IDEQ(tournamentEnt.ID)),
+			fieldentry.HasGolferWith(golfer.IDEQ(params.NewGolferID)),
 		).
 		Exist(ctx)
 	if err != nil {

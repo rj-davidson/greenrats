@@ -18,6 +18,9 @@ type CourseHole func(*sql.Selector)
 // EmailReminder is the predicate function for emailreminder builders.
 type EmailReminder func(*sql.Selector)
 
+// FieldEntry is the predicate function for fieldentry builders.
+type FieldEntry func(*sql.Selector)
+
 // Golfer is the predicate function for golfer builders.
 type Golfer func(*sql.Selector)
 
@@ -26,6 +29,9 @@ type GolferSeason func(*sql.Selector)
 
 // HoleScore is the predicate function for holescore builders.
 type HoleScore func(*sql.Selector)
+
+// LeaderboardEntry is the predicate function for leaderboardentry builders.
+type LeaderboardEntry func(*sql.Selector)
 
 // League is the predicate function for league builders.
 type League func(*sql.Selector)
@@ -47,9 +53,6 @@ type SyncStatus func(*sql.Selector)
 
 // Tournament is the predicate function for tournament builders.
 type Tournament func(*sql.Selector)
-
-// TournamentEntry is the predicate function for tournamententry builders.
-type TournamentEntry func(*sql.Selector)
 
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

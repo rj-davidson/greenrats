@@ -8,30 +8,30 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/predicate"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
-// TournamentEntryDelete is the builder for deleting a TournamentEntry entity.
-type TournamentEntryDelete struct {
+// FieldEntryDelete is the builder for deleting a FieldEntry entity.
+type FieldEntryDelete struct {
 	config
 	hooks    []Hook
-	mutation *TournamentEntryMutation
+	mutation *FieldEntryMutation
 }
 
-// Where appends a list predicates to the TournamentEntryDelete builder.
-func (_d *TournamentEntryDelete) Where(ps ...predicate.TournamentEntry) *TournamentEntryDelete {
+// Where appends a list predicates to the FieldEntryDelete builder.
+func (_d *FieldEntryDelete) Where(ps ...predicate.FieldEntry) *FieldEntryDelete {
 	_d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
-func (_d *TournamentEntryDelete) Exec(ctx context.Context) (int, error) {
+func (_d *FieldEntryDelete) Exec(ctx context.Context) (int, error) {
 	return withHooks(ctx, _d.sqlExec, _d.mutation, _d.hooks)
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *TournamentEntryDelete) ExecX(ctx context.Context) int {
+func (_d *FieldEntryDelete) ExecX(ctx context.Context) int {
 	n, err := _d.Exec(ctx)
 	if err != nil {
 		panic(err)
@@ -39,8 +39,8 @@ func (_d *TournamentEntryDelete) ExecX(ctx context.Context) int {
 	return n
 }
 
-func (_d *TournamentEntryDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := sqlgraph.NewDeleteSpec(tournamententry.Table, sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID))
+func (_d *FieldEntryDelete) sqlExec(ctx context.Context) (int, error) {
+	_spec := sqlgraph.NewDeleteSpec(fieldentry.Table, sqlgraph.NewFieldSpec(fieldentry.FieldID, field.TypeUUID))
 	if ps := _d.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
@@ -56,32 +56,32 @@ func (_d *TournamentEntryDelete) sqlExec(ctx context.Context) (int, error) {
 	return affected, err
 }
 
-// TournamentEntryDeleteOne is the builder for deleting a single TournamentEntry entity.
-type TournamentEntryDeleteOne struct {
-	_d *TournamentEntryDelete
+// FieldEntryDeleteOne is the builder for deleting a single FieldEntry entity.
+type FieldEntryDeleteOne struct {
+	_d *FieldEntryDelete
 }
 
-// Where appends a list predicates to the TournamentEntryDelete builder.
-func (_d *TournamentEntryDeleteOne) Where(ps ...predicate.TournamentEntry) *TournamentEntryDeleteOne {
+// Where appends a list predicates to the FieldEntryDelete builder.
+func (_d *FieldEntryDeleteOne) Where(ps ...predicate.FieldEntry) *FieldEntryDeleteOne {
 	_d._d.mutation.Where(ps...)
 	return _d
 }
 
 // Exec executes the deletion query.
-func (_d *TournamentEntryDeleteOne) Exec(ctx context.Context) error {
+func (_d *FieldEntryDeleteOne) Exec(ctx context.Context) error {
 	n, err := _d._d.Exec(ctx)
 	switch {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{tournamententry.Label}
+		return &NotFoundError{fieldentry.Label}
 	default:
 		return nil
 	}
 }
 
 // ExecX is like Exec, but panics if an error occurs.
-func (_d *TournamentEntryDeleteOne) ExecX(ctx context.Context) {
+func (_d *FieldEntryDeleteOne) ExecX(ctx context.Context) {
 	if err := _d.Exec(ctx); err != nil {
 		panic(err)
 	}

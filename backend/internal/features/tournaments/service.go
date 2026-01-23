@@ -144,7 +144,7 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string) (*GetLeaderboar
 		return nil, fmt.Errorf("failed to get tournament: %w", err)
 	}
 
-	entries, err := t.QueryEntries().
+	entries, err := t.QueryLeaderboardEntries().
 		WithGolfer().
 		All(ctx)
 	if err != nil {

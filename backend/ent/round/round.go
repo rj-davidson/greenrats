@@ -27,21 +27,21 @@ const (
 	FieldParRelativeScore = "par_relative_score"
 	// FieldTeeTime holds the string denoting the tee_time field in the database.
 	FieldTeeTime = "tee_time"
-	// EdgeTournamentEntry holds the string denoting the tournament_entry edge name in mutations.
-	EdgeTournamentEntry = "tournament_entry"
+	// EdgeLeaderboardEntry holds the string denoting the leaderboard_entry edge name in mutations.
+	EdgeLeaderboardEntry = "leaderboard_entry"
 	// EdgeHoleScores holds the string denoting the hole_scores edge name in mutations.
 	EdgeHoleScores = "hole_scores"
 	// EdgeCourse holds the string denoting the course edge name in mutations.
 	EdgeCourse = "course"
 	// Table holds the table name of the round in the database.
 	Table = "rounds"
-	// TournamentEntryTable is the table that holds the tournament_entry relation/edge.
-	TournamentEntryTable = "rounds"
-	// TournamentEntryInverseTable is the table name for the TournamentEntry entity.
-	// It exists in this package in order to avoid circular dependency with the "tournamententry" package.
-	TournamentEntryInverseTable = "tournament_entries"
-	// TournamentEntryColumn is the table column denoting the tournament_entry relation/edge.
-	TournamentEntryColumn = "tournament_entry_rounds"
+	// LeaderboardEntryTable is the table that holds the leaderboard_entry relation/edge.
+	LeaderboardEntryTable = "rounds"
+	// LeaderboardEntryInverseTable is the table name for the LeaderboardEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "leaderboardentry" package.
+	LeaderboardEntryInverseTable = "leaderboard_entries"
+	// LeaderboardEntryColumn is the table column denoting the leaderboard_entry relation/edge.
+	LeaderboardEntryColumn = "leaderboard_entry_rounds"
 	// HoleScoresTable is the table that holds the hole_scores relation/edge.
 	HoleScoresTable = "hole_scores"
 	// HoleScoresInverseTable is the table name for the HoleScore entity.
@@ -73,7 +73,7 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"course_rounds",
-	"tournament_entry_rounds",
+	"leaderboard_entry_rounds",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -142,10 +142,10 @@ func ByTeeTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTeeTime, opts...).ToFunc()
 }
 
-// ByTournamentEntryField orders the results by tournament_entry field.
-func ByTournamentEntryField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByLeaderboardEntryField orders the results by leaderboard_entry field.
+func ByLeaderboardEntryField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newTournamentEntryStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newLeaderboardEntryStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -169,11 +169,11 @@ func ByCourseField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCourseStep(), sql.OrderByField(field, opts...))
 	}
 }
-func newTournamentEntryStep() *sqlgraph.Step {
+func newLeaderboardEntryStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(TournamentEntryInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, TournamentEntryTable, TournamentEntryColumn),
+		sqlgraph.To(LeaderboardEntryInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, LeaderboardEntryTable, LeaderboardEntryColumn),
 	)
 }
 func newHoleScoresStep() *sqlgraph.Step {

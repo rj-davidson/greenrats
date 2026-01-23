@@ -7,23 +7,18 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// TournamentEntry holds the schema definition for a golfer's entry/result in a tournament.
-// This acts as a junction table between Tournament and Golfer with additional result data.
-// Lifecycle: pending → active → cut/withdrawn/finished
-type TournamentEntry struct {
+type LeaderboardEntry struct {
 	ent.Schema
 }
 
-// Mixin of the TournamentEntry.
-func (TournamentEntry) Mixin() []ent.Mixin {
+func (LeaderboardEntry) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
 		BaseMixin{},
 	}
 }
 
-// Fields of the TournamentEntry.
-func (TournamentEntry) Fields() []ent.Field {
+func (LeaderboardEntry) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("position").
 			Default(0).
@@ -50,41 +45,24 @@ func (TournamentEntry) Fields() []ent.Field {
 		field.Int("thru").
 			Default(0).
 			Comment("Holes completed in current round"),
-		field.Enum("entry_status").
-			Values("confirmed", "alternate", "withdrawn", "pending").
-			Default("confirmed").
-			Comment("Field entry status (confirmed, alternate, withdrawn, pending)"),
-		field.String("qualifier").
-			Optional().
-			Nillable().
-			Comment("Qualification category (e.g., 'winner', 'exemption', 'sponsor')"),
-		field.Int("owgr_at_entry").
-			Optional().
-			Nillable().
-			Comment("Official World Golf Ranking at time of field entry"),
-		field.Bool("is_amateur").
-			Default(false).
-			Comment("True if golfer is playing as an amateur"),
 	}
 }
 
-// Edges of the TournamentEntry.
-func (TournamentEntry) Edges() []ent.Edge {
+func (LeaderboardEntry) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("tournament", Tournament.Type).
-			Ref("entries").
+			Ref("leaderboard_entries").
 			Unique().
 			Required(),
 		edge.From("golfer", Golfer.Type).
-			Ref("entries").
+			Ref("leaderboard_entries").
 			Unique().
 			Required(),
 		edge.To("rounds", Round.Type),
 	}
 }
 
-// Indexes of the TournamentEntry.
-func (TournamentEntry) Indexes() []ent.Index {
+func (LeaderboardEntry) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Edges("tournament", "golfer").
 			Unique(),

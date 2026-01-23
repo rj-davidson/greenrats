@@ -1,8 +1,7 @@
 package balldontlie
 
-// GOAT tier ($39.99/mo) - NOT CURRENTLY SUBSCRIBED
-// These types are defined for future use if we upgrade.
-// Endpoints: player_round_results, player_round_stats, player_season_stats, player_scorecards
+// GOAT tier ($39.99/mo) - CURRENTLY SUBSCRIBED
+// Endpoints: player_round_results, player_round_stats, player_season_stats, player_scorecards, tournament_field
 
 type PlayerRoundResult struct {
 	Tournament       TournamentRef `json:"tournament"`

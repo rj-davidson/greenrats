@@ -19,7 +19,7 @@ func TestUpsertRound_Create(t *testing.T) {
 
 	tournament := testutil.CreateTournament(t, svc.db, "Masters", 2026)
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateTournamentEntry(t, svc.db, tournament.ID, golferEntity.ID)
+	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournament.ID, golferEntity.ID)
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		Tournament:       balldontlie.TournamentRef{ID: 1},
@@ -44,7 +44,7 @@ func TestUpsertRound_Update(t *testing.T) {
 
 	tournament := testutil.CreateTournament(t, svc.db, "Masters", 2026)
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateTournamentEntry(t, svc.db, tournament.ID, golferEntity.ID)
+	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournament.ID, golferEntity.ID)
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		RoundNumber:      1,
@@ -71,7 +71,7 @@ func TestUpsertHoleScore_Create(t *testing.T) {
 
 	tournament := testutil.CreateTournament(t, svc.db, "Masters", 2026)
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateTournamentEntry(t, svc.db, tournament.ID, golferEntity.ID)
+	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournament.ID, golferEntity.ID)
 
 	bdlRoundResult := &balldontlie.PlayerRoundResult{RoundNumber: 1}
 	roundRecord, err := svc.UpsertRound(ctx, entry.ID, bdlRoundResult)
@@ -104,7 +104,7 @@ func TestUpsertHoleScore_Update(t *testing.T) {
 
 	tournament := testutil.CreateTournament(t, svc.db, "Masters", 2026)
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateTournamentEntry(t, svc.db, tournament.ID, golferEntity.ID)
+	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournament.ID, golferEntity.ID)
 
 	bdlRoundResult := &balldontlie.PlayerRoundResult{RoundNumber: 1}
 	roundRecord, err := svc.UpsertRound(ctx, entry.ID, bdlRoundResult)

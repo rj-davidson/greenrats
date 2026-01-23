@@ -161,9 +161,9 @@ func TestService_GetLeaderboard(t *testing.T) {
 		golfer2 := factory.CreateGolfer(testutil.WithGolferName("Player Two"))
 		golfer3 := factory.CreateGolfer(testutil.WithGolferName("Player Three"))
 
-		factory.CreateTournamentEntry(tourn, golfer1, testutil.WithPosition(3), testutil.WithScore(-5))
-		factory.CreateTournamentEntry(tourn, golfer2, testutil.WithPosition(1), testutil.WithScore(-10))
-		factory.CreateTournamentEntry(tourn, golfer3, testutil.WithPosition(2), testutil.WithScore(-7))
+		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithPosition(3), testutil.WithScore(-5))
+		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithPosition(1), testutil.WithScore(-10))
+		factory.CreateLeaderboardEntry(tourn, golfer3, testutil.WithPosition(2), testutil.WithScore(-7))
 
 		resp, err := service.GetLeaderboard(ctx, tourn.ID.String())
 
@@ -184,8 +184,8 @@ func TestService_GetLeaderboard(t *testing.T) {
 		golfer1 := factory.CreateGolfer(testutil.WithGolferName("A Player"))
 		golfer2 := factory.CreateGolfer(testutil.WithGolferName("B Player"))
 
-		factory.CreateTournamentEntry(tourn, golfer1, testutil.WithPosition(2), testutil.WithScore(-5))
-		factory.CreateTournamentEntry(tourn, golfer2, testutil.WithPosition(2), testutil.WithScore(-5))
+		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithPosition(2), testutil.WithScore(-5))
+		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithPosition(2), testutil.WithScore(-5))
 
 		resp, err := service.GetLeaderboard(ctx, tourn.ID.String())
 
@@ -204,8 +204,8 @@ func TestService_GetLeaderboard(t *testing.T) {
 		golfer1 := factory.CreateGolfer(testutil.WithGolferName("Finisher"))
 		golfer2 := factory.CreateGolfer(testutil.WithGolferName("Cut Player"))
 
-		factory.CreateTournamentEntry(tourn, golfer1, testutil.WithPosition(10), testutil.WithScore(-5))
-		factory.CreateTournamentEntry(tourn, golfer2, testutil.WithCut(true), testutil.WithScore(5))
+		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithPosition(10), testutil.WithScore(-5))
+		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithCut(true), testutil.WithScore(5))
 
 		resp, err := service.GetLeaderboard(ctx, tourn.ID.String())
 

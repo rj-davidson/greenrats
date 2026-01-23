@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 func (i *Ingester) syncEarnings(ctx context.Context) {
@@ -83,10 +83,10 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 }
 
 func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament) (bool, error) {
-	return i.db.TournamentEntry.Query().
+	return i.db.LeaderboardEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.IDEQ(t.ID)),
-			tournamententry.EarningsGT(0),
+			leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
+			leaderboardentry.EarningsGT(0),
 		).
 		Exist(ctx)
 }

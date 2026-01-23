@@ -49,8 +49,10 @@ const (
 	FieldPurse = "purse"
 	// EdgePicks holds the string denoting the picks edge name in mutations.
 	EdgePicks = "picks"
-	// EdgeEntries holds the string denoting the entries edge name in mutations.
-	EdgeEntries = "entries"
+	// EdgeFieldEntries holds the string denoting the field_entries edge name in mutations.
+	EdgeFieldEntries = "field_entries"
+	// EdgeLeaderboardEntries holds the string denoting the leaderboard_entries edge name in mutations.
+	EdgeLeaderboardEntries = "leaderboard_entries"
 	// EdgeEmailReminders holds the string denoting the email_reminders edge name in mutations.
 	EdgeEmailReminders = "email_reminders"
 	// EdgeChampion holds the string denoting the champion edge name in mutations.
@@ -68,13 +70,20 @@ const (
 	PicksInverseTable = "picks"
 	// PicksColumn is the table column denoting the picks relation/edge.
 	PicksColumn = "tournament_picks"
-	// EntriesTable is the table that holds the entries relation/edge.
-	EntriesTable = "tournament_entries"
-	// EntriesInverseTable is the table name for the TournamentEntry entity.
-	// It exists in this package in order to avoid circular dependency with the "tournamententry" package.
-	EntriesInverseTable = "tournament_entries"
-	// EntriesColumn is the table column denoting the entries relation/edge.
-	EntriesColumn = "tournament_entries"
+	// FieldEntriesTable is the table that holds the field_entries relation/edge.
+	FieldEntriesTable = "field_entries"
+	// FieldEntriesInverseTable is the table name for the FieldEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "fieldentry" package.
+	FieldEntriesInverseTable = "field_entries"
+	// FieldEntriesColumn is the table column denoting the field_entries relation/edge.
+	FieldEntriesColumn = "tournament_field_entries"
+	// LeaderboardEntriesTable is the table that holds the leaderboard_entries relation/edge.
+	LeaderboardEntriesTable = "leaderboard_entries"
+	// LeaderboardEntriesInverseTable is the table name for the LeaderboardEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "leaderboardentry" package.
+	LeaderboardEntriesInverseTable = "leaderboard_entries"
+	// LeaderboardEntriesColumn is the table column denoting the leaderboard_entries relation/edge.
+	LeaderboardEntriesColumn = "tournament_leaderboard_entries"
 	// EmailRemindersTable is the table that holds the email_reminders relation/edge.
 	EmailRemindersTable = "email_reminders"
 	// EmailRemindersInverseTable is the table name for the EmailReminder entity.
@@ -264,17 +273,31 @@ func ByPicks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByEntriesCount orders the results by entries count.
-func ByEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByFieldEntriesCount orders the results by field_entries count.
+func ByFieldEntriesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newEntriesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newFieldEntriesStep(), opts...)
 	}
 }
 
-// ByEntries orders the results by entries terms.
-func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByFieldEntries orders the results by field_entries terms.
+func ByFieldEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newFieldEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByLeaderboardEntriesCount orders the results by leaderboard_entries count.
+func ByLeaderboardEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newLeaderboardEntriesStep(), opts...)
+	}
+}
+
+// ByLeaderboardEntries orders the results by leaderboard_entries terms.
+func ByLeaderboardEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newLeaderboardEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -319,11 +342,18 @@ func newPicksStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, PicksTable, PicksColumn),
 	)
 }
-func newEntriesStep() *sqlgraph.Step {
+func newFieldEntriesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(EntriesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
+		sqlgraph.To(FieldEntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, FieldEntriesTable, FieldEntriesColumn),
+	)
+}
+func newLeaderboardEntriesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(LeaderboardEntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, LeaderboardEntriesTable, LeaderboardEntriesColumn),
 	)
 }
 func newEmailRemindersStep() *sqlgraph.Step {

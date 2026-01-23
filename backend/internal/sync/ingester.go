@@ -10,8 +10,6 @@ import (
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
-	"github.com/rj-davidson/greenrats/internal/external/pgatour"
-	"github.com/rj-davidson/greenrats/internal/features/fields"
 )
 
 const (
@@ -21,43 +19,41 @@ const (
 	ScorecardSyncInterval   = 10 * time.Minute
 	ReminderCheckInterval   = 1 * time.Hour
 	EarningsCheckInterval   = 6 * time.Hour
+	GolferStatsSyncInterval = 7 * 24 * time.Hour
 	SchedulerTickInterval   = 1 * time.Minute
 	FieldSyncHour           = 9
 	PlayerSyncHour          = 21
+	CourseSyncHour          = 3
+	CourseSyncDay           = time.Sunday
+	GolferStatsSyncDay      = time.Monday
 	PlayHoursStart          = 8
 	PlayHoursEnd            = 20
 )
 
 type Ingester struct {
-	db            *ent.Client
-	config        *config.Config
-	ballDontLie   *balldontlie.Client
-	pgatourClient *pgatour.Client
-	syncService   *Service
-	fieldsService *fields.Service
-	email         *email.Client
-	logger        *slog.Logger
+	db          *ent.Client
+	config      *config.Config
+	ballDontLie *balldontlie.Client
+	syncService *Service
+	email       *email.Client
+	logger      *slog.Logger
 }
 
 func NewIngester(
 	db *ent.Client,
 	cfg *config.Config,
 	ballDontLie *balldontlie.Client,
-	pgatourClient *pgatour.Client,
 	syncService *Service,
-	fieldsService *fields.Service,
 	emailClient *email.Client,
 	logger *slog.Logger,
 ) *Ingester {
 	return &Ingester{
-		db:            db,
-		config:        cfg,
-		ballDontLie:   ballDontLie,
-		pgatourClient: pgatourClient,
-		syncService:   syncService,
-		fieldsService: fieldsService,
-		email:         emailClient,
-		logger:        logger,
+		db:          db,
+		config:      cfg,
+		ballDontLie: ballDontLie,
+		syncService: syncService,
+		email:       emailClient,
+		logger:      logger,
 	}
 }
 
@@ -71,6 +67,7 @@ func (i *Ingester) Run(ctx context.Context) {
 
 	var lastTournamentSync, lastLeaderboardSync, lastScorecardSync time.Time
 	var lastFieldSync, lastEarningsSync, lastPlayerSync, lastReminderSync time.Time
+	var lastCourseSync, lastGolferStatsSync time.Time
 
 	i.logger.Info("ingester started, checking for required initial syncs")
 	if i.shouldSync(ctx, "tournaments", TournamentSyncInterval) {
@@ -152,6 +149,16 @@ func (i *Ingester) Run(ctx context.Context) {
 				i.sendPickReminders(ctx)
 				lastReminderSync = now
 			}
+
+			if i.shouldSyncCoursesNow() && now.Sub(lastCourseSync) >= 6*24*time.Hour {
+				i.syncCourses(ctx)
+				lastCourseSync = now
+			}
+
+			if i.shouldSyncGolferStatsNow() && now.Sub(lastGolferStatsSync) >= 6*24*time.Hour {
+				i.syncGolferSeasonStats(ctx)
+				lastGolferStatsSync = now
+			}
 		}
 	}
 }
@@ -224,6 +231,26 @@ func (i *Ingester) shouldSyncPlayersNow() bool {
 	return isTargetDay && now.Hour() == PlayerSyncHour && now.Minute() < 5
 }
 
+func (i *Ingester) shouldSyncCoursesNow() bool {
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		i.logger.Error("failed to load timezone", "error", err)
+		return false
+	}
+	now := time.Now().In(loc)
+	return now.Weekday() == CourseSyncDay && now.Hour() == CourseSyncHour && now.Minute() < 5
+}
+
+func (i *Ingester) shouldSyncGolferStatsNow() bool {
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		i.logger.Error("failed to load timezone", "error", err)
+		return false
+	}
+	now := time.Now().In(loc)
+	return now.Weekday() == GolferStatsSyncDay && now.Hour() == 4 && now.Minute() < 5
+}
+
 func (i *Ingester) needsInitialization(ctx context.Context) bool {
 	count, err := i.db.Season.Query().Count(ctx)
 	if err != nil {
@@ -239,9 +266,12 @@ func (i *Ingester) initialize(ctx context.Context) {
 
 	i.syncTournaments(ctx)
 	i.syncPlayers(ctx)
+	i.syncCourses(ctx)
 	i.syncAllFields(ctx)
 	i.syncAllLeaderboards(ctx)
+	i.syncAllRounds(ctx)
 	i.syncAllEarnings(ctx)
+	i.syncGolferSeasonStats(ctx)
 
 	i.logger.Info("initialization complete", "duration", time.Since(start))
 }
@@ -254,7 +284,7 @@ func (i *Ingester) syncAllFields(ctx context.Context) {
 	tournaments, err := i.db.Tournament.Query().
 		Where(
 			tournament.PickWindowOpensAtLTE(now),
-			tournament.PgaTourIDNotNil(),
+			tournament.BdlIDNotNil(),
 		).
 		All(ctx)
 	if err != nil {
@@ -269,7 +299,7 @@ func (i *Ingester) syncAllFields(ctx context.Context) {
 
 	synced := 0
 	for _, t := range tournaments {
-		if t.PgaTourID == nil || *t.PgaTourID == "" {
+		if t.BdlID == nil {
 			continue
 		}
 
@@ -283,20 +313,47 @@ func (i *Ingester) syncAllFields(ctx context.Context) {
 			continue
 		}
 
-		result, err := i.fieldsService.SyncTournamentField(ctx, t.ID)
-		if err != nil {
+		if err := i.syncTournamentField(ctx, t); err != nil {
 			i.logger.Error("failed to sync field", "tournament", t.Name, "error", err)
 			continue
 		}
-
-		i.logger.Debug("field sync completed",
-			"tournament", t.Name,
-			"total", result.TotalPlayers,
-			"matched", result.MatchedPlayers)
 		synced++
 	}
 
 	i.logger.Info("sync completed", "type", "fields_init", "duration", time.Since(start), "tournaments_synced", synced)
+}
+
+func (i *Ingester) syncAllRounds(ctx context.Context) {
+	start := time.Now()
+	i.logger.Info("sync started", "type", "rounds_init")
+
+	now := time.Now().UTC()
+	tournaments, err := i.db.Tournament.Query().
+		Where(
+			tournament.PickWindowClosesAtLT(now),
+			tournament.BdlIDNotNil(),
+		).
+		All(ctx)
+	if err != nil {
+		i.logger.Error("failed to query tournaments for rounds initialization", "error", err)
+		return
+	}
+
+	if len(tournaments) == 0 {
+		i.logger.Debug("no tournaments found for rounds initialization")
+		return
+	}
+
+	synced := 0
+	for _, t := range tournaments {
+		if err := i.syncTournamentScorecards(ctx, t); err != nil {
+			i.logger.Error("failed to sync rounds", "tournament", t.Name, "error", err)
+			continue
+		}
+		synced++
+	}
+
+	i.logger.Info("sync completed", "type", "rounds_init", "duration", time.Since(start), "tournaments_synced", synced)
 }
 
 func (i *Ingester) syncAllLeaderboards(ctx context.Context) {

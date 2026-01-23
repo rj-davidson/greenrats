@@ -71,7 +71,7 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 
 	processed := 0
 	for idx := range results {
-		if err := i.syncService.UpsertTournamentEntry(ctx, t, &results[idx]); err != nil {
+		if err := i.syncService.UpsertLeaderboardEntry(ctx, t, &results[idx]); err != nil {
 			i.logger.Error("failed to upsert result", "player", results[idx].Player.DisplayName, "error", err)
 			i.captureJobError("sync_tournament_leaderboard", err)
 			continue

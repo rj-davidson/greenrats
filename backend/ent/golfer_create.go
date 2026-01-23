@@ -11,10 +11,11 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/golferseason"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/pick"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 // GolferCreate is the builder for creating a Golfer entity.
@@ -170,6 +171,160 @@ func (_c *GolferCreate) SetNillableImageURL(v *string) *GolferCreate {
 	return _c
 }
 
+// SetHeight sets the "height" field.
+func (_c *GolferCreate) SetHeight(v string) *GolferCreate {
+	_c.mutation.SetHeight(v)
+	return _c
+}
+
+// SetNillableHeight sets the "height" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableHeight(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetHeight(*v)
+	}
+	return _c
+}
+
+// SetWeight sets the "weight" field.
+func (_c *GolferCreate) SetWeight(v string) *GolferCreate {
+	_c.mutation.SetWeight(v)
+	return _c
+}
+
+// SetNillableWeight sets the "weight" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableWeight(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetWeight(*v)
+	}
+	return _c
+}
+
+// SetBirthDate sets the "birth_date" field.
+func (_c *GolferCreate) SetBirthDate(v time.Time) *GolferCreate {
+	_c.mutation.SetBirthDate(v)
+	return _c
+}
+
+// SetNillableBirthDate sets the "birth_date" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableBirthDate(v *time.Time) *GolferCreate {
+	if v != nil {
+		_c.SetBirthDate(*v)
+	}
+	return _c
+}
+
+// SetBirthplaceCity sets the "birthplace_city" field.
+func (_c *GolferCreate) SetBirthplaceCity(v string) *GolferCreate {
+	_c.mutation.SetBirthplaceCity(v)
+	return _c
+}
+
+// SetNillableBirthplaceCity sets the "birthplace_city" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableBirthplaceCity(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetBirthplaceCity(*v)
+	}
+	return _c
+}
+
+// SetBirthplaceState sets the "birthplace_state" field.
+func (_c *GolferCreate) SetBirthplaceState(v string) *GolferCreate {
+	_c.mutation.SetBirthplaceState(v)
+	return _c
+}
+
+// SetNillableBirthplaceState sets the "birthplace_state" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableBirthplaceState(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetBirthplaceState(*v)
+	}
+	return _c
+}
+
+// SetBirthplaceCountry sets the "birthplace_country" field.
+func (_c *GolferCreate) SetBirthplaceCountry(v string) *GolferCreate {
+	_c.mutation.SetBirthplaceCountry(v)
+	return _c
+}
+
+// SetNillableBirthplaceCountry sets the "birthplace_country" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableBirthplaceCountry(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetBirthplaceCountry(*v)
+	}
+	return _c
+}
+
+// SetTurnedPro sets the "turned_pro" field.
+func (_c *GolferCreate) SetTurnedPro(v int) *GolferCreate {
+	_c.mutation.SetTurnedPro(v)
+	return _c
+}
+
+// SetNillableTurnedPro sets the "turned_pro" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableTurnedPro(v *int) *GolferCreate {
+	if v != nil {
+		_c.SetTurnedPro(*v)
+	}
+	return _c
+}
+
+// SetSchool sets the "school" field.
+func (_c *GolferCreate) SetSchool(v string) *GolferCreate {
+	_c.mutation.SetSchool(v)
+	return _c
+}
+
+// SetNillableSchool sets the "school" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableSchool(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetSchool(*v)
+	}
+	return _c
+}
+
+// SetResidenceCity sets the "residence_city" field.
+func (_c *GolferCreate) SetResidenceCity(v string) *GolferCreate {
+	_c.mutation.SetResidenceCity(v)
+	return _c
+}
+
+// SetNillableResidenceCity sets the "residence_city" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableResidenceCity(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetResidenceCity(*v)
+	}
+	return _c
+}
+
+// SetResidenceState sets the "residence_state" field.
+func (_c *GolferCreate) SetResidenceState(v string) *GolferCreate {
+	_c.mutation.SetResidenceState(v)
+	return _c
+}
+
+// SetNillableResidenceState sets the "residence_state" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableResidenceState(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetResidenceState(*v)
+	}
+	return _c
+}
+
+// SetResidenceCountry sets the "residence_country" field.
+func (_c *GolferCreate) SetResidenceCountry(v string) *GolferCreate {
+	_c.mutation.SetResidenceCountry(v)
+	return _c
+}
+
+// SetNillableResidenceCountry sets the "residence_country" field if the given value is not nil.
+func (_c *GolferCreate) SetNillableResidenceCountry(v *string) *GolferCreate {
+	if v != nil {
+		_c.SetResidenceCountry(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *GolferCreate) SetID(v uuid.UUID) *GolferCreate {
 	_c.mutation.SetID(v)
@@ -199,19 +354,34 @@ func (_c *GolferCreate) AddPicks(v ...*Pick) *GolferCreate {
 	return _c.AddPickIDs(ids...)
 }
 
-// AddEntryIDs adds the "entries" edge to the TournamentEntry entity by IDs.
-func (_c *GolferCreate) AddEntryIDs(ids ...uuid.UUID) *GolferCreate {
-	_c.mutation.AddEntryIDs(ids...)
+// AddFieldEntryIDs adds the "field_entries" edge to the FieldEntry entity by IDs.
+func (_c *GolferCreate) AddFieldEntryIDs(ids ...uuid.UUID) *GolferCreate {
+	_c.mutation.AddFieldEntryIDs(ids...)
 	return _c
 }
 
-// AddEntries adds the "entries" edges to the TournamentEntry entity.
-func (_c *GolferCreate) AddEntries(v ...*TournamentEntry) *GolferCreate {
+// AddFieldEntries adds the "field_entries" edges to the FieldEntry entity.
+func (_c *GolferCreate) AddFieldEntries(v ...*FieldEntry) *GolferCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddEntryIDs(ids...)
+	return _c.AddFieldEntryIDs(ids...)
+}
+
+// AddLeaderboardEntryIDs adds the "leaderboard_entries" edge to the LeaderboardEntry entity by IDs.
+func (_c *GolferCreate) AddLeaderboardEntryIDs(ids ...uuid.UUID) *GolferCreate {
+	_c.mutation.AddLeaderboardEntryIDs(ids...)
+	return _c
+}
+
+// AddLeaderboardEntries adds the "leaderboard_entries" edges to the LeaderboardEntry entity.
+func (_c *GolferCreate) AddLeaderboardEntries(v ...*LeaderboardEntry) *GolferCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddLeaderboardEntryIDs(ids...)
 }
 
 // AddSeasonIDs adds the "seasons" edge to the GolferSeason entity by IDs.
@@ -387,6 +557,50 @@ func (_c *GolferCreate) createSpec() (*Golfer, *sqlgraph.CreateSpec) {
 		_spec.SetField(golfer.FieldImageURL, field.TypeString, value)
 		_node.ImageURL = &value
 	}
+	if value, ok := _c.mutation.Height(); ok {
+		_spec.SetField(golfer.FieldHeight, field.TypeString, value)
+		_node.Height = &value
+	}
+	if value, ok := _c.mutation.Weight(); ok {
+		_spec.SetField(golfer.FieldWeight, field.TypeString, value)
+		_node.Weight = &value
+	}
+	if value, ok := _c.mutation.BirthDate(); ok {
+		_spec.SetField(golfer.FieldBirthDate, field.TypeTime, value)
+		_node.BirthDate = &value
+	}
+	if value, ok := _c.mutation.BirthplaceCity(); ok {
+		_spec.SetField(golfer.FieldBirthplaceCity, field.TypeString, value)
+		_node.BirthplaceCity = &value
+	}
+	if value, ok := _c.mutation.BirthplaceState(); ok {
+		_spec.SetField(golfer.FieldBirthplaceState, field.TypeString, value)
+		_node.BirthplaceState = &value
+	}
+	if value, ok := _c.mutation.BirthplaceCountry(); ok {
+		_spec.SetField(golfer.FieldBirthplaceCountry, field.TypeString, value)
+		_node.BirthplaceCountry = &value
+	}
+	if value, ok := _c.mutation.TurnedPro(); ok {
+		_spec.SetField(golfer.FieldTurnedPro, field.TypeInt, value)
+		_node.TurnedPro = &value
+	}
+	if value, ok := _c.mutation.School(); ok {
+		_spec.SetField(golfer.FieldSchool, field.TypeString, value)
+		_node.School = &value
+	}
+	if value, ok := _c.mutation.ResidenceCity(); ok {
+		_spec.SetField(golfer.FieldResidenceCity, field.TypeString, value)
+		_node.ResidenceCity = &value
+	}
+	if value, ok := _c.mutation.ResidenceState(); ok {
+		_spec.SetField(golfer.FieldResidenceState, field.TypeString, value)
+		_node.ResidenceState = &value
+	}
+	if value, ok := _c.mutation.ResidenceCountry(); ok {
+		_spec.SetField(golfer.FieldResidenceCountry, field.TypeString, value)
+		_node.ResidenceCountry = &value
+	}
 	if nodes := _c.mutation.PicksIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -403,15 +617,31 @@ func (_c *GolferCreate) createSpec() (*Golfer, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.EntriesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.FieldEntriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   golfer.EntriesTable,
-			Columns: []string{golfer.EntriesColumn},
+			Table:   golfer.FieldEntriesTable,
+			Columns: []string{golfer.FieldEntriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(fieldentry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.LeaderboardEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.LeaderboardEntriesTable,
+			Columns: []string{golfer.LeaderboardEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

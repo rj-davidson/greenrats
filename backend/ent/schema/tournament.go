@@ -72,7 +72,8 @@ func (Tournament) Fields() []ent.Field {
 func (Tournament) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("picks", Pick.Type),
-		edge.To("entries", TournamentEntry.Type),
+		edge.To("field_entries", FieldEntry.Type),
+		edge.To("leaderboard_entries", LeaderboardEntry.Type),
 		edge.To("email_reminders", EmailReminder.Type),
 		edge.To("champion", Golfer.Type).
 			Unique(),

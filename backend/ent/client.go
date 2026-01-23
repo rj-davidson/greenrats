@@ -20,9 +20,11 @@ import (
 	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/coursehole"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/golferseason"
 	"github.com/rj-davidson/greenrats/ent/holescore"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
@@ -30,7 +32,6 @@ import (
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -47,12 +48,16 @@ type Client struct {
 	CourseHole *CourseHoleClient
 	// EmailReminder is the client for interacting with the EmailReminder builders.
 	EmailReminder *EmailReminderClient
+	// FieldEntry is the client for interacting with the FieldEntry builders.
+	FieldEntry *FieldEntryClient
 	// Golfer is the client for interacting with the Golfer builders.
 	Golfer *GolferClient
 	// GolferSeason is the client for interacting with the GolferSeason builders.
 	GolferSeason *GolferSeasonClient
 	// HoleScore is the client for interacting with the HoleScore builders.
 	HoleScore *HoleScoreClient
+	// LeaderboardEntry is the client for interacting with the LeaderboardEntry builders.
+	LeaderboardEntry *LeaderboardEntryClient
 	// League is the client for interacting with the League builders.
 	League *LeagueClient
 	// LeagueMembership is the client for interacting with the LeagueMembership builders.
@@ -67,8 +72,6 @@ type Client struct {
 	SyncStatus *SyncStatusClient
 	// Tournament is the client for interacting with the Tournament builders.
 	Tournament *TournamentClient
-	// TournamentEntry is the client for interacting with the TournamentEntry builders.
-	TournamentEntry *TournamentEntryClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -86,9 +89,11 @@ func (c *Client) init() {
 	c.Course = NewCourseClient(c.config)
 	c.CourseHole = NewCourseHoleClient(c.config)
 	c.EmailReminder = NewEmailReminderClient(c.config)
+	c.FieldEntry = NewFieldEntryClient(c.config)
 	c.Golfer = NewGolferClient(c.config)
 	c.GolferSeason = NewGolferSeasonClient(c.config)
 	c.HoleScore = NewHoleScoreClient(c.config)
+	c.LeaderboardEntry = NewLeaderboardEntryClient(c.config)
 	c.League = NewLeagueClient(c.config)
 	c.LeagueMembership = NewLeagueMembershipClient(c.config)
 	c.Pick = NewPickClient(c.config)
@@ -96,7 +101,6 @@ func (c *Client) init() {
 	c.Season = NewSeasonClient(c.config)
 	c.SyncStatus = NewSyncStatusClient(c.config)
 	c.Tournament = NewTournamentClient(c.config)
-	c.TournamentEntry = NewTournamentEntryClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -194,9 +198,11 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Course:             NewCourseClient(cfg),
 		CourseHole:         NewCourseHoleClient(cfg),
 		EmailReminder:      NewEmailReminderClient(cfg),
+		FieldEntry:         NewFieldEntryClient(cfg),
 		Golfer:             NewGolferClient(cfg),
 		GolferSeason:       NewGolferSeasonClient(cfg),
 		HoleScore:          NewHoleScoreClient(cfg),
+		LeaderboardEntry:   NewLeaderboardEntryClient(cfg),
 		League:             NewLeagueClient(cfg),
 		LeagueMembership:   NewLeagueMembershipClient(cfg),
 		Pick:               NewPickClient(cfg),
@@ -204,7 +210,6 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Season:             NewSeasonClient(cfg),
 		SyncStatus:         NewSyncStatusClient(cfg),
 		Tournament:         NewTournamentClient(cfg),
-		TournamentEntry:    NewTournamentEntryClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -229,9 +234,11 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Course:             NewCourseClient(cfg),
 		CourseHole:         NewCourseHoleClient(cfg),
 		EmailReminder:      NewEmailReminderClient(cfg),
+		FieldEntry:         NewFieldEntryClient(cfg),
 		Golfer:             NewGolferClient(cfg),
 		GolferSeason:       NewGolferSeasonClient(cfg),
 		HoleScore:          NewHoleScoreClient(cfg),
+		LeaderboardEntry:   NewLeaderboardEntryClient(cfg),
 		League:             NewLeagueClient(cfg),
 		LeagueMembership:   NewLeagueMembershipClient(cfg),
 		Pick:               NewPickClient(cfg),
@@ -239,7 +246,6 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Season:             NewSeasonClient(cfg),
 		SyncStatus:         NewSyncStatusClient(cfg),
 		Tournament:         NewTournamentClient(cfg),
-		TournamentEntry:    NewTournamentEntryClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -270,9 +276,10 @@ func (c *Client) Close() error {
 // In order to add hooks to a specific client, call: `client.Node.Use(...)`.
 func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
-		c.CommissionerAction, c.Course, c.CourseHole, c.EmailReminder, c.Golfer,
-		c.GolferSeason, c.HoleScore, c.League, c.LeagueMembership, c.Pick, c.Round,
-		c.Season, c.SyncStatus, c.Tournament, c.TournamentEntry, c.User,
+		c.CommissionerAction, c.Course, c.CourseHole, c.EmailReminder, c.FieldEntry,
+		c.Golfer, c.GolferSeason, c.HoleScore, c.LeaderboardEntry, c.League,
+		c.LeagueMembership, c.Pick, c.Round, c.Season, c.SyncStatus, c.Tournament,
+		c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -282,9 +289,10 @@ func (c *Client) Use(hooks ...Hook) {
 // In order to add interceptors to a specific client, call: `client.Node.Intercept(...)`.
 func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
-		c.CommissionerAction, c.Course, c.CourseHole, c.EmailReminder, c.Golfer,
-		c.GolferSeason, c.HoleScore, c.League, c.LeagueMembership, c.Pick, c.Round,
-		c.Season, c.SyncStatus, c.Tournament, c.TournamentEntry, c.User,
+		c.CommissionerAction, c.Course, c.CourseHole, c.EmailReminder, c.FieldEntry,
+		c.Golfer, c.GolferSeason, c.HoleScore, c.LeaderboardEntry, c.League,
+		c.LeagueMembership, c.Pick, c.Round, c.Season, c.SyncStatus, c.Tournament,
+		c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -301,12 +309,16 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.CourseHole.mutate(ctx, m)
 	case *EmailReminderMutation:
 		return c.EmailReminder.mutate(ctx, m)
+	case *FieldEntryMutation:
+		return c.FieldEntry.mutate(ctx, m)
 	case *GolferMutation:
 		return c.Golfer.mutate(ctx, m)
 	case *GolferSeasonMutation:
 		return c.GolferSeason.mutate(ctx, m)
 	case *HoleScoreMutation:
 		return c.HoleScore.mutate(ctx, m)
+	case *LeaderboardEntryMutation:
+		return c.LeaderboardEntry.mutate(ctx, m)
 	case *LeagueMutation:
 		return c.League.mutate(ctx, m)
 	case *LeagueMembershipMutation:
@@ -321,8 +333,6 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.SyncStatus.mutate(ctx, m)
 	case *TournamentMutation:
 		return c.Tournament.mutate(ctx, m)
-	case *TournamentEntryMutation:
-		return c.TournamentEntry.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -1022,6 +1032,171 @@ func (c *EmailReminderClient) mutate(ctx context.Context, m *EmailReminderMutati
 	}
 }
 
+// FieldEntryClient is a client for the FieldEntry schema.
+type FieldEntryClient struct {
+	config
+}
+
+// NewFieldEntryClient returns a client for the FieldEntry from the given config.
+func NewFieldEntryClient(c config) *FieldEntryClient {
+	return &FieldEntryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `fieldentry.Hooks(f(g(h())))`.
+func (c *FieldEntryClient) Use(hooks ...Hook) {
+	c.hooks.FieldEntry = append(c.hooks.FieldEntry, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `fieldentry.Intercept(f(g(h())))`.
+func (c *FieldEntryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.FieldEntry = append(c.inters.FieldEntry, interceptors...)
+}
+
+// Create returns a builder for creating a FieldEntry entity.
+func (c *FieldEntryClient) Create() *FieldEntryCreate {
+	mutation := newFieldEntryMutation(c.config, OpCreate)
+	return &FieldEntryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of FieldEntry entities.
+func (c *FieldEntryClient) CreateBulk(builders ...*FieldEntryCreate) *FieldEntryCreateBulk {
+	return &FieldEntryCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *FieldEntryClient) MapCreateBulk(slice any, setFunc func(*FieldEntryCreate, int)) *FieldEntryCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &FieldEntryCreateBulk{err: fmt.Errorf("calling to FieldEntryClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*FieldEntryCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &FieldEntryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for FieldEntry.
+func (c *FieldEntryClient) Update() *FieldEntryUpdate {
+	mutation := newFieldEntryMutation(c.config, OpUpdate)
+	return &FieldEntryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *FieldEntryClient) UpdateOne(_m *FieldEntry) *FieldEntryUpdateOne {
+	mutation := newFieldEntryMutation(c.config, OpUpdateOne, withFieldEntry(_m))
+	return &FieldEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *FieldEntryClient) UpdateOneID(id uuid.UUID) *FieldEntryUpdateOne {
+	mutation := newFieldEntryMutation(c.config, OpUpdateOne, withFieldEntryID(id))
+	return &FieldEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for FieldEntry.
+func (c *FieldEntryClient) Delete() *FieldEntryDelete {
+	mutation := newFieldEntryMutation(c.config, OpDelete)
+	return &FieldEntryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *FieldEntryClient) DeleteOne(_m *FieldEntry) *FieldEntryDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *FieldEntryClient) DeleteOneID(id uuid.UUID) *FieldEntryDeleteOne {
+	builder := c.Delete().Where(fieldentry.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &FieldEntryDeleteOne{builder}
+}
+
+// Query returns a query builder for FieldEntry.
+func (c *FieldEntryClient) Query() *FieldEntryQuery {
+	return &FieldEntryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeFieldEntry},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a FieldEntry entity by its id.
+func (c *FieldEntryClient) Get(ctx context.Context, id uuid.UUID) (*FieldEntry, error) {
+	return c.Query().Where(fieldentry.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *FieldEntryClient) GetX(ctx context.Context, id uuid.UUID) *FieldEntry {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTournament queries the tournament edge of a FieldEntry.
+func (c *FieldEntryClient) QueryTournament(_m *FieldEntry) *TournamentQuery {
+	query := (&TournamentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(fieldentry.Table, fieldentry.FieldID, id),
+			sqlgraph.To(tournament.Table, tournament.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, fieldentry.TournamentTable, fieldentry.TournamentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryGolfer queries the golfer edge of a FieldEntry.
+func (c *FieldEntryClient) QueryGolfer(_m *FieldEntry) *GolferQuery {
+	query := (&GolferClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(fieldentry.Table, fieldentry.FieldID, id),
+			sqlgraph.To(golfer.Table, golfer.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, fieldentry.GolferTable, fieldentry.GolferColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *FieldEntryClient) Hooks() []Hook {
+	return c.hooks.FieldEntry
+}
+
+// Interceptors returns the client interceptors.
+func (c *FieldEntryClient) Interceptors() []Interceptor {
+	return c.inters.FieldEntry
+}
+
+func (c *FieldEntryClient) mutate(ctx context.Context, m *FieldEntryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&FieldEntryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&FieldEntryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&FieldEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&FieldEntryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown FieldEntry mutation op: %q", m.Op())
+	}
+}
+
 // GolferClient is a client for the Golfer schema.
 type GolferClient struct {
 	config
@@ -1146,15 +1321,31 @@ func (c *GolferClient) QueryPicks(_m *Golfer) *PickQuery {
 	return query
 }
 
-// QueryEntries queries the entries edge of a Golfer.
-func (c *GolferClient) QueryEntries(_m *Golfer) *TournamentEntryQuery {
-	query := (&TournamentEntryClient{config: c.config}).Query()
+// QueryFieldEntries queries the field_entries edge of a Golfer.
+func (c *GolferClient) QueryFieldEntries(_m *Golfer) *FieldEntryQuery {
+	query := (&FieldEntryClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(golfer.Table, golfer.FieldID, id),
-			sqlgraph.To(tournamententry.Table, tournamententry.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, golfer.EntriesTable, golfer.EntriesColumn),
+			sqlgraph.To(fieldentry.Table, fieldentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, golfer.FieldEntriesTable, golfer.FieldEntriesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLeaderboardEntries queries the leaderboard_entries edge of a Golfer.
+func (c *GolferClient) QueryLeaderboardEntries(_m *Golfer) *LeaderboardEntryQuery {
+	query := (&LeaderboardEntryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(golfer.Table, golfer.FieldID, id),
+			sqlgraph.To(leaderboardentry.Table, leaderboardentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, golfer.LeaderboardEntriesTable, golfer.LeaderboardEntriesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -1514,6 +1705,187 @@ func (c *HoleScoreClient) mutate(ctx context.Context, m *HoleScoreMutation) (Val
 		return (&HoleScoreDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown HoleScore mutation op: %q", m.Op())
+	}
+}
+
+// LeaderboardEntryClient is a client for the LeaderboardEntry schema.
+type LeaderboardEntryClient struct {
+	config
+}
+
+// NewLeaderboardEntryClient returns a client for the LeaderboardEntry from the given config.
+func NewLeaderboardEntryClient(c config) *LeaderboardEntryClient {
+	return &LeaderboardEntryClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `leaderboardentry.Hooks(f(g(h())))`.
+func (c *LeaderboardEntryClient) Use(hooks ...Hook) {
+	c.hooks.LeaderboardEntry = append(c.hooks.LeaderboardEntry, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `leaderboardentry.Intercept(f(g(h())))`.
+func (c *LeaderboardEntryClient) Intercept(interceptors ...Interceptor) {
+	c.inters.LeaderboardEntry = append(c.inters.LeaderboardEntry, interceptors...)
+}
+
+// Create returns a builder for creating a LeaderboardEntry entity.
+func (c *LeaderboardEntryClient) Create() *LeaderboardEntryCreate {
+	mutation := newLeaderboardEntryMutation(c.config, OpCreate)
+	return &LeaderboardEntryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of LeaderboardEntry entities.
+func (c *LeaderboardEntryClient) CreateBulk(builders ...*LeaderboardEntryCreate) *LeaderboardEntryCreateBulk {
+	return &LeaderboardEntryCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *LeaderboardEntryClient) MapCreateBulk(slice any, setFunc func(*LeaderboardEntryCreate, int)) *LeaderboardEntryCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &LeaderboardEntryCreateBulk{err: fmt.Errorf("calling to LeaderboardEntryClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*LeaderboardEntryCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &LeaderboardEntryCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for LeaderboardEntry.
+func (c *LeaderboardEntryClient) Update() *LeaderboardEntryUpdate {
+	mutation := newLeaderboardEntryMutation(c.config, OpUpdate)
+	return &LeaderboardEntryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LeaderboardEntryClient) UpdateOne(_m *LeaderboardEntry) *LeaderboardEntryUpdateOne {
+	mutation := newLeaderboardEntryMutation(c.config, OpUpdateOne, withLeaderboardEntry(_m))
+	return &LeaderboardEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LeaderboardEntryClient) UpdateOneID(id uuid.UUID) *LeaderboardEntryUpdateOne {
+	mutation := newLeaderboardEntryMutation(c.config, OpUpdateOne, withLeaderboardEntryID(id))
+	return &LeaderboardEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for LeaderboardEntry.
+func (c *LeaderboardEntryClient) Delete() *LeaderboardEntryDelete {
+	mutation := newLeaderboardEntryMutation(c.config, OpDelete)
+	return &LeaderboardEntryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *LeaderboardEntryClient) DeleteOne(_m *LeaderboardEntry) *LeaderboardEntryDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *LeaderboardEntryClient) DeleteOneID(id uuid.UUID) *LeaderboardEntryDeleteOne {
+	builder := c.Delete().Where(leaderboardentry.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &LeaderboardEntryDeleteOne{builder}
+}
+
+// Query returns a query builder for LeaderboardEntry.
+func (c *LeaderboardEntryClient) Query() *LeaderboardEntryQuery {
+	return &LeaderboardEntryQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeLeaderboardEntry},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a LeaderboardEntry entity by its id.
+func (c *LeaderboardEntryClient) Get(ctx context.Context, id uuid.UUID) (*LeaderboardEntry, error) {
+	return c.Query().Where(leaderboardentry.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LeaderboardEntryClient) GetX(ctx context.Context, id uuid.UUID) *LeaderboardEntry {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTournament queries the tournament edge of a LeaderboardEntry.
+func (c *LeaderboardEntryClient) QueryTournament(_m *LeaderboardEntry) *TournamentQuery {
+	query := (&TournamentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leaderboardentry.Table, leaderboardentry.FieldID, id),
+			sqlgraph.To(tournament.Table, tournament.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leaderboardentry.TournamentTable, leaderboardentry.TournamentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryGolfer queries the golfer edge of a LeaderboardEntry.
+func (c *LeaderboardEntryClient) QueryGolfer(_m *LeaderboardEntry) *GolferQuery {
+	query := (&GolferClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leaderboardentry.Table, leaderboardentry.FieldID, id),
+			sqlgraph.To(golfer.Table, golfer.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, leaderboardentry.GolferTable, leaderboardentry.GolferColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryRounds queries the rounds edge of a LeaderboardEntry.
+func (c *LeaderboardEntryClient) QueryRounds(_m *LeaderboardEntry) *RoundQuery {
+	query := (&RoundClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(leaderboardentry.Table, leaderboardentry.FieldID, id),
+			sqlgraph.To(round.Table, round.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, leaderboardentry.RoundsTable, leaderboardentry.RoundsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *LeaderboardEntryClient) Hooks() []Hook {
+	return c.hooks.LeaderboardEntry
+}
+
+// Interceptors returns the client interceptors.
+func (c *LeaderboardEntryClient) Interceptors() []Interceptor {
+	return c.inters.LeaderboardEntry
+}
+
+func (c *LeaderboardEntryClient) mutate(ctx context.Context, m *LeaderboardEntryMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&LeaderboardEntryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&LeaderboardEntryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&LeaderboardEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&LeaderboardEntryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown LeaderboardEntry mutation op: %q", m.Op())
 	}
 }
 
@@ -2232,15 +2604,15 @@ func (c *RoundClient) GetX(ctx context.Context, id uuid.UUID) *Round {
 	return obj
 }
 
-// QueryTournamentEntry queries the tournament_entry edge of a Round.
-func (c *RoundClient) QueryTournamentEntry(_m *Round) *TournamentEntryQuery {
-	query := (&TournamentEntryClient{config: c.config}).Query()
+// QueryLeaderboardEntry queries the leaderboard_entry edge of a Round.
+func (c *RoundClient) QueryLeaderboardEntry(_m *Round) *LeaderboardEntryQuery {
+	query := (&LeaderboardEntryClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(round.Table, round.FieldID, id),
-			sqlgraph.To(tournamententry.Table, tournamententry.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, round.TournamentEntryTable, round.TournamentEntryColumn),
+			sqlgraph.To(leaderboardentry.Table, leaderboardentry.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, round.LeaderboardEntryTable, round.LeaderboardEntryColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2759,15 +3131,31 @@ func (c *TournamentClient) QueryPicks(_m *Tournament) *PickQuery {
 	return query
 }
 
-// QueryEntries queries the entries edge of a Tournament.
-func (c *TournamentClient) QueryEntries(_m *Tournament) *TournamentEntryQuery {
-	query := (&TournamentEntryClient{config: c.config}).Query()
+// QueryFieldEntries queries the field_entries edge of a Tournament.
+func (c *TournamentClient) QueryFieldEntries(_m *Tournament) *FieldEntryQuery {
+	query := (&FieldEntryClient{config: c.config}).Query()
 	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
 		id := _m.ID
 		step := sqlgraph.NewStep(
 			sqlgraph.From(tournament.Table, tournament.FieldID, id),
-			sqlgraph.To(tournamententry.Table, tournamententry.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, tournament.EntriesTable, tournament.EntriesColumn),
+			sqlgraph.To(fieldentry.Table, fieldentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tournament.FieldEntriesTable, tournament.FieldEntriesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryLeaderboardEntries queries the leaderboard_entries edge of a Tournament.
+func (c *TournamentClient) QueryLeaderboardEntries(_m *Tournament) *LeaderboardEntryQuery {
+	query := (&LeaderboardEntryClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournament.Table, tournament.FieldID, id),
+			sqlgraph.To(leaderboardentry.Table, leaderboardentry.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tournament.LeaderboardEntriesTable, tournament.LeaderboardEntriesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -2861,187 +3249,6 @@ func (c *TournamentClient) mutate(ctx context.Context, m *TournamentMutation) (V
 		return (&TournamentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Tournament mutation op: %q", m.Op())
-	}
-}
-
-// TournamentEntryClient is a client for the TournamentEntry schema.
-type TournamentEntryClient struct {
-	config
-}
-
-// NewTournamentEntryClient returns a client for the TournamentEntry from the given config.
-func NewTournamentEntryClient(c config) *TournamentEntryClient {
-	return &TournamentEntryClient{config: c}
-}
-
-// Use adds a list of mutation hooks to the hooks stack.
-// A call to `Use(f, g, h)` equals to `tournamententry.Hooks(f(g(h())))`.
-func (c *TournamentEntryClient) Use(hooks ...Hook) {
-	c.hooks.TournamentEntry = append(c.hooks.TournamentEntry, hooks...)
-}
-
-// Intercept adds a list of query interceptors to the interceptors stack.
-// A call to `Intercept(f, g, h)` equals to `tournamententry.Intercept(f(g(h())))`.
-func (c *TournamentEntryClient) Intercept(interceptors ...Interceptor) {
-	c.inters.TournamentEntry = append(c.inters.TournamentEntry, interceptors...)
-}
-
-// Create returns a builder for creating a TournamentEntry entity.
-func (c *TournamentEntryClient) Create() *TournamentEntryCreate {
-	mutation := newTournamentEntryMutation(c.config, OpCreate)
-	return &TournamentEntryCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// CreateBulk returns a builder for creating a bulk of TournamentEntry entities.
-func (c *TournamentEntryClient) CreateBulk(builders ...*TournamentEntryCreate) *TournamentEntryCreateBulk {
-	return &TournamentEntryCreateBulk{config: c.config, builders: builders}
-}
-
-// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
-// a builder and applies setFunc on it.
-func (c *TournamentEntryClient) MapCreateBulk(slice any, setFunc func(*TournamentEntryCreate, int)) *TournamentEntryCreateBulk {
-	rv := reflect.ValueOf(slice)
-	if rv.Kind() != reflect.Slice {
-		return &TournamentEntryCreateBulk{err: fmt.Errorf("calling to TournamentEntryClient.MapCreateBulk with wrong type %T, need slice", slice)}
-	}
-	builders := make([]*TournamentEntryCreate, rv.Len())
-	for i := 0; i < rv.Len(); i++ {
-		builders[i] = c.Create()
-		setFunc(builders[i], i)
-	}
-	return &TournamentEntryCreateBulk{config: c.config, builders: builders}
-}
-
-// Update returns an update builder for TournamentEntry.
-func (c *TournamentEntryClient) Update() *TournamentEntryUpdate {
-	mutation := newTournamentEntryMutation(c.config, OpUpdate)
-	return &TournamentEntryUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOne returns an update builder for the given entity.
-func (c *TournamentEntryClient) UpdateOne(_m *TournamentEntry) *TournamentEntryUpdateOne {
-	mutation := newTournamentEntryMutation(c.config, OpUpdateOne, withTournamentEntry(_m))
-	return &TournamentEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// UpdateOneID returns an update builder for the given id.
-func (c *TournamentEntryClient) UpdateOneID(id uuid.UUID) *TournamentEntryUpdateOne {
-	mutation := newTournamentEntryMutation(c.config, OpUpdateOne, withTournamentEntryID(id))
-	return &TournamentEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// Delete returns a delete builder for TournamentEntry.
-func (c *TournamentEntryClient) Delete() *TournamentEntryDelete {
-	mutation := newTournamentEntryMutation(c.config, OpDelete)
-	return &TournamentEntryDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
-}
-
-// DeleteOne returns a builder for deleting the given entity.
-func (c *TournamentEntryClient) DeleteOne(_m *TournamentEntry) *TournamentEntryDeleteOne {
-	return c.DeleteOneID(_m.ID)
-}
-
-// DeleteOneID returns a builder for deleting the given entity by its id.
-func (c *TournamentEntryClient) DeleteOneID(id uuid.UUID) *TournamentEntryDeleteOne {
-	builder := c.Delete().Where(tournamententry.ID(id))
-	builder.mutation.id = &id
-	builder.mutation.op = OpDeleteOne
-	return &TournamentEntryDeleteOne{builder}
-}
-
-// Query returns a query builder for TournamentEntry.
-func (c *TournamentEntryClient) Query() *TournamentEntryQuery {
-	return &TournamentEntryQuery{
-		config: c.config,
-		ctx:    &QueryContext{Type: TypeTournamentEntry},
-		inters: c.Interceptors(),
-	}
-}
-
-// Get returns a TournamentEntry entity by its id.
-func (c *TournamentEntryClient) Get(ctx context.Context, id uuid.UUID) (*TournamentEntry, error) {
-	return c.Query().Where(tournamententry.ID(id)).Only(ctx)
-}
-
-// GetX is like Get, but panics if an error occurs.
-func (c *TournamentEntryClient) GetX(ctx context.Context, id uuid.UUID) *TournamentEntry {
-	obj, err := c.Get(ctx, id)
-	if err != nil {
-		panic(err)
-	}
-	return obj
-}
-
-// QueryTournament queries the tournament edge of a TournamentEntry.
-func (c *TournamentEntryClient) QueryTournament(_m *TournamentEntry) *TournamentQuery {
-	query := (&TournamentClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(tournamententry.Table, tournamententry.FieldID, id),
-			sqlgraph.To(tournament.Table, tournament.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, tournamententry.TournamentTable, tournamententry.TournamentColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryGolfer queries the golfer edge of a TournamentEntry.
-func (c *TournamentEntryClient) QueryGolfer(_m *TournamentEntry) *GolferQuery {
-	query := (&GolferClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(tournamententry.Table, tournamententry.FieldID, id),
-			sqlgraph.To(golfer.Table, golfer.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, tournamententry.GolferTable, tournamententry.GolferColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// QueryRounds queries the rounds edge of a TournamentEntry.
-func (c *TournamentEntryClient) QueryRounds(_m *TournamentEntry) *RoundQuery {
-	query := (&RoundClient{config: c.config}).Query()
-	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
-		id := _m.ID
-		step := sqlgraph.NewStep(
-			sqlgraph.From(tournamententry.Table, tournamententry.FieldID, id),
-			sqlgraph.To(round.Table, round.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, tournamententry.RoundsTable, tournamententry.RoundsColumn),
-		)
-		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
-		return fromV, nil
-	}
-	return query
-}
-
-// Hooks returns the client hooks.
-func (c *TournamentEntryClient) Hooks() []Hook {
-	return c.hooks.TournamentEntry
-}
-
-// Interceptors returns the client interceptors.
-func (c *TournamentEntryClient) Interceptors() []Interceptor {
-	return c.inters.TournamentEntry
-}
-
-func (c *TournamentEntryClient) mutate(ctx context.Context, m *TournamentEntryMutation) (Value, error) {
-	switch m.Op() {
-	case OpCreate:
-		return (&TournamentEntryCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdate:
-		return (&TournamentEntryUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpUpdateOne:
-		return (&TournamentEntryUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
-	case OpDelete, OpDeleteOne:
-		return (&TournamentEntryDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
-	default:
-		return nil, fmt.Errorf("ent: unknown TournamentEntry mutation op: %q", m.Op())
 	}
 }
 
@@ -3261,13 +3468,13 @@ func (c *UserClient) mutate(ctx context.Context, m *UserMutation) (Value, error)
 // hooks and interceptors per client, for fast access.
 type (
 	hooks struct {
-		CommissionerAction, Course, CourseHole, EmailReminder, Golfer, GolferSeason,
-		HoleScore, League, LeagueMembership, Pick, Round, Season, SyncStatus,
-		Tournament, TournamentEntry, User []ent.Hook
+		CommissionerAction, Course, CourseHole, EmailReminder, FieldEntry, Golfer,
+		GolferSeason, HoleScore, LeaderboardEntry, League, LeagueMembership, Pick,
+		Round, Season, SyncStatus, Tournament, User []ent.Hook
 	}
 	inters struct {
-		CommissionerAction, Course, CourseHole, EmailReminder, Golfer, GolferSeason,
-		HoleScore, League, LeagueMembership, Pick, Round, Season, SyncStatus,
-		Tournament, TournamentEntry, User []ent.Interceptor
+		CommissionerAction, Course, CourseHole, EmailReminder, FieldEntry, Golfer,
+		GolferSeason, HoleScore, LeaderboardEntry, League, LeagueMembership, Pick,
+		Round, Season, SyncStatus, Tournament, User []ent.Interceptor
 	}
 )

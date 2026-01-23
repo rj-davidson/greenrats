@@ -37,10 +37,34 @@ const (
 	FieldActive = "active"
 	// FieldImageURL holds the string denoting the image_url field in the database.
 	FieldImageURL = "image_url"
+	// FieldHeight holds the string denoting the height field in the database.
+	FieldHeight = "height"
+	// FieldWeight holds the string denoting the weight field in the database.
+	FieldWeight = "weight"
+	// FieldBirthDate holds the string denoting the birth_date field in the database.
+	FieldBirthDate = "birth_date"
+	// FieldBirthplaceCity holds the string denoting the birthplace_city field in the database.
+	FieldBirthplaceCity = "birthplace_city"
+	// FieldBirthplaceState holds the string denoting the birthplace_state field in the database.
+	FieldBirthplaceState = "birthplace_state"
+	// FieldBirthplaceCountry holds the string denoting the birthplace_country field in the database.
+	FieldBirthplaceCountry = "birthplace_country"
+	// FieldTurnedPro holds the string denoting the turned_pro field in the database.
+	FieldTurnedPro = "turned_pro"
+	// FieldSchool holds the string denoting the school field in the database.
+	FieldSchool = "school"
+	// FieldResidenceCity holds the string denoting the residence_city field in the database.
+	FieldResidenceCity = "residence_city"
+	// FieldResidenceState holds the string denoting the residence_state field in the database.
+	FieldResidenceState = "residence_state"
+	// FieldResidenceCountry holds the string denoting the residence_country field in the database.
+	FieldResidenceCountry = "residence_country"
 	// EdgePicks holds the string denoting the picks edge name in mutations.
 	EdgePicks = "picks"
-	// EdgeEntries holds the string denoting the entries edge name in mutations.
-	EdgeEntries = "entries"
+	// EdgeFieldEntries holds the string denoting the field_entries edge name in mutations.
+	EdgeFieldEntries = "field_entries"
+	// EdgeLeaderboardEntries holds the string denoting the leaderboard_entries edge name in mutations.
+	EdgeLeaderboardEntries = "leaderboard_entries"
 	// EdgeSeasons holds the string denoting the seasons edge name in mutations.
 	EdgeSeasons = "seasons"
 	// Table holds the table name of the golfer in the database.
@@ -52,13 +76,20 @@ const (
 	PicksInverseTable = "picks"
 	// PicksColumn is the table column denoting the picks relation/edge.
 	PicksColumn = "golfer_picks"
-	// EntriesTable is the table that holds the entries relation/edge.
-	EntriesTable = "tournament_entries"
-	// EntriesInverseTable is the table name for the TournamentEntry entity.
-	// It exists in this package in order to avoid circular dependency with the "tournamententry" package.
-	EntriesInverseTable = "tournament_entries"
-	// EntriesColumn is the table column denoting the entries relation/edge.
-	EntriesColumn = "golfer_entries"
+	// FieldEntriesTable is the table that holds the field_entries relation/edge.
+	FieldEntriesTable = "field_entries"
+	// FieldEntriesInverseTable is the table name for the FieldEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "fieldentry" package.
+	FieldEntriesInverseTable = "field_entries"
+	// FieldEntriesColumn is the table column denoting the field_entries relation/edge.
+	FieldEntriesColumn = "golfer_field_entries"
+	// LeaderboardEntriesTable is the table that holds the leaderboard_entries relation/edge.
+	LeaderboardEntriesTable = "leaderboard_entries"
+	// LeaderboardEntriesInverseTable is the table name for the LeaderboardEntry entity.
+	// It exists in this package in order to avoid circular dependency with the "leaderboardentry" package.
+	LeaderboardEntriesInverseTable = "leaderboard_entries"
+	// LeaderboardEntriesColumn is the table column denoting the leaderboard_entries relation/edge.
+	LeaderboardEntriesColumn = "golfer_leaderboard_entries"
 	// SeasonsTable is the table that holds the seasons relation/edge.
 	SeasonsTable = "golfer_seasons"
 	// SeasonsInverseTable is the table name for the GolferSeason entity.
@@ -82,6 +113,17 @@ var Columns = []string{
 	FieldOwgr,
 	FieldActive,
 	FieldImageURL,
+	FieldHeight,
+	FieldWeight,
+	FieldBirthDate,
+	FieldBirthplaceCity,
+	FieldBirthplaceState,
+	FieldBirthplaceCountry,
+	FieldTurnedPro,
+	FieldSchool,
+	FieldResidenceCity,
+	FieldResidenceState,
+	FieldResidenceCountry,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -174,6 +216,61 @@ func ByImageURL(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldImageURL, opts...).ToFunc()
 }
 
+// ByHeight orders the results by the height field.
+func ByHeight(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldHeight, opts...).ToFunc()
+}
+
+// ByWeight orders the results by the weight field.
+func ByWeight(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldWeight, opts...).ToFunc()
+}
+
+// ByBirthDate orders the results by the birth_date field.
+func ByBirthDate(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBirthDate, opts...).ToFunc()
+}
+
+// ByBirthplaceCity orders the results by the birthplace_city field.
+func ByBirthplaceCity(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBirthplaceCity, opts...).ToFunc()
+}
+
+// ByBirthplaceState orders the results by the birthplace_state field.
+func ByBirthplaceState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBirthplaceState, opts...).ToFunc()
+}
+
+// ByBirthplaceCountry orders the results by the birthplace_country field.
+func ByBirthplaceCountry(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldBirthplaceCountry, opts...).ToFunc()
+}
+
+// ByTurnedPro orders the results by the turned_pro field.
+func ByTurnedPro(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldTurnedPro, opts...).ToFunc()
+}
+
+// BySchool orders the results by the school field.
+func BySchool(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldSchool, opts...).ToFunc()
+}
+
+// ByResidenceCity orders the results by the residence_city field.
+func ByResidenceCity(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldResidenceCity, opts...).ToFunc()
+}
+
+// ByResidenceState orders the results by the residence_state field.
+func ByResidenceState(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldResidenceState, opts...).ToFunc()
+}
+
+// ByResidenceCountry orders the results by the residence_country field.
+func ByResidenceCountry(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldResidenceCountry, opts...).ToFunc()
+}
+
 // ByPicksCount orders the results by picks count.
 func ByPicksCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -188,17 +285,31 @@ func ByPicks(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByEntriesCount orders the results by entries count.
-func ByEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByFieldEntriesCount orders the results by field_entries count.
+func ByFieldEntriesCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newEntriesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newFieldEntriesStep(), opts...)
 	}
 }
 
-// ByEntries orders the results by entries terms.
-func ByEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByFieldEntries orders the results by field_entries terms.
+func ByFieldEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newFieldEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByLeaderboardEntriesCount orders the results by leaderboard_entries count.
+func ByLeaderboardEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newLeaderboardEntriesStep(), opts...)
+	}
+}
+
+// ByLeaderboardEntries orders the results by leaderboard_entries terms.
+func ByLeaderboardEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newLeaderboardEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -222,11 +333,18 @@ func newPicksStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, PicksTable, PicksColumn),
 	)
 }
-func newEntriesStep() *sqlgraph.Step {
+func newFieldEntriesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(EntriesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
+		sqlgraph.To(FieldEntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, FieldEntriesTable, FieldEntriesColumn),
+	)
+}
+func newLeaderboardEntriesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(LeaderboardEntriesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, LeaderboardEntriesTable, LeaderboardEntriesColumn),
 	)
 }
 func newSeasonsStep() *sqlgraph.Step {

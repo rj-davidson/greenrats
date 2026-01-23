@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
@@ -21,12 +21,12 @@ func TestListTournamentField_Success(t *testing.T) {
 	golfer1 := factory.CreateGolfer(testutil.WithGolferName("Scottie Scheffler"), testutil.WithCountryCode("USA"))
 	golfer2 := factory.CreateGolfer(testutil.WithGolferName("Rory McIlroy"), testutil.WithCountryCode("NIR"))
 
-	factory.CreateTournamentEntry(tournament, golfer1,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusConfirmed),
+	factory.CreateFieldEntry(tournament, golfer1,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusConfirmed),
 		testutil.WithOwgrAtEntry(1),
 	)
-	factory.CreateTournamentEntry(tournament, golfer2,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusAlternate),
+	factory.CreateFieldEntry(tournament, golfer2,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusAlternate),
 		testutil.WithQualifier("Sponsor Exemption"),
 	)
 
@@ -155,8 +155,8 @@ func TestAddFieldEntry_AlreadyExists(t *testing.T) {
 
 	tournament := factory.CreateTournament()
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-	existingEntry := factory.CreateTournamentEntry(tournament, golfer,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusConfirmed),
+	existingEntry := factory.CreateFieldEntry(tournament, golfer,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusConfirmed),
 	)
 
 	service := NewService(db)
@@ -181,8 +181,8 @@ func TestUpdateFieldEntry_Success(t *testing.T) {
 
 	tournament := factory.CreateTournament()
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"), testutil.WithCountryCode("USA"))
-	entry := factory.CreateTournamentEntry(tournament, golfer,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusPending),
+	entry := factory.CreateFieldEntry(tournament, golfer,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusPending),
 	)
 
 	service := NewService(db)
@@ -220,8 +220,8 @@ func TestUpdateFieldEntry_PartialUpdate(t *testing.T) {
 
 	tournament := factory.CreateTournament()
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-	entry := factory.CreateTournamentEntry(tournament, golfer,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusPending),
+	entry := factory.CreateFieldEntry(tournament, golfer,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusPending),
 		testutil.WithQualifier("Original"),
 	)
 
@@ -268,7 +268,7 @@ func TestDeleteFieldEntry_Success(t *testing.T) {
 
 	tournament := factory.CreateTournament()
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-	entry := factory.CreateTournamentEntry(tournament, golfer)
+	entry := factory.CreateFieldEntry(tournament, golfer)
 
 	service := NewService(db)
 
@@ -276,7 +276,7 @@ func TestDeleteFieldEntry_Success(t *testing.T) {
 
 	require.NoError(t, err)
 
-	exists, _ := db.TournamentEntry.Query().Where().Exist(ctx)
+	exists, _ := db.FieldEntry.Query().Where().Exist(ctx)
 	assert.False(t, exists)
 }
 
@@ -298,14 +298,14 @@ func TestDeleteFieldEntry_NotFound(t *testing.T) {
 func TestMapEntryStatus(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected tournamententry.EntryStatus
+		expected fieldentry.EntryStatus
 	}{
-		{"confirmed", tournamententry.EntryStatusConfirmed},
-		{"alternate", tournamententry.EntryStatusAlternate},
-		{"withdrawn", tournamententry.EntryStatusWithdrawn},
-		{"pending", tournamententry.EntryStatusPending},
-		{"unknown", tournamententry.EntryStatusConfirmed},
-		{"", tournamententry.EntryStatusConfirmed},
+		{"confirmed", fieldentry.EntryStatusConfirmed},
+		{"alternate", fieldentry.EntryStatusAlternate},
+		{"withdrawn", fieldentry.EntryStatusWithdrawn},
+		{"pending", fieldentry.EntryStatusPending},
+		{"unknown", fieldentry.EntryStatusConfirmed},
+		{"", fieldentry.EntryStatusConfirmed},
 	}
 
 	for _, tt := range tests {

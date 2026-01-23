@@ -33,10 +33,10 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 		golfer3 := factory.CreateGolfer()
 		golfer4 := factory.CreateGolfer()
 
-		factory.CreateTournamentEntry(tourn1, golfer1, testutil.WithEarnings(100000))
-		factory.CreateTournamentEntry(tourn1, golfer2, testutil.WithEarnings(50000))
-		factory.CreateTournamentEntry(tourn2, golfer3, testutil.WithEarnings(200000))
-		factory.CreateTournamentEntry(tourn2, golfer4, testutil.WithEarnings(75000))
+		factory.CreateLeaderboardEntry(tourn1, golfer1, testutil.WithEarnings(100000))
+		factory.CreateLeaderboardEntry(tourn1, golfer2, testutil.WithEarnings(50000))
+		factory.CreateLeaderboardEntry(tourn2, golfer3, testutil.WithEarnings(200000))
+		factory.CreateLeaderboardEntry(tourn2, golfer4, testutil.WithEarnings(75000))
 
 		factory.CreatePick(user1, tourn1, golfer1, league)
 		factory.CreatePick(user1, tourn2, golfer3, league)
@@ -72,9 +72,9 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
 		golfer3 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1, testutil.WithEarnings(100000))
-		factory.CreateTournamentEntry(tourn, golfer2, testutil.WithEarnings(100000))
-		factory.CreateTournamentEntry(tourn, golfer3, testutil.WithEarnings(50000))
+		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithEarnings(100000))
+		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithEarnings(100000))
+		factory.CreateLeaderboardEntry(tourn, golfer3, testutil.WithEarnings(50000))
 
 		factory.CreatePick(user1, tourn, golfer1, league)
 		factory.CreatePick(user2, tourn, golfer2, league)
@@ -105,8 +105,8 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 		tourn := factory.CreateCompletedTournament(testutil.WithSeasonYear(time.Now().Year()))
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1, testutil.WithEarnings(100000))
-		factory.CreateTournamentEntry(tourn, golfer2, testutil.WithEarnings(100000))
+		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithEarnings(100000))
+		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithEarnings(100000))
 
 		factory.CreatePick(user1, tourn, golfer1, league)
 		factory.CreatePick(user2, tourn, golfer2, league)
@@ -135,8 +135,8 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn2024, golfer1, testutil.WithEarnings(100000))
-		factory.CreateTournamentEntry(tourn2025, golfer2, testutil.WithEarnings(200000))
+		factory.CreateLeaderboardEntry(tourn2024, golfer1, testutil.WithEarnings(100000))
+		factory.CreateLeaderboardEntry(tourn2025, golfer2, testutil.WithEarnings(200000))
 
 		factory.CreatePick(user, tourn2024, golfer1, league)
 		factory.CreatePick(user, tourn2025, golfer2, league)
@@ -175,7 +175,7 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 
 		tourn := factory.CreateCompletedTournament(testutil.WithSeasonYear(time.Now().Year()))
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer, testutil.WithCut(true), testutil.WithEarnings(0))
+		factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithCut(true), testutil.WithEarnings(0))
 
 		factory.CreatePick(user, tourn, golfer, league)
 
@@ -202,8 +202,8 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn1, golfer1, testutil.WithEarnings(50000))
-		factory.CreateTournamentEntry(tourn2, golfer2, testutil.WithEarnings(50000))
+		factory.CreateLeaderboardEntry(tourn1, golfer1, testutil.WithEarnings(50000))
+		factory.CreateLeaderboardEntry(tourn2, golfer2, testutil.WithEarnings(50000))
 
 		factory.CreatePick(user, tourn1, golfer1, league)
 		factory.CreatePick(user, tourn2, golfer2, league)

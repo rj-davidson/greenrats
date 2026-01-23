@@ -2,179 +2,19 @@ package fields
 
 import (
 	"context"
-	"errors"
 	"io"
 	"log/slog"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
-	"github.com/rj-davidson/greenrats/internal/external/pgatour"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
 func testLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
-}
-
-func TestSyncTournamentField_Success(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	factory := testutil.NewFactory(t, db)
-	ctx := context.Background()
-
-	tournament := factory.CreateTournament(testutil.WithPgaTourID("R2025001"))
-	golfer1 := factory.CreateGolfer(testutil.WithGolferName("Scottie Scheffler"))
-	golfer2 := factory.CreateGolfer(testutil.WithGolferName("Rory McIlroy"))
-
-	mockClient := pgatour.NewMockClient()
-	mockClient.On("GetTournamentField", mock.Anything, "R2025001").Return([]pgatour.FieldEntry{
-		{DisplayName: "Scottie Scheffler", IsAmateur: false},
-		{DisplayName: "Rory McIlroy", IsAmateur: false},
-	}, nil)
-
-	service := NewService(db, mockClient, testLogger())
-
-	result, err := service.SyncTournamentField(ctx, tournament.ID)
-
-	require.NoError(t, err)
-	require.NotNil(t, result)
-	assert.Equal(t, tournament.ID, result.TournamentID)
-	assert.Equal(t, 2, result.TotalPlayers)
-	assert.Equal(t, 2, result.MatchedPlayers)
-	assert.Equal(t, 2, result.NewEntries)
-	assert.Equal(t, 0, result.UpdatedEntries)
-	assert.Empty(t, result.Errors)
-
-	entries, err := db.TournamentEntry.Query().All(ctx)
-	require.NoError(t, err)
-	assert.Len(t, entries, 2)
-
-	golferIDs := make(map[string]bool)
-	for _, e := range entries {
-		g, _ := e.QueryGolfer().Only(ctx)
-		golferIDs[g.Name] = true
-	}
-	assert.True(t, golferIDs["Scottie Scheffler"])
-	assert.True(t, golferIDs["Rory McIlroy"])
-
-	_ = golfer1
-	_ = golfer2
-	mockClient.AssertExpectations(t)
-}
-
-func TestSyncTournamentField_UpdatesExisting(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	factory := testutil.NewFactory(t, db)
-	ctx := context.Background()
-
-	tournament := factory.CreateTournament(testutil.WithPgaTourID("R2025001"))
-	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-	factory.CreateTournamentEntry(tournament, golfer, testutil.WithEntryStatusEnum(tournamententry.EntryStatusPending))
-
-	mockClient := pgatour.NewMockClient()
-	mockClient.On("GetTournamentField", mock.Anything, "R2025001").Return([]pgatour.FieldEntry{
-		{DisplayName: "Tiger Woods", IsAmateur: false},
-	}, nil)
-
-	service := NewService(db, mockClient, testLogger())
-
-	result, err := service.SyncTournamentField(ctx, tournament.ID)
-
-	require.NoError(t, err)
-	assert.Equal(t, 1, result.TotalPlayers)
-	assert.Equal(t, 1, result.MatchedPlayers)
-	assert.Equal(t, 0, result.NewEntries)
-	assert.Equal(t, 1, result.UpdatedEntries)
-
-	mockClient.AssertExpectations(t)
-}
-
-func TestSyncTournamentField_NoPgaTourID(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	factory := testutil.NewFactory(t, db)
-	ctx := context.Background()
-
-	tournament := factory.CreateTournament()
-
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
-
-	result, err := service.SyncTournamentField(ctx, tournament.ID)
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "has no PGA Tour ID")
-	assert.Nil(t, result)
-}
-
-func TestSyncTournamentField_EmptyField(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	factory := testutil.NewFactory(t, db)
-	ctx := context.Background()
-
-	tournament := factory.CreateTournament(testutil.WithPgaTourID("R2025001"))
-
-	mockClient := pgatour.NewMockClient()
-	mockClient.On("GetTournamentField", mock.Anything, "R2025001").Return([]pgatour.FieldEntry{}, nil)
-
-	service := NewService(db, mockClient, testLogger())
-
-	result, err := service.SyncTournamentField(ctx, tournament.ID)
-
-	require.NoError(t, err)
-	assert.Equal(t, 0, result.TotalPlayers)
-	assert.Equal(t, 0, result.MatchedPlayers)
-
-	mockClient.AssertExpectations(t)
-}
-
-func TestSyncTournamentField_PartialMatches(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	factory := testutil.NewFactory(t, db)
-	ctx := context.Background()
-
-	tournament := factory.CreateTournament(testutil.WithPgaTourID("R2025001"))
-	factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-
-	mockClient := pgatour.NewMockClient()
-	mockClient.On("GetTournamentField", mock.Anything, "R2025001").Return([]pgatour.FieldEntry{
-		{DisplayName: "Tiger Woods", IsAmateur: false},
-		{DisplayName: "Unknown Player", IsAmateur: false},
-	}, nil)
-
-	service := NewService(db, mockClient, testLogger())
-
-	result, err := service.SyncTournamentField(ctx, tournament.ID)
-
-	require.NoError(t, err)
-	assert.Equal(t, 2, result.TotalPlayers)
-	assert.Equal(t, 1, result.MatchedPlayers)
-	assert.Equal(t, 1, result.NewEntries)
-
-	mockClient.AssertExpectations(t)
-}
-
-func TestSyncTournamentField_ClientError(t *testing.T) {
-	db := testutil.NewTestDB(t)
-	factory := testutil.NewFactory(t, db)
-	ctx := context.Background()
-
-	tournament := factory.CreateTournament(testutil.WithPgaTourID("R2025001"))
-
-	mockClient := pgatour.NewMockClient()
-	mockClient.On("GetTournamentField", mock.Anything, "R2025001").Return(nil, errors.New("API error"))
-
-	service := NewService(db, mockClient, testLogger())
-
-	result, err := service.SyncTournamentField(ctx, tournament.ID)
-
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "failed to fetch field from PGA Tour")
-	assert.Nil(t, result)
-
-	mockClient.AssertExpectations(t)
 }
 
 func TestGetTournamentField_Success(t *testing.T) {
@@ -186,17 +26,16 @@ func TestGetTournamentField_Success(t *testing.T) {
 	golfer1 := factory.CreateGolfer(testutil.WithGolferName("Scottie Scheffler"), testutil.WithCountryCode("USA"))
 	golfer2 := factory.CreateGolfer(testutil.WithGolferName("Rory McIlroy"), testutil.WithCountryCode("NIR"))
 
-	factory.CreateTournamentEntry(tournament, golfer1,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusConfirmed),
+	factory.CreateFieldEntry(tournament, golfer1,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusConfirmed),
 		testutil.WithOwgrAtEntry(1),
 	)
-	factory.CreateTournamentEntry(tournament, golfer2,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusAlternate),
+	factory.CreateFieldEntry(tournament, golfer2,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusAlternate),
 		testutil.WithQualifier("Sponsor Exemption"),
 	)
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	entries, err := service.GetTournamentField(ctx, tournament.ID)
 
@@ -226,8 +65,7 @@ func TestGetTournamentField_Empty(t *testing.T) {
 
 	tournament := factory.CreateTournament()
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	entries, err := service.GetTournamentField(ctx, tournament.ID)
 
@@ -243,15 +81,14 @@ func TestAddFieldEntry_Success(t *testing.T) {
 	tournament := factory.CreateTournament()
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"), testutil.WithOWGR(15))
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	qualifier := "Past Champion"
 	entry, err := service.AddFieldEntry(ctx, tournament.ID, golfer.ID, "confirmed", &qualifier)
 
 	require.NoError(t, err)
 	require.NotNil(t, entry)
-	assert.Equal(t, tournamententry.EntryStatusConfirmed, entry.EntryStatus)
+	assert.Equal(t, fieldentry.EntryStatusConfirmed, entry.EntryStatus)
 	assert.NotNil(t, entry.Qualifier)
 	assert.Equal(t, "Past Champion", *entry.Qualifier)
 	assert.NotNil(t, entry.OwgrAtEntry)
@@ -265,12 +102,11 @@ func TestAddFieldEntry_AlreadyExists(t *testing.T) {
 
 	tournament := factory.CreateTournament()
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-	existingEntry := factory.CreateTournamentEntry(tournament, golfer,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusConfirmed),
+	existingEntry := factory.CreateFieldEntry(tournament, golfer,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusConfirmed),
 	)
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	entry, err := service.AddFieldEntry(ctx, tournament.ID, golfer.ID, "alternate", nil)
 
@@ -287,8 +123,7 @@ func TestAddFieldEntry_TournamentNotFound(t *testing.T) {
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
 	randomID := factory.RandomUUID()
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	entry, err := service.AddFieldEntry(ctx, randomID, golfer.ID, "confirmed", nil)
 
@@ -305,8 +140,7 @@ func TestAddFieldEntry_GolferNotFound(t *testing.T) {
 	tournament := factory.CreateTournament()
 	randomID := factory.RandomUUID()
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	entry, err := service.AddFieldEntry(ctx, tournament.ID, randomID, "confirmed", nil)
 
@@ -322,12 +156,11 @@ func TestUpdateFieldEntry_Success(t *testing.T) {
 
 	tournament := factory.CreateTournament()
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-	entry := factory.CreateTournamentEntry(tournament, golfer,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusPending),
+	entry := factory.CreateFieldEntry(tournament, golfer,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusPending),
 	)
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	newStatus := "confirmed"
 	newQualifier := "Past Champion"
@@ -338,7 +171,7 @@ func TestUpdateFieldEntry_Success(t *testing.T) {
 
 	require.NoError(t, err)
 	require.NotNil(t, updated)
-	assert.Equal(t, tournamententry.EntryStatusConfirmed, updated.EntryStatus)
+	assert.Equal(t, fieldentry.EntryStatusConfirmed, updated.EntryStatus)
 	assert.Equal(t, "Past Champion", *updated.Qualifier)
 	assert.Equal(t, 10, *updated.OwgrAtEntry)
 	assert.True(t, updated.IsAmateur)
@@ -351,19 +184,18 @@ func TestUpdateFieldEntry_PartialUpdate(t *testing.T) {
 
 	tournament := factory.CreateTournament()
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-	entry := factory.CreateTournamentEntry(tournament, golfer,
-		testutil.WithEntryStatusEnum(tournamententry.EntryStatusPending),
+	entry := factory.CreateFieldEntry(tournament, golfer,
+		testutil.WithEntryStatusEnum(fieldentry.EntryStatusPending),
 		testutil.WithQualifier("Original"),
 	)
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	newStatus := "confirmed"
 	updated, err := service.UpdateFieldEntry(ctx, entry.ID, &newStatus, nil, nil, nil)
 
 	require.NoError(t, err)
-	assert.Equal(t, tournamententry.EntryStatusConfirmed, updated.EntryStatus)
+	assert.Equal(t, fieldentry.EntryStatusConfirmed, updated.EntryStatus)
 	assert.Equal(t, "Original", *updated.Qualifier)
 }
 
@@ -374,8 +206,7 @@ func TestUpdateFieldEntry_NotFound(t *testing.T) {
 
 	randomID := factory.RandomUUID()
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	newStatus := "confirmed"
 	updated, err := service.UpdateFieldEntry(ctx, randomID, &newStatus, nil, nil, nil)
@@ -392,16 +223,15 @@ func TestDeleteFieldEntry_Success(t *testing.T) {
 
 	tournament := factory.CreateTournament()
 	golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-	entry := factory.CreateTournamentEntry(tournament, golfer)
+	entry := factory.CreateFieldEntry(tournament, golfer)
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	err := service.DeleteFieldEntry(ctx, entry.ID)
 
 	require.NoError(t, err)
 
-	exists, _ := db.TournamentEntry.Query().Where().Exist(ctx)
+	exists, _ := db.FieldEntry.Query().Where().Exist(ctx)
 	assert.False(t, exists)
 }
 
@@ -412,8 +242,7 @@ func TestDeleteFieldEntry_NotFound(t *testing.T) {
 
 	randomID := factory.RandomUUID()
 
-	mockClient := pgatour.NewMockClient()
-	service := NewService(db, mockClient, testLogger())
+	service := NewService(db, testLogger())
 
 	err := service.DeleteFieldEntry(ctx, randomID)
 

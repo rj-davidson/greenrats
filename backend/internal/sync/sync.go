@@ -13,13 +13,14 @@ import (
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/coursehole"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/golferseason"
 	"github.com/rj-davidson/greenrats/ent/holescore"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
 	"github.com/rj-davidson/greenrats/internal/external/pgatour"
@@ -261,18 +262,7 @@ func (s *Service) UpsertPlayer(ctx context.Context, p *balldontlie.Player) error
 			SetCountryCode(countryCode).
 			SetActive(p.Active)
 
-		if p.FirstName != nil {
-			builder.SetFirstName(*p.FirstName)
-		}
-		if p.LastName != nil {
-			builder.SetLastName(*p.LastName)
-		}
-		if p.Country != nil && *p.Country != "" {
-			builder.SetCountry(*p.Country)
-		}
-		if p.OWGR != nil && *p.OWGR > 0 {
-			builder.SetOwgr(*p.OWGR)
-		}
+		applyPlayerFieldsToCreate(builder, p)
 
 		_, err = builder.Save(ctx)
 		if err != nil {
@@ -290,18 +280,7 @@ func (s *Service) UpsertPlayer(ctx context.Context, p *balldontlie.Player) error
 			SetActive(p.Active).
 			SetBdlID(p.ID)
 
-		if p.FirstName != nil {
-			updater.SetFirstName(*p.FirstName)
-		}
-		if p.LastName != nil {
-			updater.SetLastName(*p.LastName)
-		}
-		if p.Country != nil && *p.Country != "" {
-			updater.SetCountry(*p.Country)
-		}
-		if p.OWGR != nil && *p.OWGR > 0 {
-			updater.SetOwgr(*p.OWGR)
-		}
+		applyPlayerFieldsToUpdate(updater, p)
 
 		_, err = updater.Save(ctx)
 		if err != nil {
@@ -312,7 +291,111 @@ func (s *Service) UpsertPlayer(ctx context.Context, p *balldontlie.Player) error
 	return nil
 }
 
-func (s *Service) UpsertTournamentFieldEntry(ctx context.Context, t *ent.Tournament, f *balldontlie.TournamentField) error {
+func applyPlayerFieldsToCreate(builder *ent.GolferCreate, p *balldontlie.Player) {
+	if p.FirstName != nil {
+		builder.SetFirstName(*p.FirstName)
+	}
+	if p.LastName != nil {
+		builder.SetLastName(*p.LastName)
+	}
+	if p.Country != nil && *p.Country != "" {
+		builder.SetCountry(*p.Country)
+	}
+	if p.OWGR != nil && *p.OWGR > 0 {
+		builder.SetOwgr(*p.OWGR)
+	}
+	if p.Height != nil && *p.Height != "" {
+		builder.SetHeight(*p.Height)
+	}
+	if p.Weight != nil && *p.Weight != "" {
+		builder.SetWeight(*p.Weight)
+	}
+	if p.BirthDate != nil && *p.BirthDate != "" {
+		if bd, err := time.Parse("2006-01-02", *p.BirthDate); err == nil {
+			builder.SetBirthDate(bd)
+		}
+	}
+	if p.BirthplaceCity != nil && *p.BirthplaceCity != "" {
+		builder.SetBirthplaceCity(*p.BirthplaceCity)
+	}
+	if p.BirthplaceState != nil && *p.BirthplaceState != "" {
+		builder.SetBirthplaceState(*p.BirthplaceState)
+	}
+	if p.BirthplaceCountry != nil && *p.BirthplaceCountry != "" {
+		builder.SetBirthplaceCountry(*p.BirthplaceCountry)
+	}
+	if p.TurnedPro != nil && *p.TurnedPro != "" {
+		if year, err := strconv.Atoi(*p.TurnedPro); err == nil {
+			builder.SetTurnedPro(year)
+		}
+	}
+	if p.School != nil && *p.School != "" {
+		builder.SetSchool(*p.School)
+	}
+	if p.ResidenceCity != nil && *p.ResidenceCity != "" {
+		builder.SetResidenceCity(*p.ResidenceCity)
+	}
+	if p.ResidenceState != nil && *p.ResidenceState != "" {
+		builder.SetResidenceState(*p.ResidenceState)
+	}
+	if p.ResidenceCountry != nil && *p.ResidenceCountry != "" {
+		builder.SetResidenceCountry(*p.ResidenceCountry)
+	}
+}
+
+func applyPlayerFieldsToUpdate(updater *ent.GolferUpdateOne, p *balldontlie.Player) {
+	if p.FirstName != nil {
+		updater.SetFirstName(*p.FirstName)
+	}
+	if p.LastName != nil {
+		updater.SetLastName(*p.LastName)
+	}
+	if p.Country != nil && *p.Country != "" {
+		updater.SetCountry(*p.Country)
+	}
+	if p.OWGR != nil && *p.OWGR > 0 {
+		updater.SetOwgr(*p.OWGR)
+	}
+	if p.Height != nil && *p.Height != "" {
+		updater.SetHeight(*p.Height)
+	}
+	if p.Weight != nil && *p.Weight != "" {
+		updater.SetWeight(*p.Weight)
+	}
+	if p.BirthDate != nil && *p.BirthDate != "" {
+		if bd, err := time.Parse("2006-01-02", *p.BirthDate); err == nil {
+			updater.SetBirthDate(bd)
+		}
+	}
+	if p.BirthplaceCity != nil && *p.BirthplaceCity != "" {
+		updater.SetBirthplaceCity(*p.BirthplaceCity)
+	}
+	if p.BirthplaceState != nil && *p.BirthplaceState != "" {
+		updater.SetBirthplaceState(*p.BirthplaceState)
+	}
+	if p.BirthplaceCountry != nil && *p.BirthplaceCountry != "" {
+		updater.SetBirthplaceCountry(*p.BirthplaceCountry)
+	}
+	if p.TurnedPro != nil && *p.TurnedPro != "" {
+		if year, err := strconv.Atoi(*p.TurnedPro); err == nil {
+			updater.SetTurnedPro(year)
+		}
+	}
+	if p.School != nil && *p.School != "" {
+		updater.SetSchool(*p.School)
+	}
+	if p.ResidenceCity != nil && *p.ResidenceCity != "" {
+		updater.SetResidenceCity(*p.ResidenceCity)
+	}
+	if p.ResidenceState != nil && *p.ResidenceState != "" {
+		updater.SetResidenceState(*p.ResidenceState)
+	}
+	if p.ResidenceCountry != nil && *p.ResidenceCountry != "" {
+		updater.SetResidenceCountry(*p.ResidenceCountry)
+	}
+}
+
+func (s *Service) UpsertFieldEntry(ctx context.Context, t *ent.Tournament, f *balldontlie.TournamentField) error {
 	g, err := s.db.Golfer.Query().
 		Where(golfer.BdlID(f.Player.ID)).
 		Only(ctx)
@@ -323,18 +406,18 @@ func (s *Service) UpsertTournamentFieldEntry(ctx context.Context, t *ent.Tournam
 		return fmt.Errorf("failed to query golfer: %w", err)
 	}
 
-	entryStatus := mapEntryStatus(f.EntryStatus)
+	entryStatus := mapFieldEntryStatus(f.EntryStatus)
 
-	existing, err := s.db.TournamentEntry.Query().
+	existing, err := s.db.FieldEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.ID(t.ID)),
-			tournamententry.HasGolferWith(golfer.ID(g.ID)),
+			fieldentry.HasTournamentWith(tournament.ID(t.ID)),
+			fieldentry.HasGolferWith(golfer.ID(g.ID)),
 		).
 		Only(ctx)
 
 	switch {
 	case ent.IsNotFound(err):
-		builder := s.db.TournamentEntry.Create().
+		builder := s.db.FieldEntry.Create().
 			SetTournament(t).
 			SetGolfer(g).
 			SetEntryStatus(entryStatus).
@@ -349,11 +432,11 @@ func (s *Service) UpsertTournamentFieldEntry(ctx context.Context, t *ent.Tournam
 
 		_, err = builder.Save(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to create tournament field entry: %w", err)
+			return fmt.Errorf("failed to create field entry: %w", err)
 		}
 
 	case err != nil:
-		return fmt.Errorf("failed to query tournament entry: %w", err)
+		return fmt.Errorf("failed to query field entry: %w", err)
 
 	default:
 		updater := existing.Update().
@@ -369,27 +452,27 @@ func (s *Service) UpsertTournamentFieldEntry(ctx context.Context, t *ent.Tournam
 
 		_, err = updater.Save(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to update tournament field entry: %w", err)
+			return fmt.Errorf("failed to update field entry: %w", err)
 		}
 	}
 
 	return nil
 }
 
-func mapEntryStatus(status string) tournamententry.EntryStatus {
+func mapFieldEntryStatus(status string) fieldentry.EntryStatus {
 	switch strings.ToLower(status) {
 	case "committed", "confirmed":
-		return tournamententry.EntryStatusConfirmed
+		return fieldentry.EntryStatusConfirmed
 	case "alternate":
-		return tournamententry.EntryStatusAlternate
+		return fieldentry.EntryStatusAlternate
 	case "withdrawn", "wd":
-		return tournamententry.EntryStatusWithdrawn
+		return fieldentry.EntryStatusWithdrawn
 	default:
-		return tournamententry.EntryStatusPending
+		return fieldentry.EntryStatusPending
 	}
 }
 
-func (s *Service) UpsertTournamentEntry(ctx context.Context, t *ent.Tournament, r *balldontlie.TournamentResult) error {
+func (s *Service) UpsertLeaderboardEntry(ctx context.Context, t *ent.Tournament, r *balldontlie.TournamentResult) error {
 	g, err := s.db.Golfer.Query().
 		Where(golfer.BdlID(r.Player.ID)).
 		Only(ctx)
@@ -400,14 +483,14 @@ func (s *Service) UpsertTournamentEntry(ctx context.Context, t *ent.Tournament, 
 		return fmt.Errorf("failed to query golfer: %w", err)
 	}
 
-	status := tournamententry.StatusActive
+	status := leaderboardentry.StatusActive
 	cut := false
 	if r.Tournament.Status != nil {
 		switch *r.Tournament.Status {
 		case "COMPLETED":
-			status = tournamententry.StatusFinished
+			status = leaderboardentry.StatusFinished
 		case "IN_PROGRESS":
-			status = tournamententry.StatusActive
+			status = leaderboardentry.StatusActive
 		}
 	}
 
@@ -417,7 +500,7 @@ func (s *Service) UpsertTournamentEntry(ctx context.Context, t *ent.Tournament, 
 	}
 	if r.Position != nil && *r.Position == "CUT" {
 		cut = true
-		status = tournamententry.StatusFinished
+		status = leaderboardentry.StatusFinished
 	}
 
 	score := 0
@@ -431,16 +514,16 @@ func (s *Service) UpsertTournamentEntry(ctx context.Context, t *ent.Tournament, 
 		earnings = int(*r.Earnings)
 	}
 
-	existing, err := s.db.TournamentEntry.Query().
+	existing, err := s.db.LeaderboardEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.ID(t.ID)),
-			tournamententry.HasGolferWith(golfer.ID(g.ID)),
+			leaderboardentry.HasTournamentWith(tournament.ID(t.ID)),
+			leaderboardentry.HasGolferWith(golfer.ID(g.ID)),
 		).
 		Only(ctx)
 
 	switch {
 	case ent.IsNotFound(err):
-		_, err = s.db.TournamentEntry.Create().
+		_, err = s.db.LeaderboardEntry.Create().
 			SetTournament(t).
 			SetGolfer(g).
 			SetPosition(position).
@@ -451,11 +534,11 @@ func (s *Service) UpsertTournamentEntry(ctx context.Context, t *ent.Tournament, 
 			SetEarnings(earnings).
 			Save(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to create tournament entry: %w", err)
+			return fmt.Errorf("failed to create leaderboard entry: %w", err)
 		}
 
 	case err != nil:
-		return fmt.Errorf("failed to query tournament entry: %w", err)
+		return fmt.Errorf("failed to query leaderboard entry: %w", err)
 
 	default:
 		_, err = existing.Update().
@@ -467,7 +550,7 @@ func (s *Service) UpsertTournamentEntry(ctx context.Context, t *ent.Tournament, 
 			SetEarnings(earnings).
 			Save(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to update tournament entry: %w", err)
+			return fmt.Errorf("failed to update leaderboard entry: %w", err)
 		}
 	}
 
@@ -548,23 +631,7 @@ func (s *Service) UpsertCourse(ctx context.Context, c *balldontlie.Course) (*ent
 			SetBdlID(c.ID).
 			SetName(c.Name)
 
-		if c.Par != nil {
-			builder.SetPar(*c.Par)
-		}
-		if c.Yardage != nil && *c.Yardage != "" {
-			if yardage, err := strconv.Atoi(*c.Yardage); err == nil {
-				builder.SetYardage(yardage)
-			}
-		}
-		if c.City != nil {
-			builder.SetCity(*c.City)
-		}
-		if c.State != nil {
-			builder.SetState(*c.State)
-		}
-		if c.Country != nil {
-			builder.SetCountry(*c.Country)
-		}
+		applyCourseFieldsToCreate(builder, c)
 
 		created, err := builder.Save(ctx)
 		if err != nil {
@@ -580,29 +647,87 @@ func (s *Service) UpsertCourse(ctx context.Context, c *balldontlie.Course) (*ent
 		updater := existing.Update().
 			SetName(c.Name)
 
-		if c.Par != nil {
-			updater.SetPar(*c.Par)
-		}
-		if c.Yardage != nil && *c.Yardage != "" {
-			if yardage, err := strconv.Atoi(*c.Yardage); err == nil {
-				updater.SetYardage(yardage)
-			}
-		}
-		if c.City != nil {
-			updater.SetCity(*c.City)
-		}
-		if c.State != nil {
-			updater.SetState(*c.State)
-		}
-		if c.Country != nil {
-			updater.SetCountry(*c.Country)
-		}
+		applyCourseFieldsToUpdate(updater, c)
 
 		updated, err := updater.Save(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to update course: %w", err)
 		}
 		return updated, nil
+	}
+}
+
+func applyCourseFieldsToCreate(builder *ent.CourseCreate, c *balldontlie.Course) {
+	if c.Par != nil {
+		builder.SetPar(*c.Par)
+	}
+	if c.Yardage != nil && *c.Yardage != "" {
+		if yardage, err := strconv.Atoi(*c.Yardage); err == nil {
+			builder.SetYardage(yardage)
+		}
+	}
+	if c.City != nil {
+		builder.SetCity(*c.City)
+	}
+	if c.State != nil {
+		builder.SetState(*c.State)
+	}
+	if c.Country != nil {
+		builder.SetCountry(*c.Country)
+	}
+	if c.Established != nil && *c.Established != "" {
+		if year, err := strconv.Atoi(*c.Established); err == nil {
+			builder.SetEstablished(year)
+		}
+	}
+	if c.Architect != nil && *c.Architect != "" {
+		builder.SetArchitect(*c.Architect)
+	}
+	if c.FairwayGrass != nil && *c.FairwayGrass != "" {
+		builder.SetFairwayGrass(*c.FairwayGrass)
+	}
+	if c.RoughGrass != nil && *c.RoughGrass != "" {
+		builder.SetRoughGrass(*c.RoughGrass)
+	}
+	if c.GreenGrass != nil && *c.GreenGrass != "" {
+		builder.SetGreenGrass(*c.GreenGrass)
+	}
+}
+
+func applyCourseFieldsToUpdate(updater *ent.CourseUpdateOne, c *balldontlie.Course) {
+	if c.Par != nil {
+		updater.SetPar(*c.Par)
+	}
+	if c.Yardage != nil && *c.Yardage != "" {
+		if yardage, err := strconv.Atoi(*c.Yardage); err == nil {
+			updater.SetYardage(yardage)
+		}
+	}
+	if c.City != nil {
+		updater.SetCity(*c.City)
+	}
+	if c.State != nil {
+		updater.SetState(*c.State)
+	}
+	if c.Country != nil {
+		updater.SetCountry(*c.Country)
+	}
+	if c.Established != nil && *c.Established != "" {
+		if year, err := strconv.Atoi(*c.Established); err == nil {
+			updater.SetEstablished(year)
+		}
+	}
+	if c.Architect != nil && *c.Architect != "" {
+		updater.SetArchitect(*c.Architect)
+	}
+	if c.FairwayGrass != nil && *c.FairwayGrass != "" {
+		updater.SetFairwayGrass(*c.FairwayGrass)
+	}
+	if c.RoughGrass != nil && *c.RoughGrass != "" {
+		updater.SetRoughGrass(*c.RoughGrass)
+	}
+	if c.GreenGrass != nil && *c.GreenGrass != "" {
+		updater.SetGreenGrass(*c.GreenGrass)
 	}
 }
 
@@ -653,7 +778,7 @@ func (s *Service) UpsertCourseHole(ctx context.Context, courseID uuid.UUID, h *b
 func (s *Service) UpsertRound(ctx context.Context, entryID uuid.UUID, r *balldontlie.PlayerRoundResult) (*ent.Round, error) {
 	existing, err := s.db.Round.Query().
 		Where(
-			round.HasTournamentEntryWith(tournamententry.IDEQ(entryID)),
+			round.HasLeaderboardEntryWith(leaderboardentry.IDEQ(entryID)),
 			round.RoundNumberEQ(r.RoundNumber),
 		).
 		Only(ctx)
@@ -661,7 +786,7 @@ func (s *Service) UpsertRound(ctx context.Context, entryID uuid.UUID, r *balldon
 	switch {
 	case ent.IsNotFound(err):
 		builder := s.db.Round.Create().
-			SetTournamentEntryID(entryID).
+			SetLeaderboardEntryID(entryID).
 			SetRoundNumber(r.RoundNumber)
 
 		if r.Score != nil {

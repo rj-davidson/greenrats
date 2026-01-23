@@ -11,8 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/course"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/round"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 // Round is the model entity for the Round schema.
@@ -34,16 +34,16 @@ type Round struct {
 	TeeTime *time.Time `json:"tee_time,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoundQuery when eager-loading is set.
-	Edges                   RoundEdges `json:"edges"`
-	course_rounds           *uuid.UUID
-	tournament_entry_rounds *uuid.UUID
-	selectValues            sql.SelectValues
+	Edges                    RoundEdges `json:"edges"`
+	course_rounds            *uuid.UUID
+	leaderboard_entry_rounds *uuid.UUID
+	selectValues             sql.SelectValues
 }
 
 // RoundEdges holds the relations/edges for other nodes in the graph.
 type RoundEdges struct {
-	// TournamentEntry holds the value of the tournament_entry edge.
-	TournamentEntry *TournamentEntry `json:"tournament_entry,omitempty"`
+	// LeaderboardEntry holds the value of the leaderboard_entry edge.
+	LeaderboardEntry *LeaderboardEntry `json:"leaderboard_entry,omitempty"`
 	// HoleScores holds the value of the hole_scores edge.
 	HoleScores []*HoleScore `json:"hole_scores,omitempty"`
 	// Course holds the value of the course edge.
@@ -53,15 +53,15 @@ type RoundEdges struct {
 	loadedTypes [3]bool
 }
 
-// TournamentEntryOrErr returns the TournamentEntry value or an error if the edge
+// LeaderboardEntryOrErr returns the LeaderboardEntry value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e RoundEdges) TournamentEntryOrErr() (*TournamentEntry, error) {
-	if e.TournamentEntry != nil {
-		return e.TournamentEntry, nil
+func (e RoundEdges) LeaderboardEntryOrErr() (*LeaderboardEntry, error) {
+	if e.LeaderboardEntry != nil {
+		return e.LeaderboardEntry, nil
 	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: tournamententry.Label}
+		return nil, &NotFoundError{label: leaderboardentry.Label}
 	}
-	return nil, &NotLoadedError{edge: "tournament_entry"}
+	return nil, &NotLoadedError{edge: "leaderboard_entry"}
 }
 
 // HoleScoresOrErr returns the HoleScores value or an error if the edge
@@ -97,7 +97,7 @@ func (*Round) scanValues(columns []string) ([]any, error) {
 			values[i] = new(uuid.UUID)
 		case round.ForeignKeys[0]: // course_rounds
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case round.ForeignKeys[1]: // tournament_entry_rounds
+		case round.ForeignKeys[1]: // leaderboard_entry_rounds
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -168,10 +168,10 @@ func (_m *Round) assignValues(columns []string, values []any) error {
 			}
 		case round.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field tournament_entry_rounds", values[i])
+				return fmt.Errorf("unexpected type %T for field leaderboard_entry_rounds", values[i])
 			} else if value.Valid {
-				_m.tournament_entry_rounds = new(uuid.UUID)
-				*_m.tournament_entry_rounds = *value.S.(*uuid.UUID)
+				_m.leaderboard_entry_rounds = new(uuid.UUID)
+				*_m.leaderboard_entry_rounds = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -186,9 +186,9 @@ func (_m *Round) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryTournamentEntry queries the "tournament_entry" edge of the Round entity.
-func (_m *Round) QueryTournamentEntry() *TournamentEntryQuery {
-	return NewRoundClient(_m.config).QueryTournamentEntry(_m)
+// QueryLeaderboardEntry queries the "leaderboard_entry" edge of the Round entity.
+func (_m *Round) QueryLeaderboardEntry() *LeaderboardEntryQuery {
+	return NewRoundClient(_m.config).QueryLeaderboardEntry(_m)
 }
 
 // QueryHoleScores queries the "hole_scores" edge of the Round entity.

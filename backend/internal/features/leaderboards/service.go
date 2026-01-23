@@ -9,10 +9,10 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 type Service struct {
@@ -79,15 +79,15 @@ func (s *Service) GetLeagueLeaderboard(ctx context.Context, leagueID uuid.UUID, 
 		entry.PickCount++
 
 		if p.Edges.Golfer != nil && p.Edges.Tournament != nil {
-			tournamentEntry, err := s.db.TournamentEntry.
+			lbEntry, err := s.db.LeaderboardEntry.
 				Query().
 				Where(
-					tournamententry.HasTournamentWith(tournament.IDEQ(p.Edges.Tournament.ID)),
-					tournamententry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
+					leaderboardentry.HasTournamentWith(tournament.IDEQ(p.Edges.Tournament.ID)),
+					leaderboardentry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
 				).
 				Only(ctx)
 			if err == nil {
-				entry.Earnings += tournamentEntry.Earnings
+				entry.Earnings += lbEntry.Earnings
 			}
 		}
 	}

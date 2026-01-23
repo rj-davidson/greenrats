@@ -213,6 +213,113 @@ func (_u *CourseUpdate) ClearCountry() *CourseUpdate {
 	return _u
 }
 
+// SetEstablished sets the "established" field.
+func (_u *CourseUpdate) SetEstablished(v int) *CourseUpdate {
+	_u.mutation.ResetEstablished()
+	_u.mutation.SetEstablished(v)
+	return _u
+}
+
+// SetNillableEstablished sets the "established" field if the given value is not nil.
+func (_u *CourseUpdate) SetNillableEstablished(v *int) *CourseUpdate {
+	if v != nil {
+		_u.SetEstablished(*v)
+	}
+	return _u
+}
+
+// AddEstablished adds value to the "established" field.
+func (_u *CourseUpdate) AddEstablished(v int) *CourseUpdate {
+	_u.mutation.AddEstablished(v)
+	return _u
+}
+
+// ClearEstablished clears the value of the "established" field.
+func (_u *CourseUpdate) ClearEstablished() *CourseUpdate {
+	_u.mutation.ClearEstablished()
+	return _u
+}
+
+// SetArchitect sets the "architect" field.
+func (_u *CourseUpdate) SetArchitect(v string) *CourseUpdate {
+	_u.mutation.SetArchitect(v)
+	return _u
+}
+
+// SetNillableArchitect sets the "architect" field if the given value is not nil.
+func (_u *CourseUpdate) SetNillableArchitect(v *string) *CourseUpdate {
+	if v != nil {
+		_u.SetArchitect(*v)
+	}
+	return _u
+}
+
+// ClearArchitect clears the value of the "architect" field.
+func (_u *CourseUpdate) ClearArchitect() *CourseUpdate {
+	_u.mutation.ClearArchitect()
+	return _u
+}
+
+// SetFairwayGrass sets the "fairway_grass" field.
+func (_u *CourseUpdate) SetFairwayGrass(v string) *CourseUpdate {
+	_u.mutation.SetFairwayGrass(v)
+	return _u
+}
+
+// SetNillableFairwayGrass sets the "fairway_grass" field if the given value is not nil.
+func (_u *CourseUpdate) SetNillableFairwayGrass(v *string) *CourseUpdate {
+	if v != nil {
+		_u.SetFairwayGrass(*v)
+	}
+	return _u
+}
+
+// ClearFairwayGrass clears the value of the "fairway_grass" field.
+func (_u *CourseUpdate) ClearFairwayGrass() *CourseUpdate {
+	_u.mutation.ClearFairwayGrass()
+	return _u
+}
+
+// SetRoughGrass sets the "rough_grass" field.
+func (_u *CourseUpdate) SetRoughGrass(v string) *CourseUpdate {
+	_u.mutation.SetRoughGrass(v)
+	return _u
+}
+
+// SetNillableRoughGrass sets the "rough_grass" field if the given value is not nil.
+func (_u *CourseUpdate) SetNillableRoughGrass(v *string) *CourseUpdate {
+	if v != nil {
+		_u.SetRoughGrass(*v)
+	}
+	return _u
+}
+
+// ClearRoughGrass clears the value of the "rough_grass" field.
+func (_u *CourseUpdate) ClearRoughGrass() *CourseUpdate {
+	_u.mutation.ClearRoughGrass()
+	return _u
+}
+
+// SetGreenGrass sets the "green_grass" field.
+func (_u *CourseUpdate) SetGreenGrass(v string) *CourseUpdate {
+	_u.mutation.SetGreenGrass(v)
+	return _u
+}
+
+// SetNillableGreenGrass sets the "green_grass" field if the given value is not nil.
+func (_u *CourseUpdate) SetNillableGreenGrass(v *string) *CourseUpdate {
+	if v != nil {
+		_u.SetGreenGrass(*v)
+	}
+	return _u
+}
+
+// ClearGreenGrass clears the value of the "green_grass" field.
+func (_u *CourseUpdate) ClearGreenGrass() *CourseUpdate {
+	_u.mutation.ClearGreenGrass()
+	return _u
+}
+
 // AddHoleIDs adds the "holes" edge to the CourseHole entity by IDs.
 func (_u *CourseUpdate) AddHoleIDs(ids ...uuid.UUID) *CourseUpdate {
 	_u.mutation.AddHoleIDs(ids...)
@@ -440,6 +547,39 @@ func (_u *CourseUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.CountryCleared() {
 		_spec.ClearField(course.FieldCountry, field.TypeString)
+	}
+	if value, ok := _u.mutation.Established(); ok {
+		_spec.SetField(course.FieldEstablished, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedEstablished(); ok {
+		_spec.AddField(course.FieldEstablished, field.TypeInt, value)
+	}
+	if _u.mutation.EstablishedCleared() {
+		_spec.ClearField(course.FieldEstablished, field.TypeInt)
+	}
+	if value, ok := _u.mutation.Architect(); ok {
+		_spec.SetField(course.FieldArchitect, field.TypeString, value)
+	}
+	if _u.mutation.ArchitectCleared() {
+		_spec.ClearField(course.FieldArchitect, field.TypeString)
+	}
+	if value, ok := _u.mutation.FairwayGrass(); ok {
+		_spec.SetField(course.FieldFairwayGrass, field.TypeString, value)
+	}
+	if _u.mutation.FairwayGrassCleared() {
+		_spec.ClearField(course.FieldFairwayGrass, field.TypeString)
+	}
+	if value, ok := _u.mutation.RoughGrass(); ok {
+		_spec.SetField(course.FieldRoughGrass, field.TypeString, value)
+	}
+	if _u.mutation.RoughGrassCleared() {
+		_spec.ClearField(course.FieldRoughGrass, field.TypeString)
+	}
+	if value, ok := _u.mutation.GreenGrass(); ok {
+		_spec.SetField(course.FieldGreenGrass, field.TypeString, value)
+	}
+	if _u.mutation.GreenGrassCleared() {
+		_spec.ClearField(course.FieldGreenGrass, field.TypeString)
 	}
 	if _u.mutation.HolesCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -777,6 +917,113 @@ func (_u *CourseUpdateOne) ClearCountry() *CourseUpdateOne {
 	return _u
 }
 
+// SetEstablished sets the "established" field.
+func (_u *CourseUpdateOne) SetEstablished(v int) *CourseUpdateOne {
+	_u.mutation.ResetEstablished()
+	_u.mutation.SetEstablished(v)
+	return _u
+}
+
+// SetNillableEstablished sets the "established" field if the given value is not nil.
+func (_u *CourseUpdateOne) SetNillableEstablished(v *int) *CourseUpdateOne {
+	if v != nil {
+		_u.SetEstablished(*v)
+	}
+	return _u
+}
+
+// AddEstablished adds value to the "established" field.
+func (_u *CourseUpdateOne) AddEstablished(v int) *CourseUpdateOne {
+	_u.mutation.AddEstablished(v)
+	return _u
+}
+
+// ClearEstablished clears the value of the "established" field.
+func (_u *CourseUpdateOne) ClearEstablished() *CourseUpdateOne {
+	_u.mutation.ClearEstablished()
+	return _u
+}
+
+// SetArchitect sets the "architect" field.
+func (_u *CourseUpdateOne) SetArchitect(v string) *CourseUpdateOne {
+	_u.mutation.SetArchitect(v)
+	return _u
+}
+
+// SetNillableArchitect sets the "architect" field if the given value is not nil.
+func (_u *CourseUpdateOne) SetNillableArchitect(v *string) *CourseUpdateOne {
+	if v != nil {
+		_u.SetArchitect(*v)
+	}
+	return _u
+}
+
+// ClearArchitect clears the value of the "architect" field.
+func (_u *CourseUpdateOne) ClearArchitect() *CourseUpdateOne {
+	_u.mutation.ClearArchitect()
+	return _u
+}
+
+// SetFairwayGrass sets the "fairway_grass" field.
+func (_u *CourseUpdateOne) SetFairwayGrass(v string) *CourseUpdateOne {
+	_u.mutation.SetFairwayGrass(v)
+	return _u
+}
+
+// SetNillableFairwayGrass sets the "fairway_grass" field if the given value is not nil.
+func (_u *CourseUpdateOne) SetNillableFairwayGrass(v *string) *CourseUpdateOne {
+	if v != nil {
+		_u.SetFairwayGrass(*v)
+	}
+	return _u
+}
+
+// ClearFairwayGrass clears the value of the "fairway_grass" field.
+func (_u *CourseUpdateOne) ClearFairwayGrass() *CourseUpdateOne {
+	_u.mutation.ClearFairwayGrass()
+	return _u
+}
+
+// SetRoughGrass sets the "rough_grass" field.
+func (_u *CourseUpdateOne) SetRoughGrass(v string) *CourseUpdateOne {
+	_u.mutation.SetRoughGrass(v)
+	return _u
+}
+
+// SetNillableRoughGrass sets the "rough_grass" field if the given value is not nil.
+func (_u *CourseUpdateOne) SetNillableRoughGrass(v *string) *CourseUpdateOne {
+	if v != nil {
+		_u.SetRoughGrass(*v)
+	}
+	return _u
+}
+
+// ClearRoughGrass clears the value of the "rough_grass" field.
+func (_u *CourseUpdateOne) ClearRoughGrass() *CourseUpdateOne {
+	_u.mutation.ClearRoughGrass()
+	return _u
+}
+
+// SetGreenGrass sets the "green_grass" field.
+func (_u *CourseUpdateOne) SetGreenGrass(v string) *CourseUpdateOne {
+	_u.mutation.SetGreenGrass(v)
+	return _u
+}
+
+// SetNillableGreenGrass sets the "green_grass" field if the given value is not nil.
+func (_u *CourseUpdateOne) SetNillableGreenGrass(v *string) *CourseUpdateOne {
+	if v != nil {
+		_u.SetGreenGrass(*v)
+	}
+	return _u
+}
+
+// ClearGreenGrass clears the value of the "green_grass" field.
+func (_u *CourseUpdateOne) ClearGreenGrass() *CourseUpdateOne {
+	_u.mutation.ClearGreenGrass()
+	return _u
+}
+
 // AddHoleIDs adds the "holes" edge to the CourseHole entity by IDs.
 func (_u *CourseUpdateOne) AddHoleIDs(ids ...uuid.UUID) *CourseUpdateOne {
 	_u.mutation.AddHoleIDs(ids...)
@@ -1034,6 +1281,39 @@ func (_u *CourseUpdateOne) sqlSave(ctx context.Context) (_node *Course, err erro
 	}
 	if _u.mutation.CountryCleared() {
 		_spec.ClearField(course.FieldCountry, field.TypeString)
+	}
+	if value, ok := _u.mutation.Established(); ok {
+		_spec.SetField(course.FieldEstablished, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedEstablished(); ok {
+		_spec.AddField(course.FieldEstablished, field.TypeInt, value)
+	}
+	if _u.mutation.EstablishedCleared() {
+		_spec.ClearField(course.FieldEstablished, field.TypeInt)
+	}
+	if value, ok := _u.mutation.Architect(); ok {
+		_spec.SetField(course.FieldArchitect, field.TypeString, value)
+	}
+	if _u.mutation.ArchitectCleared() {
+		_spec.ClearField(course.FieldArchitect, field.TypeString)
+	}
+	if value, ok := _u.mutation.FairwayGrass(); ok {
+		_spec.SetField(course.FieldFairwayGrass, field.TypeString, value)
+	}
+	if _u.mutation.FairwayGrassCleared() {
+		_spec.ClearField(course.FieldFairwayGrass, field.TypeString)
+	}
+	if value, ok := _u.mutation.RoughGrass(); ok {
+		_spec.SetField(course.FieldRoughGrass, field.TypeString, value)
+	}
+	if _u.mutation.RoughGrassCleared() {
+		_spec.ClearField(course.FieldRoughGrass, field.TypeString)
+	}
+	if value, ok := _u.mutation.GreenGrass(); ok {
+		_spec.SetField(course.FieldGreenGrass, field.TypeString, value)
+	}
+	if _u.mutation.GreenGrassCleared() {
+		_spec.ClearField(course.FieldGreenGrass, field.TypeString)
 	}
 	if _u.mutation.HolesCleared() {
 		edge := &sqlgraph.EdgeSpec{

@@ -10,11 +10,11 @@ import (
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
 	"github.com/rj-davidson/greenrats/internal/email"
 )
@@ -181,10 +181,10 @@ func (i *Ingester) sendPickReminderEmail(_ context.Context, u *ent.User, l *ent.
 func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tournament) {
 	i.logger.Info("sending tournament results emails", "tournament", t.Name)
 
-	winnerEntry, err := i.db.TournamentEntry.Query().
+	winnerEntry, err := i.db.LeaderboardEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.IDEQ(t.ID)),
-			tournamententry.PositionEQ(1),
+			leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
+			leaderboardentry.PositionEQ(1),
 		).
 		WithGolfer().
 		First(ctx)
@@ -232,10 +232,10 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 			continue
 		}
 
-		golferEntry, _ := i.db.TournamentEntry.Query().
+		golferEntry, _ := i.db.LeaderboardEntry.Query().
 			Where(
-				tournamententry.HasTournamentWith(tournament.IDEQ(t.ID)),
-				tournamententry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
+				leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
+				leaderboardentry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
 			).
 			Only(ctx)
 
@@ -310,10 +310,10 @@ func (i *Ingester) calculateLeagueStandings(ctx context.Context, userID, leagueI
 		if p.Edges.User == nil || p.Edges.Golfer == nil || p.Edges.Tournament == nil {
 			continue
 		}
-		entry, err := i.db.TournamentEntry.Query().
+		entry, err := i.db.LeaderboardEntry.Query().
 			Where(
-				tournamententry.HasTournamentWith(tournament.IDEQ(p.Edges.Tournament.ID)),
-				tournamententry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
+				leaderboardentry.HasTournamentWith(tournament.IDEQ(p.Edges.Tournament.ID)),
+				leaderboardentry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
 			).
 			Only(ctx)
 		if err == nil {

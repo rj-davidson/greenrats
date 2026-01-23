@@ -10,9 +10,10 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/season"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 type Factory struct {
@@ -425,69 +426,39 @@ func (f *Factory) AddUserToLeague(user *ent.User, league *ent.League) *ent.Leagu
 	return membership
 }
 
-type TournamentEntryOption func(*ent.TournamentEntryCreate)
+type FieldEntryOption func(*ent.FieldEntryCreate)
 
-func WithPosition(pos int) TournamentEntryOption {
-	return func(tec *ent.TournamentEntryCreate) {
-		tec.SetPosition(pos)
+func WithEntryStatusEnum(status fieldentry.EntryStatus) FieldEntryOption {
+	return func(fec *ent.FieldEntryCreate) {
+		fec.SetEntryStatus(status)
 	}
 }
 
-func WithCut(cut bool) TournamentEntryOption {
-	return func(tec *ent.TournamentEntryCreate) {
-		tec.SetCut(cut)
+func WithQualifier(q string) FieldEntryOption {
+	return func(fec *ent.FieldEntryCreate) {
+		fec.SetQualifier(q)
 	}
 }
 
-func WithScore(score int) TournamentEntryOption {
-	return func(tec *ent.TournamentEntryCreate) {
-		tec.SetScore(score)
+func WithOwgrAtEntry(owgr int) FieldEntryOption {
+	return func(fec *ent.FieldEntryCreate) {
+		fec.SetOwgrAtEntry(owgr)
 	}
 }
 
-func WithEarnings(earnings int) TournamentEntryOption {
-	return func(tec *ent.TournamentEntryCreate) {
-		tec.SetEarnings(earnings)
+func WithIsAmateur(amateur bool) FieldEntryOption {
+	return func(fec *ent.FieldEntryCreate) {
+		fec.SetIsAmateur(amateur)
 	}
 }
 
-func WithEntryStatus(status tournamententry.Status) TournamentEntryOption {
-	return func(tec *ent.TournamentEntryCreate) {
-		tec.SetStatus(status)
-	}
-}
-
-func WithEntryStatusEnum(status tournamententry.EntryStatus) TournamentEntryOption {
-	return func(tec *ent.TournamentEntryCreate) {
-		tec.SetEntryStatus(status)
-	}
-}
-
-func WithQualifier(q string) TournamentEntryOption {
-	return func(tec *ent.TournamentEntryCreate) {
-		tec.SetQualifier(q)
-	}
-}
-
-func WithOwgrAtEntry(owgr int) TournamentEntryOption {
-	return func(tec *ent.TournamentEntryCreate) {
-		tec.SetOwgrAtEntry(owgr)
-	}
-}
-
-func WithIsAmateur(amateur bool) TournamentEntryOption {
-	return func(tec *ent.TournamentEntryCreate) {
-		tec.SetIsAmateur(amateur)
-	}
-}
-
-func (f *Factory) CreateTournamentEntry(t *ent.Tournament, g *ent.Golfer, opts ...TournamentEntryOption) *ent.TournamentEntry {
+func (f *Factory) CreateFieldEntry(t *ent.Tournament, g *ent.Golfer, opts ...FieldEntryOption) *ent.FieldEntry {
 	f.t.Helper()
 
-	create := f.db.TournamentEntry.Create().
+	create := f.db.FieldEntry.Create().
 		SetTournament(t).
 		SetGolfer(g).
-		SetStatus(tournamententry.StatusPending)
+		SetEntryStatus(fieldentry.EntryStatusConfirmed)
 
 	for _, opt := range opts {
 		opt(create)
@@ -495,7 +466,58 @@ func (f *Factory) CreateTournamentEntry(t *ent.Tournament, g *ent.Golfer, opts .
 
 	entry, err := create.Save(f.ctx)
 	if err != nil {
-		f.t.Fatalf("failed to create tournament entry: %v", err)
+		f.t.Fatalf("failed to create field entry: %v", err)
+	}
+	return entry
+}
+
+type LeaderboardEntryOption func(*ent.LeaderboardEntryCreate)
+
+func WithPosition(pos int) LeaderboardEntryOption {
+	return func(lec *ent.LeaderboardEntryCreate) {
+		lec.SetPosition(pos)
+	}
+}
+
+func WithCut(cut bool) LeaderboardEntryOption {
+	return func(lec *ent.LeaderboardEntryCreate) {
+		lec.SetCut(cut)
+	}
+}
+
+func WithScore(score int) LeaderboardEntryOption {
+	return func(lec *ent.LeaderboardEntryCreate) {
+		lec.SetScore(score)
+	}
+}
+
+func WithEarnings(earnings int) LeaderboardEntryOption {
+	return func(lec *ent.LeaderboardEntryCreate) {
+		lec.SetEarnings(earnings)
+	}
+}
+
+func WithEntryStatus(status leaderboardentry.Status) LeaderboardEntryOption {
+	return func(lec *ent.LeaderboardEntryCreate) {
+		lec.SetStatus(status)
+	}
+}
+
+func (f *Factory) CreateLeaderboardEntry(t *ent.Tournament, g *ent.Golfer, opts ...LeaderboardEntryOption) *ent.LeaderboardEntry {
+	f.t.Helper()
+
+	create := f.db.LeaderboardEntry.Create().
+		SetTournament(t).
+		SetGolfer(g).
+		SetStatus(leaderboardentry.StatusPending)
+
+	for _, opt := range opts {
+		opt(create)
+	}
+
+	entry, err := create.Save(f.ctx)
+	if err != nil {
+		f.t.Fatalf("failed to create leaderboard entry: %v", err)
 	}
 	return entry
 }
@@ -536,12 +558,12 @@ func (f *Factory) CreateGolfers(count int, opts ...GolferOption) []*ent.Golfer {
 	return golfers
 }
 
-func (f *Factory) CreateTournamentField(t *ent.Tournament, golfers []*ent.Golfer, opts ...TournamentEntryOption) []*ent.TournamentEntry {
+func (f *Factory) CreateTournamentField(t *ent.Tournament, golfers []*ent.Golfer, opts ...FieldEntryOption) []*ent.FieldEntry {
 	f.t.Helper()
 
-	entries := make([]*ent.TournamentEntry, len(golfers))
+	entries := make([]*ent.FieldEntry, len(golfers))
 	for i, g := range golfers {
-		entries[i] = f.CreateTournamentEntry(t, g, opts...)
+		entries[i] = f.CreateFieldEntry(t, g, opts...)
 	}
 	return entries
 }
@@ -588,17 +610,32 @@ func CreateGolfer(t *testing.T, db *ent.Client, name string, bdlID int) *ent.Gol
 	return golfer
 }
 
-func CreateTournamentEntry(t *testing.T, db *ent.Client, tournamentID, golferID uuid.UUID) *ent.TournamentEntry {
+func CreateFieldEntry(t *testing.T, db *ent.Client, tournamentID, golferID uuid.UUID) *ent.FieldEntry {
 	t.Helper()
 	ctx := context.Background()
 
-	entry, err := db.TournamentEntry.Create().
+	entry, err := db.FieldEntry.Create().
 		SetTournamentID(tournamentID).
 		SetGolferID(golferID).
-		SetStatus(tournamententry.StatusPending).
+		SetEntryStatus(fieldentry.EntryStatusConfirmed).
 		Save(ctx)
 	if err != nil {
-		t.Fatalf("failed to create tournament entry: %v", err)
+		t.Fatalf("failed to create field entry: %v", err)
+	}
+	return entry
+}
+
+func CreateLeaderboardEntry(t *testing.T, db *ent.Client, tournamentID, golferID uuid.UUID) *ent.LeaderboardEntry {
+	t.Helper()
+	ctx := context.Background()
+
+	entry, err := db.LeaderboardEntry.Create().
+		SetTournamentID(tournamentID).
+		SetGolferID(golferID).
+		SetStatus(leaderboardentry.StatusPending).
+		Save(ctx)
+	if err != nil {
+		t.Fatalf("failed to create leaderboard entry: %v", err)
 	}
 	return entry
 }

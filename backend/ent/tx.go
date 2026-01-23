@@ -20,12 +20,16 @@ type Tx struct {
 	CourseHole *CourseHoleClient
 	// EmailReminder is the client for interacting with the EmailReminder builders.
 	EmailReminder *EmailReminderClient
+	// FieldEntry is the client for interacting with the FieldEntry builders.
+	FieldEntry *FieldEntryClient
 	// Golfer is the client for interacting with the Golfer builders.
 	Golfer *GolferClient
 	// GolferSeason is the client for interacting with the GolferSeason builders.
 	GolferSeason *GolferSeasonClient
 	// HoleScore is the client for interacting with the HoleScore builders.
 	HoleScore *HoleScoreClient
+	// LeaderboardEntry is the client for interacting with the LeaderboardEntry builders.
+	LeaderboardEntry *LeaderboardEntryClient
 	// League is the client for interacting with the League builders.
 	League *LeagueClient
 	// LeagueMembership is the client for interacting with the LeagueMembership builders.
@@ -40,8 +44,6 @@ type Tx struct {
 	SyncStatus *SyncStatusClient
 	// Tournament is the client for interacting with the Tournament builders.
 	Tournament *TournamentClient
-	// TournamentEntry is the client for interacting with the TournamentEntry builders.
-	TournamentEntry *TournamentEntryClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -179,9 +181,11 @@ func (tx *Tx) init() {
 	tx.Course = NewCourseClient(tx.config)
 	tx.CourseHole = NewCourseHoleClient(tx.config)
 	tx.EmailReminder = NewEmailReminderClient(tx.config)
+	tx.FieldEntry = NewFieldEntryClient(tx.config)
 	tx.Golfer = NewGolferClient(tx.config)
 	tx.GolferSeason = NewGolferSeasonClient(tx.config)
 	tx.HoleScore = NewHoleScoreClient(tx.config)
+	tx.LeaderboardEntry = NewLeaderboardEntryClient(tx.config)
 	tx.League = NewLeagueClient(tx.config)
 	tx.LeagueMembership = NewLeagueMembershipClient(tx.config)
 	tx.Pick = NewPickClient(tx.config)
@@ -189,7 +193,6 @@ func (tx *Tx) init() {
 	tx.Season = NewSeasonClient(tx.config)
 	tx.SyncStatus = NewSyncStatusClient(tx.config)
 	tx.Tournament = NewTournamentClient(tx.config)
-	tx.TournamentEntry = NewTournamentEntryClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

@@ -139,8 +139,8 @@ func TestLeaguesIntegration(t *testing.T) {
 		tourn := factory.CreateCompletedTournament(testutil.WithSeasonYear(time.Now().Year()))
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1, testutil.WithEarnings(500000))
-		factory.CreateTournamentEntry(tourn, golfer2, testutil.WithEarnings(250000))
+		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithEarnings(500000))
+		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithEarnings(250000))
 
 		factory.CreatePick(owner, tourn, golfer1, league)
 		factory.CreatePick(user2, tourn, golfer2, league)
@@ -180,7 +180,7 @@ func TestLeaguesIntegration(t *testing.T) {
 		)
 
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn1, golfer, testutil.WithEarnings(100000))
+		factory.CreateLeaderboardEntry(tourn1, golfer, testutil.WithEarnings(100000))
 		factory.CreatePick(user, tourn1, golfer, league)
 
 		app := testutil.NewTestApp(t).WithDBUser(user)

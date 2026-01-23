@@ -25,7 +25,7 @@ func TestService_Create(t *testing.T) {
 
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer)
+		factory.CreateFieldEntry(tourn, golfer)
 
 		pick, err := service.Create(ctx, CreateParams{
 			UserID:       user.ID,
@@ -76,7 +76,7 @@ func TestService_Create(t *testing.T) {
 
 		tourn := factory.CreateActiveTournament()
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer)
+		factory.CreateFieldEntry(tourn, golfer)
 
 		_, err := service.Create(ctx, CreateParams{
 			UserID:       user.ID,
@@ -101,7 +101,7 @@ func TestService_Create(t *testing.T) {
 
 		tourn := factory.CreateUpcomingTournament(10)
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer)
+		factory.CreateFieldEntry(tourn, golfer)
 
 		_, err := service.Create(ctx, CreateParams{
 			UserID:       user.ID,
@@ -148,7 +148,7 @@ func TestService_Create(t *testing.T) {
 
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer)
+		factory.CreateFieldEntry(tourn, golfer)
 
 		_, err := service.Create(ctx, CreateParams{
 			UserID:       user.ID,
@@ -198,8 +198,8 @@ func TestService_Create(t *testing.T) {
 		tourn1 := factory.CreateUpcomingTournament(2)
 		tourn2 := factory.CreateUpcomingTournament(2, testutil.WithTournamentName("Second Tournament"))
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn1, golfer)
-		factory.CreateTournamentEntry(tourn2, golfer)
+		factory.CreateFieldEntry(tourn1, golfer)
+		factory.CreateFieldEntry(tourn2, golfer)
 
 		factory.CreatePick(user, tourn1, golfer, league)
 
@@ -227,8 +227,8 @@ func TestService_Create(t *testing.T) {
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 
 		factory.CreatePick(user, tourn, golfer1, league)
 
@@ -386,8 +386,8 @@ func TestService_GetAvailableGolfers(t *testing.T) {
 		tourn2 := factory.CreateUpcomingTournament(2)
 
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn1, golfer)
-		factory.CreateTournamentEntry(tourn2, golfer)
+		factory.CreateFieldEntry(tourn1, golfer)
+		factory.CreateFieldEntry(tourn2, golfer)
 
 		factory.CreatePick(user, tourn1, golfer, league)
 
@@ -430,8 +430,8 @@ func TestService_UpdateUserPick(t *testing.T) {
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
@@ -461,8 +461,8 @@ func TestService_UpdateUserPick(t *testing.T) {
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
@@ -489,8 +489,8 @@ func TestService_UpdateUserPick(t *testing.T) {
 		tourn := factory.CreateActiveTournament()
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
@@ -518,9 +518,9 @@ func TestService_UpdateUserPick(t *testing.T) {
 		tourn2 := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn1, golfer2)
-		factory.CreateTournamentEntry(tourn2, golfer1)
-		factory.CreateTournamentEntry(tourn2, golfer2)
+		factory.CreateFieldEntry(tourn1, golfer2)
+		factory.CreateFieldEntry(tourn2, golfer1)
+		factory.CreateFieldEntry(tourn2, golfer2)
 
 		factory.CreatePick(user, tourn1, golfer2, league)
 		pick := factory.CreatePick(user, tourn2, golfer1, league)
@@ -550,8 +550,8 @@ func TestService_OverridePick(t *testing.T) {
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
@@ -580,8 +580,8 @@ func TestService_OverridePick(t *testing.T) {
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
@@ -609,8 +609,8 @@ func TestService_OverridePick(t *testing.T) {
 		tourn := factory.CreateCompletedTournament()
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
@@ -668,8 +668,8 @@ func TestService_GetAvailableGolfersForUserOverride(t *testing.T) {
 		tourn2 := factory.CreateUpcomingTournament(2)
 
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn1, golfer)
-		factory.CreateTournamentEntry(tourn2, golfer)
+		factory.CreateFieldEntry(tourn1, golfer)
+		factory.CreateFieldEntry(tourn2, golfer)
 
 		factory.CreatePick(user, tourn1, golfer, league)
 

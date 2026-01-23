@@ -13,11 +13,12 @@ import (
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/pick"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 // TournamentCreate is the builder for creating a Tournament entity.
@@ -248,19 +249,34 @@ func (_c *TournamentCreate) AddPicks(v ...*Pick) *TournamentCreate {
 	return _c.AddPickIDs(ids...)
 }
 
-// AddEntryIDs adds the "entries" edge to the TournamentEntry entity by IDs.
-func (_c *TournamentCreate) AddEntryIDs(ids ...uuid.UUID) *TournamentCreate {
-	_c.mutation.AddEntryIDs(ids...)
+// AddFieldEntryIDs adds the "field_entries" edge to the FieldEntry entity by IDs.
+func (_c *TournamentCreate) AddFieldEntryIDs(ids ...uuid.UUID) *TournamentCreate {
+	_c.mutation.AddFieldEntryIDs(ids...)
 	return _c
 }
 
-// AddEntries adds the "entries" edges to the TournamentEntry entity.
-func (_c *TournamentCreate) AddEntries(v ...*TournamentEntry) *TournamentCreate {
+// AddFieldEntries adds the "field_entries" edges to the FieldEntry entity.
+func (_c *TournamentCreate) AddFieldEntries(v ...*FieldEntry) *TournamentCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddEntryIDs(ids...)
+	return _c.AddFieldEntryIDs(ids...)
+}
+
+// AddLeaderboardEntryIDs adds the "leaderboard_entries" edge to the LeaderboardEntry entity by IDs.
+func (_c *TournamentCreate) AddLeaderboardEntryIDs(ids ...uuid.UUID) *TournamentCreate {
+	_c.mutation.AddLeaderboardEntryIDs(ids...)
+	return _c
+}
+
+// AddLeaderboardEntries adds the "leaderboard_entries" edges to the LeaderboardEntry entity.
+func (_c *TournamentCreate) AddLeaderboardEntries(v ...*LeaderboardEntry) *TournamentCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddLeaderboardEntryIDs(ids...)
 }
 
 // AddEmailReminderIDs adds the "email_reminders" edge to the EmailReminder entity by IDs.
@@ -519,15 +535,31 @@ func (_c *TournamentCreate) createSpec() (*Tournament, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.EntriesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.FieldEntriesIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   tournament.EntriesTable,
-			Columns: []string{tournament.EntriesColumn},
+			Table:   tournament.FieldEntriesTable,
+			Columns: []string{tournament.FieldEntriesColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(fieldentry.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.LeaderboardEntriesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournament.LeaderboardEntriesTable,
+			Columns: []string{tournament.LeaderboardEntriesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

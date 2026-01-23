@@ -150,7 +150,7 @@ func TestHandler_GetLeaderboard(t *testing.T) {
 
 		tourn := factory.CreateActiveTournament()
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer, testutil.WithPosition(1))
+		factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithPosition(1))
 
 		app := testutil.NewTestApp(t)
 		app.App.Get("/tournaments/:id/leaderboard", handler.GetLeaderboard)

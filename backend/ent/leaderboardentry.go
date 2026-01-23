@@ -11,12 +11,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
-// TournamentEntry is the model entity for the TournamentEntry schema.
-type TournamentEntry struct {
+// LeaderboardEntry is the model entity for the LeaderboardEntry schema.
+type LeaderboardEntry struct {
 	config `json:"-"`
 	// ID of the ent.
 	ID uuid.UUID `json:"id,omitempty"`
@@ -35,29 +35,21 @@ type TournamentEntry struct {
 	// Prize money in dollars
 	Earnings int `json:"earnings,omitempty"`
 	// Golfer's status in the tournament
-	Status tournamententry.Status `json:"status,omitempty"`
+	Status leaderboardentry.Status `json:"status,omitempty"`
 	// Current round (1-4)
 	CurrentRound int `json:"current_round,omitempty"`
 	// Holes completed in current round
 	Thru int `json:"thru,omitempty"`
-	// Field entry status (confirmed, alternate, withdrawn, pending)
-	EntryStatus tournamententry.EntryStatus `json:"entry_status,omitempty"`
-	// Qualification category (e.g., 'winner', 'exemption', 'sponsor')
-	Qualifier *string `json:"qualifier,omitempty"`
-	// Official World Golf Ranking at time of field entry
-	OwgrAtEntry *int `json:"owgr_at_entry,omitempty"`
-	// True if golfer is playing as an amateur
-	IsAmateur bool `json:"is_amateur,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the TournamentEntryQuery when eager-loading is set.
-	Edges              TournamentEntryEdges `json:"edges"`
-	golfer_entries     *uuid.UUID
-	tournament_entries *uuid.UUID
-	selectValues       sql.SelectValues
+	// The values are being populated by the LeaderboardEntryQuery when eager-loading is set.
+	Edges                          LeaderboardEntryEdges `json:"edges"`
+	golfer_leaderboard_entries     *uuid.UUID
+	tournament_leaderboard_entries *uuid.UUID
+	selectValues                   sql.SelectValues
 }
 
-// TournamentEntryEdges holds the relations/edges for other nodes in the graph.
-type TournamentEntryEdges struct {
+// LeaderboardEntryEdges holds the relations/edges for other nodes in the graph.
+type LeaderboardEntryEdges struct {
 	// Tournament holds the value of the tournament edge.
 	Tournament *Tournament `json:"tournament,omitempty"`
 	// Golfer holds the value of the golfer edge.
@@ -71,7 +63,7 @@ type TournamentEntryEdges struct {
 
 // TournamentOrErr returns the Tournament value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e TournamentEntryEdges) TournamentOrErr() (*Tournament, error) {
+func (e LeaderboardEntryEdges) TournamentOrErr() (*Tournament, error) {
 	if e.Tournament != nil {
 		return e.Tournament, nil
 	} else if e.loadedTypes[0] {
@@ -82,7 +74,7 @@ func (e TournamentEntryEdges) TournamentOrErr() (*Tournament, error) {
 
 // GolferOrErr returns the Golfer value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e TournamentEntryEdges) GolferOrErr() (*Golfer, error) {
+func (e LeaderboardEntryEdges) GolferOrErr() (*Golfer, error) {
 	if e.Golfer != nil {
 		return e.Golfer, nil
 	} else if e.loadedTypes[1] {
@@ -93,7 +85,7 @@ func (e TournamentEntryEdges) GolferOrErr() (*Golfer, error) {
 
 // RoundsOrErr returns the Rounds value or an error if the edge
 // was not loaded in eager-loading.
-func (e TournamentEntryEdges) RoundsOrErr() ([]*Round, error) {
+func (e LeaderboardEntryEdges) RoundsOrErr() ([]*Round, error) {
 	if e.loadedTypes[2] {
 		return e.Rounds, nil
 	}
@@ -101,23 +93,23 @@ func (e TournamentEntryEdges) RoundsOrErr() ([]*Round, error) {
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*TournamentEntry) scanValues(columns []string) ([]any, error) {
+func (*LeaderboardEntry) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case tournamententry.FieldCut, tournamententry.FieldIsAmateur:
+		case leaderboardentry.FieldCut:
 			values[i] = new(sql.NullBool)
-		case tournamententry.FieldPosition, tournamententry.FieldScore, tournamententry.FieldTotalStrokes, tournamententry.FieldEarnings, tournamententry.FieldCurrentRound, tournamententry.FieldThru, tournamententry.FieldOwgrAtEntry:
+		case leaderboardentry.FieldPosition, leaderboardentry.FieldScore, leaderboardentry.FieldTotalStrokes, leaderboardentry.FieldEarnings, leaderboardentry.FieldCurrentRound, leaderboardentry.FieldThru:
 			values[i] = new(sql.NullInt64)
-		case tournamententry.FieldStatus, tournamententry.FieldEntryStatus, tournamententry.FieldQualifier:
+		case leaderboardentry.FieldStatus:
 			values[i] = new(sql.NullString)
-		case tournamententry.FieldCreatedAt, tournamententry.FieldUpdatedAt:
+		case leaderboardentry.FieldCreatedAt, leaderboardentry.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
-		case tournamententry.FieldID:
+		case leaderboardentry.FieldID:
 			values[i] = new(uuid.UUID)
-		case tournamententry.ForeignKeys[0]: // golfer_entries
+		case leaderboardentry.ForeignKeys[0]: // golfer_leaderboard_entries
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case tournamententry.ForeignKeys[1]: // tournament_entries
+		case leaderboardentry.ForeignKeys[1]: // tournament_leaderboard_entries
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -127,118 +119,92 @@ func (*TournamentEntry) scanValues(columns []string) ([]any, error) {
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
-// to the TournamentEntry fields.
-func (_m *TournamentEntry) assignValues(columns []string, values []any) error {
+// to the LeaderboardEntry fields.
+func (_m *LeaderboardEntry) assignValues(columns []string, values []any) error {
 	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	for i := range columns {
 		switch columns[i] {
-		case tournamententry.FieldID:
+		case leaderboardentry.FieldID:
 			if value, ok := values[i].(*uuid.UUID); !ok {
 				return fmt.Errorf("unexpected type %T for field id", values[i])
 			} else if value != nil {
 				_m.ID = *value
 			}
-		case tournamententry.FieldCreatedAt:
+		case leaderboardentry.FieldCreatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field created_at", values[i])
 			} else if value.Valid {
 				_m.CreatedAt = value.Time
 			}
-		case tournamententry.FieldUpdatedAt:
+		case leaderboardentry.FieldUpdatedAt:
 			if value, ok := values[i].(*sql.NullTime); !ok {
 				return fmt.Errorf("unexpected type %T for field updated_at", values[i])
 			} else if value.Valid {
 				_m.UpdatedAt = value.Time
 			}
-		case tournamententry.FieldPosition:
+		case leaderboardentry.FieldPosition:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field position", values[i])
 			} else if value.Valid {
 				_m.Position = int(value.Int64)
 			}
-		case tournamententry.FieldCut:
+		case leaderboardentry.FieldCut:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field cut", values[i])
 			} else if value.Valid {
 				_m.Cut = value.Bool
 			}
-		case tournamententry.FieldScore:
+		case leaderboardentry.FieldScore:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field score", values[i])
 			} else if value.Valid {
 				_m.Score = int(value.Int64)
 			}
-		case tournamententry.FieldTotalStrokes:
+		case leaderboardentry.FieldTotalStrokes:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field total_strokes", values[i])
 			} else if value.Valid {
 				_m.TotalStrokes = int(value.Int64)
 			}
-		case tournamententry.FieldEarnings:
+		case leaderboardentry.FieldEarnings:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field earnings", values[i])
 			} else if value.Valid {
 				_m.Earnings = int(value.Int64)
 			}
-		case tournamententry.FieldStatus:
+		case leaderboardentry.FieldStatus:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field status", values[i])
 			} else if value.Valid {
-				_m.Status = tournamententry.Status(value.String)
+				_m.Status = leaderboardentry.Status(value.String)
 			}
-		case tournamententry.FieldCurrentRound:
+		case leaderboardentry.FieldCurrentRound:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field current_round", values[i])
 			} else if value.Valid {
 				_m.CurrentRound = int(value.Int64)
 			}
-		case tournamententry.FieldThru:
+		case leaderboardentry.FieldThru:
 			if value, ok := values[i].(*sql.NullInt64); !ok {
 				return fmt.Errorf("unexpected type %T for field thru", values[i])
 			} else if value.Valid {
 				_m.Thru = int(value.Int64)
 			}
-		case tournamententry.FieldEntryStatus:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field entry_status", values[i])
-			} else if value.Valid {
-				_m.EntryStatus = tournamententry.EntryStatus(value.String)
-			}
-		case tournamententry.FieldQualifier:
-			if value, ok := values[i].(*sql.NullString); !ok {
-				return fmt.Errorf("unexpected type %T for field qualifier", values[i])
-			} else if value.Valid {
-				_m.Qualifier = new(string)
-				*_m.Qualifier = value.String
-			}
-		case tournamententry.FieldOwgrAtEntry:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field owgr_at_entry", values[i])
-			} else if value.Valid {
-				_m.OwgrAtEntry = new(int)
-				*_m.OwgrAtEntry = int(value.Int64)
-			}
-		case tournamententry.FieldIsAmateur:
-			if value, ok := values[i].(*sql.NullBool); !ok {
-				return fmt.Errorf("unexpected type %T for field is_amateur", values[i])
-			} else if value.Valid {
-				_m.IsAmateur = value.Bool
-			}
-		case tournamententry.ForeignKeys[0]:
+		case leaderboardentry.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field golfer_entries", values[i])
+				return fmt.Errorf("unexpected type %T for field golfer_leaderboard_entries", values[i])
 			} else if value.Valid {
-				_m.golfer_entries = new(uuid.UUID)
-				*_m.golfer_entries = *value.S.(*uuid.UUID)
+				_m.golfer_leaderboard_entries = new(uuid.UUID)
+				*_m.golfer_leaderboard_entries = *value.S.(*uuid.UUID)
 			}
-		case tournamententry.ForeignKeys[1]:
+		case leaderboardentry.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field tournament_entries", values[i])
+				return fmt.Errorf("unexpected type %T for field tournament_leaderboard_entries", values[i])
 			} else if value.Valid {
-				_m.tournament_entries = new(uuid.UUID)
-				*_m.tournament_entries = *value.S.(*uuid.UUID)
+				_m.tournament_leaderboard_entries = new(uuid.UUID)
+				*_m.tournament_leaderboard_entries = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -247,49 +213,49 @@ func (_m *TournamentEntry) assignValues(columns []string, values []any) error {
 	return nil
 }
 
-// Value returns the ent.Value that was dynamically selected and assigned to the TournamentEntry.
+// Value returns the ent.Value that was dynamically selected and assigned to the LeaderboardEntry.
 // This includes values selected through modifiers, order, etc.
-func (_m *TournamentEntry) Value(name string) (ent.Value, error) {
+func (_m *LeaderboardEntry) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryTournament queries the "tournament" edge of the TournamentEntry entity.
-func (_m *TournamentEntry) QueryTournament() *TournamentQuery {
-	return NewTournamentEntryClient(_m.config).QueryTournament(_m)
+// QueryTournament queries the "tournament" edge of the LeaderboardEntry entity.
+func (_m *LeaderboardEntry) QueryTournament() *TournamentQuery {
+	return NewLeaderboardEntryClient(_m.config).QueryTournament(_m)
 }
 
-// QueryGolfer queries the "golfer" edge of the TournamentEntry entity.
-func (_m *TournamentEntry) QueryGolfer() *GolferQuery {
-	return NewTournamentEntryClient(_m.config).QueryGolfer(_m)
+// QueryGolfer queries the "golfer" edge of the LeaderboardEntry entity.
+func (_m *LeaderboardEntry) QueryGolfer() *GolferQuery {
+	return NewLeaderboardEntryClient(_m.config).QueryGolfer(_m)
 }
 
-// QueryRounds queries the "rounds" edge of the TournamentEntry entity.
-func (_m *TournamentEntry) QueryRounds() *RoundQuery {
-	return NewTournamentEntryClient(_m.config).QueryRounds(_m)
+// QueryRounds queries the "rounds" edge of the LeaderboardEntry entity.
+func (_m *LeaderboardEntry) QueryRounds() *RoundQuery {
+	return NewLeaderboardEntryClient(_m.config).QueryRounds(_m)
 }
 
-// Update returns a builder for updating this TournamentEntry.
-// Note that you need to call TournamentEntry.Unwrap() before calling this method if this TournamentEntry
+// Update returns a builder for updating this LeaderboardEntry.
+// Note that you need to call LeaderboardEntry.Unwrap() before calling this method if this LeaderboardEntry
 // was returned from a transaction, and the transaction was committed or rolled back.
-func (_m *TournamentEntry) Update() *TournamentEntryUpdateOne {
-	return NewTournamentEntryClient(_m.config).UpdateOne(_m)
+func (_m *LeaderboardEntry) Update() *LeaderboardEntryUpdateOne {
+	return NewLeaderboardEntryClient(_m.config).UpdateOne(_m)
 }
 
-// Unwrap unwraps the TournamentEntry entity that was returned from a transaction after it was closed,
+// Unwrap unwraps the LeaderboardEntry entity that was returned from a transaction after it was closed,
 // so that all future queries will be executed through the driver which created the transaction.
-func (_m *TournamentEntry) Unwrap() *TournamentEntry {
+func (_m *LeaderboardEntry) Unwrap() *LeaderboardEntry {
 	_tx, ok := _m.config.driver.(*txDriver)
 	if !ok {
-		panic("ent: TournamentEntry is not a transactional entity")
+		panic("ent: LeaderboardEntry is not a transactional entity")
 	}
 	_m.config.driver = _tx.drv
 	return _m
 }
 
 // String implements the fmt.Stringer.
-func (_m *TournamentEntry) String() string {
+func (_m *LeaderboardEntry) String() string {
 	var builder strings.Builder
-	builder.WriteString("TournamentEntry(")
+	builder.WriteString("LeaderboardEntry(")
 	builder.WriteString(fmt.Sprintf("id=%v, ", _m.ID))
 	builder.WriteString("created_at=")
 	builder.WriteString(_m.CreatedAt.Format(time.ANSIC))
@@ -320,25 +286,9 @@ func (_m *TournamentEntry) String() string {
 	builder.WriteString(", ")
 	builder.WriteString("thru=")
 	builder.WriteString(fmt.Sprintf("%v", _m.Thru))
-	builder.WriteString(", ")
-	builder.WriteString("entry_status=")
-	builder.WriteString(fmt.Sprintf("%v", _m.EntryStatus))
-	builder.WriteString(", ")
-	if v := _m.Qualifier; v != nil {
-		builder.WriteString("qualifier=")
-		builder.WriteString(*v)
-	}
-	builder.WriteString(", ")
-	if v := _m.OwgrAtEntry; v != nil {
-		builder.WriteString("owgr_at_entry=")
-		builder.WriteString(fmt.Sprintf("%v", *v))
-	}
-	builder.WriteString(", ")
-	builder.WriteString("is_amateur=")
-	builder.WriteString(fmt.Sprintf("%v", _m.IsAmateur))
 	builder.WriteByte(')')
 	return builder.String()
 }
 
-// TournamentEntries is a parsable slice of TournamentEntry.
-type TournamentEntries []*TournamentEntry
+// LeaderboardEntries is a parsable slice of LeaderboardEntry.
+type LeaderboardEntries []*LeaderboardEntry

@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
@@ -31,19 +31,19 @@ func TestUpsertTournamentFieldEntry_Create(t *testing.T) {
 		IsAmateur:   false,
 	}
 
-	err := svc.UpsertTournamentFieldEntry(ctx, tournamentEntity, bdlField)
+	err := svc.UpsertFieldEntry(ctx, tournamentEntity, bdlField)
 	require.NoError(t, err)
 
-	entries, err := svc.db.TournamentEntry.Query().
+	entries, err := svc.db.FieldEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID)),
-			tournamententry.HasGolferWith(golfer.IDEQ(golferEntity.ID)),
+			fieldentry.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID)),
+			fieldentry.HasGolferWith(golfer.IDEQ(golferEntity.ID)),
 		).
 		All(ctx)
 
 	require.NoError(t, err)
 	require.Len(t, entries, 1)
-	assert.Equal(t, tournamententry.EntryStatusConfirmed, entries[0].EntryStatus)
+	assert.Equal(t, fieldentry.EntryStatusConfirmed, entries[0].EntryStatus)
 	assert.Equal(t, "Winner", *entries[0].Qualifier)
 	assert.Equal(t, 1, *entries[0].OwgrAtEntry)
 	assert.False(t, entries[0].IsAmateur)
@@ -64,25 +64,25 @@ func TestUpsertTournamentFieldEntry_Update(t *testing.T) {
 		IsAmateur:   false,
 	}
 
-	err := svc.UpsertTournamentFieldEntry(ctx, tournamentEntity, bdlField)
+	err := svc.UpsertFieldEntry(ctx, tournamentEntity, bdlField)
 	require.NoError(t, err)
 
 	bdlField.EntryStatus = "Withdrawn"
 	bdlField.OWGR = intPtr(1)
 
-	err = svc.UpsertTournamentFieldEntry(ctx, tournamentEntity, bdlField)
+	err = svc.UpsertFieldEntry(ctx, tournamentEntity, bdlField)
 	require.NoError(t, err)
 
-	entries, err := svc.db.TournamentEntry.Query().
+	entries, err := svc.db.FieldEntry.Query().
 		Where(
-			tournamententry.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID)),
-			tournamententry.HasGolferWith(golfer.IDEQ(golferEntity.ID)),
+			fieldentry.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID)),
+			fieldentry.HasGolferWith(golfer.IDEQ(golferEntity.ID)),
 		).
 		All(ctx)
 
 	require.NoError(t, err)
 	require.Len(t, entries, 1)
-	assert.Equal(t, tournamententry.EntryStatusWithdrawn, entries[0].EntryStatus)
+	assert.Equal(t, fieldentry.EntryStatusWithdrawn, entries[0].EntryStatus)
 	assert.Equal(t, 1, *entries[0].OwgrAtEntry)
 }
 
@@ -101,11 +101,11 @@ func TestUpsertTournamentFieldEntry_Amateur(t *testing.T) {
 		IsAmateur:   true,
 	}
 
-	err := svc.UpsertTournamentFieldEntry(ctx, tournamentEntity, bdlField)
+	err := svc.UpsertFieldEntry(ctx, tournamentEntity, bdlField)
 	require.NoError(t, err)
 
-	entries, err := svc.db.TournamentEntry.Query().
-		Where(tournamententry.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID))).
+	entries, err := svc.db.FieldEntry.Query().
+		Where(fieldentry.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID))).
 		All(ctx)
 
 	require.NoError(t, err)
@@ -125,37 +125,37 @@ func TestUpsertTournamentFieldEntry_GolferNotFound(t *testing.T) {
 		EntryStatus: "Committed",
 	}
 
-	err := svc.UpsertTournamentFieldEntry(ctx, tournamentEntity, bdlField)
+	err := svc.UpsertFieldEntry(ctx, tournamentEntity, bdlField)
 	require.NoError(t, err)
 
-	entries, err := svc.db.TournamentEntry.Query().
-		Where(tournamententry.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID))).
+	entries, err := svc.db.FieldEntry.Query().
+		Where(fieldentry.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID))).
 		All(ctx)
 
 	require.NoError(t, err)
 	assert.Empty(t, entries)
 }
 
-func TestMapEntryStatus(t *testing.T) {
+func TestMapFieldEntryStatus(t *testing.T) {
 	tests := []struct {
 		input    string
-		expected tournamententry.EntryStatus
+		expected fieldentry.EntryStatus
 	}{
-		{"Committed", tournamententry.EntryStatusConfirmed},
-		{"committed", tournamententry.EntryStatusConfirmed},
-		{"Confirmed", tournamententry.EntryStatusConfirmed},
-		{"Alternate", tournamententry.EntryStatusAlternate},
-		{"alternate", tournamententry.EntryStatusAlternate},
-		{"Withdrawn", tournamententry.EntryStatusWithdrawn},
-		{"WD", tournamententry.EntryStatusWithdrawn},
-		{"wd", tournamententry.EntryStatusWithdrawn},
-		{"Unknown", tournamententry.EntryStatusPending},
-		{"", tournamententry.EntryStatusPending},
+		{"Committed", fieldentry.EntryStatusConfirmed},
+		{"committed", fieldentry.EntryStatusConfirmed},
+		{"Confirmed", fieldentry.EntryStatusConfirmed},
+		{"Alternate", fieldentry.EntryStatusAlternate},
+		{"alternate", fieldentry.EntryStatusAlternate},
+		{"Withdrawn", fieldentry.EntryStatusWithdrawn},
+		{"WD", fieldentry.EntryStatusWithdrawn},
+		{"wd", fieldentry.EntryStatusWithdrawn},
+		{"Unknown", fieldentry.EntryStatusPending},
+		{"", fieldentry.EntryStatusPending},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			result := mapEntryStatus(tt.input)
+			result := mapFieldEntryStatus(tt.input)
 			assert.Equal(t, tt.expected, result)
 		})
 	}

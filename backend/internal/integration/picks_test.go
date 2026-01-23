@@ -34,8 +34,8 @@ func TestPicksIntegration(t *testing.T) {
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 
 		app := testutil.NewTestApp(t).WithDBUser(user)
 		app.App.Post("/picks", handler.Create)
@@ -88,8 +88,8 @@ func TestPicksIntegration(t *testing.T) {
 		tourn1 := factory.CreateUpcomingTournament(2, testutil.WithTournamentName("Tournament 1"))
 		tourn2 := factory.CreateUpcomingTournament(2, testutil.WithTournamentName("Tournament 2"))
 		golfer := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn1, golfer)
-		factory.CreateTournamentEntry(tourn2, golfer)
+		factory.CreateFieldEntry(tourn1, golfer)
+		factory.CreateFieldEntry(tourn2, golfer)
 
 		app := testutil.NewTestApp(t).WithDBUser(user)
 		app.App.Post("/picks", handler.Create)
@@ -118,8 +118,8 @@ func TestPicksIntegration(t *testing.T) {
 		tourn := factory.CreateUpcomingTournament(2)
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
-		factory.CreateTournamentEntry(tourn, golfer1)
-		factory.CreateTournamentEntry(tourn, golfer2)
+		factory.CreateFieldEntry(tourn, golfer1)
+		factory.CreateFieldEntry(tourn, golfer2)
 
 		pick := factory.CreatePick(user, tourn, golfer1, league)
 
@@ -147,9 +147,9 @@ func TestPicksIntegration(t *testing.T) {
 
 		golfer1 := factory.CreateGolfer(testutil.WithGolferName("Used Golfer"))
 		golfer2 := factory.CreateGolfer(testutil.WithGolferName("Available Golfer"))
-		factory.CreateTournamentEntry(tourn1, golfer1)
-		factory.CreateTournamentEntry(tourn2, golfer1)
-		factory.CreateTournamentEntry(tourn2, golfer2)
+		factory.CreateFieldEntry(tourn1, golfer1)
+		factory.CreateFieldEntry(tourn2, golfer1)
+		factory.CreateFieldEntry(tourn2, golfer2)
 
 		factory.CreatePick(user, tourn1, golfer1, league)
 

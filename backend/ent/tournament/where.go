@@ -1074,21 +1074,44 @@ func HasPicksWith(preds ...predicate.Pick) predicate.Tournament {
 	})
 }
 
-// HasEntries applies the HasEdge predicate on the "entries" edge.
-func HasEntries() predicate.Tournament {
+// HasFieldEntries applies the HasEdge predicate on the "field_entries" edge.
+func HasFieldEntries() predicate.Tournament {
 	return predicate.Tournament(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, EntriesTable, EntriesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, FieldEntriesTable, FieldEntriesColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasEntriesWith applies the HasEdge predicate on the "entries" edge with a given conditions (other predicates).
-func HasEntriesWith(preds ...predicate.TournamentEntry) predicate.Tournament {
+// HasFieldEntriesWith applies the HasEdge predicate on the "field_entries" edge with a given conditions (other predicates).
+func HasFieldEntriesWith(preds ...predicate.FieldEntry) predicate.Tournament {
 	return predicate.Tournament(func(s *sql.Selector) {
-		step := newEntriesStep()
+		step := newFieldEntriesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasLeaderboardEntries applies the HasEdge predicate on the "leaderboard_entries" edge.
+func HasLeaderboardEntries() predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LeaderboardEntriesTable, LeaderboardEntriesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasLeaderboardEntriesWith applies the HasEdge predicate on the "leaderboard_entries" edge with a given conditions (other predicates).
+func HasLeaderboardEntriesWith(preds ...predicate.LeaderboardEntry) predicate.Tournament {
+	return predicate.Tournament(func(s *sql.Selector) {
+		step := newLeaderboardEntriesStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

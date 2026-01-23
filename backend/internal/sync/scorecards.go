@@ -2,9 +2,14 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/gofrs/uuid/v5"
+
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
@@ -23,6 +28,7 @@ func (i *Ingester) syncScorecards(ctx context.Context) {
 		Where(
 			tournament.Not(tournament.HasChampion()),
 			tournament.PickWindowClosesAtLT(now),
+			tournament.BdlIDNotNil(),
 		).
 		All(ctx)
 	if err != nil {
@@ -41,11 +47,6 @@ func (i *Ingester) syncScorecards(ctx context.Context) {
 
 	synced := 0
 	for _, t := range tournaments {
-		if t.BdlID == nil {
-			i.logger.Debug("tournament has no BallDontLie ID, skipping", "tournament", t.Name)
-			continue
-		}
-
 		if !i.isTournamentInPlayHours(t) {
 			continue
 		}
@@ -71,12 +72,73 @@ func (i *Ingester) syncScorecards(ctx context.Context) {
 func (i *Ingester) syncTournamentScorecards(ctx context.Context, t *ent.Tournament) error {
 	i.logger.Debug("syncing scorecards", "tournament", t.Name)
 
-	scorecards, err := i.ballDontLie.GetPlayerScorecards(ctx, *t.BdlID)
+	roundResults, err := i.ballDontLie.GetPlayerRoundResults(ctx, *t.BdlID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to fetch round results: %w", err)
 	}
 
-	i.logger.Debug("fetched scorecards", "tournament", t.Name, "count", len(scorecards))
-	SyncRecordsProcessed.WithLabelValues("scorecards", "entries").Add(float64(len(scorecards)))
+	roundsProcessed := 0
+	for idx := range roundResults {
+		result := &roundResults[idx]
+
+		entry, err := i.db.LeaderboardEntry.Query().
+			Where(
+				leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
+				leaderboardentry.HasGolferWith(golfer.BdlID(result.Player.ID)),
+			).
+			Only(ctx)
+		if err != nil {
+			continue
+		}
+
+		_, err = i.syncService.UpsertRound(ctx, entry.ID, result)
+		if err != nil {
+			i.logger.Error("failed to upsert round", "player", result.Player.DisplayName, "round", result.RoundNumber, "error", err)
+			continue
+		}
+		roundsProcessed++
+	}
+
+	scorecards, err := i.ballDontLie.GetPlayerScorecards(ctx, *t.BdlID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch scorecards: %w", err)
+	}
+
+	holesProcessed := 0
+	for idx := range scorecards {
+		sc := &scorecards[idx]
+
+		entry, err := i.db.LeaderboardEntry.Query().
+			Where(
+				leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
+				leaderboardentry.HasGolferWith(golfer.BdlID(sc.Player.ID)),
+			).
+			WithRounds().
+			Only(ctx)
+		if err != nil {
+			continue
+		}
+
+		var roundID *uuid.UUID
+		for _, r := range entry.Edges.Rounds {
+			if r.RoundNumber == sc.RoundNumber {
+				roundID = &r.ID
+				break
+			}
+		}
+		if roundID == nil {
+			continue
+		}
+
+		if err := i.syncService.UpsertHoleScore(ctx, *roundID, sc); err != nil {
+			i.logger.Error("failed to upsert hole score", "player", sc.Player.DisplayName, "round", sc.RoundNumber, "hole", sc.HoleNumber, "error", err)
+			continue
+		}
+		holesProcessed++
+	}
+
+	i.logger.Debug("fetched scorecards", "tournament", t.Name, "rounds", roundsProcessed, "holes", holesProcessed)
+	SyncRecordsProcessed.WithLabelValues("scorecards", "rounds").Add(float64(roundsProcessed))
+	SyncRecordsProcessed.WithLabelValues("scorecards", "holes").Add(float64(holesProcessed))
 	return nil
 }

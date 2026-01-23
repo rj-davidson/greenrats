@@ -35,6 +35,16 @@ const (
 	FieldState = "state"
 	// FieldCountry holds the string denoting the country field in the database.
 	FieldCountry = "country"
+	// FieldEstablished holds the string denoting the established field in the database.
+	FieldEstablished = "established"
+	// FieldArchitect holds the string denoting the architect field in the database.
+	FieldArchitect = "architect"
+	// FieldFairwayGrass holds the string denoting the fairway_grass field in the database.
+	FieldFairwayGrass = "fairway_grass"
+	// FieldRoughGrass holds the string denoting the rough_grass field in the database.
+	FieldRoughGrass = "rough_grass"
+	// FieldGreenGrass holds the string denoting the green_grass field in the database.
+	FieldGreenGrass = "green_grass"
 	// EdgeHoles holds the string denoting the holes edge name in mutations.
 	EdgeHoles = "holes"
 	// EdgeTournaments holds the string denoting the tournaments edge name in mutations.
@@ -79,6 +89,11 @@ var Columns = []string{
 	FieldCity,
 	FieldState,
 	FieldCountry,
+	FieldEstablished,
+	FieldArchitect,
+	FieldFairwayGrass,
+	FieldRoughGrass,
+	FieldGreenGrass,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -160,6 +175,31 @@ func ByState(opts ...sql.OrderTermOption) OrderOption {
 // ByCountry orders the results by the country field.
 func ByCountry(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldCountry, opts...).ToFunc()
+}
+
+// ByEstablished orders the results by the established field.
+func ByEstablished(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEstablished, opts...).ToFunc()
+}
+
+// ByArchitect orders the results by the architect field.
+func ByArchitect(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldArchitect, opts...).ToFunc()
+}
+
+// ByFairwayGrass orders the results by the fairway_grass field.
+func ByFairwayGrass(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldFairwayGrass, opts...).ToFunc()
+}
+
+// ByRoughGrass orders the results by the rough_grass field.
+func ByRoughGrass(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldRoughGrass, opts...).ToFunc()
+}
+
+// ByGreenGrass orders the results by the green_grass field.
+func ByGreenGrass(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldGreenGrass, opts...).ToFunc()
 }
 
 // ByHolesCount orders the results by holes count.

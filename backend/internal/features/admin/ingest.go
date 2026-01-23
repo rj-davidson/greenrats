@@ -9,36 +9,32 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/exa"
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
 	"github.com/rj-davidson/greenrats/internal/external/openai"
-	"github.com/rj-davidson/greenrats/internal/external/pgatour"
-	"github.com/rj-davidson/greenrats/internal/features/fields"
 	"github.com/rj-davidson/greenrats/internal/features/golfers"
 	"github.com/rj-davidson/greenrats/internal/sync"
 )
 
 type IngestService struct {
-	db            *ent.Client
-	config        *config.Config
-	ballDontLie   *balldontlie.Client
-	syncService   *sync.Service
-	fieldsService *fields.Service
-	exa           *exa.Client
-	openai        *openai.Client
-	golfers       *golfers.Service
-	logger        *slog.Logger
+	db          *ent.Client
+	config      *config.Config
+	ballDontLie *balldontlie.Client
+	syncService *sync.Service
+	exa         *exa.Client
+	openai      *openai.Client
+	golfers     *golfers.Service
+	logger      *slog.Logger
 }
 
 func NewIngestService(
 	db *ent.Client,
 	cfg *config.Config,
 	ballDontLie *balldontlie.Client,
-	pgatourClient *pgatour.Client,
 	googlemapsClient *googlemaps.Client,
 	exaClient *exa.Client,
 	openaiClient *openai.Client,
@@ -46,15 +42,14 @@ func NewIngestService(
 	logger *slog.Logger,
 ) *IngestService {
 	return &IngestService{
-		db:            db,
-		config:        cfg,
-		ballDontLie:   ballDontLie,
-		syncService:   sync.NewService(db, googlemapsClient, logger),
-		fieldsService: fields.NewService(db, pgatourClient, logger),
-		exa:           exaClient,
-		openai:        openaiClient,
-		golfers:       golfersSvc,
-		logger:        logger,
+		db:          db,
+		config:      cfg,
+		ballDontLie: ballDontLie,
+		syncService: sync.NewService(db, googlemapsClient, logger),
+		exa:         exaClient,
+		openai:      openaiClient,
+		golfers:     golfersSvc,
+		logger:      logger,
 	}
 }
 
@@ -125,7 +120,7 @@ func (s *IngestService) SyncLeaderboard(ctx context.Context, tournamentID uuid.U
 	s.logger.Info("fetched results", "tournament", t.Name, "count", len(results))
 
 	for idx := range results {
-		if err := s.syncService.UpsertTournamentEntry(ctx, t, &results[idx]); err != nil {
+		if err := s.syncService.UpsertLeaderboardEntry(ctx, t, &results[idx]); err != nil {
 			s.logger.Warn("failed to upsert entry", "player", results[idx].Player.DisplayName, "error", err)
 			continue
 		}
@@ -148,21 +143,21 @@ func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID
 		year = t.EndDate.Year()
 	}
 
-	entries, err := s.db.TournamentEntry.Query().
-		Where(tournamententry.HasTournamentWith(tournament.IDEQ(t.ID))).
+	entries, err := s.db.LeaderboardEntry.Query().
+		Where(leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID))).
 		WithGolfer().
 		All(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to query tournament entries: %w", err)
+		return fmt.Errorf("failed to query leaderboard entries: %w", err)
 	}
 
 	if len(entries) == 0 {
-		s.logger.Info("no tournament entries, skipping earnings sync", "tournament", t.Name)
+		s.logger.Info("no leaderboard entries, skipping earnings sync", "tournament", t.Name)
 		return nil
 	}
 
 	golferInputs := make([]openai.GolferInput, 0, len(entries))
-	entryByGolferID := make(map[string]*ent.TournamentEntry)
+	entryByGolferID := make(map[string]*ent.LeaderboardEntry)
 	for _, entry := range entries {
 		if entry.Edges.Golfer == nil || entry.Cut || entry.Position == 0 {
 			continue
@@ -213,19 +208,34 @@ func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID
 }
 
 func (s *IngestService) SyncField(ctx context.Context, tournamentID uuid.UUID) error {
-	result, err := s.fieldsService.SyncTournamentField(ctx, tournamentID)
+	t, err := s.db.Tournament.Get(ctx, tournamentID)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to find tournament: %w", err)
 	}
 
-	s.logger.Info("field sync completed",
-		"tournament", result.TournamentName,
-		"total", result.TotalPlayers,
-		"matched", result.MatchedPlayers,
-		"new", result.NewEntries,
-		"updated", result.UpdatedEntries,
-	)
+	if t.BdlID == nil {
+		return fmt.Errorf("tournament has no BallDontLie ID")
+	}
 
+	s.logger.Info("starting field sync", "tournament", t.Name)
+
+	fields, err := s.ballDontLie.GetTournamentField(ctx, *t.BdlID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch tournament field: %w", err)
+	}
+
+	s.logger.Info("fetched field", "tournament", t.Name, "count", len(fields))
+
+	processed := 0
+	for idx := range fields {
+		if err := s.syncService.UpsertFieldEntry(ctx, t, &fields[idx]); err != nil {
+			s.logger.Warn("failed to upsert field entry", "player", fields[idx].Player.DisplayName, "error", err)
+			continue
+		}
+		processed++
+	}
+
+	s.logger.Info("field sync completed", "tournament", t.Name, "processed", processed)
 	return nil
 }
 
@@ -236,7 +246,7 @@ func (s *IngestService) matchWithOpenAI(
 	t *ent.Tournament,
 	content string,
 	golferInputs []openai.GolferInput,
-	entryByGolferID map[string]*ent.TournamentEntry,
+	entryByGolferID map[string]*ent.LeaderboardEntry,
 ) int {
 	leaderboard, err := s.openai.ParseLeaderboardContent(ctx, content, t.Name)
 	if err != nil {

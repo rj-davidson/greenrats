@@ -14,19 +14,19 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
-// TournamentEntryQuery is the builder for querying TournamentEntry entities.
-type TournamentEntryQuery struct {
+// LeaderboardEntryQuery is the builder for querying LeaderboardEntry entities.
+type LeaderboardEntryQuery struct {
 	config
 	ctx            *QueryContext
-	order          []tournamententry.OrderOption
+	order          []leaderboardentry.OrderOption
 	inters         []Interceptor
-	predicates     []predicate.TournamentEntry
+	predicates     []predicate.LeaderboardEntry
 	withTournament *TournamentQuery
 	withGolfer     *GolferQuery
 	withRounds     *RoundQuery
@@ -36,39 +36,39 @@ type TournamentEntryQuery struct {
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the TournamentEntryQuery builder.
-func (_q *TournamentEntryQuery) Where(ps ...predicate.TournamentEntry) *TournamentEntryQuery {
+// Where adds a new predicate for the LeaderboardEntryQuery builder.
+func (_q *LeaderboardEntryQuery) Where(ps ...predicate.LeaderboardEntry) *LeaderboardEntryQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *TournamentEntryQuery) Limit(limit int) *TournamentEntryQuery {
+func (_q *LeaderboardEntryQuery) Limit(limit int) *LeaderboardEntryQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *TournamentEntryQuery) Offset(offset int) *TournamentEntryQuery {
+func (_q *LeaderboardEntryQuery) Offset(offset int) *LeaderboardEntryQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *TournamentEntryQuery) Unique(unique bool) *TournamentEntryQuery {
+func (_q *LeaderboardEntryQuery) Unique(unique bool) *LeaderboardEntryQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *TournamentEntryQuery) Order(o ...tournamententry.OrderOption) *TournamentEntryQuery {
+func (_q *LeaderboardEntryQuery) Order(o ...leaderboardentry.OrderOption) *LeaderboardEntryQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
 // QueryTournament chains the current query on the "tournament" edge.
-func (_q *TournamentEntryQuery) QueryTournament() *TournamentQuery {
+func (_q *LeaderboardEntryQuery) QueryTournament() *TournamentQuery {
 	query := (&TournamentClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -79,9 +79,9 @@ func (_q *TournamentEntryQuery) QueryTournament() *TournamentQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(tournamententry.Table, tournamententry.FieldID, selector),
+			sqlgraph.From(leaderboardentry.Table, leaderboardentry.FieldID, selector),
 			sqlgraph.To(tournament.Table, tournament.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, tournamententry.TournamentTable, tournamententry.TournamentColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, leaderboardentry.TournamentTable, leaderboardentry.TournamentColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -90,7 +90,7 @@ func (_q *TournamentEntryQuery) QueryTournament() *TournamentQuery {
 }
 
 // QueryGolfer chains the current query on the "golfer" edge.
-func (_q *TournamentEntryQuery) QueryGolfer() *GolferQuery {
+func (_q *LeaderboardEntryQuery) QueryGolfer() *GolferQuery {
 	query := (&GolferClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -101,9 +101,9 @@ func (_q *TournamentEntryQuery) QueryGolfer() *GolferQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(tournamententry.Table, tournamententry.FieldID, selector),
+			sqlgraph.From(leaderboardentry.Table, leaderboardentry.FieldID, selector),
 			sqlgraph.To(golfer.Table, golfer.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, tournamententry.GolferTable, tournamententry.GolferColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, leaderboardentry.GolferTable, leaderboardentry.GolferColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -112,7 +112,7 @@ func (_q *TournamentEntryQuery) QueryGolfer() *GolferQuery {
 }
 
 // QueryRounds chains the current query on the "rounds" edge.
-func (_q *TournamentEntryQuery) QueryRounds() *RoundQuery {
+func (_q *LeaderboardEntryQuery) QueryRounds() *RoundQuery {
 	query := (&RoundClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -123,9 +123,9 @@ func (_q *TournamentEntryQuery) QueryRounds() *RoundQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(tournamententry.Table, tournamententry.FieldID, selector),
+			sqlgraph.From(leaderboardentry.Table, leaderboardentry.FieldID, selector),
 			sqlgraph.To(round.Table, round.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, tournamententry.RoundsTable, tournamententry.RoundsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, leaderboardentry.RoundsTable, leaderboardentry.RoundsColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -133,21 +133,21 @@ func (_q *TournamentEntryQuery) QueryRounds() *RoundQuery {
 	return query
 }
 
-// First returns the first TournamentEntry entity from the query.
-// Returns a *NotFoundError when no TournamentEntry was found.
-func (_q *TournamentEntryQuery) First(ctx context.Context) (*TournamentEntry, error) {
+// First returns the first LeaderboardEntry entity from the query.
+// Returns a *NotFoundError when no LeaderboardEntry was found.
+func (_q *LeaderboardEntryQuery) First(ctx context.Context) (*LeaderboardEntry, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{tournamententry.Label}
+		return nil, &NotFoundError{leaderboardentry.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *TournamentEntryQuery) FirstX(ctx context.Context) *TournamentEntry {
+func (_q *LeaderboardEntryQuery) FirstX(ctx context.Context) *LeaderboardEntry {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -155,22 +155,22 @@ func (_q *TournamentEntryQuery) FirstX(ctx context.Context) *TournamentEntry {
 	return node
 }
 
-// FirstID returns the first TournamentEntry ID from the query.
-// Returns a *NotFoundError when no TournamentEntry ID was found.
-func (_q *TournamentEntryQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
+// FirstID returns the first LeaderboardEntry ID from the query.
+// Returns a *NotFoundError when no LeaderboardEntry ID was found.
+func (_q *LeaderboardEntryQuery) FirstID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{tournamententry.Label}
+		err = &NotFoundError{leaderboardentry.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *TournamentEntryQuery) FirstIDX(ctx context.Context) uuid.UUID {
+func (_q *LeaderboardEntryQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -178,10 +178,10 @@ func (_q *TournamentEntryQuery) FirstIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// Only returns a single TournamentEntry entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one TournamentEntry entity is found.
-// Returns a *NotFoundError when no TournamentEntry entities are found.
-func (_q *TournamentEntryQuery) Only(ctx context.Context) (*TournamentEntry, error) {
+// Only returns a single LeaderboardEntry entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one LeaderboardEntry entity is found.
+// Returns a *NotFoundError when no LeaderboardEntry entities are found.
+func (_q *LeaderboardEntryQuery) Only(ctx context.Context) (*LeaderboardEntry, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -190,14 +190,14 @@ func (_q *TournamentEntryQuery) Only(ctx context.Context) (*TournamentEntry, err
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{tournamententry.Label}
+		return nil, &NotFoundError{leaderboardentry.Label}
 	default:
-		return nil, &NotSingularError{tournamententry.Label}
+		return nil, &NotSingularError{leaderboardentry.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *TournamentEntryQuery) OnlyX(ctx context.Context) *TournamentEntry {
+func (_q *LeaderboardEntryQuery) OnlyX(ctx context.Context) *LeaderboardEntry {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -205,10 +205,10 @@ func (_q *TournamentEntryQuery) OnlyX(ctx context.Context) *TournamentEntry {
 	return node
 }
 
-// OnlyID is like Only, but returns the only TournamentEntry ID in the query.
-// Returns a *NotSingularError when more than one TournamentEntry ID is found.
+// OnlyID is like Only, but returns the only LeaderboardEntry ID in the query.
+// Returns a *NotSingularError when more than one LeaderboardEntry ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *TournamentEntryQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
+func (_q *LeaderboardEntryQuery) OnlyID(ctx context.Context) (id uuid.UUID, err error) {
 	var ids []uuid.UUID
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -217,15 +217,15 @@ func (_q *TournamentEntryQuery) OnlyID(ctx context.Context) (id uuid.UUID, err e
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{tournamententry.Label}
+		err = &NotFoundError{leaderboardentry.Label}
 	default:
-		err = &NotSingularError{tournamententry.Label}
+		err = &NotSingularError{leaderboardentry.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *TournamentEntryQuery) OnlyIDX(ctx context.Context) uuid.UUID {
+func (_q *LeaderboardEntryQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -233,18 +233,18 @@ func (_q *TournamentEntryQuery) OnlyIDX(ctx context.Context) uuid.UUID {
 	return id
 }
 
-// All executes the query and returns a list of TournamentEntries.
-func (_q *TournamentEntryQuery) All(ctx context.Context) ([]*TournamentEntry, error) {
+// All executes the query and returns a list of LeaderboardEntries.
+func (_q *LeaderboardEntryQuery) All(ctx context.Context) ([]*LeaderboardEntry, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*TournamentEntry, *TournamentEntryQuery]()
-	return withInterceptors[[]*TournamentEntry](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*LeaderboardEntry, *LeaderboardEntryQuery]()
+	return withInterceptors[[]*LeaderboardEntry](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *TournamentEntryQuery) AllX(ctx context.Context) []*TournamentEntry {
+func (_q *LeaderboardEntryQuery) AllX(ctx context.Context) []*LeaderboardEntry {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -252,20 +252,20 @@ func (_q *TournamentEntryQuery) AllX(ctx context.Context) []*TournamentEntry {
 	return nodes
 }
 
-// IDs executes the query and returns a list of TournamentEntry IDs.
-func (_q *TournamentEntryQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
+// IDs executes the query and returns a list of LeaderboardEntry IDs.
+func (_q *LeaderboardEntryQuery) IDs(ctx context.Context) (ids []uuid.UUID, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(tournamententry.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(leaderboardentry.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *TournamentEntryQuery) IDsX(ctx context.Context) []uuid.UUID {
+func (_q *LeaderboardEntryQuery) IDsX(ctx context.Context) []uuid.UUID {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -274,16 +274,16 @@ func (_q *TournamentEntryQuery) IDsX(ctx context.Context) []uuid.UUID {
 }
 
 // Count returns the count of the given query.
-func (_q *TournamentEntryQuery) Count(ctx context.Context) (int, error) {
+func (_q *LeaderboardEntryQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*TournamentEntryQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*LeaderboardEntryQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *TournamentEntryQuery) CountX(ctx context.Context) int {
+func (_q *LeaderboardEntryQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -292,7 +292,7 @@ func (_q *TournamentEntryQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *TournamentEntryQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *LeaderboardEntryQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -305,7 +305,7 @@ func (_q *TournamentEntryQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *TournamentEntryQuery) ExistX(ctx context.Context) bool {
+func (_q *LeaderboardEntryQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -313,18 +313,18 @@ func (_q *TournamentEntryQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the TournamentEntryQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the LeaderboardEntryQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *TournamentEntryQuery) Clone() *TournamentEntryQuery {
+func (_q *LeaderboardEntryQuery) Clone() *LeaderboardEntryQuery {
 	if _q == nil {
 		return nil
 	}
-	return &TournamentEntryQuery{
+	return &LeaderboardEntryQuery{
 		config:         _q.config,
 		ctx:            _q.ctx.Clone(),
-		order:          append([]tournamententry.OrderOption{}, _q.order...),
+		order:          append([]leaderboardentry.OrderOption{}, _q.order...),
 		inters:         append([]Interceptor{}, _q.inters...),
-		predicates:     append([]predicate.TournamentEntry{}, _q.predicates...),
+		predicates:     append([]predicate.LeaderboardEntry{}, _q.predicates...),
 		withTournament: _q.withTournament.Clone(),
 		withGolfer:     _q.withGolfer.Clone(),
 		withRounds:     _q.withRounds.Clone(),
@@ -336,7 +336,7 @@ func (_q *TournamentEntryQuery) Clone() *TournamentEntryQuery {
 
 // WithTournament tells the query-builder to eager-load the nodes that are connected to
 // the "tournament" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TournamentEntryQuery) WithTournament(opts ...func(*TournamentQuery)) *TournamentEntryQuery {
+func (_q *LeaderboardEntryQuery) WithTournament(opts ...func(*TournamentQuery)) *LeaderboardEntryQuery {
 	query := (&TournamentClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -347,7 +347,7 @@ func (_q *TournamentEntryQuery) WithTournament(opts ...func(*TournamentQuery)) *
 
 // WithGolfer tells the query-builder to eager-load the nodes that are connected to
 // the "golfer" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TournamentEntryQuery) WithGolfer(opts ...func(*GolferQuery)) *TournamentEntryQuery {
+func (_q *LeaderboardEntryQuery) WithGolfer(opts ...func(*GolferQuery)) *LeaderboardEntryQuery {
 	query := (&GolferClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -358,7 +358,7 @@ func (_q *TournamentEntryQuery) WithGolfer(opts ...func(*GolferQuery)) *Tourname
 
 // WithRounds tells the query-builder to eager-load the nodes that are connected to
 // the "rounds" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *TournamentEntryQuery) WithRounds(opts ...func(*RoundQuery)) *TournamentEntryQuery {
+func (_q *LeaderboardEntryQuery) WithRounds(opts ...func(*RoundQuery)) *LeaderboardEntryQuery {
 	query := (&RoundClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -377,15 +377,15 @@ func (_q *TournamentEntryQuery) WithRounds(opts ...func(*RoundQuery)) *Tournamen
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.TournamentEntry.Query().
-//		GroupBy(tournamententry.FieldCreatedAt).
+//	client.LeaderboardEntry.Query().
+//		GroupBy(leaderboardentry.FieldCreatedAt).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *TournamentEntryQuery) GroupBy(field string, fields ...string) *TournamentEntryGroupBy {
+func (_q *LeaderboardEntryQuery) GroupBy(field string, fields ...string) *LeaderboardEntryGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &TournamentEntryGroupBy{build: _q}
+	grbuild := &LeaderboardEntryGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = tournamententry.Label
+	grbuild.label = leaderboardentry.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -399,23 +399,23 @@ func (_q *TournamentEntryQuery) GroupBy(field string, fields ...string) *Tournam
 //		CreatedAt time.Time `json:"created_at,omitempty"`
 //	}
 //
-//	client.TournamentEntry.Query().
-//		Select(tournamententry.FieldCreatedAt).
+//	client.LeaderboardEntry.Query().
+//		Select(leaderboardentry.FieldCreatedAt).
 //		Scan(ctx, &v)
-func (_q *TournamentEntryQuery) Select(fields ...string) *TournamentEntrySelect {
+func (_q *LeaderboardEntryQuery) Select(fields ...string) *LeaderboardEntrySelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &TournamentEntrySelect{TournamentEntryQuery: _q}
-	sbuild.label = tournamententry.Label
+	sbuild := &LeaderboardEntrySelect{LeaderboardEntryQuery: _q}
+	sbuild.label = leaderboardentry.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a TournamentEntrySelect configured with the given aggregations.
-func (_q *TournamentEntryQuery) Aggregate(fns ...AggregateFunc) *TournamentEntrySelect {
+// Aggregate returns a LeaderboardEntrySelect configured with the given aggregations.
+func (_q *LeaderboardEntryQuery) Aggregate(fns ...AggregateFunc) *LeaderboardEntrySelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *TournamentEntryQuery) prepareQuery(ctx context.Context) error {
+func (_q *LeaderboardEntryQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -427,7 +427,7 @@ func (_q *TournamentEntryQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !tournamententry.ValidColumn(f) {
+		if !leaderboardentry.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -441,9 +441,9 @@ func (_q *TournamentEntryQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *TournamentEntryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*TournamentEntry, error) {
+func (_q *LeaderboardEntryQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*LeaderboardEntry, error) {
 	var (
-		nodes       = []*TournamentEntry{}
+		nodes       = []*LeaderboardEntry{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
 		loadedTypes = [3]bool{
@@ -456,13 +456,13 @@ func (_q *TournamentEntryQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 		withFKs = true
 	}
 	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, tournamententry.ForeignKeys...)
+		_spec.Node.Columns = append(_spec.Node.Columns, leaderboardentry.ForeignKeys...)
 	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*TournamentEntry).scanValues(nil, columns)
+		return (*LeaderboardEntry).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &TournamentEntry{config: _q.config}
+		node := &LeaderboardEntry{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -478,34 +478,34 @@ func (_q *TournamentEntryQuery) sqlAll(ctx context.Context, hooks ...queryHook) 
 	}
 	if query := _q.withTournament; query != nil {
 		if err := _q.loadTournament(ctx, query, nodes, nil,
-			func(n *TournamentEntry, e *Tournament) { n.Edges.Tournament = e }); err != nil {
+			func(n *LeaderboardEntry, e *Tournament) { n.Edges.Tournament = e }); err != nil {
 			return nil, err
 		}
 	}
 	if query := _q.withGolfer; query != nil {
 		if err := _q.loadGolfer(ctx, query, nodes, nil,
-			func(n *TournamentEntry, e *Golfer) { n.Edges.Golfer = e }); err != nil {
+			func(n *LeaderboardEntry, e *Golfer) { n.Edges.Golfer = e }); err != nil {
 			return nil, err
 		}
 	}
 	if query := _q.withRounds; query != nil {
 		if err := _q.loadRounds(ctx, query, nodes,
-			func(n *TournamentEntry) { n.Edges.Rounds = []*Round{} },
-			func(n *TournamentEntry, e *Round) { n.Edges.Rounds = append(n.Edges.Rounds, e) }); err != nil {
+			func(n *LeaderboardEntry) { n.Edges.Rounds = []*Round{} },
+			func(n *LeaderboardEntry, e *Round) { n.Edges.Rounds = append(n.Edges.Rounds, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *TournamentEntryQuery) loadTournament(ctx context.Context, query *TournamentQuery, nodes []*TournamentEntry, init func(*TournamentEntry), assign func(*TournamentEntry, *Tournament)) error {
+func (_q *LeaderboardEntryQuery) loadTournament(ctx context.Context, query *TournamentQuery, nodes []*LeaderboardEntry, init func(*LeaderboardEntry), assign func(*LeaderboardEntry, *Tournament)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*TournamentEntry)
+	nodeids := make(map[uuid.UUID][]*LeaderboardEntry)
 	for i := range nodes {
-		if nodes[i].tournament_entries == nil {
+		if nodes[i].tournament_leaderboard_entries == nil {
 			continue
 		}
-		fk := *nodes[i].tournament_entries
+		fk := *nodes[i].tournament_leaderboard_entries
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -522,7 +522,7 @@ func (_q *TournamentEntryQuery) loadTournament(ctx context.Context, query *Tourn
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "tournament_entries" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "tournament_leaderboard_entries" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -530,14 +530,14 @@ func (_q *TournamentEntryQuery) loadTournament(ctx context.Context, query *Tourn
 	}
 	return nil
 }
-func (_q *TournamentEntryQuery) loadGolfer(ctx context.Context, query *GolferQuery, nodes []*TournamentEntry, init func(*TournamentEntry), assign func(*TournamentEntry, *Golfer)) error {
+func (_q *LeaderboardEntryQuery) loadGolfer(ctx context.Context, query *GolferQuery, nodes []*LeaderboardEntry, init func(*LeaderboardEntry), assign func(*LeaderboardEntry, *Golfer)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
-	nodeids := make(map[uuid.UUID][]*TournamentEntry)
+	nodeids := make(map[uuid.UUID][]*LeaderboardEntry)
 	for i := range nodes {
-		if nodes[i].golfer_entries == nil {
+		if nodes[i].golfer_leaderboard_entries == nil {
 			continue
 		}
-		fk := *nodes[i].golfer_entries
+		fk := *nodes[i].golfer_leaderboard_entries
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -554,7 +554,7 @@ func (_q *TournamentEntryQuery) loadGolfer(ctx context.Context, query *GolferQue
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "golfer_entries" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "golfer_leaderboard_entries" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -562,9 +562,9 @@ func (_q *TournamentEntryQuery) loadGolfer(ctx context.Context, query *GolferQue
 	}
 	return nil
 }
-func (_q *TournamentEntryQuery) loadRounds(ctx context.Context, query *RoundQuery, nodes []*TournamentEntry, init func(*TournamentEntry), assign func(*TournamentEntry, *Round)) error {
+func (_q *LeaderboardEntryQuery) loadRounds(ctx context.Context, query *RoundQuery, nodes []*LeaderboardEntry, init func(*LeaderboardEntry), assign func(*LeaderboardEntry, *Round)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[uuid.UUID]*TournamentEntry)
+	nodeids := make(map[uuid.UUID]*LeaderboardEntry)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -574,27 +574,27 @@ func (_q *TournamentEntryQuery) loadRounds(ctx context.Context, query *RoundQuer
 	}
 	query.withFKs = true
 	query.Where(predicate.Round(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(tournamententry.RoundsColumn), fks...))
+		s.Where(sql.InValues(s.C(leaderboardentry.RoundsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.tournament_entry_rounds
+		fk := n.leaderboard_entry_rounds
 		if fk == nil {
-			return fmt.Errorf(`foreign-key "tournament_entry_rounds" is nil for node %v`, n.ID)
+			return fmt.Errorf(`foreign-key "leaderboard_entry_rounds" is nil for node %v`, n.ID)
 		}
 		node, ok := nodeids[*fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "tournament_entry_rounds" returned %v for node %v`, *fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "leaderboard_entry_rounds" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}
 	return nil
 }
 
-func (_q *TournamentEntryQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *LeaderboardEntryQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -603,8 +603,8 @@ func (_q *TournamentEntryQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *TournamentEntryQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(tournamententry.Table, tournamententry.Columns, sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID))
+func (_q *LeaderboardEntryQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(leaderboardentry.Table, leaderboardentry.Columns, sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -613,9 +613,9 @@ func (_q *TournamentEntryQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, tournamententry.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, leaderboardentry.FieldID)
 		for i := range fields {
-			if fields[i] != tournamententry.FieldID {
+			if fields[i] != leaderboardentry.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
@@ -643,12 +643,12 @@ func (_q *TournamentEntryQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *TournamentEntryQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *LeaderboardEntryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(tournamententry.Table)
+	t1 := builder.Table(leaderboardentry.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = tournamententry.Columns
+		columns = leaderboardentry.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -675,28 +675,28 @@ func (_q *TournamentEntryQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// TournamentEntryGroupBy is the group-by builder for TournamentEntry entities.
-type TournamentEntryGroupBy struct {
+// LeaderboardEntryGroupBy is the group-by builder for LeaderboardEntry entities.
+type LeaderboardEntryGroupBy struct {
 	selector
-	build *TournamentEntryQuery
+	build *LeaderboardEntryQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *TournamentEntryGroupBy) Aggregate(fns ...AggregateFunc) *TournamentEntryGroupBy {
+func (_g *LeaderboardEntryGroupBy) Aggregate(fns ...AggregateFunc) *LeaderboardEntryGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *TournamentEntryGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *LeaderboardEntryGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*TournamentEntryQuery, *TournamentEntryGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*LeaderboardEntryQuery, *LeaderboardEntryGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *TournamentEntryGroupBy) sqlScan(ctx context.Context, root *TournamentEntryQuery, v any) error {
+func (_g *LeaderboardEntryGroupBy) sqlScan(ctx context.Context, root *LeaderboardEntryQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -723,28 +723,28 @@ func (_g *TournamentEntryGroupBy) sqlScan(ctx context.Context, root *TournamentE
 	return sql.ScanSlice(rows, v)
 }
 
-// TournamentEntrySelect is the builder for selecting fields of TournamentEntry entities.
-type TournamentEntrySelect struct {
-	*TournamentEntryQuery
+// LeaderboardEntrySelect is the builder for selecting fields of LeaderboardEntry entities.
+type LeaderboardEntrySelect struct {
+	*LeaderboardEntryQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *TournamentEntrySelect) Aggregate(fns ...AggregateFunc) *TournamentEntrySelect {
+func (_s *LeaderboardEntrySelect) Aggregate(fns ...AggregateFunc) *LeaderboardEntrySelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *TournamentEntrySelect) Scan(ctx context.Context, v any) error {
+func (_s *LeaderboardEntrySelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*TournamentEntryQuery, *TournamentEntrySelect](ctx, _s.TournamentEntryQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*LeaderboardEntryQuery, *LeaderboardEntrySelect](ctx, _s.LeaderboardEntryQuery, _s, _s.inters, v)
 }
 
-func (_s *TournamentEntrySelect) sqlScan(ctx context.Context, root *TournamentEntryQuery, v any) error {
+func (_s *LeaderboardEntrySelect) sqlScan(ctx context.Context, root *LeaderboardEntryQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

@@ -18,8 +18,6 @@ import (
 	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
-	"github.com/rj-davidson/greenrats/internal/external/pgatour"
-	"github.com/rj-davidson/greenrats/internal/features/fields"
 	"github.com/rj-davidson/greenrats/internal/sync"
 )
 
@@ -65,8 +63,6 @@ func run() error {
 
 	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, cfg.IsDevelopment(), logger)
 	emailClient := email.New(cfg, logger)
-	pgatourClient := pgatour.New(cfg.PGATourAPIKey, logger)
-	fieldsService := fields.NewService(db, pgatourClient, logger)
 
 	var gmapsClient *googlemaps.Client
 	if cfg.GoogleMapsAPIKey != "" {
@@ -83,9 +79,7 @@ func run() error {
 		db,
 		cfg,
 		bdlClient,
-		pgatourClient,
 		syncService,
-		fieldsService,
 		emailClient,
 		logger,
 	)

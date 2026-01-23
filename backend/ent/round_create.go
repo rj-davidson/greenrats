@@ -13,8 +13,8 @@ import (
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/holescore"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/round"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 // RoundCreate is the builder for creating a Round entity.
@@ -114,15 +114,15 @@ func (_c *RoundCreate) SetNillableID(v *uuid.UUID) *RoundCreate {
 	return _c
 }
 
-// SetTournamentEntryID sets the "tournament_entry" edge to the TournamentEntry entity by ID.
-func (_c *RoundCreate) SetTournamentEntryID(id uuid.UUID) *RoundCreate {
-	_c.mutation.SetTournamentEntryID(id)
+// SetLeaderboardEntryID sets the "leaderboard_entry" edge to the LeaderboardEntry entity by ID.
+func (_c *RoundCreate) SetLeaderboardEntryID(id uuid.UUID) *RoundCreate {
+	_c.mutation.SetLeaderboardEntryID(id)
 	return _c
 }
 
-// SetTournamentEntry sets the "tournament_entry" edge to the TournamentEntry entity.
-func (_c *RoundCreate) SetTournamentEntry(v *TournamentEntry) *RoundCreate {
-	return _c.SetTournamentEntryID(v.ID)
+// SetLeaderboardEntry sets the "leaderboard_entry" edge to the LeaderboardEntry entity.
+func (_c *RoundCreate) SetLeaderboardEntry(v *LeaderboardEntry) *RoundCreate {
+	return _c.SetLeaderboardEntryID(v.ID)
 }
 
 // AddHoleScoreIDs adds the "hole_scores" edge to the HoleScore entity by IDs.
@@ -224,8 +224,8 @@ func (_c *RoundCreate) check() error {
 			return &ValidationError{Name: "round_number", err: fmt.Errorf(`ent: validator failed for field "Round.round_number": %w`, err)}
 		}
 	}
-	if len(_c.mutation.TournamentEntryIDs()) == 0 {
-		return &ValidationError{Name: "tournament_entry", err: errors.New(`ent: missing required edge "Round.tournament_entry"`)}
+	if len(_c.mutation.LeaderboardEntryIDs()) == 0 {
+		return &ValidationError{Name: "leaderboard_entry", err: errors.New(`ent: missing required edge "Round.leaderboard_entry"`)}
 	}
 	return nil
 }
@@ -286,21 +286,21 @@ func (_c *RoundCreate) createSpec() (*Round, *sqlgraph.CreateSpec) {
 		_spec.SetField(round.FieldTeeTime, field.TypeTime, value)
 		_node.TeeTime = &value
 	}
-	if nodes := _c.mutation.TournamentEntryIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.LeaderboardEntryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   round.TournamentEntryTable,
-			Columns: []string{round.TournamentEntryColumn},
+			Table:   round.LeaderboardEntryTable,
+			Columns: []string{round.LeaderboardEntryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.tournament_entry_rounds = &nodes[0]
+		_node.leaderboard_entry_rounds = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := _c.mutation.HoleScoresIDs(); len(nodes) > 0 {

@@ -356,21 +356,21 @@ func TeeTimeNotNil() predicate.Round {
 	return predicate.Round(sql.FieldNotNull(FieldTeeTime))
 }
 
-// HasTournamentEntry applies the HasEdge predicate on the "tournament_entry" edge.
-func HasTournamentEntry() predicate.Round {
+// HasLeaderboardEntry applies the HasEdge predicate on the "leaderboard_entry" edge.
+func HasLeaderboardEntry() predicate.Round {
 	return predicate.Round(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, TournamentEntryTable, TournamentEntryColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, LeaderboardEntryTable, LeaderboardEntryColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasTournamentEntryWith applies the HasEdge predicate on the "tournament_entry" edge with a given conditions (other predicates).
-func HasTournamentEntryWith(preds ...predicate.TournamentEntry) predicate.Round {
+// HasLeaderboardEntryWith applies the HasEdge predicate on the "leaderboard_entry" edge with a given conditions (other predicates).
+func HasLeaderboardEntryWith(preds ...predicate.LeaderboardEntry) predicate.Round {
 	return predicate.Round(func(s *sql.Selector) {
-		step := newTournamentEntryStep()
+		step := newLeaderboardEntryStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

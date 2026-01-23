@@ -42,7 +42,7 @@ func (Round) Fields() []ent.Field {
 // Edges of the Round.
 func (Round) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("tournament_entry", TournamentEntry.Type).
+		edge.From("leaderboard_entry", LeaderboardEntry.Type).
 			Ref("rounds").
 			Unique().
 			Required(),
@@ -56,7 +56,7 @@ func (Round) Edges() []ent.Edge {
 // Indexes of the Round.
 func (Round) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Edges("tournament_entry").
+		index.Edges("leaderboard_entry").
 			Fields("round_number").
 			Unique(),
 	}

@@ -49,6 +49,23 @@ func (Course) Fields() []ent.Field {
 		field.String("country").
 			Optional().
 			Nillable(),
+		field.Int("established").
+			Optional().
+			Nillable().
+			Comment("Year the course was established"),
+		field.String("architect").
+			Optional().
+			Nillable().
+			Comment("Course architect/designer"),
+		field.String("fairway_grass").
+			Optional().
+			Nillable(),
+		field.String("rough_grass").
+			Optional().
+			Nillable(),
+		field.String("green_grass").
+			Optional().
+			Nillable(),
 	}
 }
 

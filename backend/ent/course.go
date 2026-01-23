@@ -38,6 +38,16 @@ type Course struct {
 	State *string `json:"state,omitempty"`
 	// Country holds the value of the "country" field.
 	Country *string `json:"country,omitempty"`
+	// Year the course was established
+	Established *int `json:"established,omitempty"`
+	// Course architect/designer
+	Architect *string `json:"architect,omitempty"`
+	// FairwayGrass holds the value of the "fairway_grass" field.
+	FairwayGrass *string `json:"fairway_grass,omitempty"`
+	// RoughGrass holds the value of the "rough_grass" field.
+	RoughGrass *string `json:"rough_grass,omitempty"`
+	// GreenGrass holds the value of the "green_grass" field.
+	GreenGrass *string `json:"green_grass,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CourseQuery when eager-loading is set.
 	Edges        CourseEdges `json:"edges"`
@@ -89,9 +99,9 @@ func (*Course) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case course.FieldBdlID, course.FieldPar, course.FieldYardage:
+		case course.FieldBdlID, course.FieldPar, course.FieldYardage, course.FieldEstablished:
 			values[i] = new(sql.NullInt64)
-		case course.FieldPgaTourID, course.FieldName, course.FieldCity, course.FieldState, course.FieldCountry:
+		case course.FieldPgaTourID, course.FieldName, course.FieldCity, course.FieldState, course.FieldCountry, course.FieldArchitect, course.FieldFairwayGrass, course.FieldRoughGrass, course.FieldGreenGrass:
 			values[i] = new(sql.NullString)
 		case course.FieldCreatedAt, course.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -185,6 +195,41 @@ func (_m *Course) assignValues(columns []string, values []any) error {
 				_m.Country = new(string)
 				*_m.Country = value.String
 			}
+		case course.FieldEstablished:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field established", values[i])
+			} else if value.Valid {
+				_m.Established = new(int)
+				*_m.Established = int(value.Int64)
+			}
+		case course.FieldArchitect:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field architect", values[i])
+			} else if value.Valid {
+				_m.Architect = new(string)
+				*_m.Architect = value.String
+			}
+		case course.FieldFairwayGrass:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field fairway_grass", values[i])
+			} else if value.Valid {
+				_m.FairwayGrass = new(string)
+				*_m.FairwayGrass = value.String
+			}
+		case course.FieldRoughGrass:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field rough_grass", values[i])
+			} else if value.Valid {
+				_m.RoughGrass = new(string)
+				*_m.RoughGrass = value.String
+			}
+		case course.FieldGreenGrass:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field green_grass", values[i])
+			} else if value.Valid {
+				_m.GreenGrass = new(string)
+				*_m.GreenGrass = value.String
+			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
 		}
@@ -277,6 +322,31 @@ func (_m *Course) String() string {
 	builder.WriteString(", ")
 	if v := _m.Country; v != nil {
 		builder.WriteString("country=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.Established; v != nil {
+		builder.WriteString("established=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
+	}
+	builder.WriteString(", ")
+	if v := _m.Architect; v != nil {
+		builder.WriteString("architect=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.FairwayGrass; v != nil {
+		builder.WriteString("fairway_grass=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.RoughGrass; v != nil {
+		builder.WriteString("rough_grass=")
+		builder.WriteString(*v)
+	}
+	builder.WriteString(", ")
+	if v := _m.GreenGrass; v != nil {
+		builder.WriteString("green_grass=")
 		builder.WriteString(*v)
 	}
 	builder.WriteByte(')')

@@ -13,12 +13,12 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 	"github.com/rj-davidson/greenrats/ent/user"
 	"github.com/rj-davidson/greenrats/internal/resources"
 )
@@ -149,14 +149,14 @@ func EnsureDemoLeague(ctx context.Context, db *ent.Client, logger *slog.Logger) 
 			continue
 		}
 
-		inField, err := tx.TournamentEntry.Query().
+		inField, err := tx.FieldEntry.Query().
 			Where(
-				tournamententry.HasTournamentWith(tournament.IDEQ(tournamentEnt.ID)),
-				tournamententry.HasGolferWith(golfer.IDEQ(golferEnt.ID)),
+				fieldentry.HasTournamentWith(tournament.IDEQ(tournamentEnt.ID)),
+				fieldentry.HasGolferWith(golfer.IDEQ(golferEnt.ID)),
 			).
 			Exist(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to check tournament entry for %s: %w", row.golferName, err)
+			return fmt.Errorf("failed to check field entry for %s: %w", row.golferName, err)
 		}
 		if !inField {
 			skippedEntry++

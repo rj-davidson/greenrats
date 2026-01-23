@@ -14,9 +14,9 @@ import (
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/course"
 	"github.com/rj-davidson/greenrats/ent/holescore"
+	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/round"
-	"github.com/rj-davidson/greenrats/ent/tournamententry"
 )
 
 // RoundUpdate is the builder for updating Round entities.
@@ -133,15 +133,15 @@ func (_u *RoundUpdate) ClearTeeTime() *RoundUpdate {
 	return _u
 }
 
-// SetTournamentEntryID sets the "tournament_entry" edge to the TournamentEntry entity by ID.
-func (_u *RoundUpdate) SetTournamentEntryID(id uuid.UUID) *RoundUpdate {
-	_u.mutation.SetTournamentEntryID(id)
+// SetLeaderboardEntryID sets the "leaderboard_entry" edge to the LeaderboardEntry entity by ID.
+func (_u *RoundUpdate) SetLeaderboardEntryID(id uuid.UUID) *RoundUpdate {
+	_u.mutation.SetLeaderboardEntryID(id)
 	return _u
 }
 
-// SetTournamentEntry sets the "tournament_entry" edge to the TournamentEntry entity.
-func (_u *RoundUpdate) SetTournamentEntry(v *TournamentEntry) *RoundUpdate {
-	return _u.SetTournamentEntryID(v.ID)
+// SetLeaderboardEntry sets the "leaderboard_entry" edge to the LeaderboardEntry entity.
+func (_u *RoundUpdate) SetLeaderboardEntry(v *LeaderboardEntry) *RoundUpdate {
+	return _u.SetLeaderboardEntryID(v.ID)
 }
 
 // AddHoleScoreIDs adds the "hole_scores" edge to the HoleScore entity by IDs.
@@ -183,9 +183,9 @@ func (_u *RoundUpdate) Mutation() *RoundMutation {
 	return _u.mutation
 }
 
-// ClearTournamentEntry clears the "tournament_entry" edge to the TournamentEntry entity.
-func (_u *RoundUpdate) ClearTournamentEntry() *RoundUpdate {
-	_u.mutation.ClearTournamentEntry()
+// ClearLeaderboardEntry clears the "leaderboard_entry" edge to the LeaderboardEntry entity.
+func (_u *RoundUpdate) ClearLeaderboardEntry() *RoundUpdate {
+	_u.mutation.ClearLeaderboardEntry()
 	return _u
 }
 
@@ -259,8 +259,8 @@ func (_u *RoundUpdate) check() error {
 			return &ValidationError{Name: "round_number", err: fmt.Errorf(`ent: validator failed for field "Round.round_number": %w`, err)}
 		}
 	}
-	if _u.mutation.TournamentEntryCleared() && len(_u.mutation.TournamentEntryIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Round.tournament_entry"`)
+	if _u.mutation.LeaderboardEntryCleared() && len(_u.mutation.LeaderboardEntryIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Round.leaderboard_entry"`)
 	}
 	return nil
 }
@@ -310,28 +310,28 @@ func (_u *RoundUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.TeeTimeCleared() {
 		_spec.ClearField(round.FieldTeeTime, field.TypeTime)
 	}
-	if _u.mutation.TournamentEntryCleared() {
+	if _u.mutation.LeaderboardEntryCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   round.TournamentEntryTable,
-			Columns: []string{round.TournamentEntryColumn},
+			Table:   round.LeaderboardEntryTable,
+			Columns: []string{round.LeaderboardEntryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.TournamentEntryIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.LeaderboardEntryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   round.TournamentEntryTable,
-			Columns: []string{round.TournamentEntryColumn},
+			Table:   round.LeaderboardEntryTable,
+			Columns: []string{round.LeaderboardEntryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -534,15 +534,15 @@ func (_u *RoundUpdateOne) ClearTeeTime() *RoundUpdateOne {
 	return _u
 }
 
-// SetTournamentEntryID sets the "tournament_entry" edge to the TournamentEntry entity by ID.
-func (_u *RoundUpdateOne) SetTournamentEntryID(id uuid.UUID) *RoundUpdateOne {
-	_u.mutation.SetTournamentEntryID(id)
+// SetLeaderboardEntryID sets the "leaderboard_entry" edge to the LeaderboardEntry entity by ID.
+func (_u *RoundUpdateOne) SetLeaderboardEntryID(id uuid.UUID) *RoundUpdateOne {
+	_u.mutation.SetLeaderboardEntryID(id)
 	return _u
 }
 
-// SetTournamentEntry sets the "tournament_entry" edge to the TournamentEntry entity.
-func (_u *RoundUpdateOne) SetTournamentEntry(v *TournamentEntry) *RoundUpdateOne {
-	return _u.SetTournamentEntryID(v.ID)
+// SetLeaderboardEntry sets the "leaderboard_entry" edge to the LeaderboardEntry entity.
+func (_u *RoundUpdateOne) SetLeaderboardEntry(v *LeaderboardEntry) *RoundUpdateOne {
+	return _u.SetLeaderboardEntryID(v.ID)
 }
 
 // AddHoleScoreIDs adds the "hole_scores" edge to the HoleScore entity by IDs.
@@ -584,9 +584,9 @@ func (_u *RoundUpdateOne) Mutation() *RoundMutation {
 	return _u.mutation
 }
 
-// ClearTournamentEntry clears the "tournament_entry" edge to the TournamentEntry entity.
-func (_u *RoundUpdateOne) ClearTournamentEntry() *RoundUpdateOne {
-	_u.mutation.ClearTournamentEntry()
+// ClearLeaderboardEntry clears the "leaderboard_entry" edge to the LeaderboardEntry entity.
+func (_u *RoundUpdateOne) ClearLeaderboardEntry() *RoundUpdateOne {
+	_u.mutation.ClearLeaderboardEntry()
 	return _u
 }
 
@@ -673,8 +673,8 @@ func (_u *RoundUpdateOne) check() error {
 			return &ValidationError{Name: "round_number", err: fmt.Errorf(`ent: validator failed for field "Round.round_number": %w`, err)}
 		}
 	}
-	if _u.mutation.TournamentEntryCleared() && len(_u.mutation.TournamentEntryIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Round.tournament_entry"`)
+	if _u.mutation.LeaderboardEntryCleared() && len(_u.mutation.LeaderboardEntryIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Round.leaderboard_entry"`)
 	}
 	return nil
 }
@@ -741,28 +741,28 @@ func (_u *RoundUpdateOne) sqlSave(ctx context.Context) (_node *Round, err error)
 	if _u.mutation.TeeTimeCleared() {
 		_spec.ClearField(round.FieldTeeTime, field.TypeTime)
 	}
-	if _u.mutation.TournamentEntryCleared() {
+	if _u.mutation.LeaderboardEntryCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   round.TournamentEntryTable,
-			Columns: []string{round.TournamentEntryColumn},
+			Table:   round.LeaderboardEntryTable,
+			Columns: []string{round.LeaderboardEntryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.TournamentEntryIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.LeaderboardEntryIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   round.TournamentEntryTable,
-			Columns: []string{round.TournamentEntryColumn},
+			Table:   round.LeaderboardEntryTable,
+			Columns: []string{round.LeaderboardEntryColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(tournamententry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
