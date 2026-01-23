@@ -82,6 +82,11 @@ CREATE TABLE "courses" (
   "city" character varying NULL,
   "state" character varying NULL,
   "country" character varying NULL,
+  "established" bigint NULL,
+  "architect" character varying NULL,
+  "fairway_grass" character varying NULL,
+  "rough_grass" character varying NULL,
+  "green_grass" character varying NULL,
   PRIMARY KEY ("id")
 );
 -- Create index "courses_bdl_id_key" to table: "courses"
@@ -114,6 +119,17 @@ CREATE TABLE "golfers" (
   "owgr" bigint NULL,
   "active" boolean NOT NULL DEFAULT true,
   "image_url" character varying NULL,
+  "height" character varying NULL,
+  "weight" character varying NULL,
+  "birth_date" timestamptz NULL,
+  "birthplace_city" character varying NULL,
+  "birthplace_state" character varying NULL,
+  "birthplace_country" character varying NULL,
+  "turned_pro" bigint NULL,
+  "school" character varying NULL,
+  "residence_city" character varying NULL,
+  "residence_state" character varying NULL,
+  "residence_country" character varying NULL,
   PRIMARY KEY ("id")
 );
 -- Create index "golfers_bdl_id_key" to table: "golfers"
@@ -164,6 +180,23 @@ CREATE TABLE "email_reminders" (
 );
 -- Create index "emailreminder_reminder_type_user_email_reminders_tournament_ema" to table: "email_reminders"
 CREATE UNIQUE INDEX "emailreminder_reminder_type_user_email_reminders_tournament_ema" ON "email_reminders" ("reminder_type", "user_email_reminders", "tournament_email_reminders", "league_email_reminders");
+-- Create "field_entries" table
+CREATE TABLE "field_entries" (
+  "id" uuid NOT NULL,
+  "created_at" timestamptz NOT NULL,
+  "updated_at" timestamptz NOT NULL,
+  "entry_status" character varying NOT NULL DEFAULT 'confirmed',
+  "qualifier" character varying NULL,
+  "owgr_at_entry" bigint NULL,
+  "is_amateur" boolean NOT NULL DEFAULT false,
+  "golfer_field_entries" uuid NOT NULL,
+  "tournament_field_entries" uuid NOT NULL,
+  PRIMARY KEY ("id"),
+  CONSTRAINT "field_entries_golfers_field_entries" FOREIGN KEY ("golfer_field_entries") REFERENCES "golfers" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT "field_entries_tournaments_field_entries" FOREIGN KEY ("tournament_field_entries") REFERENCES "tournaments" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
+);
+-- Create index "fieldentry_tournament_field_entries_golfer_field_entries" to table: "field_entries"
+CREATE UNIQUE INDEX "fieldentry_tournament_field_entries_golfer_field_entries" ON "field_entries" ("tournament_field_entries", "golfer_field_entries");
 -- Create "golfer_seasons" table
 CREATE TABLE "golfer_seasons" (
   "id" uuid NOT NULL,
@@ -189,8 +222,8 @@ CREATE TABLE "golfer_seasons" (
 );
 -- Create index "golferseason_golfer_seasons_season_golfer_seasons" to table: "golfer_seasons"
 CREATE UNIQUE INDEX "golferseason_golfer_seasons_season_golfer_seasons" ON "golfer_seasons" ("golfer_seasons", "season_golfer_seasons");
--- Create "tournament_entries" table
-CREATE TABLE "tournament_entries" (
+-- Create "leaderboard_entries" table
+CREATE TABLE "leaderboard_entries" (
   "id" uuid NOT NULL,
   "created_at" timestamptz NOT NULL,
   "updated_at" timestamptz NOT NULL,
@@ -202,18 +235,14 @@ CREATE TABLE "tournament_entries" (
   "status" character varying NOT NULL DEFAULT 'pending',
   "current_round" bigint NOT NULL DEFAULT 0,
   "thru" bigint NOT NULL DEFAULT 0,
-  "entry_status" character varying NOT NULL DEFAULT 'confirmed',
-  "qualifier" character varying NULL,
-  "owgr_at_entry" bigint NULL,
-  "is_amateur" boolean NOT NULL DEFAULT false,
-  "golfer_entries" uuid NOT NULL,
-  "tournament_entries" uuid NOT NULL,
+  "golfer_leaderboard_entries" uuid NOT NULL,
+  "tournament_leaderboard_entries" uuid NOT NULL,
   PRIMARY KEY ("id"),
-  CONSTRAINT "tournament_entries_golfers_entries" FOREIGN KEY ("golfer_entries") REFERENCES "golfers" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
-  CONSTRAINT "tournament_entries_tournaments_entries" FOREIGN KEY ("tournament_entries") REFERENCES "tournaments" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
+  CONSTRAINT "leaderboard_entries_golfers_leaderboard_entries" FOREIGN KEY ("golfer_leaderboard_entries") REFERENCES "golfers" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION,
+  CONSTRAINT "leaderboard_entries_tournaments_leaderboard_entries" FOREIGN KEY ("tournament_leaderboard_entries") REFERENCES "tournaments" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 );
--- Create index "tournamententry_tournament_entries_golfer_entries" to table: "tournament_entries"
-CREATE UNIQUE INDEX "tournamententry_tournament_entries_golfer_entries" ON "tournament_entries" ("tournament_entries", "golfer_entries");
+-- Create index "leaderboardentry_tournament_leaderboard_entries_golfer_leaderbo" to table: "leaderboard_entries"
+CREATE UNIQUE INDEX "leaderboardentry_tournament_leaderboard_entries_golfer_leaderbo" ON "leaderboard_entries" ("tournament_leaderboard_entries", "golfer_leaderboard_entries");
 -- Create "rounds" table
 CREATE TABLE "rounds" (
   "id" uuid NOT NULL,
@@ -224,13 +253,13 @@ CREATE TABLE "rounds" (
   "par_relative_score" bigint NULL,
   "tee_time" timestamptz NULL,
   "course_rounds" uuid NULL,
-  "tournament_entry_rounds" uuid NOT NULL,
+  "leaderboard_entry_rounds" uuid NOT NULL,
   PRIMARY KEY ("id"),
   CONSTRAINT "rounds_courses_rounds" FOREIGN KEY ("course_rounds") REFERENCES "courses" ("id") ON UPDATE NO ACTION ON DELETE SET NULL,
-  CONSTRAINT "rounds_tournament_entries_rounds" FOREIGN KEY ("tournament_entry_rounds") REFERENCES "tournament_entries" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
+  CONSTRAINT "rounds_leaderboard_entries_rounds" FOREIGN KEY ("leaderboard_entry_rounds") REFERENCES "leaderboard_entries" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION
 );
--- Create index "round_round_number_tournament_entry_rounds" to table: "rounds"
-CREATE UNIQUE INDEX "round_round_number_tournament_entry_rounds" ON "rounds" ("round_number", "tournament_entry_rounds");
+-- Create index "round_round_number_leaderboard_entry_rounds" to table: "rounds"
+CREATE UNIQUE INDEX "round_round_number_leaderboard_entry_rounds" ON "rounds" ("round_number", "leaderboard_entry_rounds");
 -- Create "hole_scores" table
 CREATE TABLE "hole_scores" (
   "id" uuid NOT NULL,
