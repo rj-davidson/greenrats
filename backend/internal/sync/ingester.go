@@ -28,8 +28,8 @@ const (
 	CourseSyncHour          = 3
 	CourseSyncDay           = time.Sunday
 	GolferStatsSyncDay      = time.Monday
-	PlayHoursStart          = 8
-	PlayHoursEnd            = 20
+	PlayHoursStart          = 9
+	PlayHoursEnd            = 21
 )
 
 type Ingester struct {
@@ -196,10 +196,18 @@ func (i *Ingester) isAnyTournamentInPlayHours(ctx context.Context) bool {
 }
 
 func (i *Ingester) isTournamentInPlayHours(t *ent.Tournament) bool {
-	loc, err := time.LoadLocation("America/New_York")
+	tzName := "America/New_York"
+	if t.Timezone != nil && *t.Timezone != "" {
+		tzName = *t.Timezone
+	}
+
+	loc, err := time.LoadLocation(tzName)
 	if err != nil {
-		i.logger.Error("failed to load timezone", "error", err)
-		loc = time.UTC
+		i.logger.Error("failed to load tournament timezone",
+			"timezone", tzName,
+			"tournament", t.Name,
+			"error", err)
+		loc, _ = time.LoadLocation("America/New_York")
 	}
 	now := time.Now().In(loc)
 
