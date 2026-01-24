@@ -430,8 +430,8 @@ func (c *Client) GetPlayerRoundResults(ctx context.Context, tournamentID int) ([
 	return allResults, nil
 }
 
-func (c *Client) GetPlayerScorecards(ctx context.Context, tournamentID int) ([]PlayerScorecard, error) {
-	c.logger.Info("fetching player scorecards", "tournament_id", tournamentID)
+func (c *Client) GetPlayerScorecards(ctx context.Context, tournamentID, playerID int) ([]PlayerScorecard, error) {
+	c.logger.Info("fetching player scorecards", "tournament_id", tournamentID, "player_id", playerID)
 	start := time.Now()
 
 	var allScorecards []PlayerScorecard
@@ -449,6 +449,7 @@ func (c *Client) GetPlayerScorecards(ctx context.Context, tournamentID int) ([]P
 				SetContext(ctx).
 				SetResult(&response).
 				SetQueryParam("tournament_ids[]", fmt.Sprintf("%d", tournamentID)).
+				SetQueryParam("player_ids[]", fmt.Sprintf("%d", playerID)).
 				SetQueryParam("per_page", "100")
 
 			if cursor > 0 {

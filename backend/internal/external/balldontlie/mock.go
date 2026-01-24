@@ -70,8 +70,8 @@ func (m *MockClient) GetPlayerRoundResults(ctx context.Context, tournamentID int
 	return result, args.Error(1)
 }
 
-func (m *MockClient) GetPlayerScorecards(ctx context.Context, tournamentID int) ([]PlayerScorecard, error) {
-	args := m.Called(ctx, tournamentID)
+func (m *MockClient) GetPlayerScorecards(ctx context.Context, tournamentID, playerID int) ([]PlayerScorecard, error) {
+	args := m.Called(ctx, tournamentID, playerID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

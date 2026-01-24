@@ -15,7 +15,7 @@ type ClientInterface interface {
 	GetCourseHoles(ctx context.Context, courseID int) ([]CourseHole, error)
 	GetPlayerRoundResults(ctx context.Context, tournamentID int) ([]PlayerRoundResult, error)
 	GetPlayerRoundStats(ctx context.Context, tournamentID int) ([]PlayerRoundStats, error)
-	GetPlayerScorecards(ctx context.Context, tournamentID int) ([]PlayerScorecard, error)
+	GetPlayerScorecards(ctx context.Context, tournamentID, playerID int) ([]PlayerScorecard, error)
 	GetPlayerSeasonStats(ctx context.Context, season int, statIDs []int) ([]PlayerSeasonStat, error)
 	GetTournamentField(ctx context.Context, tournamentID int) ([]TournamentField, error)
 }

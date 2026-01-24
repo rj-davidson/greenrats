@@ -10,7 +10,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
-func (i *Ingester) syncFields(ctx context.Context) {
+func (i *Ingester) syncFields(ctx context.Context) error {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "fields")
 
@@ -26,26 +26,25 @@ func (i *Ingester) syncFields(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		i.logger.Error("failed to query upcoming tournaments", "error", err)
-		i.captureJobError("sync_fields", err)
 		SyncErrors.WithLabelValues("fields").Inc()
 		SyncRunsTotal.WithLabelValues("fields", "error").Inc()
-		return
+		return fmt.Errorf("query upcoming tournaments: %w", err)
 	}
 
 	if len(tournaments) == 0 {
 		i.logger.Debug("no upcoming tournaments in sync window")
 		i.recordSync(ctx, "fields")
 		SyncRunsTotal.WithLabelValues("fields", "skipped").Inc()
-		return
+		return nil
 	}
 
 	synced := 0
 	for _, t := range tournaments {
 		hasField, err := i.tournamentHasField(ctx, t)
 		if err != nil {
-			i.logger.Error("failed to check field", "tournament", t.Name, "error", err)
-			i.captureJobError("sync_fields", err)
+			if isContextError(err) {
+				return fmt.Errorf("check field for %s: %w", t.Name, err)
+			}
 			SyncErrors.WithLabelValues("fields").Inc()
 			continue
 		}
@@ -57,8 +56,9 @@ func (i *Ingester) syncFields(ctx context.Context) {
 
 		i.logger.Debug("syncing field", "tournament", t.Name)
 		if err := i.syncTournamentField(ctx, t); err != nil {
-			i.logger.Error("failed to sync field", "tournament", t.Name, "error", err)
-			i.captureJobError("sync_fields", err)
+			if isContextError(err) {
+				return fmt.Errorf("sync field for %s: %w", t.Name, err)
+			}
 			SyncErrors.WithLabelValues("fields").Inc()
 			continue
 		}
@@ -72,12 +72,13 @@ func (i *Ingester) syncFields(ctx context.Context) {
 	SyncRunsTotal.WithLabelValues("fields", "success").Inc()
 	LastSyncTimestamp.WithLabelValues("fields").Set(float64(time.Now().Unix()))
 	i.logger.Info("sync completed", "type", "fields", "duration", duration, "tournaments_synced", synced)
+	return nil
 }
 
 func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) error {
 	fields, err := i.ballDontLie.GetTournamentField(ctx, *t.BdlID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch tournament field: %w", err)
+		return fmt.Errorf("fetch tournament field: %w", err)
 	}
 
 	i.logger.Debug("fetched field", "tournament", t.Name, "count", len(fields))
@@ -85,8 +86,9 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 	processed := 0
 	for idx := range fields {
 		if err := i.syncService.UpsertFieldEntry(ctx, t, &fields[idx]); err != nil {
-			i.logger.Error("failed to upsert field entry", "player", fields[idx].Player.DisplayName, "error", err)
-			i.captureJobError("sync_tournament_field", err)
+			if isContextError(err) {
+				return fmt.Errorf("upsert field entry for %s: %w", fields[idx].Player.DisplayName, err)
+			}
 			continue
 		}
 		processed++

@@ -232,6 +232,7 @@ func TestGetPlayerScorecards_Success(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/pga/v1/player_scorecards", r.URL.Path)
 		assert.Equal(t, "456", r.URL.Query().Get("tournament_ids[]"))
+		assert.Equal(t, "1", r.URL.Query().Get("player_ids[]"))
 
 		response := PlayerScorecardsResponse{
 			Data: []PlayerScorecard{
@@ -261,7 +262,7 @@ func TestGetPlayerScorecards_Success(t *testing.T) {
 	defer server.Close()
 
 	client := newTestClient(server.URL)
-	scorecards, err := client.GetPlayerScorecards(context.Background(), 456)
+	scorecards, err := client.GetPlayerScorecards(context.Background(), 456, 1)
 
 	require.NoError(t, err)
 	require.Len(t, scorecards, 2)

@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent/golfer"
@@ -22,7 +23,7 @@ var relevantStatIDs = []int{
 	130, // Scrambling
 }
 
-func (i *Ingester) syncGolferSeasonStats(ctx context.Context) {
+func (i *Ingester) syncGolferSeasonStats(ctx context.Context) error {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "golfer_stats")
 
@@ -30,20 +31,16 @@ func (i *Ingester) syncGolferSeasonStats(ctx context.Context) {
 		Where(season.IsCurrent(true)).
 		Only(ctx)
 	if err != nil {
-		i.logger.Error("failed to get current season", "error", err)
-		i.captureJobError("sync_golfer_stats", err)
 		SyncErrors.WithLabelValues("golfer_stats").Inc()
 		SyncRunsTotal.WithLabelValues("golfer_stats", "error").Inc()
-		return
+		return fmt.Errorf("get current season: %w", err)
 	}
 
 	stats, err := i.ballDontLie.GetPlayerSeasonStats(ctx, currentSeason.Year, relevantStatIDs)
 	if err != nil {
-		i.logger.Error("failed to fetch player season stats", "error", err)
-		i.captureJobError("sync_golfer_stats", err)
 		SyncErrors.WithLabelValues("golfer_stats").Inc()
 		SyncRunsTotal.WithLabelValues("golfer_stats", "error").Inc()
-		return
+		return fmt.Errorf("fetch player season stats: %w", err)
 	}
 
 	processed := 0
@@ -54,11 +51,16 @@ func (i *Ingester) syncGolferSeasonStats(ctx context.Context) {
 			Where(golfer.BdlID(stat.Player.ID)).
 			Only(ctx)
 		if err != nil {
+			if isContextError(err) {
+				return fmt.Errorf("query golfer %s: %w", stat.Player.DisplayName, err)
+			}
 			continue
 		}
 
 		if err := i.syncService.UpsertGolferSeasonStat(ctx, g.ID, currentSeason.ID, stat); err != nil {
-			i.logger.Error("failed to upsert golfer season stat", "golfer", stat.Player.DisplayName, "stat", stat.StatName, "error", err)
+			if isContextError(err) {
+				return fmt.Errorf("upsert stat for %s: %w", stat.Player.DisplayName, err)
+			}
 			continue
 		}
 		processed++
@@ -71,4 +73,5 @@ func (i *Ingester) syncGolferSeasonStats(ctx context.Context) {
 	SyncRunsTotal.WithLabelValues("golfer_stats", "success").Inc()
 	LastSyncTimestamp.WithLabelValues("golfer_stats").Set(float64(time.Now().Unix()))
 	i.logger.Info("sync completed", "type", "golfer_stats", "duration", duration, "stats_processed", processed)
+	return nil
 }

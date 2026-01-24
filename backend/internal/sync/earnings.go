@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent"
@@ -9,7 +10,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
-func (i *Ingester) syncEarnings(ctx context.Context) {
+func (i *Ingester) syncEarnings(ctx context.Context) error {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "earnings")
 
@@ -23,17 +24,15 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		i.logger.Error("failed to query completed tournaments", "error", err)
-		i.captureJobError("sync_earnings", err)
 		SyncErrors.WithLabelValues("earnings").Inc()
 		SyncRunsTotal.WithLabelValues("earnings", "error").Inc()
-		return
+		return fmt.Errorf("query completed tournaments: %w", err)
 	}
 
 	if len(tournaments) == 0 {
 		i.logger.Debug("no completed tournaments found")
 		SyncRunsTotal.WithLabelValues("earnings", "skipped").Inc()
-		return
+		return nil
 	}
 
 	synced := 0
@@ -45,8 +44,9 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 
 		hasEarnings, err := i.tournamentHasEarnings(ctx, t)
 		if err != nil {
-			i.logger.Error("failed to check earnings", "tournament", t.Name, "error", err)
-			i.captureJobError("sync_earnings", err)
+			if isContextError(err) {
+				return fmt.Errorf("check earnings for %s: %w", t.Name, err)
+			}
 			SyncErrors.WithLabelValues("earnings").Inc()
 			continue
 		}
@@ -64,8 +64,9 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 			}
 
 			if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
-				i.logger.Error("failed to sync earnings", "tournament", t.Name, "error", err)
-				i.captureJobError("sync_earnings", err)
+				if isContextError(err) {
+					return fmt.Errorf("sync leaderboard for %s: %w", t.Name, err)
+				}
 				SyncErrors.WithLabelValues("earnings").Inc()
 				continue
 			}
@@ -80,6 +81,7 @@ func (i *Ingester) syncEarnings(ctx context.Context) {
 	SyncRunsTotal.WithLabelValues("earnings", "success").Inc()
 	LastSyncTimestamp.WithLabelValues("earnings").Set(float64(time.Now().Unix()))
 	i.logger.Info("sync completed", "type", "earnings", "duration", duration, "tournaments_synced", synced)
+	return nil
 }
 
 func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament) (bool, error) {

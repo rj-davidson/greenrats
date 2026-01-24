@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -71,35 +72,35 @@ func (i *Ingester) Run(ctx context.Context) {
 
 	i.logger.Info("ingester started, checking for required initial syncs")
 	if i.shouldSync(ctx, "tournaments", TournamentSyncInterval) {
-		i.syncTournaments(ctx)
+		i.runSync(ctx, "sync_tournaments", i.syncTournaments)
 		lastTournamentSync = time.Now()
 	} else {
 		lastTournamentSync = time.Now()
 	}
 	if i.shouldSyncPlayersNow() {
-		i.syncPlayers(ctx)
+		i.runSync(ctx, "sync_players", i.syncPlayers)
 		lastPlayerSync = time.Now()
 	}
 	if i.shouldSync(ctx, "leaderboards", i.getLeaderboardInterval(ctx)) {
-		i.syncLeaderboards(ctx)
+		i.runSync(ctx, "sync_leaderboards", i.syncLeaderboards)
 		lastLeaderboardSync = time.Now()
 	} else {
 		lastLeaderboardSync = time.Now()
 	}
 	if i.isAnyTournamentInPlayHours(ctx) {
 		if i.shouldSync(ctx, "scorecards", ScorecardSyncInterval) {
-			i.syncScorecards(ctx)
+			i.runSync(ctx, "sync_scorecards", i.syncScorecards)
 			lastScorecardSync = time.Now()
 		}
 	}
 	if i.shouldSync(ctx, "earnings", EarningsCheckInterval) {
-		i.syncEarnings(ctx)
+		i.runSync(ctx, "sync_earnings", i.syncEarnings)
 		lastEarningsSync = time.Now()
 	} else {
 		lastEarningsSync = time.Now()
 	}
 	if i.shouldSyncFieldsNow() {
-		i.syncFields(ctx)
+		i.runSync(ctx, "sync_fields", i.syncFields)
 		lastFieldSync = time.Now()
 	}
 	i.sendPickReminders(ctx)
@@ -115,33 +116,33 @@ func (i *Ingester) Run(ctx context.Context) {
 			now := time.Now()
 
 			if now.Sub(lastTournamentSync) >= TournamentSyncInterval {
-				i.syncTournaments(ctx)
+				i.runSync(ctx, "sync_tournaments", i.syncTournaments)
 				lastTournamentSync = now
 			}
 
 			leaderboardInterval := i.getLeaderboardInterval(ctx)
 			if now.Sub(lastLeaderboardSync) >= leaderboardInterval {
-				i.syncLeaderboards(ctx)
+				i.runSync(ctx, "sync_leaderboards", i.syncLeaderboards)
 				lastLeaderboardSync = now
 			}
 
 			if i.isAnyTournamentInPlayHours(ctx) && now.Sub(lastScorecardSync) >= ScorecardSyncInterval {
-				i.syncScorecards(ctx)
+				i.runSync(ctx, "sync_scorecards", i.syncScorecards)
 				lastScorecardSync = now
 			}
 
 			if i.shouldSyncFieldsNow() && now.Sub(lastFieldSync) >= 23*time.Hour {
-				i.syncFields(ctx)
+				i.runSync(ctx, "sync_fields", i.syncFields)
 				lastFieldSync = now
 			}
 
 			if now.Sub(lastEarningsSync) >= EarningsCheckInterval {
-				i.syncEarnings(ctx)
+				i.runSync(ctx, "sync_earnings", i.syncEarnings)
 				lastEarningsSync = now
 			}
 
 			if i.shouldSyncPlayersNow() && now.Sub(lastPlayerSync) >= 23*time.Hour {
-				i.syncPlayers(ctx)
+				i.runSync(ctx, "sync_players", i.syncPlayers)
 				lastPlayerSync = now
 			}
 
@@ -151,12 +152,12 @@ func (i *Ingester) Run(ctx context.Context) {
 			}
 
 			if i.shouldSyncCoursesNow() && now.Sub(lastCourseSync) >= 6*24*time.Hour {
-				i.syncCourses(ctx)
+				i.runSync(ctx, "sync_courses", i.syncCourses)
 				lastCourseSync = now
 			}
 
 			if i.shouldSyncGolferStatsNow() && now.Sub(lastGolferStatsSync) >= 6*24*time.Hour {
-				i.syncGolferSeasonStats(ctx)
+				i.runSync(ctx, "sync_golfer_stats", i.syncGolferSeasonStats)
 				lastGolferStatsSync = now
 			}
 		}
@@ -264,19 +265,19 @@ func (i *Ingester) initialize(ctx context.Context) {
 	i.logger.Info("running initialization - fresh database detected")
 	start := time.Now()
 
-	i.syncTournaments(ctx)
-	i.syncPlayers(ctx)
-	i.syncCourses(ctx)
-	i.syncAllFields(ctx)
-	i.syncAllLeaderboards(ctx)
-	i.syncAllRounds(ctx)
-	i.syncAllEarnings(ctx)
-	i.syncGolferSeasonStats(ctx)
+	i.runSync(ctx, "sync_tournaments", i.syncTournaments)
+	i.runSync(ctx, "sync_players", i.syncPlayers)
+	i.runSync(ctx, "sync_courses", i.syncCourses)
+	i.runSync(ctx, "sync_fields_init", i.syncAllFields)
+	i.runSync(ctx, "sync_leaderboards_init", i.syncAllLeaderboards)
+	i.runSync(ctx, "sync_rounds_init", i.syncAllRounds)
+	i.runSync(ctx, "sync_earnings_init", i.syncAllEarnings)
+	i.runSync(ctx, "sync_golfer_stats", i.syncGolferSeasonStats)
 
 	i.logger.Info("initialization complete", "duration", time.Since(start))
 }
 
-func (i *Ingester) syncAllFields(ctx context.Context) {
+func (i *Ingester) syncAllFields(ctx context.Context) error {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "fields_init")
 
@@ -288,13 +289,12 @@ func (i *Ingester) syncAllFields(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		i.logger.Error("failed to query tournaments for field initialization", "error", err)
-		return
+		return fmt.Errorf("query tournaments: %w", err)
 	}
 
 	if len(tournaments) == 0 {
 		i.logger.Debug("no tournaments with opened pick windows")
-		return
+		return nil
 	}
 
 	synced := 0
@@ -305,7 +305,9 @@ func (i *Ingester) syncAllFields(ctx context.Context) {
 
 		hasField, err := i.tournamentHasField(ctx, t)
 		if err != nil {
-			i.logger.Error("failed to check field", "tournament", t.Name, "error", err)
+			if isContextError(err) {
+				return fmt.Errorf("check field for %s: %w", t.Name, err)
+			}
 			continue
 		}
 
@@ -314,16 +316,19 @@ func (i *Ingester) syncAllFields(ctx context.Context) {
 		}
 
 		if err := i.syncTournamentField(ctx, t); err != nil {
-			i.logger.Error("failed to sync field", "tournament", t.Name, "error", err)
+			if isContextError(err) {
+				return fmt.Errorf("sync field for %s: %w", t.Name, err)
+			}
 			continue
 		}
 		synced++
 	}
 
 	i.logger.Info("sync completed", "type", "fields_init", "duration", time.Since(start), "tournaments_synced", synced)
+	return nil
 }
 
-func (i *Ingester) syncAllRounds(ctx context.Context) {
+func (i *Ingester) syncAllRounds(ctx context.Context) error {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "rounds_init")
 
@@ -335,28 +340,30 @@ func (i *Ingester) syncAllRounds(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		i.logger.Error("failed to query tournaments for rounds initialization", "error", err)
-		return
+		return fmt.Errorf("query tournaments: %w", err)
 	}
 
 	if len(tournaments) == 0 {
 		i.logger.Debug("no tournaments found for rounds initialization")
-		return
+		return nil
 	}
 
 	synced := 0
 	for _, t := range tournaments {
 		if err := i.syncTournamentScorecards(ctx, t); err != nil {
-			i.logger.Error("failed to sync rounds", "tournament", t.Name, "error", err)
+			if isContextError(err) {
+				return fmt.Errorf("sync scorecards for %s: %w", t.Name, err)
+			}
 			continue
 		}
 		synced++
 	}
 
 	i.logger.Info("sync completed", "type", "rounds_init", "duration", time.Since(start), "tournaments_synced", synced)
+	return nil
 }
 
-func (i *Ingester) syncAllLeaderboards(ctx context.Context) {
+func (i *Ingester) syncAllLeaderboards(ctx context.Context) error {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "leaderboards_init")
 
@@ -369,28 +376,30 @@ func (i *Ingester) syncAllLeaderboards(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		i.logger.Error("failed to query active tournaments for initialization", "error", err)
-		return
+		return fmt.Errorf("query active tournaments: %w", err)
 	}
 
 	if len(tournaments) == 0 {
 		i.logger.Debug("no active tournaments found for leaderboard initialization")
-		return
+		return nil
 	}
 
 	synced := 0
 	for _, t := range tournaments {
 		if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
-			i.logger.Error("failed to sync leaderboard", "tournament", t.Name, "error", err)
+			if isContextError(err) {
+				return fmt.Errorf("sync leaderboard for %s: %w", t.Name, err)
+			}
 			continue
 		}
 		synced++
 	}
 
 	i.logger.Info("sync completed", "type", "leaderboards_init", "duration", time.Since(start), "tournaments_synced", synced)
+	return nil
 }
 
-func (i *Ingester) syncAllEarnings(ctx context.Context) {
+func (i *Ingester) syncAllEarnings(ctx context.Context) error {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "earnings_init")
 
@@ -401,20 +410,21 @@ func (i *Ingester) syncAllEarnings(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		i.logger.Error("failed to query completed tournaments for initialization", "error", err)
-		return
+		return fmt.Errorf("query completed tournaments: %w", err)
 	}
 
 	if len(tournaments) == 0 {
 		i.logger.Debug("no completed tournaments found for earnings initialization")
-		return
+		return nil
 	}
 
 	synced := 0
 	for _, t := range tournaments {
 		hasEarnings, err := i.tournamentHasEarnings(ctx, t)
 		if err != nil {
-			i.logger.Error("failed to check earnings", "tournament", t.Name, "error", err)
+			if isContextError(err) {
+				return fmt.Errorf("check earnings for %s: %w", t.Name, err)
+			}
 			continue
 		}
 
@@ -423,11 +433,14 @@ func (i *Ingester) syncAllEarnings(ctx context.Context) {
 		}
 
 		if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
-			i.logger.Error("failed to sync earnings", "tournament", t.Name, "error", err)
+			if isContextError(err) {
+				return fmt.Errorf("sync leaderboard for %s: %w", t.Name, err)
+			}
 			continue
 		}
 		synced++
 	}
 
 	i.logger.Info("sync completed", "type", "earnings_init", "duration", time.Since(start), "tournaments_synced", synced)
+	return nil
 }

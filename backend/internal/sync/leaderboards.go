@@ -9,7 +9,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
-func (i *Ingester) syncLeaderboards(ctx context.Context) {
+func (i *Ingester) syncLeaderboards(ctx context.Context) error {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "leaderboards")
 
@@ -21,17 +21,15 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) {
 		).
 		All(ctx)
 	if err != nil {
-		i.logger.Error("failed to query active tournaments", "error", err)
-		i.captureJobError("sync_leaderboards", err)
 		SyncErrors.WithLabelValues("leaderboards").Inc()
 		SyncRunsTotal.WithLabelValues("leaderboards", "error").Inc()
-		return
+		return fmt.Errorf("query active tournaments: %w", err)
 	}
 
 	if len(tournaments) == 0 {
 		i.logger.Debug("no active tournaments found")
 		SyncRunsTotal.WithLabelValues("leaderboards", "skipped").Inc()
-		return
+		return nil
 	}
 
 	synced := 0
@@ -42,8 +40,9 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) {
 		}
 
 		if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
-			i.logger.Error("failed to sync leaderboard", "tournament", t.Name, "error", err)
-			i.captureJobError("sync_leaderboards", err)
+			if isContextError(err) {
+				return fmt.Errorf("sync leaderboard for %s: %w", t.Name, err)
+			}
 			SyncErrors.WithLabelValues("leaderboards").Inc()
 			continue
 		}
@@ -57,6 +56,7 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) {
 	SyncRunsTotal.WithLabelValues("leaderboards", "success").Inc()
 	LastSyncTimestamp.WithLabelValues("leaderboards").Set(float64(time.Now().Unix()))
 	i.logger.Info("sync completed", "type", "leaderboards", "duration", duration, "tournaments_synced", synced)
+	return nil
 }
 
 func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournament) error {
@@ -64,7 +64,7 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 
 	results, err := i.ballDontLie.GetTournamentResults(ctx, *t.BdlID)
 	if err != nil {
-		return fmt.Errorf("failed to fetch tournament results: %w", err)
+		return fmt.Errorf("fetch tournament results: %w", err)
 	}
 
 	i.logger.Debug("fetched results", "tournament", t.Name, "count", len(results))
@@ -72,8 +72,9 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 	processed := 0
 	for idx := range results {
 		if err := i.syncService.UpsertLeaderboardEntry(ctx, t, &results[idx]); err != nil {
-			i.logger.Error("failed to upsert result", "player", results[idx].Player.DisplayName, "error", err)
-			i.captureJobError("sync_tournament_leaderboard", err)
+			if isContextError(err) {
+				return fmt.Errorf("upsert entry for %s: %w", results[idx].Player.DisplayName, err)
+			}
 			continue
 		}
 		processed++

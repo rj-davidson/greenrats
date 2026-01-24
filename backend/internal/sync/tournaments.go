@@ -2,29 +2,26 @@ package sync
 
 import (
 	"context"
+	"fmt"
 	"time"
 )
 
-func (i *Ingester) syncTournaments(ctx context.Context) {
+func (i *Ingester) syncTournaments(ctx context.Context) error {
 	start := time.Now()
 	i.logger.Info("sync started", "type", "tournaments", "season", i.config.CurrentSeason)
 
 	seasonEnt, err := i.syncService.UpsertSeason(ctx, i.config.CurrentSeason)
 	if err != nil {
-		i.logger.Error("failed to ensure season exists", "error", err)
-		i.captureJobError("sync_tournaments", err)
 		SyncErrors.WithLabelValues("tournaments").Inc()
 		SyncRunsTotal.WithLabelValues("tournaments", "error").Inc()
-		return
+		return fmt.Errorf("upsert season: %w", err)
 	}
 
 	tournaments, err := i.ballDontLie.GetTournaments(ctx, i.config.CurrentSeason)
 	if err != nil {
-		i.logger.Error("failed to fetch tournaments from BallDontLie", "error", err)
-		i.captureJobError("sync_tournaments", err)
 		SyncErrors.WithLabelValues("tournaments").Inc()
 		SyncRunsTotal.WithLabelValues("tournaments", "error").Inc()
-		return
+		return fmt.Errorf("fetch tournaments: %w", err)
 	}
 
 	i.logger.Debug("fetched tournaments", "count", len(tournaments), "season", i.config.CurrentSeason)
@@ -33,8 +30,9 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	for idx := range tournaments {
 		result, err := i.syncService.UpsertTournament(ctx, &tournaments[idx], seasonEnt)
 		if err != nil {
-			i.logger.Error("failed to upsert tournament", "tournament", tournaments[idx].Name, "error", err)
-			i.captureJobError("sync_tournaments", err)
+			if isContextError(err) {
+				return fmt.Errorf("upsert tournament %s: %w", tournaments[idx].Name, err)
+			}
 			SyncErrors.WithLabelValues("tournaments").Inc()
 			continue
 		}
@@ -58,4 +56,5 @@ func (i *Ingester) syncTournaments(ctx context.Context) {
 	SyncRunsTotal.WithLabelValues("tournaments", "success").Inc()
 	LastSyncTimestamp.WithLabelValues("tournaments").Set(float64(time.Now().Unix()))
 	i.logger.Info("sync completed", "type", "tournaments", "duration", duration, "created", created, "updated", updated)
+	return nil
 }
