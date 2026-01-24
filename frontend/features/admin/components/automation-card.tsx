@@ -154,9 +154,7 @@ export function AutomationsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Sync Courses</CardTitle>
-            <CardDescription>
-              Fetch and update all golf course data including holes
-            </CardDescription>
+            <CardDescription>Fetch and update all golf course data including holes</CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={handleSyncCourses} disabled={syncCourses.isPending} className="w-full">
@@ -169,9 +167,7 @@ export function AutomationsPage() {
         <Card>
           <CardHeader>
             <CardTitle>Sync Golfer Season Stats</CardTitle>
-            <CardDescription>
-              Fetch and update season statistics for all golfers
-            </CardDescription>
+            <CardDescription>Fetch and update season statistics for all golfers</CardDescription>
           </CardHeader>
           <CardContent>
             <Button

@@ -43,7 +43,7 @@ function UserMenu() {
     );
   }
 
-  const displayName = user?.display_name || user?.email || "User";
+  const displayName = user.display_name || user.email || "User";
   const initial = displayName.charAt(0).toUpperCase();
 
   return (
@@ -58,7 +58,7 @@ function UserMenu() {
       <DropdownMenuContent align="end" className="w-56">
         <div className="px-2 py-1.5">
           <p className="text-sm font-medium">{displayName}</p>
-          {user?.email && user.email !== displayName && (
+          {user.email && user.email !== displayName && (
             <p className="text-xs text-muted-foreground">{user.email}</p>
           )}
         </div>
