@@ -14,8 +14,8 @@ function LandingPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-8">
       <div className="max-w-2xl text-center">
-        <h1 className="mb-4 text-5xl font-bold">
-          greenrats <Rat className="text-primary" />
+        <h1 className="mb-4 flex items-center justify-center gap-2 font-serif text-5xl tracking-wide">
+          greenrats <Rat className="size-12 text-primary" />
         </h1>
         <p className="mb-8 text-xl text-muted-foreground">
           Pick one golfer per tournament. Compete with friends. Track your earnings throughout the

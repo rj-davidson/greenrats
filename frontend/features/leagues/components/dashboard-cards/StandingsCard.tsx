@@ -79,10 +79,11 @@ export function StandingsCard({ leagueId }: StandingsCardProps) {
     );
   }
 
-  const top10 = data?.entries.slice(0, 10) ?? [];
+  const top5 = data?.entries.slice(0, 5) ?? [];
   const userEntry = data?.entries.find((e) => e.user_id === currentUser?.id);
-  const userInTop10 = userEntry && userEntry.rank <= 10;
-  const showUserBubble = userEntry && !userInTop10;
+  const userInTop5 = userEntry && userEntry.rank <= 5;
+  const displayEntries = userInTop5 || !userEntry ? top5 : (data?.entries.slice(0, 4) ?? []);
+  const showUserBubble = userEntry && !userInTop5;
 
   return (
     <DashboardCard
@@ -100,7 +101,7 @@ export function StandingsCard({ leagueId }: StandingsCardProps) {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {top10.map((entry) => {
+          {displayEntries.map((entry) => {
             const isCurrentUser = currentUser?.id === entry.user_id;
             return (
               <TableRow key={entry.user_id} className={cn(isCurrentUser && "bg-primary/5")}>
