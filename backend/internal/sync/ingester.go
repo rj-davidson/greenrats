@@ -267,8 +267,8 @@ func (i *Ingester) initialize(ctx context.Context) {
 	i.logger.Info("running initialization - fresh database detected")
 	start := time.Now()
 
-	i.runSync(ctx, "sync_tournaments", i.syncTournaments)
 	i.runSync(ctx, "sync_players", i.syncPlayers)
+	i.runSync(ctx, "sync_tournaments", i.syncTournaments)
 	i.runSync(ctx, "sync_courses", i.syncCourses)
 	i.runSync(ctx, "sync_fields_init", i.syncAllFields)
 	i.runSync(ctx, "sync_leaderboards_init", i.syncAllLeaderboards)
