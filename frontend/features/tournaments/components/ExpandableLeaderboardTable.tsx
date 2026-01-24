@@ -109,7 +109,12 @@ export function ExpandableLeaderboardTable({
                   <TableCell colSpan={6} className="px-2 py-0">
                     {entry.picked_by && entry.picked_by.length > 0 && (
                       <div className="px-2 pt-2 text-sm text-muted-foreground">
-                        Picked by: {entry.picked_by.join(", ")}
+                        <span>Picked by:</span>
+                        <span className="ml-2 inline-flex flex-wrap gap-2">
+                          {entry.picked_by.map((picker) => (
+                            <span key={picker}>{picker}</span>
+                          ))}
+                        </span>
                       </div>
                     )}
                     <GolfScorecard
