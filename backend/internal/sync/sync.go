@@ -867,6 +867,42 @@ func (s *Service) UpsertHoleScore(ctx context.Context, roundID uuid.UUID, h *bal
 	return nil
 }
 
+func (s *Service) UpdateLeaderboardProgress(ctx context.Context, entryID uuid.UUID) error {
+	entry, err := s.db.LeaderboardEntry.Query().
+		Where(leaderboardentry.IDEQ(entryID)).
+		WithRounds(func(q *ent.RoundQuery) {
+			q.WithHoleScores()
+		}).
+		Only(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query entry: %w", err)
+	}
+
+	currentRound := 0
+	thru := 0
+	for _, r := range entry.Edges.Rounds {
+		if r.RoundNumber > currentRound {
+			currentRound = r.RoundNumber
+			thru = 0
+			for _, h := range r.Edges.HoleScores {
+				if h.Score != nil {
+					thru++
+				}
+			}
+		}
+	}
+
+	_, err = entry.Update().
+		SetCurrentRound(currentRound).
+		SetThru(thru).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to update entry progress: %w", err)
+	}
+
+	return nil
+}
+
 func (s *Service) UpsertGolferSeasonStat(ctx context.Context, golferID, seasonID uuid.UUID, stat *balldontlie.PlayerSeasonStat) error {
 	existing, err := s.db.GolferSeason.Query().
 		Where(

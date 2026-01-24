@@ -143,19 +143,31 @@ func (i *Ingester) fetchAndProcessScorecardsParallel(ctx context.Context, t *ent
 	}()
 
 	holesProcessed := 0
+	processedEntries := make(map[uuid.UUID]bool)
 	for result := range resultsCh {
 		if result.err != nil {
 			i.logger.Error("failed to fetch scorecards", "player_id", result.playerID, "error", result.err)
 			continue
 		}
-		holesProcessed += i.processPlayerScorecards(ctx, t, result.scorecards)
+		holes, entryID := i.processPlayerScorecards(ctx, t, result.scorecards)
+		holesProcessed += holes
+		if entryID != nil {
+			processedEntries[*entryID] = true
+		}
+	}
+
+	for entryID := range processedEntries {
+		if err := i.syncService.UpdateLeaderboardProgress(ctx, entryID); err != nil {
+			i.logger.Error("failed to update progress", "entry_id", entryID, "error", err)
+		}
 	}
 
 	return holesProcessed
 }
 
-func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournament, scorecards []balldontlie.PlayerScorecard) int {
+func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournament, scorecards []balldontlie.PlayerScorecard) (int, *uuid.UUID) {
 	holesProcessed := 0
+	var entryID *uuid.UUID
 	for idx := range scorecards {
 		sc := &scorecards[idx]
 
@@ -168,6 +180,10 @@ func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournamen
 			Only(ctx)
 		if err != nil {
 			continue
+		}
+
+		if entryID == nil {
+			entryID = &entry.ID
 		}
 
 		var roundID *uuid.UUID
@@ -187,5 +203,5 @@ func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournamen
 		}
 		holesProcessed++
 	}
-	return holesProcessed
+	return holesProcessed, entryID
 }

@@ -274,3 +274,195 @@ func TestUpsertLeaderboardEntry_SkipsUnknownGolfer(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 0, count, "No entry should be created for unknown golfer")
 }
+
+func TestUpdateLeaderboardProgress_PlayerMidRound(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService(t)
+
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "The Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 100)
+	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournamentEntity.ID, golferEntity.ID)
+
+	round1, err := svc.db.Round.Create().
+		SetLeaderboardEntry(entry).
+		SetRoundNumber(1).
+		Save(ctx)
+	require.NoError(t, err)
+
+	for hole := 1; hole <= 9; hole++ {
+		score := 4
+		_, err := svc.db.HoleScore.Create().
+			SetRound(round1).
+			SetHoleNumber(hole).
+			SetPar(4).
+			SetScore(score).
+			Save(ctx)
+		require.NoError(t, err)
+	}
+
+	err = svc.UpdateLeaderboardProgress(ctx, entry.ID)
+	require.NoError(t, err)
+
+	updated, err := svc.db.LeaderboardEntry.Get(ctx, entry.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, updated.CurrentRound, "Current round should be 1")
+	assert.Equal(t, 9, updated.Thru, "Thru should be 9 holes")
+}
+
+func TestUpdateLeaderboardProgress_PlayerFinishedRound(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService(t)
+
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "The Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, svc.db, "Rory McIlroy", 101)
+	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournamentEntity.ID, golferEntity.ID)
+
+	round1, err := svc.db.Round.Create().
+		SetLeaderboardEntry(entry).
+		SetRoundNumber(1).
+		Save(ctx)
+	require.NoError(t, err)
+
+	for hole := 1; hole <= 18; hole++ {
+		score := 4
+		_, err := svc.db.HoleScore.Create().
+			SetRound(round1).
+			SetHoleNumber(hole).
+			SetPar(4).
+			SetScore(score).
+			Save(ctx)
+		require.NoError(t, err)
+	}
+
+	err = svc.UpdateLeaderboardProgress(ctx, entry.ID)
+	require.NoError(t, err)
+
+	updated, err := svc.db.LeaderboardEntry.Get(ctx, entry.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, updated.CurrentRound, "Current round should be 1")
+	assert.Equal(t, 18, updated.Thru, "Thru should be 18 (finished)")
+}
+
+func TestUpdateLeaderboardProgress_PlayerNotStarted(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService(t)
+
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "The Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, svc.db, "Tiger Woods", 102)
+	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournamentEntity.ID, golferEntity.ID)
+
+	err := svc.UpdateLeaderboardProgress(ctx, entry.ID)
+	require.NoError(t, err)
+
+	updated, err := svc.db.LeaderboardEntry.Get(ctx, entry.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, 0, updated.CurrentRound, "Current round should be 0 (not started)")
+	assert.Equal(t, 0, updated.Thru, "Thru should be 0 (not started)")
+}
+
+func TestUpdateLeaderboardProgress_PlayerInRound2(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService(t)
+
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "The Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, svc.db, "Jon Rahm", 103)
+	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournamentEntity.ID, golferEntity.ID)
+
+	round1, err := svc.db.Round.Create().
+		SetLeaderboardEntry(entry).
+		SetRoundNumber(1).
+		Save(ctx)
+	require.NoError(t, err)
+
+	for hole := 1; hole <= 18; hole++ {
+		_, err := svc.db.HoleScore.Create().
+			SetRound(round1).
+			SetHoleNumber(hole).
+			SetPar(4).
+			SetScore(4).
+			Save(ctx)
+		require.NoError(t, err)
+	}
+
+	round2, err := svc.db.Round.Create().
+		SetLeaderboardEntry(entry).
+		SetRoundNumber(2).
+		Save(ctx)
+	require.NoError(t, err)
+
+	for hole := 1; hole <= 5; hole++ {
+		_, err := svc.db.HoleScore.Create().
+			SetRound(round2).
+			SetHoleNumber(hole).
+			SetPar(4).
+			SetScore(3).
+			Save(ctx)
+		require.NoError(t, err)
+	}
+
+	err = svc.UpdateLeaderboardProgress(ctx, entry.ID)
+	require.NoError(t, err)
+
+	updated, err := svc.db.LeaderboardEntry.Get(ctx, entry.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, 2, updated.CurrentRound, "Current round should be 2")
+	assert.Equal(t, 5, updated.Thru, "Thru should be 5 holes in round 2")
+}
+
+func TestUpdateLeaderboardProgress_HolesWithNilScores(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService(t)
+
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "The Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, svc.db, "Collin Morikawa", 104)
+	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournamentEntity.ID, golferEntity.ID)
+
+	round1, err := svc.db.Round.Create().
+		SetLeaderboardEntry(entry).
+		SetRoundNumber(1).
+		Save(ctx)
+	require.NoError(t, err)
+
+	for hole := 1; hole <= 6; hole++ {
+		_, err := svc.db.HoleScore.Create().
+			SetRound(round1).
+			SetHoleNumber(hole).
+			SetPar(4).
+			SetScore(4).
+			Save(ctx)
+		require.NoError(t, err)
+	}
+
+	for hole := 7; hole <= 18; hole++ {
+		_, err := svc.db.HoleScore.Create().
+			SetRound(round1).
+			SetHoleNumber(hole).
+			SetPar(4).
+			Save(ctx)
+		require.NoError(t, err)
+	}
+
+	err = svc.UpdateLeaderboardProgress(ctx, entry.ID)
+	require.NoError(t, err)
+
+	updated, err := svc.db.LeaderboardEntry.Get(ctx, entry.ID)
+	require.NoError(t, err)
+
+	assert.Equal(t, 1, updated.CurrentRound, "Current round should be 1")
+	assert.Equal(t, 6, updated.Thru, "Thru should be 6 (only holes with scores)")
+}
+
+func TestUpdateLeaderboardProgress_EntryNotFound(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService(t)
+
+	nonExistentID := testutil.NewFactory(t, svc.db).RandomUUID()
+
+	err := svc.UpdateLeaderboardProgress(ctx, nonExistentID)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to query entry")
+}

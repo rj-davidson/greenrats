@@ -139,6 +139,15 @@ func (s *Service) ListUserLeagues(ctx context.Context, userID uuid.UUID) (*ListU
 			continue
 		}
 		l := m.Edges.League
+
+		memberCount, err := s.db.LeagueMembership.
+			Query().
+			Where(leaguemembership.HasLeagueWith(league.IDEQ(l.ID))).
+			Count(ctx)
+		if err != nil {
+			s.logger.Warn("failed to count members for league", "league_id", l.ID, "error", err)
+		}
+
 		leagueResp := League{
 			ID:             l.ID,
 			Name:           l.Name,
@@ -147,6 +156,7 @@ func (s *Service) ListUserLeagues(ctx context.Context, userID uuid.UUID) (*ListU
 			JoiningEnabled: l.JoiningEnabled,
 			CreatedAt:      l.CreatedAt,
 			Role:           string(m.Role),
+			MemberCount:    memberCount,
 		}
 
 		recentPick, err := s.db.Pick.

@@ -17,8 +17,8 @@ export function LeagueCard({ league }: LeagueCardProps) {
       <Card className="transition-colors hover:bg-muted/50">
         <CardHeader className="flex flex-row items-center gap-3 pb-2">
           <LeagueMonogram league={league} size={40} />
-          <div className="flex-1">
-            <CardTitle className="text-base font-medium">{league.name}</CardTitle>
+          <div className="min-w-0 flex-1">
+            <CardTitle className="truncate text-base font-medium">{league.name}</CardTitle>
             <div className="flex items-center gap-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <UsersIcon className="size-3" />
