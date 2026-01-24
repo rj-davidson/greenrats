@@ -22,28 +22,16 @@ interface ActionCardProps {
 }
 
 function findRelevantTournament(tournaments: LeagueTournament[]): LeagueTournament | null {
-  const sorted = [...tournaments].sort((a, b) => {
-    const aTime = a.pick_window_closes_at
-      ? new Date(a.pick_window_closes_at).getTime()
-      : new Date(a.start_date).getTime();
-    const bTime = b.pick_window_closes_at
-      ? new Date(b.pick_window_closes_at).getTime()
-      : new Date(b.start_date).getTime();
-    return aTime - bTime;
-  });
-
-  const active = sorted.find(
-    (t) => t.status === "active" && t.pick_window_opens_at && t.pick_window_closes_at,
-  );
-  if (active) {
-    const state = getPickWindowState(active);
-    if (state === "open") return active;
-  }
+  const now = Date.now();
 
   return (
-    sorted.find(
-      (t) => t.status === "upcoming" && t.pick_window_opens_at && t.pick_window_closes_at,
-    ) ?? null
+    [...tournaments]
+      .filter((t) => t.pick_window_closes_at && new Date(t.pick_window_closes_at).getTime() > now)
+      .sort(
+        (a, b) =>
+          new Date(a.pick_window_closes_at!).getTime() -
+          new Date(b.pick_window_closes_at!).getTime(),
+      )[0] ?? null
   );
 }
 
