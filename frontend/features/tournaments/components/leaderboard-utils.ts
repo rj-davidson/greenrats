@@ -19,10 +19,19 @@ export function getRoundLabel(roundNumber: number): string {
 export function getCurrentRoundScore(entry: {
   rounds: RoundScore[];
   current_round: number;
+  score: number;
 }): string {
-  const round = entry.rounds.find((r) => r.round_number === entry.current_round);
-  if (!round || round.par_relative_score === null) return "-";
-  return formatScoreToPar(round.par_relative_score);
+  const currentRound = entry.rounds.find((r) => r.round_number === entry.current_round);
+
+  if (currentRound?.par_relative_score !== null && currentRound?.par_relative_score !== undefined) {
+    return formatScoreToPar(currentRound.par_relative_score);
+  }
+
+  const completedRoundsTotal = entry.rounds
+    .filter((r) => r.round_number < entry.current_round && r.par_relative_score !== null)
+    .reduce((sum, r) => sum + (r.par_relative_score ?? 0), 0);
+
+  return formatScoreToPar(entry.score - completedRoundsTotal);
 }
 
 export function calculateFrontNine(holes: HoleScore[]): { strokes: number; par: number } | null {
