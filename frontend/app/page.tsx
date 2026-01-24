@@ -1,3 +1,9 @@
+import {
+  ExamplePickHistoryCard,
+  ExampleSeasonProgressCard,
+  ExampleStandingsCard,
+  ExampleYourStatsCard,
+} from "@/app/landing";
 import { LeaguePickerContent } from "@/app/league-picker";
 import { TopBar } from "@/components/core/top-bar";
 import { Button } from "@/components/shadcn/button";
@@ -6,32 +12,135 @@ import type { User } from "@/features/users/types";
 import { makeServerRequest } from "@/lib/query/server-requestor";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { withAuth } from "@workos-inc/authkit-nextjs";
-import { Rat } from "lucide-react";
+import { CalendarCheckIcon, Rat, TrophyIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+function HeroSection() {
+  return (
+    <section className="flex flex-col items-center py-12 text-center">
+      <div className="mb-16 flex items-center justify-center gap-3">
+        <div className="rounded-full bg-primary/10 p-3">
+          <Rat className="size-10 text-primary" />
+        </div>
+        <h1 className="font-serif text-5xl tracking-wide sm:text-6xl">greenrats</h1>
+      </div>
+
+      <p className="mb-8 max-w-lg text-xl text-muted-foreground sm:text-2xl">
+        A season-long golf pick&apos;em where every golfer can only be used once.
+      </p>
+
+      <div className="mb-10 flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
+        <span className="flex items-center gap-1.5">
+          <CalendarCheckIcon className="size-4 text-primary" />
+          One pick per tournament
+        </span>
+        <span className="flex items-center gap-1.5">
+          <TrophyIcon className="size-4 text-primary" />
+          Track real earnings
+        </span>
+        <span className="flex items-center gap-1.5">
+          <UsersIcon className="size-4 text-primary" />
+          Compete in leagues
+        </span>
+      </div>
+
+      <div className="flex gap-4">
+        <Link href="/login">
+          <Button size="lg">Get Started</Button>
+        </Link>
+        <Link href="/rules">
+          <Button variant="outline" size="lg">
+            How to Play
+          </Button>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function ShowcaseSection() {
+  return (
+    <section className="w-full max-w-5xl py-12">
+      <h2 className="mb-8 text-center text-2xl font-semibold">See It In Action</h2>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <ExampleStandingsCard />
+        <ExampleYourStatsCard />
+        <ExamplePickHistoryCard />
+      </div>
+      <div className="mt-6">
+        <ExampleSeasonProgressCard />
+      </div>
+    </section>
+  );
+}
+
+function HowItWorksSection() {
+  const steps = [
+    {
+      icon: <CalendarCheckIcon className="size-8" />,
+      title: "Pick Your Golfer",
+      description:
+        "Choose one golfer before each tournament begins. Use them wisely - no repeats allowed.",
+    },
+    {
+      icon: <TrophyIcon className="size-8" />,
+      title: "Track Earnings",
+      description:
+        "Your picks earn real prize money from each tournament. Watch your total grow all season.",
+    },
+    {
+      icon: <UsersIcon className="size-8" />,
+      title: "Compete in Leagues",
+      description:
+        "Create or join leagues with friends. The highest total earnings at season end wins.",
+    },
+  ];
+
+  return (
+    <section className="w-full max-w-4xl py-12">
+      <h2 className="mb-8 text-center text-2xl font-semibold">How It Works</h2>
+      <div className="grid gap-8 md:grid-cols-3">
+        {steps.map((step) => (
+          <div key={step.title} className="flex flex-col items-center text-center">
+            <div className="mb-4 rounded-full bg-primary/10 p-4 text-primary">{step.icon}</div>
+            <h3 className="mb-2 text-lg font-medium">{step.title}</h3>
+            <p className="text-sm text-muted-foreground">{step.description}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function CtaSection() {
+  return (
+    <section className="w-full max-w-2xl py-16 text-center">
+      <h2 className="mb-4 text-2xl font-semibold">Ready to play?</h2>
+      <p className="mb-8 text-muted-foreground">
+        Join now and start making picks for this week&apos;s tournament.
+      </p>
+      <div className="flex justify-center gap-4">
+        <Link href="/login">
+          <Button size="lg">Get Started</Button>
+        </Link>
+        <Link href="/rules">
+          <Button variant="outline" size="lg">
+            Learn the Rules
+          </Button>
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 function LandingPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-8">
-      <div className="max-w-2xl text-center">
-        <h1 className="mb-4 flex items-center justify-center gap-2 font-serif text-5xl tracking-wide">
-          greenrats <Rat className="size-12 text-primary" />
-        </h1>
-        <p className="mb-8 text-xl text-muted-foreground">
-          Pick one golfer per tournament. Compete with friends. Track your earnings throughout the
-          PGA Tour season.
-        </p>
-        <div className="flex justify-center gap-4">
-          <Link href="/login">
-            <Button size="lg">Get Started</Button>
-          </Link>
-          <Link href="/rules">
-            <Button variant="outline" size="lg">
-              How to Play
-            </Button>
-          </Link>
-        </div>
-      </div>
+    <main className="flex min-h-screen flex-col items-center px-4 py-8 sm:px-8">
+      <HeroSection />
+      <ShowcaseSection />
+      <HowItWorksSection />
+      <CtaSection />
     </main>
   );
 }

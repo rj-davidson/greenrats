@@ -2,14 +2,6 @@
 
 import { DashboardCard } from "./DashboardCard";
 import { Button } from "@/components/shadcn/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/shadcn/table";
 import { useUserPicks } from "@/features/picks/queries";
 import { HistoryIcon } from "lucide-react";
 import Link from "next/link";
@@ -44,7 +36,7 @@ export function PickHistoryCard({ leagueId }: PickHistoryCardProps) {
 
     const total = sortedPicks.reduce((sum, p) => sum + (p.golfer_earnings ?? 0), 0);
 
-    return { picks: sortedPicks, totalEarnings: total };
+    return { picks: sortedPicks.slice(0, 3), totalEarnings: total };
   }, [data]);
 
   const action = (
@@ -68,36 +60,25 @@ export function PickHistoryCard({ leagueId }: PickHistoryCardProps) {
       action={action}
       isLoading={isLoading}
     >
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Tournament</TableHead>
-            <TableHead>Golfer</TableHead>
-            <TableHead className="text-right">Earnings</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {picks.map((pick) => (
-            <TableRow key={pick.id}>
-              <TableCell className="max-w-32 truncate text-sm">{pick.tournament_name}</TableCell>
-              <TableCell className="text-sm">{pick.golfer_name}</TableCell>
-              <TableCell className="text-right text-sm">
+      <div className="space-y-3">
+        {picks.map((pick) => (
+          <div key={pick.id} className="space-y-0.5">
+            <div className="text-sm font-medium">{pick.tournament_name}</div>
+            <div className="flex items-center justify-between text-sm text-muted-foreground">
+              <span>{pick.golfer_name}</span>
+              <span className="font-medium text-foreground">
                 {pick.golfer_earnings !== undefined ? formatEarnings(pick.golfer_earnings) : "-"}
-              </TableCell>
-            </TableRow>
-          ))}
-          {picks.length > 0 && (
-            <TableRow className="border-t-2">
-              <TableCell colSpan={2} className="font-semibold">
-                Total
-              </TableCell>
-              <TableCell className="text-right font-semibold">
-                {formatEarnings(totalEarnings)}
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+              </span>
+            </div>
+          </div>
+        ))}
+        {picks.length > 0 && (
+          <div className="flex items-center justify-between border-t pt-3">
+            <span className="font-semibold">Total</span>
+            <span className="font-semibold">{formatEarnings(totalEarnings)}</span>
+          </div>
+        )}
+      </div>
     </DashboardCard>
   );
 }
