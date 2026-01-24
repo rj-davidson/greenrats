@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -153,6 +154,37 @@ func (s *Service) IsDisplayNameAvailable(ctx context.Context, displayName string
 		return false, fmt.Errorf("failed to check display name: %w", err)
 	}
 	return !exists, nil
+}
+
+// ClaimTempUser TEMP BACKLOAD FEATURE - Remove this function after Prothero League users have signed up.
+// Checks if a temp user exists with this email and claims it by updating the workos_id.
+// Returns the claimed user and true if a claim was made, or nil and false if no temp user found.
+func (s *Service) ClaimTempUser(ctx context.Context, workosID, email string) (*ent.User, bool, error) {
+	existingUser, err := s.db.User.
+		Query().
+		Where(user.EmailEqualFold(email)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, false, nil
+		}
+		return nil, false, fmt.Errorf("failed to query user by email: %w", err)
+	}
+
+	if existingUser.DisplayName == nil || !strings.HasPrefix(*existingUser.DisplayName, "temp*") {
+		return nil, false, nil
+	}
+
+	updatedUser, err := existingUser.Update().
+		SetWorkosID(workosID).
+		ClearDisplayName().
+		Save(ctx)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to claim temp user: %w", err)
+	}
+
+	s.logger.Info("claimed temp user", "user_id", updatedUser.ID, "email", email)
+	return updatedUser, true, nil
 }
 
 func (s *Service) GetPendingActions(ctx context.Context, userID uuid.UUID) (*PendingActionsResponse, error) {

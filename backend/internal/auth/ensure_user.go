@@ -29,6 +29,18 @@ func EnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 			})
 		}
 
+		// TEMP BACKLOAD FEATURE - Remove this block after Prothero League users have signed up.
+		claimedUser, claimed, err := cfg.UserService.ClaimTempUser(c.Context(), workosID, email)
+		if err != nil {
+			cfg.Logger.Error("failed to claim temp user", "workos_id", workosID, "error", err)
+		}
+		if claimed && claimedUser != nil {
+			c.Locals(DBUserKey, claimedUser)
+			c.Locals(DBUserIDKey, claimedUser.ID)
+			return c.Next()
+		}
+		// END TEMP BACKLOAD FEATURE
+
 		result, err := cfg.UserService.GetOrCreate(c.Context(), users.GetOrCreateParams{
 			WorkOSID: workosID,
 			Email:    email,
