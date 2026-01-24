@@ -12,7 +12,6 @@ import {
 import { useLeagueLeaderboard } from "@/features/leaderboards/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { cn } from "@/lib/utils";
-import { TrophyIcon } from "lucide-react";
 
 interface LeagueLeaderboardProps {
   leagueId: string;
@@ -27,18 +26,12 @@ function formatEarnings(amount: number): string {
 }
 
 function getRankDisplay(rank: number) {
-  if (rank === 1) {
+  if (rank > 0 && rank < 4) {
     return (
-      <span className="flex items-center gap-1 text-amber-500">
-        <TrophyIcon className="size-4" />1
+      <span className="font-medium">
+        {rank}
       </span>
     );
-  }
-  if (rank === 2) {
-    return <span className="text-slate-400">{rank}</span>;
-  }
-  if (rank === 3) {
-    return <span className="text-amber-700">{rank}</span>;
   }
   return rank;
 }

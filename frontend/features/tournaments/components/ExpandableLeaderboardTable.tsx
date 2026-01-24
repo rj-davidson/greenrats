@@ -7,6 +7,7 @@ import {
   getCurrentRoundScore,
   getRoundLabel,
 } from "./leaderboard-utils";
+import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import {
   Table,
@@ -19,7 +20,7 @@ import {
 import { useLeaderboard, usePrefetchLeaderboardWithHoles } from "@/features/tournaments/queries";
 import type { LeaderboardEntry } from "@/features/tournaments/types";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon, ChevronRightIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, UserCheck } from "lucide-react";
 import { Fragment, useCallback, useState } from "react";
 
 interface ExpandableLeaderboardTableProps {
@@ -74,7 +75,6 @@ export function ExpandableLeaderboardTable({
   }
 
   const currentRound = data.current_round;
-  const showPicksColumn = data.entries.some((e) => e.picked_by && e.picked_by.length > 0);
 
   return (
     <Table>
@@ -83,7 +83,6 @@ export function ExpandableLeaderboardTable({
           <TableHead className="w-12"></TableHead>
           <TableHead className="w-16">Pos</TableHead>
           <TableHead>Player</TableHead>
-          {showPicksColumn && <TableHead className="w-32">Picked by</TableHead>}
           <TableHead className="w-16">{getRoundLabel(currentRound)}</TableHead>
           <TableHead className="w-16">Thru</TableHead>
           <TableHead className="w-20">Total</TableHead>
@@ -102,13 +101,17 @@ export function ExpandableLeaderboardTable({
                 entry={entry}
                 isExpanded={isExpanded}
                 isHighlighted={entry.golfer_id === highlightedGolferId}
-                showPicksColumn={showPicksColumn}
                 onToggle={() => toggleExpand(entry.golfer_id)}
                 onHover={prefetch}
               />
               {isExpanded && entryWithHoles && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={showPicksColumn ? 7 : 6} className="px-2 py-0">
+                  <TableCell colSpan={6} className="px-2 py-0">
+                    {entry.picked_by && entry.picked_by.length > 0 && (
+                      <div className="px-2 pt-2 text-sm text-muted-foreground">
+                        Picked by: {entry.picked_by.join(", ")}
+                      </div>
+                    )}
                     <GolfScorecard
                       rounds={entryWithHoles.rounds}
                       onClose={() => setExpandedGolferId(null)}
@@ -118,7 +121,7 @@ export function ExpandableLeaderboardTable({
               )}
               {isExpanded && !entryWithHoles && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={showPicksColumn ? 7 : 6} className="p-4">
+                  <TableCell colSpan={6} className="p-4">
                     <div className="flex justify-center">
                       <Skeleton className="h-32 w-full max-w-2xl" />
                     </div>
@@ -137,7 +140,6 @@ interface LeaderboardRowProps {
   entry: LeaderboardEntry;
   isExpanded: boolean;
   isHighlighted: boolean;
-  showPicksColumn: boolean;
   onToggle: () => void;
   onHover: () => void;
 }
@@ -146,7 +148,6 @@ function LeaderboardRow({
   entry,
   isExpanded,
   isHighlighted,
-  showPicksColumn,
   onToggle,
   onHover,
 }: LeaderboardRowProps) {
@@ -173,17 +174,16 @@ function LeaderboardRow({
         {entry.position_display}
       </TableCell>
       <TableCell>
-        <span className={cn(isHighlighted && "font-bold")}>{entry.golfer_name}</span>
+        <div className="flex items-center gap-2">
+          <span className={cn(isHighlighted && "font-bold")}>{entry.golfer_name}</span>
+          {entry.picked_by && entry.picked_by.length > 0 && (
+            <Badge variant="secondary" className="gap-1">
+              <UserCheck className="size-3" />
+              {entry.picked_by.length}
+            </Badge>
+          )}
+        </div>
       </TableCell>
-      {showPicksColumn && (
-        <TableCell className="align-top">
-          <div className="flex flex-col text-xs text-muted-foreground">
-            {entry.picked_by?.map((name, i) => (
-              <span key={i}>{name}</span>
-            ))}
-          </div>
-        </TableCell>
-      )}
       <TableCell className="font-mono">{getCurrentRoundScore(entry)}</TableCell>
       <TableCell className="text-muted-foreground">
         {formatThru(entry.thru, entry.status)}

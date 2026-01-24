@@ -7,7 +7,7 @@ import { getTournamentSpotlight } from "@/features/leagues/components/tournament
 import type { LeagueTournament } from "@/features/leagues/types";
 import { getPickWindowState } from "@/features/picks/utils";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, CheckCircle2Icon, ClockIcon, TrophyIcon, XCircleIcon } from "lucide-react";
+import { CalendarIcon, CheckCircle2Icon, ClockIcon, XCircleIcon } from "lucide-react";
 import Link from "next/link";
 
 interface TournamentSpotlightCardsProps {
@@ -92,7 +92,6 @@ function PickStatus({
         </div>
         {hasEarnings && (
           <div className="flex items-center gap-1.5 text-sm">
-            <TrophyIcon className="size-4 shrink-0 text-yellow-500" />
             <span className="font-medium">{formatEarnings(tournament.golfer_earnings!)}</span>
           </div>
         )}
