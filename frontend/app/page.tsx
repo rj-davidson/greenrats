@@ -55,6 +55,13 @@ function HeroSection() {
           </Button>
         </Link>
       </div>
+
+      <p className="mt-6 text-sm text-muted-foreground">
+        Already have an account?{" "}
+        <Link href="/login" className="text-primary underline-offset-4 hover:underline">
+          Sign in
+        </Link>
+      </p>
     </section>
   );
 }
