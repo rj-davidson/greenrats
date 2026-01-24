@@ -22,6 +22,8 @@ import {
   useTriggerSyncLeaderboard,
   useTriggerSyncEarnings,
   useTriggerSyncField,
+  useTriggerSyncCourses,
+  useTriggerSyncGolferStats,
 } from "@/features/admin/queries";
 import { RefreshCwIcon } from "lucide-react";
 import { useState } from "react";
@@ -34,6 +36,8 @@ export function AutomationsPage() {
   const syncLeaderboard = useTriggerSyncLeaderboard();
   const syncEarnings = useTriggerSyncEarnings();
   const syncField = useTriggerSyncField();
+  const syncCourses = useTriggerSyncCourses();
+  const syncGolferStats = useTriggerSyncGolferStats();
 
   const [selectedTournament, setSelectedTournament] = useState<string>("");
 
@@ -94,9 +98,27 @@ export function AutomationsPage() {
     }
   };
 
+  const handleSyncCourses = async () => {
+    try {
+      await syncCourses.mutateAsync();
+      toast.success("Courses sync started");
+    } catch {
+      toast.error("Failed to start courses sync");
+    }
+  };
+
+  const handleSyncGolferStats = async () => {
+    try {
+      await syncGolferStats.mutateAsync();
+      toast.success("Golfer season stats sync started");
+    } catch {
+      toast.error("Failed to start golfer stats sync");
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 md:grid-cols-2">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle>Sync Tournaments</CardTitle>
@@ -125,6 +147,40 @@ export function AutomationsPage() {
             <Button onClick={handleSyncPlayers} disabled={syncPlayers.isPending} className="w-full">
               <RefreshCwIcon className={syncPlayers.isPending ? "animate-spin" : ""} />
               {syncPlayers.isPending ? "Syncing..." : "Sync Players"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Sync Courses</CardTitle>
+            <CardDescription>
+              Fetch and update all golf course data including holes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={handleSyncCourses} disabled={syncCourses.isPending} className="w-full">
+              <RefreshCwIcon className={syncCourses.isPending ? "animate-spin" : ""} />
+              {syncCourses.isPending ? "Syncing..." : "Sync Courses"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Sync Golfer Season Stats</CardTitle>
+            <CardDescription>
+              Fetch and update season statistics for all golfers
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button
+              onClick={handleSyncGolferStats}
+              disabled={syncGolferStats.isPending}
+              className="w-full"
+            >
+              <RefreshCwIcon className={syncGolferStats.isPending ? "animate-spin" : ""} />
+              {syncGolferStats.isPending ? "Syncing..." : "Sync Golfer Stats"}
             </Button>
           </CardContent>
         </Card>

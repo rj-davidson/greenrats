@@ -40,6 +40,8 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	automations.Post("/sync-leaderboard/:tournamentId", h.SyncLeaderboard)
 	automations.Post("/sync-earnings/:tournamentId", h.SyncEarnings)
 	automations.Post("/sync-field/:tournamentId", h.SyncField)
+	automations.Post("/sync-courses", h.SyncCourses)
+	automations.Post("/sync-golfer-stats", h.SyncGolferSeasonStats)
 }
 
 func (h *Handler) ListUsers(c *fiber.Ctx) error {
@@ -296,5 +298,31 @@ func (h *Handler) SyncField(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusAccepted).JSON(TriggerResponse{
 		Message: "Field sync started",
+	})
+}
+
+func (h *Handler) SyncCourses(c *fiber.Ctx) error {
+	go func() {
+		ctx := context.Background()
+		if err := h.ingestService.SyncCourses(ctx); err != nil {
+			h.logger.Error("courses sync failed", "error", err)
+		}
+	}()
+
+	return c.Status(fiber.StatusAccepted).JSON(TriggerResponse{
+		Message: "Courses sync started",
+	})
+}
+
+func (h *Handler) SyncGolferSeasonStats(c *fiber.Ctx) error {
+	go func() {
+		ctx := context.Background()
+		if err := h.ingestService.SyncGolferSeasonStats(ctx); err != nil {
+			h.logger.Error("golfer season stats sync failed", "error", err)
+		}
+	}()
+
+	return c.Status(fiber.StatusAccepted).JSON(TriggerResponse{
+		Message: "Golfer season stats sync started",
 	})
 }

@@ -107,3 +107,19 @@ export function useTriggerSyncField() {
     },
   });
 }
+
+export function useTriggerSyncCourses() {
+  return useMutation({
+    mutationFn: async () => {
+      return makeClientRequest.post<TriggerResponse>("/api/v1/admin/automations/sync-courses");
+    },
+  });
+}
+
+export function useTriggerSyncGolferStats() {
+  return useMutation({
+    mutationFn: async () => {
+      return makeClientRequest.post<TriggerResponse>("/api/v1/admin/automations/sync-golfer-stats");
+    },
+  });
+}

@@ -9,7 +9,9 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
+	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
@@ -295,4 +297,98 @@ func (s *IngestService) matchWithOpenAI(
 	}
 
 	return updated
+}
+
+func (s *IngestService) SyncCourses(ctx context.Context) error {
+	s.logger.Info("starting courses sync")
+
+	courses, err := s.ballDontLie.GetCourses(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to fetch courses: %w", err)
+	}
+
+	s.logger.Info("fetched courses", "count", len(courses))
+
+	coursesProcessed := 0
+	holesProcessed := 0
+
+	for idx := range courses {
+		c := &courses[idx]
+
+		entCourse, err := s.syncService.UpsertCourse(ctx, c)
+		if err != nil {
+			s.logger.Warn("failed to upsert course", "name", c.Name, "error", err)
+			continue
+		}
+		coursesProcessed++
+
+		holes, err := s.ballDontLie.GetCourseHoles(ctx, c.ID)
+		if err != nil {
+			s.logger.Warn("failed to fetch holes", "course", c.Name, "error", err)
+			continue
+		}
+
+		for hIdx := range holes {
+			if err := s.syncService.UpsertCourseHole(ctx, entCourse.ID, &holes[hIdx]); err != nil {
+				s.logger.Warn("failed to upsert hole", "course", c.Name, "hole", holes[hIdx].HoleNumber, "error", err)
+				continue
+			}
+			holesProcessed++
+		}
+	}
+
+	s.logger.Info("courses sync completed", "courses", coursesProcessed, "holes", holesProcessed)
+	return nil
+}
+
+var relevantStatIDs = []int{
+	120, // Scoring Average
+	110, // Top 10 Finishes
+	107, // Cuts Made
+	106, // Events Played
+	109, // Wins
+	102, // Driving Distance
+	101, // Driving Accuracy Percentage
+	103, // Greens in Regulation Percentage
+	104, // Putting Average
+	130, // Scrambling
+}
+
+func (s *IngestService) SyncGolferSeasonStats(ctx context.Context) error {
+	s.logger.Info("starting golfer season stats sync")
+
+	currentSeason, err := s.db.Season.Query().
+		Where(season.IsCurrent(true)).
+		Only(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get current season: %w", err)
+	}
+
+	stats, err := s.ballDontLie.GetPlayerSeasonStats(ctx, currentSeason.Year, relevantStatIDs)
+	if err != nil {
+		return fmt.Errorf("failed to fetch player season stats: %w", err)
+	}
+
+	s.logger.Info("fetched player season stats", "count", len(stats))
+
+	processed := 0
+	for idx := range stats {
+		stat := &stats[idx]
+
+		g, err := s.db.Golfer.Query().
+			Where(golfer.BdlID(stat.Player.ID)).
+			Only(ctx)
+		if err != nil {
+			continue
+		}
+
+		if err := s.syncService.UpsertGolferSeasonStat(ctx, g.ID, currentSeason.ID, stat); err != nil {
+			s.logger.Warn("failed to upsert stat", "golfer", stat.Player.DisplayName, "error", err)
+			continue
+		}
+		processed++
+	}
+
+	s.logger.Info("golfer season stats sync completed", "stats_processed", processed)
+	return nil
 }
