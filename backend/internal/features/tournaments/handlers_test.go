@@ -52,6 +52,37 @@ func TestHandler_List(t *testing.T) {
 		require.NoError(t, resp.JSON(&result))
 		assert.Equal(t, 1, result.Total)
 	})
+
+	t.Run("returns correct status fields for each tournament type", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		handler := NewHandler(service)
+
+		factory.CreateUpcomingTournament(7, testutil.WithTournamentName("Upcoming"))
+		factory.CreateActiveTournament(testutil.WithTournamentName("Active"))
+		factory.CreateCompletedTournament(testutil.WithTournamentName("Completed"))
+
+		app := testutil.NewTestApp(t)
+		app.App.Get("/tournaments", handler.List)
+
+		resp := app.Get("/tournaments")
+
+		assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+
+		var result ListTournamentsResponse
+		require.NoError(t, resp.JSON(&result))
+		assert.Equal(t, 3, result.Total)
+
+		statusByName := make(map[string]string)
+		for _, t := range result.Tournaments {
+			statusByName[t.Name] = t.Status
+		}
+
+		assert.Equal(t, "upcoming", statusByName["Upcoming"])
+		assert.Equal(t, "active", statusByName["Active"])
+		assert.Equal(t, "completed", statusByName["Completed"])
+	})
 }
 
 func TestHandler_GetByID(t *testing.T) {
@@ -73,6 +104,28 @@ func TestHandler_GetByID(t *testing.T) {
 		var result GetTournamentResponse
 		require.NoError(t, resp.JSON(&result))
 		assert.Equal(t, "Test Tournament", result.Tournament.Name)
+		assert.NotEmpty(t, result.Tournament.Status)
+	})
+
+	t.Run("returns completed status for tournament with champion", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		handler := NewHandler(service)
+
+		tourn := factory.CreateCompletedTournament(testutil.WithTournamentName("Completed Tournament"))
+
+		app := testutil.NewTestApp(t)
+		app.App.Get("/tournaments/:id", handler.GetByID)
+
+		resp := app.Get("/tournaments/" + tourn.ID.String())
+
+		assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+
+		var result GetTournamentResponse
+		require.NoError(t, resp.JSON(&result))
+		assert.Equal(t, "completed", result.Tournament.Status)
+		assert.NotEmpty(t, result.Tournament.ChampionID)
 	})
 
 	t.Run("returns 404 when not found", func(t *testing.T) {
@@ -122,6 +175,7 @@ func TestHandler_GetActive(t *testing.T) {
 		var result GetTournamentResponse
 		require.NoError(t, resp.JSON(&result))
 		assert.Equal(t, "Active Tournament", result.Tournament.Name)
+		assert.Equal(t, "active", result.Tournament.Status)
 	})
 
 	t.Run("returns 404 when no active tournament", func(t *testing.T) {

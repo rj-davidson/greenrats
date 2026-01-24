@@ -120,6 +120,49 @@ func TestDeriveStatusAt(t *testing.T) {
 	}
 }
 
+func TestDeriveStatusAt_Champion(t *testing.T) {
+	tests := []struct {
+		name           string
+		hasChampion    bool
+		now            time.Time
+		expectedStatus DerivedStatus
+	}{
+		{
+			name:           "completed - has champion even during active period",
+			hasChampion:    true,
+			now:            time.Date(2024, 1, 26, 14, 0, 0, 0, time.UTC),
+			expectedStatus: StatusCompleted,
+		},
+		{
+			name:           "completed - has champion before time-based completion",
+			hasChampion:    true,
+			now:            time.Date(2024, 1, 29, 12, 0, 0, 0, time.UTC),
+			expectedStatus: StatusCompleted,
+		},
+		{
+			name:           "active - no champion during tournament",
+			hasChampion:    false,
+			now:            time.Date(2024, 1, 26, 14, 0, 0, 0, time.UTC),
+			expectedStatus: StatusActive,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tournament := &ent.Tournament{
+				StartDate: time.Date(2024, 1, 25, 0, 0, 0, 0, time.UTC),
+				EndDate:   time.Date(2024, 1, 28, 0, 0, 0, 0, time.UTC),
+			}
+			if tt.hasChampion {
+				tournament.Edges.Champion = &ent.Golfer{Name: "Test Champion"}
+			}
+
+			status := DeriveStatusAt(tournament, tt.now)
+			assert.Equal(t, tt.expectedStatus, status)
+		})
+	}
+}
+
 func ptrTime(t time.Time) *time.Time {
 	return &t
 }

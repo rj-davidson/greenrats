@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
 
@@ -56,6 +58,24 @@ func TestService_List(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, 1, resp.Total)
+	})
+
+	t.Run("filters completed tournaments with champion", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		factory.CreateUpcomingTournament(7)
+		factory.CreateActiveTournament()
+		completed := factory.CreateCompletedTournament(testutil.WithTournamentName("Completed With Champion"))
+
+		resp, err := service.List(ctx, ListTournamentsRequest{Status: "completed"})
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, resp.Total)
+		assert.Equal(t, completed.Name, resp.Tournaments[0].Name)
+		assert.Equal(t, "completed", resp.Tournaments[0].Status)
 	})
 
 	t.Run("applies limit and offset", func(t *testing.T) {
@@ -112,6 +132,23 @@ func TestService_GetByID(t *testing.T) {
 		_, err := service.GetByID(ctx, "invalid")
 
 		assert.True(t, errors.Is(err, ErrInvalidTournamentID))
+	})
+
+	t.Run("returns completed status when tournament has champion", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateCompletedTournament(testutil.WithTournamentName("Finished Tournament"))
+
+		found, err := service.GetByID(ctx, tourn.ID.String())
+
+		require.NoError(t, err)
+		require.NotNil(t, found)
+		assert.Equal(t, "completed", found.Status)
+		assert.NotEmpty(t, found.ChampionID)
+		assert.NotEmpty(t, found.ChampionName)
 	})
 }
 
@@ -247,5 +284,53 @@ func TestTournamentToDTO(t *testing.T) {
 		assert.Equal(t, "Augusta National", dto.Course)
 		assert.Equal(t, float64(20000000), dto.Purse)
 		assert.Equal(t, "active", dto.Status)
+	})
+
+	t.Run("converts completed tournament with champion", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		ctx := context.Background()
+
+		tourn := factory.CreateCompletedTournament(
+			testutil.WithTournamentName("Finished Open"),
+		)
+
+		entTourn, _ := db.Tournament.Query().
+			Where(tournament.IDEQ(tourn.ID)).
+			WithChampion().
+			Only(ctx)
+		dto := toTournament(entTourn)
+
+		assert.Equal(t, "Finished Open", dto.Name)
+		assert.Equal(t, "completed", dto.Status)
+		assert.NotEmpty(t, dto.ChampionID)
+		assert.NotEmpty(t, dto.ChampionName)
+	})
+
+	t.Run("converts completed tournament by time without champion", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		ctx := context.Background()
+
+		startDate := time.Now().AddDate(0, 0, -10)
+		endDate := startDate.AddDate(0, 0, 4)
+		pickWindowCloses := startDate.Add(-1 * time.Hour)
+
+		tourn := factory.CreateTournament(
+			testutil.WithTournamentName("Past Tournament"),
+			testutil.WithStartDate(startDate),
+			testutil.WithEndDate(endDate),
+			testutil.WithPickWindow(startDate.AddDate(0, 0, -3), pickWindowCloses),
+		)
+
+		entTourn, _ := db.Tournament.Query().
+			Where(tournament.IDEQ(tourn.ID)).
+			WithChampion().
+			Only(ctx)
+		dto := toTournament(entTourn)
+
+		assert.Equal(t, "Past Tournament", dto.Name)
+		assert.Equal(t, "completed", dto.Status)
+		assert.Empty(t, dto.ChampionID)
 	})
 }

@@ -626,6 +626,137 @@ func TestService_OverridePick(t *testing.T) {
 	})
 }
 
+func TestService_GetLeaguePicksEnhanced(t *testing.T) {
+	t.Run("returns picks for active tournament with leaderboard data", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateActiveTournament()
+		golfer := factory.CreateGolfer()
+		factory.CreateFieldEntry(tourn, golfer)
+		factory.CreatePick(user, tourn, golfer, league)
+		factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithPosition(5), testutil.WithEarnings(100000))
+
+		resp, err := service.GetLeaguePicksEnhanced(ctx, league.ID, tourn.ID, false)
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, resp.Total)
+		require.Len(t, resp.Entries, 1)
+		assert.NotNil(t, resp.Entries[0].Leaderboard)
+		assert.Equal(t, 5, resp.Entries[0].Leaderboard.Position)
+		assert.Equal(t, 100000, resp.Entries[0].Leaderboard.Earnings)
+	})
+
+	t.Run("returns picks for completed tournament with champion", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateCompletedTournament()
+		golfer := factory.CreateGolfer()
+		factory.CreateFieldEntry(tourn, golfer)
+		factory.CreatePick(user, tourn, golfer, league)
+		factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithPosition(10), testutil.WithEarnings(50000))
+
+		resp, err := service.GetLeaguePicksEnhanced(ctx, league.ID, tourn.ID, false)
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, resp.Total)
+		require.Len(t, resp.Entries, 1)
+		assert.NotNil(t, resp.Entries[0].Leaderboard)
+		assert.Equal(t, 10, resp.Entries[0].Leaderboard.Position)
+	})
+
+	t.Run("returns picks for upcoming tournament without leaderboard lookup", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateUpcomingTournament(7)
+		golfer := factory.CreateGolfer()
+		factory.CreateFieldEntry(tourn, golfer)
+		factory.CreatePick(user, tourn, golfer, league)
+
+		resp, err := service.GetLeaguePicksEnhanced(ctx, league.ID, tourn.ID, false)
+
+		require.NoError(t, err)
+		assert.Equal(t, 1, resp.Total)
+		require.Len(t, resp.Entries, 1)
+		assert.Nil(t, resp.Entries[0].Leaderboard)
+	})
+
+	t.Run("returns empty entries when no picks exist", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+
+		tourn := factory.CreateActiveTournament()
+
+		resp, err := service.GetLeaguePicksEnhanced(ctx, league.ID, tourn.ID, false)
+
+		require.NoError(t, err)
+		assert.Equal(t, 0, resp.Total)
+		assert.Empty(t, resp.Entries)
+		assert.Equal(t, 1, resp.MembersWithoutPicks)
+	})
+
+	t.Run("includes round data when requested", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		tourn := factory.CreateActiveTournament()
+		golfer := factory.CreateGolfer()
+		factory.CreateFieldEntry(tourn, golfer)
+		factory.CreatePick(user, tourn, golfer, league)
+		lbEntry := factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithPosition(1))
+
+		db.Round.Create().
+			SetLeaderboardEntry(lbEntry).
+			SetRoundNumber(1).
+			SetNillableScore(intPtr(72)).
+			SetNillableParRelativeScore(intPtr(0)).
+			SaveX(ctx)
+
+		resp, err := service.GetLeaguePicksEnhanced(ctx, league.ID, tourn.ID, true)
+
+		require.NoError(t, err)
+		require.Len(t, resp.Entries, 1)
+		require.NotNil(t, resp.Entries[0].Leaderboard)
+		assert.Len(t, resp.Entries[0].Leaderboard.Rounds, 1)
+		assert.Equal(t, 1, resp.Entries[0].Leaderboard.Rounds[0].RoundNumber)
+	})
+}
+
 func TestService_GetAvailableGolfersForUserOverride(t *testing.T) {
 	t.Run("returns available golfers for target user", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
@@ -707,4 +838,8 @@ func TestService_GetAvailableGolfersForUserOverride(t *testing.T) {
 
 		require.ErrorIs(t, err, ErrNotCommissioner)
 	})
+}
+
+func intPtr(i int) *int {
+	return &i
 }

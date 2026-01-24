@@ -21,6 +21,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
+	"github.com/rj-davidson/greenrats/internal/features/tournaments"
 )
 
 const pickWindowDays = 3
@@ -451,10 +452,9 @@ func (s *Service) GetLeaguePicksEnhanced(ctx context.Context, leagueID, tourname
 
 	var leaderboardMap map[uuid.UUID]*ent.LeaderboardEntry
 	var roundsMap map[uuid.UUID][]*ent.Round
-	hasChampion := tournamentEnt != nil && tournamentEnt.Edges.Champion != nil
 	status := "upcoming"
 	if tournamentEnt != nil {
-		status = deriveTournamentStatus(tournamentEnt, hasChampion)
+		status = string(tournaments.DeriveStatus(tournamentEnt))
 	}
 
 	if status != "upcoming" {
@@ -1052,18 +1052,6 @@ func (s *Service) UpdateUserPick(ctx context.Context, params UpdatePickParams) (
 		TournamentName: tournamentEnt.Name,
 		GolferName:     newGolferEnt.Name,
 	}, nil
-}
-
-func deriveTournamentStatus(t *ent.Tournament, hasChampion bool) string {
-	if hasChampion {
-		return "completed"
-	}
-
-	now := time.Now().UTC()
-	if t.PickWindowClosesAt != nil && now.After(*t.PickWindowClosesAt) {
-		return "active"
-	}
-	return "upcoming"
 }
 
 type GetPickFieldParams struct {

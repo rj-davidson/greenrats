@@ -214,15 +214,3 @@ func TestUpsertTournament_PreservesExistingChampion(t *testing.T) {
 	require.NotNil(t, tournamentWithChampion.Edges.Champion)
 	assert.Equal(t, golferEntity.ID, tournamentWithChampion.Edges.Champion.ID)
 }
-
-func float64Ptr(f float64) *float64 {
-	return &f
-}
-
-func timeMustParse(layout, value string) time.Time {
-	t, err := time.Parse(layout, value)
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
