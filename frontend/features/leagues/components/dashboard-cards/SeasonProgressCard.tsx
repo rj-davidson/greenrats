@@ -24,14 +24,15 @@ export function SeasonProgressCard({ leagueId }: SeasonProgressCardProps) {
   const stats = useMemo((): SeasonStats | null => {
     if (!data?.tournaments) return null;
 
-    const completed = data.tournaments.filter((t) => t.status === "completed");
+    const now = new Date();
+    const started = data.tournaments.filter((t) => new Date(t.start_date) < now);
     const active = data.tournaments.find((t) => t.status === "active");
     const upcoming = data.tournaments
       .filter((t) => t.status === "upcoming")
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
 
     const total = data.tournaments.length;
-    const completedCount = completed.length;
+    const completedCount = started.length;
     const progress = total > 0 ? (completedCount / total) * 100 : 0;
 
     return {

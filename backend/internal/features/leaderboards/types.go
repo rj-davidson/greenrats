@@ -22,6 +22,7 @@ type ActiveTournament struct {
 
 type LeaderboardEntry struct {
 	Rank        int       `json:"rank"`
+	RankDisplay string    `json:"rank_display"`
 	UserID      uuid.UUID `json:"user_id"`
 	DisplayName string    `json:"display_name"`
 	Earnings    int       `json:"earnings"`
@@ -45,6 +46,7 @@ type PickHistory struct {
 
 type StandingsEntry struct {
 	Rank            int           `json:"rank"`
+	RankDisplay     string        `json:"rank_display"`
 	UserID          uuid.UUID     `json:"user_id"`
 	UserDisplayName string        `json:"user_display_name"`
 	TotalEarnings   int           `json:"total_earnings"`

@@ -19,6 +19,7 @@ export type ActiveTournament = z.infer<typeof activeTournamentSchema>;
 
 export const leaderboardEntrySchema = z.object({
   rank: z.number(),
+  rank_display: z.string(),
   user_id: z.string(),
   display_name: z.string(),
   earnings: z.number(),
@@ -46,6 +47,7 @@ export const pickHistorySchema = z.object({
 
 export const standingsEntrySchema = z.object({
   rank: z.number(),
+  rank_display: z.string(),
   user_id: z.string(),
   user_display_name: z.string(),
   total_earnings: z.number(),

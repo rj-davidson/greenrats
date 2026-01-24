@@ -39,7 +39,7 @@ export function YourStatsCard({ leagueId }: YourStatsCardProps) {
       {userEntry ? (
         <div className="space-y-4">
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-bold">{userEntry.rank}</span>
+            <span className="text-4xl font-bold">{userEntry.rank_display}</span>
             <span className="text-sm text-muted-foreground">of {totalMembers} members</span>
           </div>
           <div>

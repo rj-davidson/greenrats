@@ -30,13 +30,6 @@ function formatEarnings(amount: number): string {
   }).format(amount);
 }
 
-function getRankDisplay(rank: number) {
-  if (rank > 0 && rank < 4) {
-    return <span className="font-medium">{rank}</span>;
-  }
-  return rank;
-}
-
 function StandingsSkeleton() {
   return (
     <div className="space-y-2">
@@ -159,7 +152,7 @@ function StandingsRow({
           <ChevronRightIcon className="h-4 w-4" />
         )}
       </TableCell>
-      <TableCell className="w-16">{getRankDisplay(entry.rank)}</TableCell>
+      <TableCell className="w-16">{entry.rank_display}</TableCell>
       <TableCell>
         {entry.user_display_name}
         {isCurrentUser && <span className="ml-2 text-sm text-muted-foreground">(you)</span>}

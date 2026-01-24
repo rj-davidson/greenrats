@@ -36,6 +36,7 @@ func (s *Service) GetLeagueLeaderboard(ctx context.Context, leagueID uuid.UUID, 
 	for i, e := range resp.Entries {
 		entries[i] = LeaderboardEntry{
 			Rank:        e.Rank,
+			RankDisplay: e.RankDisplay,
 			UserID:      e.UserID,
 			DisplayName: e.UserDisplayName,
 			Earnings:    e.TotalEarnings,
@@ -263,6 +264,18 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 			currentRank = i + 1
 		}
 		entries[i].Rank = currentRank
+	}
+
+	rankCounts := make(map[int]int)
+	for _, e := range entries {
+		rankCounts[e.Rank]++
+	}
+	for i := range entries {
+		if rankCounts[entries[i].Rank] > 1 {
+			entries[i].RankDisplay = fmt.Sprintf("T%d", entries[i].Rank)
+		} else {
+			entries[i].RankDisplay = fmt.Sprintf("%d", entries[i].Rank)
+		}
 	}
 
 	var activeTournamentResponse *ActiveTournament
