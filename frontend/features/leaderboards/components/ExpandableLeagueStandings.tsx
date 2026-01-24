@@ -32,11 +32,7 @@ function formatEarnings(amount: number): string {
 
 function getRankDisplay(rank: number) {
   if (rank > 0 && rank < 4) {
-    return (
-      <span className="font-medium">
-        {rank}
-      </span>
-    );
+    return <span className="font-medium">{rank}</span>;
   }
   return rank;
 }
