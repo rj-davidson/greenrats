@@ -27,7 +27,7 @@ func newTestIngester(t *testing.T) *Ingester {
 	}
 }
 
-func TestProcessPlayerScorecards_CreatesRoundForInProgressRound(t *testing.T) {
+func TestProcessScorecards_CreatesRoundForInProgressRound(t *testing.T) {
 	ctx := context.Background()
 	ing := newTestIngester(t)
 
@@ -46,10 +46,10 @@ func TestProcessPlayerScorecards_CreatesRoundForInProgressRound(t *testing.T) {
 		},
 	}
 
-	holesProcessed, entryID := ing.processPlayerScorecards(ctx, tournament, scorecards)
+	holesProcessed, processedEntries := ing.processScorecards(ctx, tournament, scorecards)
 
-	require.NotNil(t, entryID)
-	assert.Equal(t, entry.ID, *entryID)
+	require.Len(t, processedEntries, 1)
+	assert.True(t, processedEntries[entry.ID])
 	assert.Equal(t, 1, holesProcessed)
 
 	rounds, err := ing.db.Round.Query().
@@ -71,7 +71,7 @@ func TestProcessPlayerScorecards_CreatesRoundForInProgressRound(t *testing.T) {
 	assert.Equal(t, 4, *holeScores[0].Score)
 }
 
-func TestProcessPlayerScorecards_ReusesCreatedRoundForMultipleHoles(t *testing.T) {
+func TestProcessScorecards_ReusesCreatedRoundForMultipleHoles(t *testing.T) {
 	ctx := context.Background()
 	ing := newTestIngester(t)
 
@@ -103,7 +103,7 @@ func TestProcessPlayerScorecards_ReusesCreatedRoundForMultipleHoles(t *testing.T
 		},
 	}
 
-	holesProcessed, _ := ing.processPlayerScorecards(ctx, tournament, scorecards)
+	holesProcessed, _ := ing.processScorecards(ctx, tournament, scorecards)
 
 	assert.Equal(t, 3, holesProcessed)
 
@@ -118,7 +118,7 @@ func TestProcessPlayerScorecards_ReusesCreatedRoundForMultipleHoles(t *testing.T
 	assert.Len(t, holeScores, 3)
 }
 
-func TestProcessPlayerScorecards_UsesExistingRound(t *testing.T) {
+func TestProcessScorecards_UsesExistingRound(t *testing.T) {
 	ctx := context.Background()
 	ing := newTestIngester(t)
 
@@ -144,7 +144,7 @@ func TestProcessPlayerScorecards_UsesExistingRound(t *testing.T) {
 		},
 	}
 
-	holesProcessed, _ := ing.processPlayerScorecards(ctx, tournament, scorecards)
+	holesProcessed, _ := ing.processScorecards(ctx, tournament, scorecards)
 
 	assert.Equal(t, 1, holesProcessed)
 
@@ -161,7 +161,7 @@ func TestProcessPlayerScorecards_UsesExistingRound(t *testing.T) {
 	require.Len(t, holeScores, 1)
 }
 
-func TestProcessPlayerScorecards_HandlesMultipleRounds(t *testing.T) {
+func TestProcessScorecards_HandlesMultipleRounds(t *testing.T) {
 	ctx := context.Background()
 	ing := newTestIngester(t)
 
@@ -194,7 +194,7 @@ func TestProcessPlayerScorecards_HandlesMultipleRounds(t *testing.T) {
 		},
 	}
 
-	holesProcessed, _ := ing.processPlayerScorecards(ctx, tournament, scorecards)
+	holesProcessed, _ := ing.processScorecards(ctx, tournament, scorecards)
 
 	assert.Equal(t, 2, holesProcessed)
 

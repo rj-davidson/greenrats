@@ -108,7 +108,6 @@ func (c *Client) GetPlayers(ctx context.Context) ([]Player, error) {
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("players", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -167,7 +166,6 @@ func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, 
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("tournaments", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -231,7 +229,6 @@ func (c *Client) GetTournamentResults(ctx context.Context, tournamentID int) ([]
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("tournament_results", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -289,7 +286,6 @@ func (c *Client) GetCourses(ctx context.Context) ([]Course, error) {
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("courses", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -348,7 +344,6 @@ func (c *Client) GetCourseHoles(ctx context.Context, courseID int) ([]CourseHole
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("course_holes", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -407,7 +402,6 @@ func (c *Client) GetPlayerRoundResults(ctx context.Context, tournamentID int) ([
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("player_round_results", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -467,7 +461,6 @@ func (c *Client) GetPlayerScorecards(ctx context.Context, tournamentID, playerID
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("player_scorecards", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -488,6 +481,128 @@ func (c *Client) GetPlayerScorecards(ctx context.Context, tournamentID, playerID
 	c.recordRequest("player_scorecards", start, nil)
 	c.logger.Info("player scorecards fetch complete", "total", len(allScorecards), "duration", time.Since(start))
 	return allScorecards, nil
+}
+
+func (c *Client) GetPlayerScorecardsBatch(ctx context.Context, tournamentID int, playerIDs []int) ([]PlayerScorecard, error) {
+	c.logger.Debug("fetching player scorecards batch", "tournament_id", tournamentID, "player_count", len(playerIDs))
+	start := time.Now()
+
+	var allScorecards []PlayerScorecard
+	cursor := 0
+
+	for {
+		if err := c.wait(ctx); err != nil {
+			return nil, fmt.Errorf("rate limiter: %w", err)
+		}
+
+		var response PlayerScorecardsResponse
+
+		result, err := c.breaker.Execute(func() (interface{}, error) {
+			req := c.client.R().
+				SetContext(ctx).
+				SetResult(&response).
+				SetQueryParam("tournament_ids[]", fmt.Sprintf("%d", tournamentID)).
+				SetQueryParam("per_page", "100")
+
+			for _, pid := range playerIDs {
+				req.SetQueryParam("player_ids[]", fmt.Sprintf("%d", pid))
+			}
+
+			if cursor > 0 {
+				req.SetQueryParam("cursor", fmt.Sprintf("%d", cursor))
+			}
+
+			resp, err := req.Get("/pga/v1/player_scorecards")
+			if err != nil {
+				return nil, err
+			}
+
+			if resp.IsError() {
+				return nil, fmt.Errorf("API error: %s", resp.Status())
+			}
+
+			return &response, nil
+		})
+		if err != nil {
+			c.recordRequest("player_scorecards_batch", start, err)
+			if errors.Is(err, gobreaker.ErrOpenState) {
+				return nil, fmt.Errorf("failed to fetch player scorecards: %w", ErrCircuitOpen)
+			}
+			return nil, fmt.Errorf("failed to fetch player scorecards: %w", err)
+		}
+
+		_ = result
+		allScorecards = append(allScorecards, response.Data...)
+
+		if response.Meta.NextCursor == 0 {
+			break
+		}
+		cursor = response.Meta.NextCursor
+	}
+
+	c.recordRequest("player_scorecards_batch", start, nil)
+	return allScorecards, nil
+}
+
+func (c *Client) GetPlayerRoundResultsBatch(ctx context.Context, tournamentID int, playerIDs []int) ([]PlayerRoundResult, error) {
+	c.logger.Debug("fetching player round results batch", "tournament_id", tournamentID, "player_count", len(playerIDs))
+	start := time.Now()
+
+	var allResults []PlayerRoundResult
+	cursor := 0
+
+	for {
+		if err := c.wait(ctx); err != nil {
+			return nil, fmt.Errorf("rate limiter: %w", err)
+		}
+
+		var response PlayerRoundResultsResponse
+
+		result, err := c.breaker.Execute(func() (interface{}, error) {
+			req := c.client.R().
+				SetContext(ctx).
+				SetResult(&response).
+				SetQueryParam("tournament_ids[]", fmt.Sprintf("%d", tournamentID)).
+				SetQueryParam("per_page", "100")
+
+			for _, pid := range playerIDs {
+				req.SetQueryParam("player_ids[]", fmt.Sprintf("%d", pid))
+			}
+
+			if cursor > 0 {
+				req.SetQueryParam("cursor", fmt.Sprintf("%d", cursor))
+			}
+
+			resp, err := req.Get("/pga/v1/player_round_results")
+			if err != nil {
+				return nil, err
+			}
+
+			if resp.IsError() {
+				return nil, fmt.Errorf("API error: %s", resp.Status())
+			}
+
+			return &response, nil
+		})
+		if err != nil {
+			c.recordRequest("player_round_results_batch", start, err)
+			if errors.Is(err, gobreaker.ErrOpenState) {
+				return nil, fmt.Errorf("failed to fetch player round results: %w", ErrCircuitOpen)
+			}
+			return nil, fmt.Errorf("failed to fetch player round results: %w", err)
+		}
+
+		_ = result
+		allResults = append(allResults, response.Data...)
+
+		if response.Meta.NextCursor == 0 {
+			break
+		}
+		cursor = response.Meta.NextCursor
+	}
+
+	c.recordRequest("player_round_results_batch", start, nil)
+	return allResults, nil
 }
 
 func (c *Client) GetPlayerSeasonStats(ctx context.Context, season int, statIDs []int) ([]PlayerSeasonStat, error) {
@@ -530,7 +645,6 @@ func (c *Client) GetPlayerSeasonStats(ctx context.Context, season int, statIDs [
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("player_season_stats", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -589,7 +703,6 @@ func (c *Client) GetTournamentCourseStats(ctx context.Context, tournamentID int)
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("tournament_course_stats", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -648,7 +761,6 @@ func (c *Client) GetTournamentField(ctx context.Context, tournamentID int) ([]To
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("tournament_field", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {
@@ -707,7 +819,6 @@ func (c *Client) GetPlayerRoundStats(ctx context.Context, tournamentID int) ([]P
 
 			return &response, nil
 		})
-
 		if err != nil {
 			c.recordRequest("player_round_stats", start, err)
 			if errors.Is(err, gobreaker.ErrOpenState) {

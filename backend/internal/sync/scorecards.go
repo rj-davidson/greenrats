@@ -15,13 +15,7 @@ import (
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 )
 
-const maxConcurrentFetches = 6
-
-type playerScorecardResult struct {
-	playerID   int
-	scorecards []balldontlie.PlayerScorecard
-	err        error
-}
+const playerBatchSize = 5
 
 func (i *Ingester) syncScorecards(ctx context.Context) error {
 	start := time.Now()
@@ -82,108 +76,113 @@ func (i *Ingester) syncScorecards(ctx context.Context) error {
 func (i *Ingester) syncTournamentScorecards(ctx context.Context, t *ent.Tournament) error {
 	i.logger.Debug("syncing scorecards", "tournament", t.Name)
 
-	roundResults, err := i.ballDontLie.GetPlayerRoundResults(ctx, *t.BdlID)
+	entries, err := t.QueryLeaderboardEntries().WithGolfer().All(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to fetch round results: %w", err)
+		return fmt.Errorf("failed to query leaderboard entries: %w", err)
 	}
 
-	playerIDs := make(map[int]bool)
+	playerIDs := make([]int, 0, len(entries))
+	for _, e := range entries {
+		if e.Edges.Golfer != nil && e.Edges.Golfer.BdlID != nil && *e.Edges.Golfer.BdlID != 0 {
+			playerIDs = append(playerIDs, *e.Edges.Golfer.BdlID)
+		}
+	}
+
 	roundsProcessed := 0
-	for idx := range roundResults {
-		result := &roundResults[idx]
-		playerIDs[result.Player.ID] = true
+	holesProcessed := 0
 
-		entry, err := i.db.LeaderboardEntry.Query().
-			Where(
-				leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
-				leaderboardentry.HasGolferWith(golfer.BdlID(result.Player.ID)),
-			).
-			Only(ctx)
-		if err != nil {
-			continue
+	for batchStart := 0; batchStart < len(playerIDs); batchStart += playerBatchSize {
+		batchEnd := batchStart + playerBatchSize
+		if batchEnd > len(playerIDs) {
+			batchEnd = len(playerIDs)
+		}
+		batch := playerIDs[batchStart:batchEnd]
+
+		var wg sync.WaitGroup
+		var scorecards []balldontlie.PlayerScorecard
+		var roundResults []balldontlie.PlayerRoundResult
+		var scorecardsErr, roundsErr error
+
+		wg.Add(2)
+		go func() {
+			defer wg.Done()
+			scorecards, scorecardsErr = i.ballDontLie.GetPlayerScorecardsBatch(ctx, *t.BdlID, batch)
+		}()
+		go func() {
+			defer wg.Done()
+			roundResults, roundsErr = i.ballDontLie.GetPlayerRoundResultsBatch(ctx, *t.BdlID, batch)
+		}()
+		wg.Wait()
+
+		if scorecardsErr != nil {
+			i.logger.Error("failed to fetch scorecard batch", "error", scorecardsErr)
+		}
+		if roundsErr != nil {
+			i.logger.Error("failed to fetch round results batch", "error", roundsErr)
 		}
 
-		_, err = i.syncService.UpsertRound(ctx, entry.ID, result)
-		if err != nil {
-			i.logger.Error("failed to upsert round", "player", result.Player.DisplayName, "round", result.RoundNumber, "error", err)
-			continue
+		processedEntries := make(map[uuid.UUID]bool)
+		for idx := range roundResults {
+			result := &roundResults[idx]
+			entry, err := i.db.LeaderboardEntry.Query().
+				Where(
+					leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
+					leaderboardentry.HasGolferWith(golfer.BdlID(result.Player.ID)),
+				).
+				Only(ctx)
+			if err != nil {
+				continue
+			}
+
+			_, err = i.syncService.UpsertRound(ctx, entry.ID, result)
+			if err != nil {
+				continue
+			}
+			processedEntries[entry.ID] = true
+			roundsProcessed++
 		}
-		roundsProcessed++
+
+		holes, entryIDs := i.processScorecards(ctx, t, scorecards)
+		holesProcessed += holes
+		for entryID := range entryIDs {
+			processedEntries[entryID] = true
+		}
+
+		for entryID := range processedEntries {
+			if err := i.syncService.UpdateLeaderboardProgress(ctx, entryID); err != nil {
+				i.logger.Error("failed to update progress", "entry_id", entryID, "error", err)
+			}
+		}
 	}
 
-	holesProcessed := i.fetchAndProcessScorecardsParallel(ctx, t, playerIDs)
-
-	i.logger.Debug("fetched scorecards", "tournament", t.Name, "rounds", roundsProcessed, "holes", holesProcessed)
+	i.logger.Debug("synced scorecards", "tournament", t.Name, "rounds", roundsProcessed, "holes", holesProcessed)
 	SyncRecordsProcessed.WithLabelValues("scorecards", "rounds").Add(float64(roundsProcessed))
 	SyncRecordsProcessed.WithLabelValues("scorecards", "holes").Add(float64(holesProcessed))
 	return nil
 }
 
-func (i *Ingester) fetchAndProcessScorecardsParallel(ctx context.Context, t *ent.Tournament, playerIDs map[int]bool) int {
-	resultsCh := make(chan playerScorecardResult)
-	sem := make(chan struct{}, maxConcurrentFetches)
-
-	var wg sync.WaitGroup
-
-	for playerID := range playerIDs {
-		wg.Add(1)
-		go func(pid int) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-
-			scorecards, err := i.ballDontLie.GetPlayerScorecards(ctx, *t.BdlID, pid)
-			resultsCh <- playerScorecardResult{playerID: pid, scorecards: scorecards, err: err}
-		}(playerID)
-	}
-
-	go func() {
-		wg.Wait()
-		close(resultsCh)
-	}()
-
+func (i *Ingester) processScorecards(ctx context.Context, t *ent.Tournament, scorecards []balldontlie.PlayerScorecard) (int, map[uuid.UUID]bool) {
 	holesProcessed := 0
 	processedEntries := make(map[uuid.UUID]bool)
-	for result := range resultsCh {
-		if result.err != nil {
-			i.logger.Error("failed to fetch scorecards", "player_id", result.playerID, "error", result.err)
-			continue
-		}
-		holes, entryID := i.processPlayerScorecards(ctx, t, result.scorecards)
-		holesProcessed += holes
-		if entryID != nil {
-			processedEntries[*entryID] = true
-		}
-	}
+	entryCache := make(map[int]*ent.LeaderboardEntry)
 
-	for entryID := range processedEntries {
-		if err := i.syncService.UpdateLeaderboardProgress(ctx, entryID); err != nil {
-			i.logger.Error("failed to update progress", "entry_id", entryID, "error", err)
-		}
-	}
-
-	return holesProcessed
-}
-
-func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournament, scorecards []balldontlie.PlayerScorecard) (int, *uuid.UUID) {
-	holesProcessed := 0
-	var entryID *uuid.UUID
 	for idx := range scorecards {
 		sc := &scorecards[idx]
 
-		entry, err := i.db.LeaderboardEntry.Query().
-			Where(
-				leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
-				leaderboardentry.HasGolferWith(golfer.BdlID(sc.Player.ID)),
-			).
-			WithRounds().
-			Only(ctx)
-		if err != nil {
-			continue
-		}
-
-		if entryID == nil {
-			entryID = &entry.ID
+		entry, ok := entryCache[sc.Player.ID]
+		if !ok {
+			var err error
+			entry, err = i.db.LeaderboardEntry.Query().
+				Where(
+					leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
+					leaderboardentry.HasGolferWith(golfer.BdlID(sc.Player.ID)),
+				).
+				WithRounds().
+				Only(ctx)
+			if err != nil {
+				continue
+			}
+			entryCache[sc.Player.ID] = entry
 		}
 
 		var roundID *uuid.UUID
@@ -212,6 +211,7 @@ func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournamen
 			continue
 		}
 		holesProcessed++
+		processedEntries[entry.ID] = true
 	}
-	return holesProcessed, entryID
+	return holesProcessed, processedEntries
 }

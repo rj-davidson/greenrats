@@ -70,8 +70,26 @@ func (m *MockClient) GetPlayerRoundResults(ctx context.Context, tournamentID int
 	return result, args.Error(1)
 }
 
+func (m *MockClient) GetPlayerRoundResultsBatch(ctx context.Context, tournamentID int, playerIDs []int) ([]PlayerRoundResult, error) {
+	args := m.Called(ctx, tournamentID, playerIDs)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, _ := args.Get(0).([]PlayerRoundResult)
+	return result, args.Error(1)
+}
+
 func (m *MockClient) GetPlayerScorecards(ctx context.Context, tournamentID, playerID int) ([]PlayerScorecard, error) {
 	args := m.Called(ctx, tournamentID, playerID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, _ := args.Get(0).([]PlayerScorecard)
+	return result, args.Error(1)
+}
+
+func (m *MockClient) GetPlayerScorecardsBatch(ctx context.Context, tournamentID int, playerIDs []int) ([]PlayerScorecard, error) {
+	args := m.Called(ctx, tournamentID, playerIDs)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
