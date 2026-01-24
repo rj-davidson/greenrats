@@ -112,7 +112,9 @@ export function ExpandableLeaderboardTable({
                         <span>Picked by:</span>
                         <span className="ml-2 inline-flex flex-wrap gap-2">
                           {entry.picked_by.map((picker) => (
-                            <span key={picker}>{picker}</span>
+                            <Badge key={picker} variant="outline">
+                              {picker}
+                            </Badge>
                           ))}
                         </span>
                       </div>
