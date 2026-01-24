@@ -3,6 +3,7 @@ package sync
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/gofrs/uuid/v5"
@@ -11,7 +12,16 @@ import (
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 )
+
+const maxConcurrentFetches = 6
+
+type playerScorecardResult struct {
+	playerID   int
+	scorecards []balldontlie.PlayerScorecard
+	err        error
+}
 
 func (i *Ingester) syncScorecards(ctx context.Context) error {
 	start := time.Now()
@@ -101,49 +111,81 @@ func (i *Ingester) syncTournamentScorecards(ctx context.Context, t *ent.Tourname
 		roundsProcessed++
 	}
 
-	holesProcessed := 0
-	for playerID := range playerIDs {
-		scorecards, err := i.ballDontLie.GetPlayerScorecards(ctx, *t.BdlID, playerID)
-		if err != nil {
-			i.logger.Error("failed to fetch scorecards", "player_id", playerID, "error", err)
-			continue
-		}
-
-		for idx := range scorecards {
-			sc := &scorecards[idx]
-
-			entry, err := i.db.LeaderboardEntry.Query().
-				Where(
-					leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
-					leaderboardentry.HasGolferWith(golfer.BdlID(sc.Player.ID)),
-				).
-				WithRounds().
-				Only(ctx)
-			if err != nil {
-				continue
-			}
-
-			var roundID *uuid.UUID
-			for _, r := range entry.Edges.Rounds {
-				if r.RoundNumber == sc.RoundNumber {
-					roundID = &r.ID
-					break
-				}
-			}
-			if roundID == nil {
-				continue
-			}
-
-			if err := i.syncService.UpsertHoleScore(ctx, *roundID, sc); err != nil {
-				i.logger.Error("failed to upsert hole score", "player", sc.Player.DisplayName, "round", sc.RoundNumber, "hole", sc.HoleNumber, "error", err)
-				continue
-			}
-			holesProcessed++
-		}
-	}
+	holesProcessed := i.fetchAndProcessScorecardsParallel(ctx, t, playerIDs)
 
 	i.logger.Debug("fetched scorecards", "tournament", t.Name, "rounds", roundsProcessed, "holes", holesProcessed)
 	SyncRecordsProcessed.WithLabelValues("scorecards", "rounds").Add(float64(roundsProcessed))
 	SyncRecordsProcessed.WithLabelValues("scorecards", "holes").Add(float64(holesProcessed))
 	return nil
+}
+
+func (i *Ingester) fetchAndProcessScorecardsParallel(ctx context.Context, t *ent.Tournament, playerIDs map[int]bool) int {
+	resultsCh := make(chan playerScorecardResult)
+	sem := make(chan struct{}, maxConcurrentFetches)
+
+	var wg sync.WaitGroup
+
+	for playerID := range playerIDs {
+		wg.Add(1)
+		go func(pid int) {
+			defer wg.Done()
+			sem <- struct{}{}
+			defer func() { <-sem }()
+
+			scorecards, err := i.ballDontLie.GetPlayerScorecards(ctx, *t.BdlID, pid)
+			resultsCh <- playerScorecardResult{playerID: pid, scorecards: scorecards, err: err}
+		}(playerID)
+	}
+
+	go func() {
+		wg.Wait()
+		close(resultsCh)
+	}()
+
+	holesProcessed := 0
+	for result := range resultsCh {
+		if result.err != nil {
+			i.logger.Error("failed to fetch scorecards", "player_id", result.playerID, "error", result.err)
+			continue
+		}
+		holesProcessed += i.processPlayerScorecards(ctx, t, result.scorecards)
+	}
+
+	return holesProcessed
+}
+
+func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournament, scorecards []balldontlie.PlayerScorecard) int {
+	holesProcessed := 0
+	for idx := range scorecards {
+		sc := &scorecards[idx]
+
+		entry, err := i.db.LeaderboardEntry.Query().
+			Where(
+				leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
+				leaderboardentry.HasGolferWith(golfer.BdlID(sc.Player.ID)),
+			).
+			WithRounds().
+			Only(ctx)
+		if err != nil {
+			continue
+		}
+
+		var roundID *uuid.UUID
+		for _, r := range entry.Edges.Rounds {
+			if r.RoundNumber == sc.RoundNumber {
+				roundID = &r.ID
+				break
+			}
+		}
+		if roundID == nil {
+			continue
+		}
+
+		if err := i.syncService.UpsertHoleScore(ctx, *roundID, sc); err != nil {
+			i.logger.Error("failed to upsert hole score", "player", sc.Player.DisplayName, "round", sc.RoundNumber, "hole", sc.HoleNumber, "error", err)
+			continue
+		}
+		holesProcessed++
+	}
+	return holesProcessed
 }

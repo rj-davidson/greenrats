@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync/atomic"
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent"
@@ -32,12 +33,13 @@ const (
 )
 
 type Ingester struct {
-	db          *ent.Client
-	config      *config.Config
-	ballDontLie *balldontlie.Client
-	syncService *Service
-	email       *email.Client
-	logger      *slog.Logger
+	db                   *ent.Client
+	config               *config.Config
+	ballDontLie          *balldontlie.Client
+	syncService          *Service
+	email                *email.Client
+	logger               *slog.Logger
+	scorecardSyncRunning atomic.Bool
 }
 
 func NewIngester(
@@ -89,7 +91,7 @@ func (i *Ingester) Run(ctx context.Context) {
 	}
 	if i.isAnyTournamentInPlayHours(ctx) {
 		if i.shouldSync(ctx, "scorecards", ScorecardSyncInterval) {
-			i.runSync(ctx, "sync_scorecards", i.syncScorecards)
+			i.runSyncAsync(ctx, "sync_scorecards", &i.scorecardSyncRunning, i.syncScorecards)
 			lastScorecardSync = time.Now()
 		}
 	}
@@ -127,7 +129,7 @@ func (i *Ingester) Run(ctx context.Context) {
 			}
 
 			if i.isAnyTournamentInPlayHours(ctx) && now.Sub(lastScorecardSync) >= ScorecardSyncInterval {
-				i.runSync(ctx, "sync_scorecards", i.syncScorecards)
+				i.runSyncAsync(ctx, "sync_scorecards", &i.scorecardSyncRunning, i.syncScorecards)
 				lastScorecardSync = now
 			}
 

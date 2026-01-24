@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync/atomic"
 
 	"github.com/getsentry/sentry-go"
 )
@@ -17,6 +18,17 @@ func (i *Ingester) runSync(ctx context.Context, name string, fn func(context.Con
 		i.logger.Error("sync failed", "type", name, "error", err)
 		i.captureJobError(name, err)
 	}
+}
+
+func (i *Ingester) runSyncAsync(ctx context.Context, name string, running *atomic.Bool, fn func(context.Context) error) {
+	if !running.CompareAndSwap(false, true) {
+		i.logger.Debug("sync already running, skipping", "type", name)
+		return
+	}
+	go func() {
+		defer running.Store(false)
+		i.runSync(ctx, name, fn)
+	}()
 }
 
 func (i *Ingester) captureJobError(job string, err error) {
