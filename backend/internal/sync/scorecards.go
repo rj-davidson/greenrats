@@ -194,7 +194,17 @@ func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournamen
 			}
 		}
 		if roundID == nil {
-			continue
+			roundResult := &balldontlie.PlayerRoundResult{
+				RoundNumber: sc.RoundNumber,
+				Player:      sc.Player,
+			}
+			newRound, err := i.syncService.UpsertRound(ctx, entry.ID, roundResult)
+			if err != nil {
+				i.logger.Error("failed to create round for scorecard", "player", sc.Player.DisplayName, "round", sc.RoundNumber, "error", err)
+				continue
+			}
+			roundID = &newRound.ID
+			entry.Edges.Rounds = append(entry.Edges.Rounds, newRound)
 		}
 
 		if err := i.syncService.UpsertHoleScore(ctx, *roundID, sc); err != nil {
