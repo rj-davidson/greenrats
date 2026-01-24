@@ -40,9 +40,8 @@ function MakingYourPick() {
       <div className="space-y-3 text-muted-foreground">
         <p>
           The pick window <strong className="text-foreground">opens 4 days</strong> before each
-          tournament and{" "}
-          <strong className="text-foreground">closes at 5 AM local time</strong> the morning the
-          tournament begins.
+          tournament and <strong className="text-foreground">closes at 5 AM local time</strong> the
+          morning the tournament begins.
         </p>
         <p>
           While the window is open, you can{" "}
