@@ -880,28 +880,15 @@ func (s *Service) UpdateLeaderboardProgress(ctx context.Context, entryID uuid.UU
 
 	currentRound := 0
 	thru := 0
-
 	for _, r := range entry.Edges.Rounds {
-		holesPlayed := 0
-		parRelative := 0
-		for _, h := range r.Edges.HoleScores {
-			if h.Score != nil {
-				holesPlayed++
-				parRelative += *h.Score - h.Par
-			}
-		}
-
-		if holesPlayed > 0 && r.ParRelativeScore == nil {
-			_, err := r.Update().SetParRelativeScore(parRelative).Save(ctx)
-			if err != nil {
-				s.logger.Warn("failed to update round par_relative_score",
-					"round", r.RoundNumber, "error", err)
-			}
-		}
-
 		if r.RoundNumber > currentRound {
 			currentRound = r.RoundNumber
-			thru = holesPlayed
+			thru = 0
+			for _, h := range r.Edges.HoleScores {
+				if h.Score != nil {
+					thru++
+				}
+			}
 		}
 	}
 
