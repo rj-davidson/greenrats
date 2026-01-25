@@ -26,7 +26,7 @@ func (s *Server) setupMiddleware() {
 		Timeout:         2 * time.Second,
 	}))
 	s.app.Use(func(c *fiber.Ctx) error {
-		if hub := sentry.GetHubFromContext(c.UserContext()); hub != nil {
+		if hub := sentryfiber.GetHubFromContext(c); hub != nil {
 			if id, ok := c.Locals("requestid").(string); ok && id != "" {
 				hub.Scope().SetTag("request_id", id)
 			}
