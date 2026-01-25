@@ -45,8 +45,8 @@ function LeaderboardRow({
   entry: LeaderboardEntry;
   showEarnings: boolean;
 }) {
-  const isTopThree = entry.position >= 1 && entry.position <= 3 && !entry.cut;
-  const isCut = entry.cut;
+  const isCut = entry.status === "cut";
+  const isTopThree = entry.position >= 1 && entry.position <= 3 && !isCut;
 
   return (
     <TableRow className={cn(isCut && "text-muted-foreground")}>

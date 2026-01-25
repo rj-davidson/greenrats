@@ -105,18 +105,6 @@ func (f HoleScoreFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, e
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.HoleScoreMutation", m)
 }
 
-// The LeaderboardEntryFunc type is an adapter to allow the use of ordinary
-// function as LeaderboardEntry mutator.
-type LeaderboardEntryFunc func(context.Context, *ent.LeaderboardEntryMutation) (ent.Value, error)
-
-// Mutate calls f(ctx, m).
-func (f LeaderboardEntryFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
-	if mv, ok := m.(*ent.LeaderboardEntryMutation); ok {
-		return f(ctx, mv)
-	}
-	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LeaderboardEntryMutation", m)
-}
-
 // The LeagueFunc type is an adapter to allow the use of ordinary
 // function as League mutator.
 type LeagueFunc func(context.Context, *ent.LeagueMutation) (ent.Value, error)
@@ -151,6 +139,18 @@ func (f PickFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error)
 		return f(ctx, mv)
 	}
 	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PickMutation", m)
+}
+
+// The PlacementFunc type is an adapter to allow the use of ordinary
+// function as Placement mutator.
+type PlacementFunc func(context.Context, *ent.PlacementMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PlacementFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PlacementMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PlacementMutation", m)
 }
 
 // The RoundFunc type is an adapter to allow the use of ordinary

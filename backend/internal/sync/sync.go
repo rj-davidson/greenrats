@@ -17,7 +17,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/golferseason"
 	"github.com/rj-davidson/greenrats/ent/holescore"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
@@ -472,7 +472,7 @@ func mapFieldEntryStatus(status string) fieldentry.EntryStatus {
 	}
 }
 
-func (s *Service) UpsertLeaderboardEntry(ctx context.Context, t *ent.Tournament, r *balldontlie.TournamentResult) error {
+func (s *Service) UpsertPlacement(ctx context.Context, t *ent.Tournament, r *balldontlie.TournamentResult) error {
 	g, err := s.db.Golfer.Query().
 		Where(golfer.BdlID(r.Player.ID)).
 		Only(ctx)
@@ -483,74 +483,93 @@ func (s *Service) UpsertLeaderboardEntry(ctx context.Context, t *ent.Tournament,
 		return fmt.Errorf("failed to query golfer: %w", err)
 	}
 
-	status := leaderboardentry.StatusActive
-	cut := false
-	if r.Tournament.Status != nil {
-		switch *r.Tournament.Status {
-		case "COMPLETED":
-			status = leaderboardentry.StatusFinished
-		case "IN_PROGRESS":
-			status = leaderboardentry.StatusActive
+	status := placement.StatusFinished
+	position := ""
+	var positionNumeric *int
+
+	if r.Position != nil {
+		position = *r.Position
+		if position == "CUT" {
+			status = placement.StatusCut
+		} else if position == "WD" {
+			status = placement.StatusWithdrawn
 		}
 	}
 
-	position := 0
-	if r.PositionNumeric != nil {
-		position = *r.PositionNumeric
-	}
-	if r.Position != nil && *r.Position == "CUT" {
-		cut = true
-		status = leaderboardentry.StatusFinished
+	if r.PositionNumeric != nil && *r.PositionNumeric > 0 {
+		positionNumeric = r.PositionNumeric
 	}
 
-	score := 0
+	var totalScore *int
 	if r.TotalScore != nil {
-		score = *r.TotalScore
+		totalScore = r.TotalScore
 	}
-	totalStrokes := 0
+
+	var parRelativeScore *int
+	if r.ParRelativeScore != nil {
+		parRelativeScore = r.ParRelativeScore
+	}
 
 	earnings := 0
 	if r.Earnings != nil {
 		earnings = int(*r.Earnings)
 	}
 
-	existing, err := s.db.LeaderboardEntry.Query().
+	existing, err := s.db.Placement.Query().
 		Where(
-			leaderboardentry.HasTournamentWith(tournament.ID(t.ID)),
-			leaderboardentry.HasGolferWith(golfer.ID(g.ID)),
+			placement.HasTournamentWith(tournament.ID(t.ID)),
+			placement.HasGolferWith(golfer.ID(g.ID)),
 		).
 		Only(ctx)
 
 	switch {
 	case ent.IsNotFound(err):
-		_, err = s.db.LeaderboardEntry.Create().
+		builder := s.db.Placement.Create().
 			SetTournament(t).
 			SetGolfer(g).
 			SetPosition(position).
-			SetCut(cut).
-			SetScore(score).
-			SetTotalStrokes(totalStrokes).
 			SetStatus(status).
-			SetEarnings(earnings).
-			Save(ctx)
+			SetEarnings(earnings)
+
+		if positionNumeric != nil {
+			builder.SetPositionNumeric(*positionNumeric)
+		}
+		if totalScore != nil {
+			builder.SetTotalScore(*totalScore)
+		}
+		if parRelativeScore != nil {
+			builder.SetParRelativeScore(*parRelativeScore)
+		}
+
+		_, err = builder.Save(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to create leaderboard entry: %w", err)
+			return fmt.Errorf("failed to create placement: %w", err)
 		}
 
 	case err != nil:
-		return fmt.Errorf("failed to query leaderboard entry: %w", err)
+		return fmt.Errorf("failed to query placement: %w", err)
 
 	default:
-		_, err = existing.Update().
+		updater := existing.Update().
 			SetPosition(position).
-			SetCut(cut).
-			SetScore(score).
-			SetTotalStrokes(totalStrokes).
 			SetStatus(status).
-			SetEarnings(earnings).
-			Save(ctx)
+			SetEarnings(earnings)
+
+		if positionNumeric != nil {
+			updater.SetPositionNumeric(*positionNumeric)
+		} else {
+			updater.ClearPositionNumeric()
+		}
+		if totalScore != nil {
+			updater.SetTotalScore(*totalScore)
+		}
+		if parRelativeScore != nil {
+			updater.SetParRelativeScore(*parRelativeScore)
+		}
+
+		_, err = updater.Save(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to update leaderboard entry: %w", err)
+			return fmt.Errorf("failed to update placement: %w", err)
 		}
 	}
 
@@ -775,10 +794,11 @@ func (s *Service) UpsertCourseHole(ctx context.Context, courseID uuid.UUID, h *b
 	return nil
 }
 
-func (s *Service) UpsertRound(ctx context.Context, entryID uuid.UUID, r *balldontlie.PlayerRoundResult) (*ent.Round, error) {
+func (s *Service) UpsertRound(ctx context.Context, tournamentID, golferID uuid.UUID, r *balldontlie.PlayerRoundResult) (*ent.Round, error) {
 	existing, err := s.db.Round.Query().
 		Where(
-			round.HasLeaderboardEntryWith(leaderboardentry.IDEQ(entryID)),
+			round.HasTournamentWith(tournament.IDEQ(tournamentID)),
+			round.HasGolferWith(golfer.IDEQ(golferID)),
 			round.RoundNumberEQ(r.RoundNumber),
 		).
 		Only(ctx)
@@ -786,7 +806,8 @@ func (s *Service) UpsertRound(ctx context.Context, entryID uuid.UUID, r *balldon
 	switch {
 	case ent.IsNotFound(err):
 		builder := s.db.Round.Create().
-			SetLeaderboardEntryID(entryID).
+			SetTournamentID(tournamentID).
+			SetGolferID(golferID).
 			SetRoundNumber(r.RoundNumber)
 
 		if r.Score != nil {
@@ -862,42 +883,6 @@ func (s *Service) UpsertHoleScore(ctx context.Context, roundID uuid.UUID, h *bal
 		if err != nil {
 			return fmt.Errorf("failed to update hole score: %w", err)
 		}
-	}
-
-	return nil
-}
-
-func (s *Service) UpdateLeaderboardProgress(ctx context.Context, entryID uuid.UUID) error {
-	entry, err := s.db.LeaderboardEntry.Query().
-		Where(leaderboardentry.IDEQ(entryID)).
-		WithRounds(func(q *ent.RoundQuery) {
-			q.WithHoleScores()
-		}).
-		Only(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to query entry: %w", err)
-	}
-
-	currentRound := 0
-	thru := 0
-	for _, r := range entry.Edges.Rounds {
-		if r.RoundNumber > currentRound {
-			currentRound = r.RoundNumber
-			thru = 0
-			for _, h := range r.Edges.HoleScores {
-				if h.Score != nil {
-					thru++
-				}
-			}
-		}
-	}
-
-	_, err = entry.Update().
-		SetCurrentRound(currentRound).
-		SetThru(thru).
-		Save(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to update entry progress: %w", err)
 	}
 
 	return nil

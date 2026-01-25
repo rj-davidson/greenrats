@@ -14,23 +14,25 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/course"
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/holescore"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/round"
+	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
 // RoundQuery is the builder for querying Round entities.
 type RoundQuery struct {
 	config
-	ctx                  *QueryContext
-	order                []round.OrderOption
-	inters               []Interceptor
-	predicates           []predicate.Round
-	withLeaderboardEntry *LeaderboardEntryQuery
-	withHoleScores       *HoleScoreQuery
-	withCourse           *CourseQuery
-	withFKs              bool
+	ctx            *QueryContext
+	order          []round.OrderOption
+	inters         []Interceptor
+	predicates     []predicate.Round
+	withTournament *TournamentQuery
+	withGolfer     *GolferQuery
+	withHoleScores *HoleScoreQuery
+	withCourse     *CourseQuery
+	withFKs        bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -67,9 +69,9 @@ func (_q *RoundQuery) Order(o ...round.OrderOption) *RoundQuery {
 	return _q
 }
 
-// QueryLeaderboardEntry chains the current query on the "leaderboard_entry" edge.
-func (_q *RoundQuery) QueryLeaderboardEntry() *LeaderboardEntryQuery {
-	query := (&LeaderboardEntryClient{config: _q.config}).Query()
+// QueryTournament chains the current query on the "tournament" edge.
+func (_q *RoundQuery) QueryTournament() *TournamentQuery {
+	query := (&TournamentClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -80,8 +82,30 @@ func (_q *RoundQuery) QueryLeaderboardEntry() *LeaderboardEntryQuery {
 		}
 		step := sqlgraph.NewStep(
 			sqlgraph.From(round.Table, round.FieldID, selector),
-			sqlgraph.To(leaderboardentry.Table, leaderboardentry.FieldID),
-			sqlgraph.Edge(sqlgraph.M2O, true, round.LeaderboardEntryTable, round.LeaderboardEntryColumn),
+			sqlgraph.To(tournament.Table, tournament.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, round.TournamentTable, round.TournamentColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryGolfer chains the current query on the "golfer" edge.
+func (_q *RoundQuery) QueryGolfer() *GolferQuery {
+	query := (&GolferClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(round.Table, round.FieldID, selector),
+			sqlgraph.To(golfer.Table, golfer.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, round.GolferTable, round.GolferColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -320,28 +344,40 @@ func (_q *RoundQuery) Clone() *RoundQuery {
 		return nil
 	}
 	return &RoundQuery{
-		config:               _q.config,
-		ctx:                  _q.ctx.Clone(),
-		order:                append([]round.OrderOption{}, _q.order...),
-		inters:               append([]Interceptor{}, _q.inters...),
-		predicates:           append([]predicate.Round{}, _q.predicates...),
-		withLeaderboardEntry: _q.withLeaderboardEntry.Clone(),
-		withHoleScores:       _q.withHoleScores.Clone(),
-		withCourse:           _q.withCourse.Clone(),
+		config:         _q.config,
+		ctx:            _q.ctx.Clone(),
+		order:          append([]round.OrderOption{}, _q.order...),
+		inters:         append([]Interceptor{}, _q.inters...),
+		predicates:     append([]predicate.Round{}, _q.predicates...),
+		withTournament: _q.withTournament.Clone(),
+		withGolfer:     _q.withGolfer.Clone(),
+		withHoleScores: _q.withHoleScores.Clone(),
+		withCourse:     _q.withCourse.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithLeaderboardEntry tells the query-builder to eager-load the nodes that are connected to
-// the "leaderboard_entry" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *RoundQuery) WithLeaderboardEntry(opts ...func(*LeaderboardEntryQuery)) *RoundQuery {
-	query := (&LeaderboardEntryClient{config: _q.config}).Query()
+// WithTournament tells the query-builder to eager-load the nodes that are connected to
+// the "tournament" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *RoundQuery) WithTournament(opts ...func(*TournamentQuery)) *RoundQuery {
+	query := (&TournamentClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withLeaderboardEntry = query
+	_q.withTournament = query
+	return _q
+}
+
+// WithGolfer tells the query-builder to eager-load the nodes that are connected to
+// the "golfer" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *RoundQuery) WithGolfer(opts ...func(*GolferQuery)) *RoundQuery {
+	query := (&GolferClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withGolfer = query
 	return _q
 }
 
@@ -446,13 +482,14 @@ func (_q *RoundQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Round,
 		nodes       = []*Round{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
-			_q.withLeaderboardEntry != nil,
+		loadedTypes = [4]bool{
+			_q.withTournament != nil,
+			_q.withGolfer != nil,
 			_q.withHoleScores != nil,
 			_q.withCourse != nil,
 		}
 	)
-	if _q.withLeaderboardEntry != nil || _q.withCourse != nil {
+	if _q.withTournament != nil || _q.withGolfer != nil || _q.withCourse != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -476,9 +513,15 @@ func (_q *RoundQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Round,
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withLeaderboardEntry; query != nil {
-		if err := _q.loadLeaderboardEntry(ctx, query, nodes, nil,
-			func(n *Round, e *LeaderboardEntry) { n.Edges.LeaderboardEntry = e }); err != nil {
+	if query := _q.withTournament; query != nil {
+		if err := _q.loadTournament(ctx, query, nodes, nil,
+			func(n *Round, e *Tournament) { n.Edges.Tournament = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withGolfer; query != nil {
+		if err := _q.loadGolfer(ctx, query, nodes, nil,
+			func(n *Round, e *Golfer) { n.Edges.Golfer = e }); err != nil {
 			return nil, err
 		}
 	}
@@ -498,14 +541,14 @@ func (_q *RoundQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Round,
 	return nodes, nil
 }
 
-func (_q *RoundQuery) loadLeaderboardEntry(ctx context.Context, query *LeaderboardEntryQuery, nodes []*Round, init func(*Round), assign func(*Round, *LeaderboardEntry)) error {
+func (_q *RoundQuery) loadTournament(ctx context.Context, query *TournamentQuery, nodes []*Round, init func(*Round), assign func(*Round, *Tournament)) error {
 	ids := make([]uuid.UUID, 0, len(nodes))
 	nodeids := make(map[uuid.UUID][]*Round)
 	for i := range nodes {
-		if nodes[i].leaderboard_entry_rounds == nil {
+		if nodes[i].tournament_rounds == nil {
 			continue
 		}
-		fk := *nodes[i].leaderboard_entry_rounds
+		fk := *nodes[i].tournament_rounds
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -514,7 +557,7 @@ func (_q *RoundQuery) loadLeaderboardEntry(ctx context.Context, query *Leaderboa
 	if len(ids) == 0 {
 		return nil
 	}
-	query.Where(leaderboardentry.IDIn(ids...))
+	query.Where(tournament.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
@@ -522,7 +565,39 @@ func (_q *RoundQuery) loadLeaderboardEntry(ctx context.Context, query *Leaderboa
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "leaderboard_entry_rounds" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "tournament_rounds" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *RoundQuery) loadGolfer(ctx context.Context, query *GolferQuery, nodes []*Round, init func(*Round), assign func(*Round, *Golfer)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Round)
+	for i := range nodes {
+		if nodes[i].golfer_rounds == nil {
+			continue
+		}
+		fk := *nodes[i].golfer_rounds
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(golfer.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "golfer_rounds" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)

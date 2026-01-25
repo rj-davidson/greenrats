@@ -14,8 +14,9 @@ import (
 	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/golferseason"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/placement"
+	"github.com/rj-davidson/greenrats/ent/round"
 )
 
 // GolferCreate is the builder for creating a Golfer entity.
@@ -369,19 +370,34 @@ func (_c *GolferCreate) AddFieldEntries(v ...*FieldEntry) *GolferCreate {
 	return _c.AddFieldEntryIDs(ids...)
 }
 
-// AddLeaderboardEntryIDs adds the "leaderboard_entries" edge to the LeaderboardEntry entity by IDs.
-func (_c *GolferCreate) AddLeaderboardEntryIDs(ids ...uuid.UUID) *GolferCreate {
-	_c.mutation.AddLeaderboardEntryIDs(ids...)
+// AddPlacementIDs adds the "placements" edge to the Placement entity by IDs.
+func (_c *GolferCreate) AddPlacementIDs(ids ...uuid.UUID) *GolferCreate {
+	_c.mutation.AddPlacementIDs(ids...)
 	return _c
 }
 
-// AddLeaderboardEntries adds the "leaderboard_entries" edges to the LeaderboardEntry entity.
-func (_c *GolferCreate) AddLeaderboardEntries(v ...*LeaderboardEntry) *GolferCreate {
+// AddPlacements adds the "placements" edges to the Placement entity.
+func (_c *GolferCreate) AddPlacements(v ...*Placement) *GolferCreate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _c.AddLeaderboardEntryIDs(ids...)
+	return _c.AddPlacementIDs(ids...)
+}
+
+// AddRoundIDs adds the "rounds" edge to the Round entity by IDs.
+func (_c *GolferCreate) AddRoundIDs(ids ...uuid.UUID) *GolferCreate {
+	_c.mutation.AddRoundIDs(ids...)
+	return _c
+}
+
+// AddRounds adds the "rounds" edges to the Round entity.
+func (_c *GolferCreate) AddRounds(v ...*Round) *GolferCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddRoundIDs(ids...)
 }
 
 // AddSeasonIDs adds the "seasons" edge to the GolferSeason entity by IDs.
@@ -633,15 +649,31 @@ func (_c *GolferCreate) createSpec() (*Golfer, *sqlgraph.CreateSpec) {
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := _c.mutation.LeaderboardEntriesIDs(); len(nodes) > 0 {
+	if nodes := _c.mutation.PlacementsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   golfer.LeaderboardEntriesTable,
-			Columns: []string{golfer.LeaderboardEntriesColumn},
+			Table:   golfer.PlacementsTable,
+			Columns: []string{golfer.PlacementsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(placement.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.RoundsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.RoundsTable,
+			Columns: []string{golfer.RoundsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(round.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

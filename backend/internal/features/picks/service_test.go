@@ -627,7 +627,7 @@ func TestService_OverridePick(t *testing.T) {
 }
 
 func TestService_GetLeaguePicksEnhanced(t *testing.T) {
-	t.Run("returns picks for active tournament with leaderboard data", func(t *testing.T) {
+	t.Run("returns picks for completed tournament with leaderboard data", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
 		service := NewService(db)
@@ -638,11 +638,11 @@ func TestService_GetLeaguePicksEnhanced(t *testing.T) {
 		user := factory.CreateUser()
 		factory.AddUserToLeague(user, league)
 
-		tourn := factory.CreateActiveTournament()
+		tourn := factory.CreateCompletedTournament()
 		golfer := factory.CreateGolfer()
 		factory.CreateFieldEntry(tourn, golfer)
 		factory.CreatePick(user, tourn, golfer, league)
-		factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithPosition(5), testutil.WithEarnings(100000))
+		factory.CreatePlacement(tourn, golfer, testutil.WithPosition(5), testutil.WithEarnings(100000))
 
 		resp, err := service.GetLeaguePicksEnhanced(ctx, league.ID, tourn.ID, false)
 
@@ -669,7 +669,7 @@ func TestService_GetLeaguePicksEnhanced(t *testing.T) {
 		golfer := factory.CreateGolfer()
 		factory.CreateFieldEntry(tourn, golfer)
 		factory.CreatePick(user, tourn, golfer, league)
-		factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithPosition(10), testutil.WithEarnings(50000))
+		factory.CreatePlacement(tourn, golfer, testutil.WithPosition(10), testutil.WithEarnings(50000))
 
 		resp, err := service.GetLeaguePicksEnhanced(ctx, league.ID, tourn.ID, false)
 
@@ -734,14 +734,15 @@ func TestService_GetLeaguePicksEnhanced(t *testing.T) {
 		user := factory.CreateUser()
 		factory.AddUserToLeague(user, league)
 
-		tourn := factory.CreateActiveTournament()
+		tourn := factory.CreateCompletedTournament()
 		golfer := factory.CreateGolfer()
 		factory.CreateFieldEntry(tourn, golfer)
 		factory.CreatePick(user, tourn, golfer, league)
-		lbEntry := factory.CreateLeaderboardEntry(tourn, golfer, testutil.WithPosition(1))
+		factory.CreatePlacement(tourn, golfer, testutil.WithPosition(1))
 
 		db.Round.Create().
-			SetLeaderboardEntry(lbEntry).
+			SetTournament(tourn).
+			SetGolfer(golfer).
 			SetRoundNumber(1).
 			SetNillableScore(intPtr(72)).
 			SetNillableParRelativeScore(intPtr(0)).

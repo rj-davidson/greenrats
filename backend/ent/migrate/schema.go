@@ -288,49 +288,6 @@ var (
 			},
 		},
 	}
-	// LeaderboardEntriesColumns holds the columns for the "leaderboard_entries" table.
-	LeaderboardEntriesColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeUUID},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "position", Type: field.TypeInt, Default: 0},
-		{Name: "cut", Type: field.TypeBool, Default: false},
-		{Name: "score", Type: field.TypeInt, Default: 0},
-		{Name: "total_strokes", Type: field.TypeInt, Default: 0},
-		{Name: "earnings", Type: field.TypeInt, Default: 0},
-		{Name: "status", Type: field.TypeEnum, Enums: []string{"pending", "active", "withdrawn", "finished"}, Default: "pending"},
-		{Name: "current_round", Type: field.TypeInt, Default: 0},
-		{Name: "thru", Type: field.TypeInt, Default: 0},
-		{Name: "golfer_leaderboard_entries", Type: field.TypeUUID},
-		{Name: "tournament_leaderboard_entries", Type: field.TypeUUID},
-	}
-	// LeaderboardEntriesTable holds the schema information for the "leaderboard_entries" table.
-	LeaderboardEntriesTable = &schema.Table{
-		Name:       "leaderboard_entries",
-		Columns:    LeaderboardEntriesColumns,
-		PrimaryKey: []*schema.Column{LeaderboardEntriesColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{
-			{
-				Symbol:     "leaderboard_entries_golfers_leaderboard_entries",
-				Columns:    []*schema.Column{LeaderboardEntriesColumns[11]},
-				RefColumns: []*schema.Column{GolfersColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-			{
-				Symbol:     "leaderboard_entries_tournaments_leaderboard_entries",
-				Columns:    []*schema.Column{LeaderboardEntriesColumns[12]},
-				RefColumns: []*schema.Column{TournamentsColumns[0]},
-				OnDelete:   schema.NoAction,
-			},
-		},
-		Indexes: []*schema.Index{
-			{
-				Name:    "leaderboardentry_tournament_leaderboard_entries_golfer_leaderboard_entries",
-				Unique:  true,
-				Columns: []*schema.Column{LeaderboardEntriesColumns[12], LeaderboardEntriesColumns[11]},
-			},
-		},
-	}
 	// LeaguesColumns holds the columns for the "leagues" table.
 	LeaguesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -461,6 +418,47 @@ var (
 			},
 		},
 	}
+	// PlacementsColumns holds the columns for the "placements" table.
+	PlacementsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "position", Type: field.TypeString, Default: ""},
+		{Name: "position_numeric", Type: field.TypeInt, Nullable: true},
+		{Name: "total_score", Type: field.TypeInt, Nullable: true},
+		{Name: "par_relative_score", Type: field.TypeInt, Nullable: true},
+		{Name: "earnings", Type: field.TypeInt, Default: 0},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"cut", "withdrawn", "finished"}, Default: "finished"},
+		{Name: "golfer_placements", Type: field.TypeUUID},
+		{Name: "tournament_placements", Type: field.TypeUUID},
+	}
+	// PlacementsTable holds the schema information for the "placements" table.
+	PlacementsTable = &schema.Table{
+		Name:       "placements",
+		Columns:    PlacementsColumns,
+		PrimaryKey: []*schema.Column{PlacementsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "placements_golfers_placements",
+				Columns:    []*schema.Column{PlacementsColumns[9]},
+				RefColumns: []*schema.Column{GolfersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "placements_tournaments_placements",
+				Columns:    []*schema.Column{PlacementsColumns[10]},
+				RefColumns: []*schema.Column{TournamentsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "placement_tournament_placements_golfer_placements",
+				Unique:  true,
+				Columns: []*schema.Column{PlacementsColumns[10], PlacementsColumns[9]},
+			},
+		},
+	}
 	// RoundsColumns holds the columns for the "rounds" table.
 	RoundsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -471,7 +469,8 @@ var (
 		{Name: "par_relative_score", Type: field.TypeInt, Nullable: true},
 		{Name: "tee_time", Type: field.TypeTime, Nullable: true},
 		{Name: "course_rounds", Type: field.TypeUUID, Nullable: true},
-		{Name: "leaderboard_entry_rounds", Type: field.TypeUUID},
+		{Name: "golfer_rounds", Type: field.TypeUUID},
+		{Name: "tournament_rounds", Type: field.TypeUUID},
 	}
 	// RoundsTable holds the schema information for the "rounds" table.
 	RoundsTable = &schema.Table{
@@ -486,17 +485,23 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:     "rounds_leaderboard_entries_rounds",
+				Symbol:     "rounds_golfers_rounds",
 				Columns:    []*schema.Column{RoundsColumns[8]},
-				RefColumns: []*schema.Column{LeaderboardEntriesColumns[0]},
+				RefColumns: []*schema.Column{GolfersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "rounds_tournaments_rounds",
+				Columns:    []*schema.Column{RoundsColumns[9]},
+				RefColumns: []*schema.Column{TournamentsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 		},
 		Indexes: []*schema.Index{
 			{
-				Name:    "round_round_number_leaderboard_entry_rounds",
+				Name:    "round_round_number_tournament_rounds_golfer_rounds",
 				Unique:  true,
-				Columns: []*schema.Column{RoundsColumns[3], RoundsColumns[8]},
+				Columns: []*schema.Column{RoundsColumns[3], RoundsColumns[9], RoundsColumns[8]},
 			},
 		},
 	}
@@ -605,10 +610,10 @@ var (
 		GolfersTable,
 		GolferSeasonsTable,
 		HoleScoresTable,
-		LeaderboardEntriesTable,
 		LeaguesTable,
 		LeagueMembershipsTable,
 		PicksTable,
+		PlacementsTable,
 		RoundsTable,
 		SeasonsTable,
 		SyncStatusTable,
@@ -630,8 +635,6 @@ func init() {
 	GolferSeasonsTable.ForeignKeys[0].RefTable = GolfersTable
 	GolferSeasonsTable.ForeignKeys[1].RefTable = SeasonsTable
 	HoleScoresTable.ForeignKeys[0].RefTable = RoundsTable
-	LeaderboardEntriesTable.ForeignKeys[0].RefTable = GolfersTable
-	LeaderboardEntriesTable.ForeignKeys[1].RefTable = TournamentsTable
 	LeaguesTable.ForeignKeys[0].RefTable = UsersTable
 	LeaguesTable.ForeignKeys[1].RefTable = SeasonsTable
 	LeagueMembershipsTable.ForeignKeys[0].RefTable = LeaguesTable
@@ -641,8 +644,11 @@ func init() {
 	PicksTable.ForeignKeys[2].RefTable = SeasonsTable
 	PicksTable.ForeignKeys[3].RefTable = TournamentsTable
 	PicksTable.ForeignKeys[4].RefTable = UsersTable
+	PlacementsTable.ForeignKeys[0].RefTable = GolfersTable
+	PlacementsTable.ForeignKeys[1].RefTable = TournamentsTable
 	RoundsTable.ForeignKeys[0].RefTable = CoursesTable
-	RoundsTable.ForeignKeys[1].RefTable = LeaderboardEntriesTable
+	RoundsTable.ForeignKeys[1].RefTable = GolfersTable
+	RoundsTable.ForeignKeys[2].RefTable = TournamentsTable
 	TournamentsTable.ForeignKeys[0].RefTable = CoursesTable
 	TournamentsTable.ForeignKeys[1].RefTable = SeasonsTable
 	TournamentsTable.ForeignKeys[2].RefTable = GolfersTable

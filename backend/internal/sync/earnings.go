@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
@@ -63,9 +63,9 @@ func (i *Ingester) syncEarnings(ctx context.Context) error {
 				i.logger.Debug("refreshing earnings for recently completed tournament", "tournament", t.Name, "days_since_end", daysSinceEnd)
 			}
 
-			if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
+			if err := i.syncTournamentPlacements(ctx, t); err != nil {
 				if isContextError(err) {
-					return fmt.Errorf("sync leaderboard for %s: %w", t.Name, err)
+					return fmt.Errorf("sync placements for %s: %w", t.Name, err)
 				}
 				SyncErrors.WithLabelValues("earnings").Inc()
 				continue
@@ -85,10 +85,10 @@ func (i *Ingester) syncEarnings(ctx context.Context) error {
 }
 
 func (i *Ingester) tournamentHasEarnings(ctx context.Context, t *ent.Tournament) (bool, error) {
-	return i.db.LeaderboardEntry.Query().
+	return i.db.Placement.Query().
 		Where(
-			leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
-			leaderboardentry.EarningsGT(0),
+			placement.HasTournamentWith(tournament.IDEQ(t.ID)),
+			placement.EarningsGT(0),
 		).
 		Exist(ctx)
 }

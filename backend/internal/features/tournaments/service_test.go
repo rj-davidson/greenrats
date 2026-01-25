@@ -193,14 +193,14 @@ func TestService_GetLeaderboard(t *testing.T) {
 		service := NewService(db)
 		ctx := context.Background()
 
-		tourn := factory.CreateActiveTournament()
+		tourn := factory.CreateCompletedTournament()
 		golfer1 := factory.CreateGolfer(testutil.WithGolferName("Player One"))
 		golfer2 := factory.CreateGolfer(testutil.WithGolferName("Player Two"))
 		golfer3 := factory.CreateGolfer(testutil.WithGolferName("Player Three"))
 
-		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithPosition(3), testutil.WithScore(-5))
-		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithPosition(1), testutil.WithScore(-10))
-		factory.CreateLeaderboardEntry(tourn, golfer3, testutil.WithPosition(2), testutil.WithScore(-7))
+		factory.CreatePlacement(tourn, golfer1, testutil.WithPosition(3), testutil.WithParRelativeScore(-5))
+		factory.CreatePlacement(tourn, golfer2, testutil.WithPosition(1), testutil.WithParRelativeScore(-10))
+		factory.CreatePlacement(tourn, golfer3, testutil.WithPosition(2), testutil.WithParRelativeScore(-7))
 
 		resp, err := service.GetLeaderboard(ctx, tourn.ID.String(), false, "")
 
@@ -217,12 +217,12 @@ func TestService_GetLeaderboard(t *testing.T) {
 		service := NewService(db)
 		ctx := context.Background()
 
-		tourn := factory.CreateActiveTournament()
+		tourn := factory.CreateCompletedTournament()
 		golfer1 := factory.CreateGolfer(testutil.WithGolferName("A Player"))
 		golfer2 := factory.CreateGolfer(testutil.WithGolferName("B Player"))
 
-		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithPosition(2), testutil.WithScore(-5))
-		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithPosition(2), testutil.WithScore(-5))
+		factory.CreatePlacement(tourn, golfer1, testutil.WithPosition(2), testutil.WithParRelativeScore(-5))
+		factory.CreatePlacement(tourn, golfer2, testutil.WithPosition(2), testutil.WithParRelativeScore(-5))
 
 		resp, err := service.GetLeaderboard(ctx, tourn.ID.String(), false, "")
 
@@ -241,8 +241,8 @@ func TestService_GetLeaderboard(t *testing.T) {
 		golfer1 := factory.CreateGolfer(testutil.WithGolferName("Finisher"))
 		golfer2 := factory.CreateGolfer(testutil.WithGolferName("Cut Player"))
 
-		factory.CreateLeaderboardEntry(tourn, golfer1, testutil.WithPosition(10), testutil.WithScore(-5))
-		factory.CreateLeaderboardEntry(tourn, golfer2, testutil.WithCut(true), testutil.WithScore(5))
+		factory.CreatePlacement(tourn, golfer1, testutil.WithPosition(10), testutil.WithParRelativeScore(-5))
+		factory.CreatePlacement(tourn, golfer2, testutil.WithCut(true), testutil.WithParRelativeScore(5))
 
 		resp, err := service.GetLeaderboard(ctx, tourn.ID.String(), false, "")
 

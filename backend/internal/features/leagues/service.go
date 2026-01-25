@@ -14,10 +14,10 @@ import (
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/commissioneraction"
 	"github.com/rj-davidson/greenrats/ent/golfer"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -784,15 +784,15 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 			if userPick.Edges.Golfer != nil {
 				lt.GolferName = userPick.Edges.Golfer.Name
 
-				lbEntry, entryErr := s.db.LeaderboardEntry.
+				pl, entryErr := s.db.Placement.
 					Query().
 					Where(
-						leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
-						leaderboardentry.HasGolferWith(golfer.IDEQ(userPick.Edges.Golfer.ID)),
+						placement.HasTournamentWith(tournament.IDEQ(t.ID)),
+						placement.HasGolferWith(golfer.IDEQ(userPick.Edges.Golfer.ID)),
 					).
 					Only(ctx)
 				if entryErr == nil {
-					lt.GolferEarnings = lbEntry.Earnings
+					lt.GolferEarnings = pl.Earnings
 				}
 			}
 		}

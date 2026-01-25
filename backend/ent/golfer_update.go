@@ -15,9 +15,10 @@ import (
 	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/golferseason"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/predicate"
+	"github.com/rj-davidson/greenrats/ent/round"
 )
 
 // GolferUpdate is the builder for updating Golfer entities.
@@ -472,19 +473,34 @@ func (_u *GolferUpdate) AddFieldEntries(v ...*FieldEntry) *GolferUpdate {
 	return _u.AddFieldEntryIDs(ids...)
 }
 
-// AddLeaderboardEntryIDs adds the "leaderboard_entries" edge to the LeaderboardEntry entity by IDs.
-func (_u *GolferUpdate) AddLeaderboardEntryIDs(ids ...uuid.UUID) *GolferUpdate {
-	_u.mutation.AddLeaderboardEntryIDs(ids...)
+// AddPlacementIDs adds the "placements" edge to the Placement entity by IDs.
+func (_u *GolferUpdate) AddPlacementIDs(ids ...uuid.UUID) *GolferUpdate {
+	_u.mutation.AddPlacementIDs(ids...)
 	return _u
 }
 
-// AddLeaderboardEntries adds the "leaderboard_entries" edges to the LeaderboardEntry entity.
-func (_u *GolferUpdate) AddLeaderboardEntries(v ...*LeaderboardEntry) *GolferUpdate {
+// AddPlacements adds the "placements" edges to the Placement entity.
+func (_u *GolferUpdate) AddPlacements(v ...*Placement) *GolferUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddLeaderboardEntryIDs(ids...)
+	return _u.AddPlacementIDs(ids...)
+}
+
+// AddRoundIDs adds the "rounds" edge to the Round entity by IDs.
+func (_u *GolferUpdate) AddRoundIDs(ids ...uuid.UUID) *GolferUpdate {
+	_u.mutation.AddRoundIDs(ids...)
+	return _u
+}
+
+// AddRounds adds the "rounds" edges to the Round entity.
+func (_u *GolferUpdate) AddRounds(v ...*Round) *GolferUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRoundIDs(ids...)
 }
 
 // AddSeasonIDs adds the "seasons" edge to the GolferSeason entity by IDs.
@@ -549,25 +565,46 @@ func (_u *GolferUpdate) RemoveFieldEntries(v ...*FieldEntry) *GolferUpdate {
 	return _u.RemoveFieldEntryIDs(ids...)
 }
 
-// ClearLeaderboardEntries clears all "leaderboard_entries" edges to the LeaderboardEntry entity.
-func (_u *GolferUpdate) ClearLeaderboardEntries() *GolferUpdate {
-	_u.mutation.ClearLeaderboardEntries()
+// ClearPlacements clears all "placements" edges to the Placement entity.
+func (_u *GolferUpdate) ClearPlacements() *GolferUpdate {
+	_u.mutation.ClearPlacements()
 	return _u
 }
 
-// RemoveLeaderboardEntryIDs removes the "leaderboard_entries" edge to LeaderboardEntry entities by IDs.
-func (_u *GolferUpdate) RemoveLeaderboardEntryIDs(ids ...uuid.UUID) *GolferUpdate {
-	_u.mutation.RemoveLeaderboardEntryIDs(ids...)
+// RemovePlacementIDs removes the "placements" edge to Placement entities by IDs.
+func (_u *GolferUpdate) RemovePlacementIDs(ids ...uuid.UUID) *GolferUpdate {
+	_u.mutation.RemovePlacementIDs(ids...)
 	return _u
 }
 
-// RemoveLeaderboardEntries removes "leaderboard_entries" edges to LeaderboardEntry entities.
-func (_u *GolferUpdate) RemoveLeaderboardEntries(v ...*LeaderboardEntry) *GolferUpdate {
+// RemovePlacements removes "placements" edges to Placement entities.
+func (_u *GolferUpdate) RemovePlacements(v ...*Placement) *GolferUpdate {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveLeaderboardEntryIDs(ids...)
+	return _u.RemovePlacementIDs(ids...)
+}
+
+// ClearRounds clears all "rounds" edges to the Round entity.
+func (_u *GolferUpdate) ClearRounds() *GolferUpdate {
+	_u.mutation.ClearRounds()
+	return _u
+}
+
+// RemoveRoundIDs removes the "rounds" edge to Round entities by IDs.
+func (_u *GolferUpdate) RemoveRoundIDs(ids ...uuid.UUID) *GolferUpdate {
+	_u.mutation.RemoveRoundIDs(ids...)
+	return _u
+}
+
+// RemoveRounds removes "rounds" edges to Round entities.
+func (_u *GolferUpdate) RemoveRounds(v ...*Round) *GolferUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRoundIDs(ids...)
 }
 
 // ClearSeasons clears all "seasons" edges to the GolferSeason entity.
@@ -862,28 +899,28 @@ func (_u *GolferUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.LeaderboardEntriesCleared() {
+	if _u.mutation.PlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   golfer.LeaderboardEntriesTable,
-			Columns: []string{golfer.LeaderboardEntriesColumn},
+			Table:   golfer.PlacementsTable,
+			Columns: []string{golfer.PlacementsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(placement.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedLeaderboardEntriesIDs(); len(nodes) > 0 && !_u.mutation.LeaderboardEntriesCleared() {
+	if nodes := _u.mutation.RemovedPlacementsIDs(); len(nodes) > 0 && !_u.mutation.PlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   golfer.LeaderboardEntriesTable,
-			Columns: []string{golfer.LeaderboardEntriesColumn},
+			Table:   golfer.PlacementsTable,
+			Columns: []string{golfer.PlacementsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(placement.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -891,15 +928,60 @@ func (_u *GolferUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.LeaderboardEntriesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.PlacementsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   golfer.LeaderboardEntriesTable,
-			Columns: []string{golfer.LeaderboardEntriesColumn},
+			Table:   golfer.PlacementsTable,
+			Columns: []string{golfer.PlacementsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(placement.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RoundsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.RoundsTable,
+			Columns: []string{golfer.RoundsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(round.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRoundsIDs(); len(nodes) > 0 && !_u.mutation.RoundsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.RoundsTable,
+			Columns: []string{golfer.RoundsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(round.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RoundsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.RoundsTable,
+			Columns: []string{golfer.RoundsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(round.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1411,19 +1493,34 @@ func (_u *GolferUpdateOne) AddFieldEntries(v ...*FieldEntry) *GolferUpdateOne {
 	return _u.AddFieldEntryIDs(ids...)
 }
 
-// AddLeaderboardEntryIDs adds the "leaderboard_entries" edge to the LeaderboardEntry entity by IDs.
-func (_u *GolferUpdateOne) AddLeaderboardEntryIDs(ids ...uuid.UUID) *GolferUpdateOne {
-	_u.mutation.AddLeaderboardEntryIDs(ids...)
+// AddPlacementIDs adds the "placements" edge to the Placement entity by IDs.
+func (_u *GolferUpdateOne) AddPlacementIDs(ids ...uuid.UUID) *GolferUpdateOne {
+	_u.mutation.AddPlacementIDs(ids...)
 	return _u
 }
 
-// AddLeaderboardEntries adds the "leaderboard_entries" edges to the LeaderboardEntry entity.
-func (_u *GolferUpdateOne) AddLeaderboardEntries(v ...*LeaderboardEntry) *GolferUpdateOne {
+// AddPlacements adds the "placements" edges to the Placement entity.
+func (_u *GolferUpdateOne) AddPlacements(v ...*Placement) *GolferUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.AddLeaderboardEntryIDs(ids...)
+	return _u.AddPlacementIDs(ids...)
+}
+
+// AddRoundIDs adds the "rounds" edge to the Round entity by IDs.
+func (_u *GolferUpdateOne) AddRoundIDs(ids ...uuid.UUID) *GolferUpdateOne {
+	_u.mutation.AddRoundIDs(ids...)
+	return _u
+}
+
+// AddRounds adds the "rounds" edges to the Round entity.
+func (_u *GolferUpdateOne) AddRounds(v ...*Round) *GolferUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddRoundIDs(ids...)
 }
 
 // AddSeasonIDs adds the "seasons" edge to the GolferSeason entity by IDs.
@@ -1488,25 +1585,46 @@ func (_u *GolferUpdateOne) RemoveFieldEntries(v ...*FieldEntry) *GolferUpdateOne
 	return _u.RemoveFieldEntryIDs(ids...)
 }
 
-// ClearLeaderboardEntries clears all "leaderboard_entries" edges to the LeaderboardEntry entity.
-func (_u *GolferUpdateOne) ClearLeaderboardEntries() *GolferUpdateOne {
-	_u.mutation.ClearLeaderboardEntries()
+// ClearPlacements clears all "placements" edges to the Placement entity.
+func (_u *GolferUpdateOne) ClearPlacements() *GolferUpdateOne {
+	_u.mutation.ClearPlacements()
 	return _u
 }
 
-// RemoveLeaderboardEntryIDs removes the "leaderboard_entries" edge to LeaderboardEntry entities by IDs.
-func (_u *GolferUpdateOne) RemoveLeaderboardEntryIDs(ids ...uuid.UUID) *GolferUpdateOne {
-	_u.mutation.RemoveLeaderboardEntryIDs(ids...)
+// RemovePlacementIDs removes the "placements" edge to Placement entities by IDs.
+func (_u *GolferUpdateOne) RemovePlacementIDs(ids ...uuid.UUID) *GolferUpdateOne {
+	_u.mutation.RemovePlacementIDs(ids...)
 	return _u
 }
 
-// RemoveLeaderboardEntries removes "leaderboard_entries" edges to LeaderboardEntry entities.
-func (_u *GolferUpdateOne) RemoveLeaderboardEntries(v ...*LeaderboardEntry) *GolferUpdateOne {
+// RemovePlacements removes "placements" edges to Placement entities.
+func (_u *GolferUpdateOne) RemovePlacements(v ...*Placement) *GolferUpdateOne {
 	ids := make([]uuid.UUID, len(v))
 	for i := range v {
 		ids[i] = v[i].ID
 	}
-	return _u.RemoveLeaderboardEntryIDs(ids...)
+	return _u.RemovePlacementIDs(ids...)
+}
+
+// ClearRounds clears all "rounds" edges to the Round entity.
+func (_u *GolferUpdateOne) ClearRounds() *GolferUpdateOne {
+	_u.mutation.ClearRounds()
+	return _u
+}
+
+// RemoveRoundIDs removes the "rounds" edge to Round entities by IDs.
+func (_u *GolferUpdateOne) RemoveRoundIDs(ids ...uuid.UUID) *GolferUpdateOne {
+	_u.mutation.RemoveRoundIDs(ids...)
+	return _u
+}
+
+// RemoveRounds removes "rounds" edges to Round entities.
+func (_u *GolferUpdateOne) RemoveRounds(v ...*Round) *GolferUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveRoundIDs(ids...)
 }
 
 // ClearSeasons clears all "seasons" edges to the GolferSeason entity.
@@ -1831,28 +1949,28 @@ func (_u *GolferUpdateOne) sqlSave(ctx context.Context) (_node *Golfer, err erro
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if _u.mutation.LeaderboardEntriesCleared() {
+	if _u.mutation.PlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   golfer.LeaderboardEntriesTable,
-			Columns: []string{golfer.LeaderboardEntriesColumn},
+			Table:   golfer.PlacementsTable,
+			Columns: []string{golfer.PlacementsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(placement.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.RemovedLeaderboardEntriesIDs(); len(nodes) > 0 && !_u.mutation.LeaderboardEntriesCleared() {
+	if nodes := _u.mutation.RemovedPlacementsIDs(); len(nodes) > 0 && !_u.mutation.PlacementsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   golfer.LeaderboardEntriesTable,
-			Columns: []string{golfer.LeaderboardEntriesColumn},
+			Table:   golfer.PlacementsTable,
+			Columns: []string{golfer.PlacementsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(placement.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1860,15 +1978,60 @@ func (_u *GolferUpdateOne) sqlSave(ctx context.Context) (_node *Golfer, err erro
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.LeaderboardEntriesIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.PlacementsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
-			Table:   golfer.LeaderboardEntriesTable,
-			Columns: []string{golfer.LeaderboardEntriesColumn},
+			Table:   golfer.PlacementsTable,
+			Columns: []string{golfer.PlacementsColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(placement.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.RoundsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.RoundsTable,
+			Columns: []string{golfer.RoundsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(round.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedRoundsIDs(); len(nodes) > 0 && !_u.mutation.RoundsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.RoundsTable,
+			Columns: []string{golfer.RoundsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(round.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RoundsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   golfer.RoundsTable,
+			Columns: []string{golfer.RoundsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(round.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

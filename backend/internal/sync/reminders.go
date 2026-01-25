@@ -10,10 +10,10 @@ import (
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/emailreminder"
 	"github.com/rj-davidson/greenrats/ent/golfer"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
 	"github.com/rj-davidson/greenrats/internal/email"
@@ -181,17 +181,17 @@ func (i *Ingester) sendPickReminderEmail(_ context.Context, u *ent.User, l *ent.
 func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tournament) {
 	i.logger.Info("sending tournament results emails", "tournament", t.Name)
 
-	winnerEntry, err := i.db.LeaderboardEntry.Query().
+	winnerPlacement, err := i.db.Placement.Query().
 		Where(
-			leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
-			leaderboardentry.PositionEQ(1),
+			placement.HasTournamentWith(tournament.IDEQ(t.ID)),
+			placement.PositionNumericEQ(1),
 		).
 		WithGolfer().
 		First(ctx)
 
 	tournamentWinner := "Unknown"
-	if err == nil && winnerEntry.Edges.Golfer != nil {
-		tournamentWinner = winnerEntry.Edges.Golfer.Name
+	if err == nil && winnerPlacement.Edges.Golfer != nil {
+		tournamentWinner = winnerPlacement.Edges.Golfer.Name
 	}
 
 	picks, err := i.db.Pick.Query().
@@ -232,22 +232,22 @@ func (i *Ingester) sendTournamentResultsEmails(ctx context.Context, t *ent.Tourn
 			continue
 		}
 
-		golferEntry, _ := i.db.LeaderboardEntry.Query().
+		golferPlacement, _ := i.db.Placement.Query().
 			Where(
-				leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
-				leaderboardentry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
+				placement.HasTournamentWith(tournament.IDEQ(t.ID)),
+				placement.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
 			).
 			Only(ctx)
 
 		position := "N/A"
 		earnings := "$0"
-		if golferEntry != nil {
-			if golferEntry.Cut {
+		if golferPlacement != nil {
+			if golferPlacement.Status == placement.StatusCut {
 				position = "CUT"
-			} else if golferEntry.Position > 0 {
-				position = fmt.Sprintf("%d", golferEntry.Position)
+			} else if golferPlacement.PositionNumeric != nil && *golferPlacement.PositionNumeric > 0 {
+				position = fmt.Sprintf("%d", *golferPlacement.PositionNumeric)
 			}
-			earnings = formatCurrency(golferEntry.Earnings)
+			earnings = formatCurrency(golferPlacement.Earnings)
 		}
 
 		userRank, totalEarnings := i.calculateLeagueStandings(ctx, p.Edges.User.ID, p.Edges.League.ID, t.SeasonYear)
@@ -310,14 +310,14 @@ func (i *Ingester) calculateLeagueStandings(ctx context.Context, userID, leagueI
 		if p.Edges.User == nil || p.Edges.Golfer == nil || p.Edges.Tournament == nil {
 			continue
 		}
-		entry, err := i.db.LeaderboardEntry.Query().
+		pl, err := i.db.Placement.Query().
 			Where(
-				leaderboardentry.HasTournamentWith(tournament.IDEQ(p.Edges.Tournament.ID)),
-				leaderboardentry.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
+				placement.HasTournamentWith(tournament.IDEQ(p.Edges.Tournament.ID)),
+				placement.HasGolferWith(golfer.IDEQ(p.Edges.Golfer.ID)),
 			).
 			Only(ctx)
 		if err == nil {
-			earningsMap[p.Edges.User.ID] += entry.Earnings
+			earningsMap[p.Edges.User.ID] += pl.Earnings
 		}
 	}
 

@@ -9,8 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/holescore"
 	"github.com/rj-davidson/greenrats/ent/round"
+	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
@@ -31,9 +33,8 @@ func TestProcessPlayerScorecards_CreatesRoundForInProgressRound(t *testing.T) {
 	ctx := context.Background()
 	ing := newTestIngester(t)
 
-	tournament := testutil.CreateTournament(t, ing.db, "Masters", 2026)
-	golfer := testutil.CreateGolfer(t, ing.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateLeaderboardEntry(t, ing.db, tournament.ID, golfer.ID)
+	tournamentEntity := testutil.CreateTournament(t, ing.db, "Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, ing.db, "Scottie Scheffler", 1)
 
 	scorecards := []balldontlie.PlayerScorecard{
 		{
@@ -46,14 +47,15 @@ func TestProcessPlayerScorecards_CreatesRoundForInProgressRound(t *testing.T) {
 		},
 	}
 
-	holesProcessed, entryID := ing.processPlayerScorecards(ctx, tournament, scorecards)
+	holesProcessed := ing.processPlayerScorecards(ctx, tournamentEntity, scorecards)
 
-	require.NotNil(t, entryID)
-	assert.Equal(t, entry.ID, *entryID)
 	assert.Equal(t, 1, holesProcessed)
 
 	rounds, err := ing.db.Round.Query().
-		Where(round.HasLeaderboardEntryWith()).
+		Where(
+			round.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID)),
+			round.HasGolferWith(golfer.IDEQ(golferEntity.ID)),
+		).
 		All(ctx)
 	require.NoError(t, err)
 	require.Len(t, rounds, 1)
@@ -75,9 +77,8 @@ func TestProcessPlayerScorecards_ReusesCreatedRoundForMultipleHoles(t *testing.T
 	ctx := context.Background()
 	ing := newTestIngester(t)
 
-	tournament := testutil.CreateTournament(t, ing.db, "Masters", 2026)
-	golfer := testutil.CreateGolfer(t, ing.db, "Scottie Scheffler", 1)
-	testutil.CreateLeaderboardEntry(t, ing.db, tournament.ID, golfer.ID)
+	tournamentEntity := testutil.CreateTournament(t, ing.db, "Masters", 2026)
+	testutil.CreateGolfer(t, ing.db, "Scottie Scheffler", 1)
 
 	scorecards := []balldontlie.PlayerScorecard{
 		{
@@ -103,7 +104,7 @@ func TestProcessPlayerScorecards_ReusesCreatedRoundForMultipleHoles(t *testing.T
 		},
 	}
 
-	holesProcessed, _ := ing.processPlayerScorecards(ctx, tournament, scorecards)
+	holesProcessed := ing.processPlayerScorecards(ctx, tournamentEntity, scorecards)
 
 	assert.Equal(t, 3, holesProcessed)
 
@@ -122,16 +123,15 @@ func TestProcessPlayerScorecards_UsesExistingRound(t *testing.T) {
 	ctx := context.Background()
 	ing := newTestIngester(t)
 
-	tournament := testutil.CreateTournament(t, ing.db, "Masters", 2026)
-	golfer := testutil.CreateGolfer(t, ing.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateLeaderboardEntry(t, ing.db, tournament.ID, golfer.ID)
+	tournamentEntity := testutil.CreateTournament(t, ing.db, "Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, ing.db, "Scottie Scheffler", 1)
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		RoundNumber:      2,
 		Score:            intPtr(68),
 		ParRelativeScore: intPtr(-4),
 	}
-	existingRound, err := ing.syncService.UpsertRound(ctx, entry.ID, bdlRound)
+	existingRound, err := ing.syncService.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
 	require.NoError(t, err)
 
 	scorecards := []balldontlie.PlayerScorecard{
@@ -144,7 +144,7 @@ func TestProcessPlayerScorecards_UsesExistingRound(t *testing.T) {
 		},
 	}
 
-	holesProcessed, _ := ing.processPlayerScorecards(ctx, tournament, scorecards)
+	holesProcessed := ing.processPlayerScorecards(ctx, tournamentEntity, scorecards)
 
 	assert.Equal(t, 1, holesProcessed)
 
@@ -165,16 +165,15 @@ func TestProcessPlayerScorecards_HandlesMultipleRounds(t *testing.T) {
 	ctx := context.Background()
 	ing := newTestIngester(t)
 
-	tournament := testutil.CreateTournament(t, ing.db, "Masters", 2026)
-	golfer := testutil.CreateGolfer(t, ing.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateLeaderboardEntry(t, ing.db, tournament.ID, golfer.ID)
+	tournamentEntity := testutil.CreateTournament(t, ing.db, "Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, ing.db, "Scottie Scheffler", 1)
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		RoundNumber:      1,
 		Score:            intPtr(70),
 		ParRelativeScore: intPtr(-2),
 	}
-	_, err := ing.syncService.UpsertRound(ctx, entry.ID, bdlRound)
+	_, err := ing.syncService.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
 	require.NoError(t, err)
 
 	scorecards := []balldontlie.PlayerScorecard{
@@ -194,7 +193,7 @@ func TestProcessPlayerScorecards_HandlesMultipleRounds(t *testing.T) {
 		},
 	}
 
-	holesProcessed, _ := ing.processPlayerScorecards(ctx, tournament, scorecards)
+	holesProcessed := ing.processPlayerScorecards(ctx, tournamentEntity, scorecards)
 
 	assert.Equal(t, 2, holesProcessed)
 

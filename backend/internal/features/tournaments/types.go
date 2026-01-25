@@ -77,7 +77,6 @@ type LeaderboardEntry struct {
 	TotalStrokes    int          `json:"total_strokes"`
 	Thru            int          `json:"thru"`
 	CurrentRound    int          `json:"current_round"`
-	Cut             bool         `json:"cut"`
 	Status          string       `json:"status"`
 	Earnings        int          `json:"earnings"`
 	Rounds          []RoundScore `json:"rounds"`

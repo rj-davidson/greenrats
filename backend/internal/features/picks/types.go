@@ -33,7 +33,6 @@ type PickLeaderboardData struct {
 	Score           int              `json:"score"`
 	Thru            int              `json:"thru"`
 	CurrentRound    int              `json:"current_round"`
-	Cut             bool             `json:"cut"`
 	Status          string           `json:"status"`
 	Earnings        int              `json:"earnings"`
 	Rounds          []PickRoundScore `json:"rounds,omitempty"`

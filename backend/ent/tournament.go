@@ -68,8 +68,10 @@ type TournamentEdges struct {
 	Picks []*Pick `json:"picks,omitempty"`
 	// FieldEntries holds the value of the field_entries edge.
 	FieldEntries []*FieldEntry `json:"field_entries,omitempty"`
-	// LeaderboardEntries holds the value of the leaderboard_entries edge.
-	LeaderboardEntries []*LeaderboardEntry `json:"leaderboard_entries,omitempty"`
+	// Placements holds the value of the placements edge.
+	Placements []*Placement `json:"placements,omitempty"`
+	// Rounds holds the value of the rounds edge.
+	Rounds []*Round `json:"rounds,omitempty"`
 	// EmailReminders holds the value of the email_reminders edge.
 	EmailReminders []*EmailReminder `json:"email_reminders,omitempty"`
 	// Champion holds the value of the champion edge.
@@ -80,7 +82,7 @@ type TournamentEdges struct {
 	CourseRef *Course `json:"course_ref,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [7]bool
+	loadedTypes [8]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -101,19 +103,28 @@ func (e TournamentEdges) FieldEntriesOrErr() ([]*FieldEntry, error) {
 	return nil, &NotLoadedError{edge: "field_entries"}
 }
 
-// LeaderboardEntriesOrErr returns the LeaderboardEntries value or an error if the edge
+// PlacementsOrErr returns the Placements value or an error if the edge
 // was not loaded in eager-loading.
-func (e TournamentEdges) LeaderboardEntriesOrErr() ([]*LeaderboardEntry, error) {
+func (e TournamentEdges) PlacementsOrErr() ([]*Placement, error) {
 	if e.loadedTypes[2] {
-		return e.LeaderboardEntries, nil
+		return e.Placements, nil
 	}
-	return nil, &NotLoadedError{edge: "leaderboard_entries"}
+	return nil, &NotLoadedError{edge: "placements"}
+}
+
+// RoundsOrErr returns the Rounds value or an error if the edge
+// was not loaded in eager-loading.
+func (e TournamentEdges) RoundsOrErr() ([]*Round, error) {
+	if e.loadedTypes[3] {
+		return e.Rounds, nil
+	}
+	return nil, &NotLoadedError{edge: "rounds"}
 }
 
 // EmailRemindersOrErr returns the EmailReminders value or an error if the edge
 // was not loaded in eager-loading.
 func (e TournamentEdges) EmailRemindersOrErr() ([]*EmailReminder, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.EmailReminders, nil
 	}
 	return nil, &NotLoadedError{edge: "email_reminders"}
@@ -124,7 +135,7 @@ func (e TournamentEdges) EmailRemindersOrErr() ([]*EmailReminder, error) {
 func (e TournamentEdges) ChampionOrErr() (*Golfer, error) {
 	if e.Champion != nil {
 		return e.Champion, nil
-	} else if e.loadedTypes[4] {
+	} else if e.loadedTypes[5] {
 		return nil, &NotFoundError{label: golfer.Label}
 	}
 	return nil, &NotLoadedError{edge: "champion"}
@@ -135,7 +146,7 @@ func (e TournamentEdges) ChampionOrErr() (*Golfer, error) {
 func (e TournamentEdges) SeasonOrErr() (*Season, error) {
 	if e.Season != nil {
 		return e.Season, nil
-	} else if e.loadedTypes[5] {
+	} else if e.loadedTypes[6] {
 		return nil, &NotFoundError{label: season.Label}
 	}
 	return nil, &NotLoadedError{edge: "season"}
@@ -146,7 +157,7 @@ func (e TournamentEdges) SeasonOrErr() (*Season, error) {
 func (e TournamentEdges) CourseRefOrErr() (*Course, error) {
 	if e.CourseRef != nil {
 		return e.CourseRef, nil
-	} else if e.loadedTypes[6] {
+	} else if e.loadedTypes[7] {
 		return nil, &NotFoundError{label: course.Label}
 	}
 	return nil, &NotLoadedError{edge: "course_ref"}
@@ -342,9 +353,14 @@ func (_m *Tournament) QueryFieldEntries() *FieldEntryQuery {
 	return NewTournamentClient(_m.config).QueryFieldEntries(_m)
 }
 
-// QueryLeaderboardEntries queries the "leaderboard_entries" edge of the Tournament entity.
-func (_m *Tournament) QueryLeaderboardEntries() *LeaderboardEntryQuery {
-	return NewTournamentClient(_m.config).QueryLeaderboardEntries(_m)
+// QueryPlacements queries the "placements" edge of the Tournament entity.
+func (_m *Tournament) QueryPlacements() *PlacementQuery {
+	return NewTournamentClient(_m.config).QueryPlacements(_m)
+}
+
+// QueryRounds queries the "rounds" edge of the Tournament entity.
+func (_m *Tournament) QueryRounds() *RoundQuery {
+	return NewTournamentClient(_m.config).QueryRounds(_m)
 }
 
 // QueryEmailReminders queries the "email_reminders" edge of the Tournament entity.

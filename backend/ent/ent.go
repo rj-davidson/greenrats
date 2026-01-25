@@ -20,10 +20,10 @@ import (
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/golferseason"
 	"github.com/rj-davidson/greenrats/ent/holescore"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/syncstatus"
@@ -97,10 +97,10 @@ func checkColumn(t, c string) error {
 			golfer.Table:             golfer.ValidColumn,
 			golferseason.Table:       golferseason.ValidColumn,
 			holescore.Table:          holescore.ValidColumn,
-			leaderboardentry.Table:   leaderboardentry.ValidColumn,
 			league.Table:             league.ValidColumn,
 			leaguemembership.Table:   leaguemembership.ValidColumn,
 			pick.Table:               pick.ValidColumn,
+			placement.Table:          placement.ValidColumn,
 			round.Table:              round.ValidColumn,
 			season.Table:             season.ValidColumn,
 			syncstatus.Table:         syncstatus.ValidColumn,

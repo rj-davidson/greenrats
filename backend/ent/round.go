@@ -11,8 +11,9 @@ import (
 	"entgo.io/ent/dialect/sql"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/course"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/round"
+	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
 // Round is the model entity for the Round schema.
@@ -34,40 +35,54 @@ type Round struct {
 	TeeTime *time.Time `json:"tee_time,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoundQuery when eager-loading is set.
-	Edges                    RoundEdges `json:"edges"`
-	course_rounds            *uuid.UUID
-	leaderboard_entry_rounds *uuid.UUID
-	selectValues             sql.SelectValues
+	Edges             RoundEdges `json:"edges"`
+	course_rounds     *uuid.UUID
+	golfer_rounds     *uuid.UUID
+	tournament_rounds *uuid.UUID
+	selectValues      sql.SelectValues
 }
 
 // RoundEdges holds the relations/edges for other nodes in the graph.
 type RoundEdges struct {
-	// LeaderboardEntry holds the value of the leaderboard_entry edge.
-	LeaderboardEntry *LeaderboardEntry `json:"leaderboard_entry,omitempty"`
+	// Tournament holds the value of the tournament edge.
+	Tournament *Tournament `json:"tournament,omitempty"`
+	// Golfer holds the value of the golfer edge.
+	Golfer *Golfer `json:"golfer,omitempty"`
 	// HoleScores holds the value of the hole_scores edge.
 	HoleScores []*HoleScore `json:"hole_scores,omitempty"`
 	// Course holds the value of the course edge.
 	Course *Course `json:"course,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
+	loadedTypes [4]bool
 }
 
-// LeaderboardEntryOrErr returns the LeaderboardEntry value or an error if the edge
+// TournamentOrErr returns the Tournament value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
-func (e RoundEdges) LeaderboardEntryOrErr() (*LeaderboardEntry, error) {
-	if e.LeaderboardEntry != nil {
-		return e.LeaderboardEntry, nil
+func (e RoundEdges) TournamentOrErr() (*Tournament, error) {
+	if e.Tournament != nil {
+		return e.Tournament, nil
 	} else if e.loadedTypes[0] {
-		return nil, &NotFoundError{label: leaderboardentry.Label}
+		return nil, &NotFoundError{label: tournament.Label}
 	}
-	return nil, &NotLoadedError{edge: "leaderboard_entry"}
+	return nil, &NotLoadedError{edge: "tournament"}
+}
+
+// GolferOrErr returns the Golfer value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e RoundEdges) GolferOrErr() (*Golfer, error) {
+	if e.Golfer != nil {
+		return e.Golfer, nil
+	} else if e.loadedTypes[1] {
+		return nil, &NotFoundError{label: golfer.Label}
+	}
+	return nil, &NotLoadedError{edge: "golfer"}
 }
 
 // HoleScoresOrErr returns the HoleScores value or an error if the edge
 // was not loaded in eager-loading.
 func (e RoundEdges) HoleScoresOrErr() ([]*HoleScore, error) {
-	if e.loadedTypes[1] {
+	if e.loadedTypes[2] {
 		return e.HoleScores, nil
 	}
 	return nil, &NotLoadedError{edge: "hole_scores"}
@@ -78,7 +93,7 @@ func (e RoundEdges) HoleScoresOrErr() ([]*HoleScore, error) {
 func (e RoundEdges) CourseOrErr() (*Course, error) {
 	if e.Course != nil {
 		return e.Course, nil
-	} else if e.loadedTypes[2] {
+	} else if e.loadedTypes[3] {
 		return nil, &NotFoundError{label: course.Label}
 	}
 	return nil, &NotLoadedError{edge: "course"}
@@ -97,7 +112,9 @@ func (*Round) scanValues(columns []string) ([]any, error) {
 			values[i] = new(uuid.UUID)
 		case round.ForeignKeys[0]: // course_rounds
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
-		case round.ForeignKeys[1]: // leaderboard_entry_rounds
+		case round.ForeignKeys[1]: // golfer_rounds
+			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
+		case round.ForeignKeys[2]: // tournament_rounds
 			values[i] = &sql.NullScanner{S: new(uuid.UUID)}
 		default:
 			values[i] = new(sql.UnknownType)
@@ -168,10 +185,17 @@ func (_m *Round) assignValues(columns []string, values []any) error {
 			}
 		case round.ForeignKeys[1]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
-				return fmt.Errorf("unexpected type %T for field leaderboard_entry_rounds", values[i])
+				return fmt.Errorf("unexpected type %T for field golfer_rounds", values[i])
 			} else if value.Valid {
-				_m.leaderboard_entry_rounds = new(uuid.UUID)
-				*_m.leaderboard_entry_rounds = *value.S.(*uuid.UUID)
+				_m.golfer_rounds = new(uuid.UUID)
+				*_m.golfer_rounds = *value.S.(*uuid.UUID)
+			}
+		case round.ForeignKeys[2]:
+			if value, ok := values[i].(*sql.NullScanner); !ok {
+				return fmt.Errorf("unexpected type %T for field tournament_rounds", values[i])
+			} else if value.Valid {
+				_m.tournament_rounds = new(uuid.UUID)
+				*_m.tournament_rounds = *value.S.(*uuid.UUID)
 			}
 		default:
 			_m.selectValues.Set(columns[i], values[i])
@@ -186,9 +210,14 @@ func (_m *Round) Value(name string) (ent.Value, error) {
 	return _m.selectValues.Get(name)
 }
 
-// QueryLeaderboardEntry queries the "leaderboard_entry" edge of the Round entity.
-func (_m *Round) QueryLeaderboardEntry() *LeaderboardEntryQuery {
-	return NewRoundClient(_m.config).QueryLeaderboardEntry(_m)
+// QueryTournament queries the "tournament" edge of the Round entity.
+func (_m *Round) QueryTournament() *TournamentQuery {
+	return NewRoundClient(_m.config).QueryTournament(_m)
+}
+
+// QueryGolfer queries the "golfer" edge of the Round entity.
+func (_m *Round) QueryGolfer() *GolferQuery {
+	return NewRoundClient(_m.config).QueryGolfer(_m)
 }
 
 // QueryHoleScores queries the "hole_scores" edge of the Round entity.

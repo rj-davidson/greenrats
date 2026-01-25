@@ -9,22 +9,22 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/placement"
+	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
-// Service handles tournament business logic.
 type Service struct {
 	db *ent.Client
 }
 
-// NewService creates a new tournament service.
 func NewService(db *ent.Client) *Service {
 	return &Service{db: db}
 }
 
-// List returns a list of tournaments with optional filtering.
 func (s *Service) List(ctx context.Context, req ListTournamentsRequest) (*ListTournamentsResponse, error) {
 	query := s.db.Tournament.Query()
 
@@ -87,7 +87,6 @@ func (s *Service) List(ctx context.Context, req ListTournamentsRequest) (*ListTo
 	}, nil
 }
 
-// GetByID returns a tournament by its ID.
 func (s *Service) GetByID(ctx context.Context, id string) (*Tournament, error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {
@@ -109,7 +108,6 @@ func (s *Service) GetByID(ctx context.Context, id string) (*Tournament, error) {
 	return &result, nil
 }
 
-// GetActive returns the currently active tournament.
 func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 	now := time.Now().UTC()
 	t, err := s.db.Tournament.Query().
@@ -131,14 +129,16 @@ func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 	return &result, nil
 }
 
-// GetLeaderboard returns the leaderboard entries for a tournament.
 func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bool, leagueID string) (*GetLeaderboardResponse, error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {
 		return nil, ErrInvalidTournamentID
 	}
 
-	t, err := s.db.Tournament.Get(ctx, uid)
+	t, err := s.db.Tournament.Query().
+		Where(tournament.IDEQ(uid)).
+		WithChampion().
+		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
 			return nil, ErrTournamentNotFound
@@ -146,160 +146,233 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bo
 		return nil, fmt.Errorf("failed to get tournament: %w", err)
 	}
 
-	// Build golfer picks map if league_id provided and pick window closed
+	golferPicksMap := s.buildGolferPicksMap(ctx, uid, leagueID, t)
+
+	isCompleted := t.Edges.Champion != nil
+
+	if isCompleted {
+		return s.getCompletedLeaderboard(ctx, t, includeHoles, golferPicksMap)
+	}
+
+	return s.getLiveLeaderboard(ctx, t, includeHoles, golferPicksMap)
+}
+
+func (s *Service) buildGolferPicksMap(ctx context.Context, tournamentID uuid.UUID, leagueID string, t *ent.Tournament) map[uuid.UUID][]string {
 	golferPicksMap := make(map[uuid.UUID][]string)
-	if leagueID != "" {
-		leagueUUID, err := uuid.FromString(leagueID)
-		if err == nil && t.PickWindowClosesAt != nil && time.Now().UTC().After(*t.PickWindowClosesAt) {
-			picks, _ := s.db.Pick.Query().
-				Where(
-					pick.HasLeagueWith(league.IDEQ(leagueUUID)),
-					pick.HasTournamentWith(tournament.IDEQ(uid)),
-				).
-				WithUser().
-				WithGolfer().
-				All(ctx)
-
-			for _, p := range picks {
-				if p.Edges.Golfer != nil && p.Edges.User != nil {
-					golferID := p.Edges.Golfer.ID
-					displayName := p.Edges.User.Email
-					if p.Edges.User.DisplayName != nil && *p.Edges.User.DisplayName != "" {
-						displayName = *p.Edges.User.DisplayName
-					}
-					golferPicksMap[golferID] = append(golferPicksMap[golferID], displayName)
-				}
-			}
-		}
+	if leagueID == "" {
+		return golferPicksMap
 	}
 
-	query := t.QueryLeaderboardEntries().
-		WithGolfer().
-		WithRounds(func(q *ent.RoundQuery) {
-			q.Order(ent.Asc("round_number"))
-			if includeHoles {
-				q.WithHoleScores(func(hq *ent.HoleScoreQuery) {
-					hq.Order(ent.Asc("hole_number"))
-				})
-			}
-		})
-
-	entries, err := query.All(ctx)
+	leagueUUID, err := uuid.FromString(leagueID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get leaderboard entries: %w", err)
+		return golferPicksMap
 	}
 
-	// Sort: players with position first, then cut players, then position 0 last
-	// Within each group, sort by position/score then alphabetically by name
-	sort.Slice(entries, func(i, j int) bool {
-		iCut, jCut := entries[i].Cut, entries[j].Cut
-		iPos, jPos := entries[i].Position, entries[j].Position
+	if t.PickWindowClosesAt == nil || time.Now().UTC().Before(*t.PickWindowClosesAt) {
+		return golferPicksMap
+	}
 
-		// Determine sorting group: 0 = has position, 1 = cut, 2 = no position (0)
-		getGroup := func(cut bool, pos int) int {
-			if !cut && pos > 0 {
-				return 0 // has position
+	picks, err := s.db.Pick.Query().
+		Where(
+			pick.HasLeagueWith(league.IDEQ(leagueUUID)),
+			pick.HasTournamentWith(tournament.IDEQ(tournamentID)),
+		).
+		WithUser().
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return golferPicksMap
+	}
+
+	for _, p := range picks {
+		if p.Edges.Golfer != nil && p.Edges.User != nil {
+			golferID := p.Edges.Golfer.ID
+			displayName := p.Edges.User.Email
+			if p.Edges.User.DisplayName != nil && *p.Edges.User.DisplayName != "" {
+				displayName = *p.Edges.User.DisplayName
 			}
-			if cut {
-				return 1 // cut
-			}
-			return 2 // no position
+			golferPicksMap[golferID] = append(golferPicksMap[golferID], displayName)
+		}
+	}
+
+	return golferPicksMap
+}
+
+func (s *Service) getCompletedLeaderboard(ctx context.Context, t *ent.Tournament, includeHoles bool, golferPicksMap map[uuid.UUID][]string) (*GetLeaderboardResponse, error) {
+	placements, err := s.db.Placement.Query().
+		Where(placement.HasTournamentWith(tournament.IDEQ(t.ID))).
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get placements: %w", err)
+	}
+
+	golferIDs := make([]uuid.UUID, 0, len(placements))
+	for _, p := range placements {
+		if p.Edges.Golfer != nil {
+			golferIDs = append(golferIDs, p.Edges.Golfer.ID)
+		}
+	}
+
+	roundsMap := make(map[uuid.UUID][]*ent.Round)
+	if len(golferIDs) > 0 {
+		roundQuery := s.db.Round.Query().
+			Where(
+				round.HasTournamentWith(tournament.IDEQ(t.ID)),
+				round.HasGolferWith(golfer.IDIn(golferIDs...)),
+			).
+			WithGolfer().
+			Order(ent.Asc("round_number"))
+
+		if includeHoles {
+			roundQuery = roundQuery.WithHoleScores(func(q *ent.HoleScoreQuery) {
+				q.Order(ent.Asc("hole_number"))
+			})
 		}
 
-		iGroup, jGroup := getGroup(iCut, iPos), getGroup(jCut, jPos)
+		rounds, err := roundQuery.All(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get rounds: %w", err)
+		}
+
+		for _, r := range rounds {
+			if r.Edges.Golfer != nil {
+				roundsMap[r.Edges.Golfer.ID] = append(roundsMap[r.Edges.Golfer.ID], r)
+			}
+		}
+	}
+
+	sort.Slice(placements, func(i, j int) bool {
+		iStatus, jStatus := placements[i].Status, placements[j].Status
+		iPos, jPos := placements[i].PositionNumeric, placements[j].PositionNumeric
+
+		getGroup := func(status placement.Status, posNumeric *int) int {
+			if status == placement.StatusFinished && posNumeric != nil && *posNumeric > 0 {
+				return 0
+			}
+			if status == placement.StatusCut {
+				return 1
+			}
+			if status == placement.StatusWithdrawn {
+				return 2
+			}
+			return 3
+		}
+
+		iGroup, jGroup := getGroup(iStatus, iPos), getGroup(jStatus, jPos)
 		if iGroup != jGroup {
 			return iGroup < jGroup
 		}
 
-		// Within same group
-		if iGroup == 0 {
-			// Both have positions: sort by position, then by name for ties
-			if iPos != jPos {
-				return iPos < jPos
-			}
-		} else if iGroup == 1 {
-			// Both cut: sort by score (ascending), then by name
-			if entries[i].Score != entries[j].Score {
-				return entries[i].Score < entries[j].Score
+		if iGroup == 0 && iPos != nil && jPos != nil {
+			if *iPos != *jPos {
+				return *iPos < *jPos
 			}
 		}
-		// Sort alphabetically by name
-		return entries[i].Edges.Golfer.Name < entries[j].Edges.Golfer.Name
+
+		iGolfer, jGolfer := placements[i].Edges.Golfer, placements[j].Edges.Golfer
+		if iGolfer != nil && jGolfer != nil {
+			return iGolfer.Name < jGolfer.Name
+		}
+		return false
 	})
 
-	// Count occurrences of each position to determine ties
 	positionCounts := make(map[int]int)
-	for _, e := range entries {
-		if !e.Cut && e.Position > 0 {
-			positionCounts[e.Position]++
+	for _, p := range placements {
+		if p.Status == placement.StatusFinished && p.PositionNumeric != nil && *p.PositionNumeric > 0 {
+			positionCounts[*p.PositionNumeric]++
 		}
 	}
 
-	// Track max current round for tournament metadata
 	maxRound := 0
-
-	result := make([]LeaderboardEntry, len(entries))
-	for i, e := range entries {
-		golfer := e.Edges.Golfer
-
-		if e.CurrentRound > maxRound {
-			maxRound = e.CurrentRound
+	result := make([]LeaderboardEntry, 0, len(placements))
+	for _, p := range placements {
+		g := p.Edges.Golfer
+		if g == nil {
+			continue
 		}
 
-		// Format position display
-		posDisplay := "-"
-		if e.Cut {
-			posDisplay = "CUT"
-		} else if e.Position > 0 {
-			if positionCounts[e.Position] > 1 {
-				posDisplay = fmt.Sprintf("T%d", e.Position)
+		posDisplay := p.Position
+		if posDisplay == "" {
+			posDisplay = "-"
+		}
+		if p.Status == placement.StatusFinished && p.PositionNumeric != nil && *p.PositionNumeric > 0 {
+			if positionCounts[*p.PositionNumeric] > 1 {
+				posDisplay = fmt.Sprintf("T%d", *p.PositionNumeric)
 			} else {
-				posDisplay = fmt.Sprintf("%d", e.Position)
+				posDisplay = fmt.Sprintf("%d", *p.PositionNumeric)
 			}
 		}
 
+		position := 0
+		if p.PositionNumeric != nil {
+			position = *p.PositionNumeric
+		}
+
+		score := 0
+		if p.ParRelativeScore != nil {
+			score = *p.ParRelativeScore
+		}
+
+		totalStrokes := 0
+		if p.TotalScore != nil {
+			totalStrokes = *p.TotalScore
+		}
+
+		currentRound := 0
+		thru := 0
+		rounds := roundsMap[g.ID]
+		if len(rounds) > 0 {
+			currentRound = len(rounds)
+			if currentRound > maxRound {
+				maxRound = currentRound
+			}
+			thru = 18
+		}
+
+		status := string(p.Status)
+
 		entry := LeaderboardEntry{
-			Position:        e.Position,
+			Position:        position,
 			PositionDisplay: posDisplay,
-			GolferID:        golfer.ID.String(),
-			GolferName:      golfer.Name,
-			CountryCode:     golfer.CountryCode,
-			Score:           e.Score,
-			TotalStrokes:    e.TotalStrokes,
-			Thru:            e.Thru,
-			CurrentRound:    e.CurrentRound,
-			Cut:             e.Cut,
-			Status:          string(e.Status),
-			Earnings:        e.Earnings,
+			GolferID:        g.ID.String(),
+			GolferName:      g.Name,
+			CountryCode:     g.CountryCode,
+			Score:           score,
+			TotalStrokes:    totalStrokes,
+			Thru:            thru,
+			CurrentRound:    currentRound,
+			Status:          status,
+			Earnings:        p.Earnings,
 			Rounds:          make([]RoundScore, 0, 4),
 		}
 
-		if golfer.Country != nil {
-			entry.Country = *golfer.Country
+		if g.Country != nil {
+			entry.Country = *g.Country
 		}
-		if golfer.ImageURL != nil {
-			entry.ImageURL = *golfer.ImageURL
+		if g.ImageURL != nil {
+			entry.ImageURL = *g.ImageURL
 		}
-		if pickedBy, ok := golferPicksMap[golfer.ID]; ok {
+		if pickedBy, ok := golferPicksMap[g.ID]; ok {
 			entry.PickedBy = pickedBy
 		}
 
-		for _, r := range e.Edges.Rounds {
-			round := RoundScore{
+		for _, r := range rounds {
+			roundScore := RoundScore{
 				RoundNumber: r.RoundNumber,
 				Score:       r.Score,
 			}
 			if r.ParRelativeScore != nil {
-				round.ParRelativeScore = r.ParRelativeScore
+				roundScore.ParRelativeScore = r.ParRelativeScore
 			}
 			if r.TeeTime != nil {
-				round.TeeTime = r.TeeTime
+				roundScore.TeeTime = r.TeeTime
 			}
 
 			if includeHoles && len(r.Edges.HoleScores) > 0 {
-				round.Holes = make([]HoleScore, 0, len(r.Edges.HoleScores))
+				roundScore.Holes = make([]HoleScore, 0, len(r.Edges.HoleScores))
 				for _, h := range r.Edges.HoleScores {
-					round.Holes = append(round.Holes, HoleScore{
+					roundScore.Holes = append(roundScore.Holes, HoleScore{
 						HoleNumber: h.HoleNumber,
 						Par:        h.Par,
 						Score:      h.Score,
@@ -307,10 +380,10 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bo
 				}
 			}
 
-			entry.Rounds = append(entry.Rounds, round)
+			entry.Rounds = append(entry.Rounds, roundScore)
 		}
 
-		result[i] = entry
+		result = append(result, entry)
 	}
 
 	return &GetLeaderboardResponse{
@@ -322,7 +395,171 @@ func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bo
 	}, nil
 }
 
-// GetField returns the field entries for a tournament.
+type golferRoundData struct {
+	golfer       *ent.Golfer
+	rounds       []*ent.Round
+	totalScore   int
+	totalPar     int
+	currentRound int
+	thru         int
+}
+
+func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, includeHoles bool, golferPicksMap map[uuid.UUID][]string) (*GetLeaderboardResponse, error) {
+	roundQuery := s.db.Round.Query().
+		Where(round.HasTournamentWith(tournament.IDEQ(t.ID))).
+		WithGolfer().
+		Order(ent.Asc("round_number"))
+
+	if includeHoles {
+		roundQuery = roundQuery.WithHoleScores(func(q *ent.HoleScoreQuery) {
+			q.Order(ent.Asc("hole_number"))
+		})
+	}
+
+	rounds, err := roundQuery.All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rounds: %w", err)
+	}
+
+	golferData := make(map[uuid.UUID]*golferRoundData)
+	maxRound := 0
+
+	for _, r := range rounds {
+		if r.Edges.Golfer == nil {
+			continue
+		}
+
+		golferID := r.Edges.Golfer.ID
+		data, ok := golferData[golferID]
+		if !ok {
+			data = &golferRoundData{
+				golfer: r.Edges.Golfer,
+				rounds: make([]*ent.Round, 0, 4),
+			}
+			golferData[golferID] = data
+		}
+
+		data.rounds = append(data.rounds, r)
+
+		if r.ParRelativeScore != nil {
+			data.totalPar += *r.ParRelativeScore
+		}
+		if r.Score != nil {
+			data.totalScore += *r.Score
+		}
+
+		if r.RoundNumber > data.currentRound {
+			data.currentRound = r.RoundNumber
+		}
+
+		if r.RoundNumber > maxRound {
+			maxRound = r.RoundNumber
+		}
+
+		data.thru = 18
+	}
+
+	sortedGolfers := make([]*golferRoundData, 0, len(golferData))
+	for _, data := range golferData {
+		sortedGolfers = append(sortedGolfers, data)
+	}
+
+	sort.Slice(sortedGolfers, func(i, j int) bool {
+		if sortedGolfers[i].totalPar != sortedGolfers[j].totalPar {
+			return sortedGolfers[i].totalPar < sortedGolfers[j].totalPar
+		}
+		return sortedGolfers[i].golfer.Name < sortedGolfers[j].golfer.Name
+	})
+
+	positionCounts := make(map[int]int)
+	currentPos := 1
+	for i := 0; i < len(sortedGolfers); {
+		score := sortedGolfers[i].totalPar
+		count := 0
+		for j := i; j < len(sortedGolfers) && sortedGolfers[j].totalPar == score; j++ {
+			count++
+		}
+		positionCounts[currentPos] = count
+		i += count
+		currentPos += count
+	}
+
+	result := make([]LeaderboardEntry, 0, len(sortedGolfers))
+	currentPos = 1
+
+	for i, data := range sortedGolfers {
+		if i > 0 && data.totalPar != sortedGolfers[i-1].totalPar {
+			currentPos = i + 1
+		}
+
+		posDisplay := fmt.Sprintf("%d", currentPos)
+		if positionCounts[currentPos] > 1 {
+			posDisplay = fmt.Sprintf("T%d", currentPos)
+		}
+
+		entry := LeaderboardEntry{
+			Position:        currentPos,
+			PositionDisplay: posDisplay,
+			GolferID:        data.golfer.ID.String(),
+			GolferName:      data.golfer.Name,
+			CountryCode:     data.golfer.CountryCode,
+			Score:           data.totalPar,
+			TotalStrokes:    data.totalScore,
+			Thru:            data.thru,
+			CurrentRound:    data.currentRound,
+			Status:          "active",
+			Earnings:        0,
+			Rounds:          make([]RoundScore, 0, len(data.rounds)),
+		}
+
+		if data.golfer.Country != nil {
+			entry.Country = *data.golfer.Country
+		}
+		if data.golfer.ImageURL != nil {
+			entry.ImageURL = *data.golfer.ImageURL
+		}
+		if pickedBy, ok := golferPicksMap[data.golfer.ID]; ok {
+			entry.PickedBy = pickedBy
+		}
+
+		for _, r := range data.rounds {
+			roundScore := RoundScore{
+				RoundNumber: r.RoundNumber,
+				Score:       r.Score,
+			}
+			if r.ParRelativeScore != nil {
+				roundScore.ParRelativeScore = r.ParRelativeScore
+			}
+			if r.TeeTime != nil {
+				roundScore.TeeTime = r.TeeTime
+			}
+
+			if includeHoles && len(r.Edges.HoleScores) > 0 {
+				roundScore.Holes = make([]HoleScore, 0, len(r.Edges.HoleScores))
+				for _, h := range r.Edges.HoleScores {
+					roundScore.Holes = append(roundScore.Holes, HoleScore{
+						HoleNumber: h.HoleNumber,
+						Par:        h.Par,
+						Score:      h.Score,
+					})
+				}
+			}
+
+			entry.Rounds = append(entry.Rounds, roundScore)
+		}
+
+		result = append(result, entry)
+	}
+
+	return &GetLeaderboardResponse{
+		TournamentID:   t.ID.String(),
+		TournamentName: t.Name,
+		CurrentRound:   maxRound,
+		Entries:        result,
+		Total:          len(result),
+	}, nil
+}
+
 func (s *Service) GetField(ctx context.Context, id string) (*GetFieldResponse, error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {
@@ -346,24 +583,24 @@ func (s *Service) GetField(ctx context.Context, id string) (*GetFieldResponse, e
 
 	result := make([]FieldEntry, 0, len(entries))
 	for _, e := range entries {
-		golfer := e.Edges.Golfer
-		if golfer == nil {
+		g := e.Edges.Golfer
+		if g == nil {
 			continue
 		}
 
 		entry := FieldEntry{
-			GolferID:    golfer.ID.String(),
-			GolferName:  golfer.Name,
-			CountryCode: golfer.CountryCode,
+			GolferID:    g.ID.String(),
+			GolferName:  g.Name,
+			CountryCode: g.CountryCode,
 			EntryStatus: string(e.EntryStatus),
 			IsAmateur:   e.IsAmateur,
 		}
 
-		if golfer.Country != nil {
-			entry.Country = *golfer.Country
+		if g.Country != nil {
+			entry.Country = *g.Country
 		}
-		if golfer.Owgr != nil {
-			entry.OWGR = golfer.Owgr
+		if g.Owgr != nil {
+			entry.OWGR = g.Owgr
 		}
 		if e.OwgrAtEntry != nil {
 			entry.OWGRAtEntry = e.OwgrAtEntry
@@ -371,8 +608,8 @@ func (s *Service) GetField(ctx context.Context, id string) (*GetFieldResponse, e
 		if e.Qualifier != nil {
 			entry.Qualifier = *e.Qualifier
 		}
-		if golfer.ImageURL != nil {
-			entry.ImageURL = *golfer.ImageURL
+		if g.ImageURL != nil {
+			entry.ImageURL = *g.ImageURL
 		}
 
 		result = append(result, entry)

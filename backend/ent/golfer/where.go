@@ -1607,21 +1607,44 @@ func HasFieldEntriesWith(preds ...predicate.FieldEntry) predicate.Golfer {
 	})
 }
 
-// HasLeaderboardEntries applies the HasEdge predicate on the "leaderboard_entries" edge.
-func HasLeaderboardEntries() predicate.Golfer {
+// HasPlacements applies the HasEdge predicate on the "placements" edge.
+func HasPlacements() predicate.Golfer {
 	return predicate.Golfer(func(s *sql.Selector) {
 		step := sqlgraph.NewStep(
 			sqlgraph.From(Table, FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, LeaderboardEntriesTable, LeaderboardEntriesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, PlacementsTable, PlacementsColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
 	})
 }
 
-// HasLeaderboardEntriesWith applies the HasEdge predicate on the "leaderboard_entries" edge with a given conditions (other predicates).
-func HasLeaderboardEntriesWith(preds ...predicate.LeaderboardEntry) predicate.Golfer {
+// HasPlacementsWith applies the HasEdge predicate on the "placements" edge with a given conditions (other predicates).
+func HasPlacementsWith(preds ...predicate.Placement) predicate.Golfer {
 	return predicate.Golfer(func(s *sql.Selector) {
-		step := newLeaderboardEntriesStep()
+		step := newPlacementsStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
+// HasRounds applies the HasEdge predicate on the "rounds" edge.
+func HasRounds() predicate.Golfer {
+	return predicate.Golfer(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, RoundsTable, RoundsColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasRoundsWith applies the HasEdge predicate on the "rounds" edge with a given conditions (other predicates).
+func HasRoundsWith(preds ...predicate.Round) predicate.Golfer {
+	return predicate.Golfer(func(s *sql.Selector) {
+		step := newRoundsStep()
 		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
 			for _, p := range preds {
 				p(s)

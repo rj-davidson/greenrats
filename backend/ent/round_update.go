@@ -13,10 +13,11 @@ import (
 	"entgo.io/ent/schema/field"
 	uuid "github.com/gofrs/uuid/v5"
 	"github.com/rj-davidson/greenrats/ent/course"
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/holescore"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/round"
+	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
 // RoundUpdate is the builder for updating Round entities.
@@ -133,15 +134,26 @@ func (_u *RoundUpdate) ClearTeeTime() *RoundUpdate {
 	return _u
 }
 
-// SetLeaderboardEntryID sets the "leaderboard_entry" edge to the LeaderboardEntry entity by ID.
-func (_u *RoundUpdate) SetLeaderboardEntryID(id uuid.UUID) *RoundUpdate {
-	_u.mutation.SetLeaderboardEntryID(id)
+// SetTournamentID sets the "tournament" edge to the Tournament entity by ID.
+func (_u *RoundUpdate) SetTournamentID(id uuid.UUID) *RoundUpdate {
+	_u.mutation.SetTournamentID(id)
 	return _u
 }
 
-// SetLeaderboardEntry sets the "leaderboard_entry" edge to the LeaderboardEntry entity.
-func (_u *RoundUpdate) SetLeaderboardEntry(v *LeaderboardEntry) *RoundUpdate {
-	return _u.SetLeaderboardEntryID(v.ID)
+// SetTournament sets the "tournament" edge to the Tournament entity.
+func (_u *RoundUpdate) SetTournament(v *Tournament) *RoundUpdate {
+	return _u.SetTournamentID(v.ID)
+}
+
+// SetGolferID sets the "golfer" edge to the Golfer entity by ID.
+func (_u *RoundUpdate) SetGolferID(id uuid.UUID) *RoundUpdate {
+	_u.mutation.SetGolferID(id)
+	return _u
+}
+
+// SetGolfer sets the "golfer" edge to the Golfer entity.
+func (_u *RoundUpdate) SetGolfer(v *Golfer) *RoundUpdate {
+	return _u.SetGolferID(v.ID)
 }
 
 // AddHoleScoreIDs adds the "hole_scores" edge to the HoleScore entity by IDs.
@@ -183,9 +195,15 @@ func (_u *RoundUpdate) Mutation() *RoundMutation {
 	return _u.mutation
 }
 
-// ClearLeaderboardEntry clears the "leaderboard_entry" edge to the LeaderboardEntry entity.
-func (_u *RoundUpdate) ClearLeaderboardEntry() *RoundUpdate {
-	_u.mutation.ClearLeaderboardEntry()
+// ClearTournament clears the "tournament" edge to the Tournament entity.
+func (_u *RoundUpdate) ClearTournament() *RoundUpdate {
+	_u.mutation.ClearTournament()
+	return _u
+}
+
+// ClearGolfer clears the "golfer" edge to the Golfer entity.
+func (_u *RoundUpdate) ClearGolfer() *RoundUpdate {
+	_u.mutation.ClearGolfer()
 	return _u
 }
 
@@ -259,8 +277,11 @@ func (_u *RoundUpdate) check() error {
 			return &ValidationError{Name: "round_number", err: fmt.Errorf(`ent: validator failed for field "Round.round_number": %w`, err)}
 		}
 	}
-	if _u.mutation.LeaderboardEntryCleared() && len(_u.mutation.LeaderboardEntryIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Round.leaderboard_entry"`)
+	if _u.mutation.TournamentCleared() && len(_u.mutation.TournamentIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Round.tournament"`)
+	}
+	if _u.mutation.GolferCleared() && len(_u.mutation.GolferIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Round.golfer"`)
 	}
 	return nil
 }
@@ -310,28 +331,57 @@ func (_u *RoundUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	if _u.mutation.TeeTimeCleared() {
 		_spec.ClearField(round.FieldTeeTime, field.TypeTime)
 	}
-	if _u.mutation.LeaderboardEntryCleared() {
+	if _u.mutation.TournamentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   round.LeaderboardEntryTable,
-			Columns: []string{round.LeaderboardEntryColumn},
+			Table:   round.TournamentTable,
+			Columns: []string{round.TournamentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.LeaderboardEntryIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TournamentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   round.LeaderboardEntryTable,
-			Columns: []string{round.LeaderboardEntryColumn},
+			Table:   round.TournamentTable,
+			Columns: []string{round.TournamentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.GolferCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   round.GolferTable,
+			Columns: []string{round.GolferColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.GolferIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   round.GolferTable,
+			Columns: []string{round.GolferColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -534,15 +584,26 @@ func (_u *RoundUpdateOne) ClearTeeTime() *RoundUpdateOne {
 	return _u
 }
 
-// SetLeaderboardEntryID sets the "leaderboard_entry" edge to the LeaderboardEntry entity by ID.
-func (_u *RoundUpdateOne) SetLeaderboardEntryID(id uuid.UUID) *RoundUpdateOne {
-	_u.mutation.SetLeaderboardEntryID(id)
+// SetTournamentID sets the "tournament" edge to the Tournament entity by ID.
+func (_u *RoundUpdateOne) SetTournamentID(id uuid.UUID) *RoundUpdateOne {
+	_u.mutation.SetTournamentID(id)
 	return _u
 }
 
-// SetLeaderboardEntry sets the "leaderboard_entry" edge to the LeaderboardEntry entity.
-func (_u *RoundUpdateOne) SetLeaderboardEntry(v *LeaderboardEntry) *RoundUpdateOne {
-	return _u.SetLeaderboardEntryID(v.ID)
+// SetTournament sets the "tournament" edge to the Tournament entity.
+func (_u *RoundUpdateOne) SetTournament(v *Tournament) *RoundUpdateOne {
+	return _u.SetTournamentID(v.ID)
+}
+
+// SetGolferID sets the "golfer" edge to the Golfer entity by ID.
+func (_u *RoundUpdateOne) SetGolferID(id uuid.UUID) *RoundUpdateOne {
+	_u.mutation.SetGolferID(id)
+	return _u
+}
+
+// SetGolfer sets the "golfer" edge to the Golfer entity.
+func (_u *RoundUpdateOne) SetGolfer(v *Golfer) *RoundUpdateOne {
+	return _u.SetGolferID(v.ID)
 }
 
 // AddHoleScoreIDs adds the "hole_scores" edge to the HoleScore entity by IDs.
@@ -584,9 +645,15 @@ func (_u *RoundUpdateOne) Mutation() *RoundMutation {
 	return _u.mutation
 }
 
-// ClearLeaderboardEntry clears the "leaderboard_entry" edge to the LeaderboardEntry entity.
-func (_u *RoundUpdateOne) ClearLeaderboardEntry() *RoundUpdateOne {
-	_u.mutation.ClearLeaderboardEntry()
+// ClearTournament clears the "tournament" edge to the Tournament entity.
+func (_u *RoundUpdateOne) ClearTournament() *RoundUpdateOne {
+	_u.mutation.ClearTournament()
+	return _u
+}
+
+// ClearGolfer clears the "golfer" edge to the Golfer entity.
+func (_u *RoundUpdateOne) ClearGolfer() *RoundUpdateOne {
+	_u.mutation.ClearGolfer()
 	return _u
 }
 
@@ -673,8 +740,11 @@ func (_u *RoundUpdateOne) check() error {
 			return &ValidationError{Name: "round_number", err: fmt.Errorf(`ent: validator failed for field "Round.round_number": %w`, err)}
 		}
 	}
-	if _u.mutation.LeaderboardEntryCleared() && len(_u.mutation.LeaderboardEntryIDs()) > 0 {
-		return errors.New(`ent: clearing a required unique edge "Round.leaderboard_entry"`)
+	if _u.mutation.TournamentCleared() && len(_u.mutation.TournamentIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Round.tournament"`)
+	}
+	if _u.mutation.GolferCleared() && len(_u.mutation.GolferIDs()) > 0 {
+		return errors.New(`ent: clearing a required unique edge "Round.golfer"`)
 	}
 	return nil
 }
@@ -741,28 +811,57 @@ func (_u *RoundUpdateOne) sqlSave(ctx context.Context) (_node *Round, err error)
 	if _u.mutation.TeeTimeCleared() {
 		_spec.ClearField(round.FieldTeeTime, field.TypeTime)
 	}
-	if _u.mutation.LeaderboardEntryCleared() {
+	if _u.mutation.TournamentCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   round.LeaderboardEntryTable,
-			Columns: []string{round.LeaderboardEntryColumn},
+			Table:   round.TournamentTable,
+			Columns: []string{round.TournamentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
 			},
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := _u.mutation.LeaderboardEntryIDs(); len(nodes) > 0 {
+	if nodes := _u.mutation.TournamentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
-			Table:   round.LeaderboardEntryTable,
-			Columns: []string{round.LeaderboardEntryColumn},
+			Table:   round.TournamentTable,
+			Columns: []string{round.TournamentColumn},
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
-				IDSpec: sqlgraph.NewFieldSpec(leaderboardentry.FieldID, field.TypeUUID),
+				IDSpec: sqlgraph.NewFieldSpec(tournament.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.GolferCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   round.GolferTable,
+			Columns: []string{round.GolferColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.GolferIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   round.GolferTable,
+			Columns: []string{round.GolferColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(golfer.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

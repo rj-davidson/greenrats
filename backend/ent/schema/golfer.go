@@ -6,12 +6,10 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// Golfer holds the schema definition for the Golfer entity.
 type Golfer struct {
 	ent.Schema
 }
 
-// Mixin of the Golfer.
 func (Golfer) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
@@ -19,7 +17,6 @@ func (Golfer) Mixin() []ent.Mixin {
 	}
 }
 
-// Fields of the Golfer.
 func (Golfer) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("bdl_id").
@@ -93,12 +90,12 @@ func (Golfer) Fields() []ent.Field {
 	}
 }
 
-// Edges of the Golfer.
 func (Golfer) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("picks", Pick.Type),
 		edge.To("field_entries", FieldEntry.Type),
-		edge.To("leaderboard_entries", LeaderboardEntry.Type),
+		edge.To("placements", Placement.Type),
+		edge.To("rounds", Round.Type),
 		edge.To("seasons", GolferSeason.Type),
 	}
 }

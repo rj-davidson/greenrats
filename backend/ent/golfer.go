@@ -74,13 +74,15 @@ type GolferEdges struct {
 	Picks []*Pick `json:"picks,omitempty"`
 	// FieldEntries holds the value of the field_entries edge.
 	FieldEntries []*FieldEntry `json:"field_entries,omitempty"`
-	// LeaderboardEntries holds the value of the leaderboard_entries edge.
-	LeaderboardEntries []*LeaderboardEntry `json:"leaderboard_entries,omitempty"`
+	// Placements holds the value of the placements edge.
+	Placements []*Placement `json:"placements,omitempty"`
+	// Rounds holds the value of the rounds edge.
+	Rounds []*Round `json:"rounds,omitempty"`
 	// Seasons holds the value of the seasons edge.
 	Seasons []*GolferSeason `json:"seasons,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -101,19 +103,28 @@ func (e GolferEdges) FieldEntriesOrErr() ([]*FieldEntry, error) {
 	return nil, &NotLoadedError{edge: "field_entries"}
 }
 
-// LeaderboardEntriesOrErr returns the LeaderboardEntries value or an error if the edge
+// PlacementsOrErr returns the Placements value or an error if the edge
 // was not loaded in eager-loading.
-func (e GolferEdges) LeaderboardEntriesOrErr() ([]*LeaderboardEntry, error) {
+func (e GolferEdges) PlacementsOrErr() ([]*Placement, error) {
 	if e.loadedTypes[2] {
-		return e.LeaderboardEntries, nil
+		return e.Placements, nil
 	}
-	return nil, &NotLoadedError{edge: "leaderboard_entries"}
+	return nil, &NotLoadedError{edge: "placements"}
+}
+
+// RoundsOrErr returns the Rounds value or an error if the edge
+// was not loaded in eager-loading.
+func (e GolferEdges) RoundsOrErr() ([]*Round, error) {
+	if e.loadedTypes[3] {
+		return e.Rounds, nil
+	}
+	return nil, &NotLoadedError{edge: "rounds"}
 }
 
 // SeasonsOrErr returns the Seasons value or an error if the edge
 // was not loaded in eager-loading.
 func (e GolferEdges) SeasonsOrErr() ([]*GolferSeason, error) {
-	if e.loadedTypes[3] {
+	if e.loadedTypes[4] {
 		return e.Seasons, nil
 	}
 	return nil, &NotLoadedError{edge: "seasons"}
@@ -327,9 +338,14 @@ func (_m *Golfer) QueryFieldEntries() *FieldEntryQuery {
 	return NewGolferClient(_m.config).QueryFieldEntries(_m)
 }
 
-// QueryLeaderboardEntries queries the "leaderboard_entries" edge of the Golfer entity.
-func (_m *Golfer) QueryLeaderboardEntries() *LeaderboardEntryQuery {
-	return NewGolferClient(_m.config).QueryLeaderboardEntries(_m)
+// QueryPlacements queries the "placements" edge of the Golfer entity.
+func (_m *Golfer) QueryPlacements() *PlacementQuery {
+	return NewGolferClient(_m.config).QueryPlacements(_m)
+}
+
+// QueryRounds queries the "rounds" edge of the Golfer entity.
+func (_m *Golfer) QueryRounds() *RoundQuery {
+	return NewGolferClient(_m.config).QueryRounds(_m)
 }
 
 // QuerySeasons queries the "seasons" edge of the Golfer entity.

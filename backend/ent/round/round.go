@@ -27,21 +27,30 @@ const (
 	FieldParRelativeScore = "par_relative_score"
 	// FieldTeeTime holds the string denoting the tee_time field in the database.
 	FieldTeeTime = "tee_time"
-	// EdgeLeaderboardEntry holds the string denoting the leaderboard_entry edge name in mutations.
-	EdgeLeaderboardEntry = "leaderboard_entry"
+	// EdgeTournament holds the string denoting the tournament edge name in mutations.
+	EdgeTournament = "tournament"
+	// EdgeGolfer holds the string denoting the golfer edge name in mutations.
+	EdgeGolfer = "golfer"
 	// EdgeHoleScores holds the string denoting the hole_scores edge name in mutations.
 	EdgeHoleScores = "hole_scores"
 	// EdgeCourse holds the string denoting the course edge name in mutations.
 	EdgeCourse = "course"
 	// Table holds the table name of the round in the database.
 	Table = "rounds"
-	// LeaderboardEntryTable is the table that holds the leaderboard_entry relation/edge.
-	LeaderboardEntryTable = "rounds"
-	// LeaderboardEntryInverseTable is the table name for the LeaderboardEntry entity.
-	// It exists in this package in order to avoid circular dependency with the "leaderboardentry" package.
-	LeaderboardEntryInverseTable = "leaderboard_entries"
-	// LeaderboardEntryColumn is the table column denoting the leaderboard_entry relation/edge.
-	LeaderboardEntryColumn = "leaderboard_entry_rounds"
+	// TournamentTable is the table that holds the tournament relation/edge.
+	TournamentTable = "rounds"
+	// TournamentInverseTable is the table name for the Tournament entity.
+	// It exists in this package in order to avoid circular dependency with the "tournament" package.
+	TournamentInverseTable = "tournaments"
+	// TournamentColumn is the table column denoting the tournament relation/edge.
+	TournamentColumn = "tournament_rounds"
+	// GolferTable is the table that holds the golfer relation/edge.
+	GolferTable = "rounds"
+	// GolferInverseTable is the table name for the Golfer entity.
+	// It exists in this package in order to avoid circular dependency with the "golfer" package.
+	GolferInverseTable = "golfers"
+	// GolferColumn is the table column denoting the golfer relation/edge.
+	GolferColumn = "golfer_rounds"
 	// HoleScoresTable is the table that holds the hole_scores relation/edge.
 	HoleScoresTable = "hole_scores"
 	// HoleScoresInverseTable is the table name for the HoleScore entity.
@@ -73,7 +82,8 @@ var Columns = []string{
 // table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
 	"course_rounds",
-	"leaderboard_entry_rounds",
+	"golfer_rounds",
+	"tournament_rounds",
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -142,10 +152,17 @@ func ByTeeTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTeeTime, opts...).ToFunc()
 }
 
-// ByLeaderboardEntryField orders the results by leaderboard_entry field.
-func ByLeaderboardEntryField(field string, opts ...sql.OrderTermOption) OrderOption {
+// ByTournamentField orders the results by tournament field.
+func ByTournamentField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newLeaderboardEntryStep(), sql.OrderByField(field, opts...))
+		sqlgraph.OrderByNeighborTerms(s, newTournamentStep(), sql.OrderByField(field, opts...))
+	}
+}
+
+// ByGolferField orders the results by golfer field.
+func ByGolferField(field string, opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newGolferStep(), sql.OrderByField(field, opts...))
 	}
 }
 
@@ -169,11 +186,18 @@ func ByCourseField(field string, opts ...sql.OrderTermOption) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newCourseStep(), sql.OrderByField(field, opts...))
 	}
 }
-func newLeaderboardEntryStep() *sqlgraph.Step {
+func newTournamentStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(LeaderboardEntryInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, LeaderboardEntryTable, LeaderboardEntryColumn),
+		sqlgraph.To(TournamentInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, TournamentTable, TournamentColumn),
+	)
+}
+func newGolferStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(GolferInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, GolferTable, GolferColumn),
 	)
 }
 func newHoleScoresStep() *sqlgraph.Step {

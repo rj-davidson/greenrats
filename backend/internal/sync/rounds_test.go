@@ -7,8 +7,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/holescore"
 	"github.com/rj-davidson/greenrats/ent/round"
+	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/testutil"
 )
@@ -17,9 +19,8 @@ func TestUpsertRound_Create(t *testing.T) {
 	ctx := context.Background()
 	svc := newTestService(t)
 
-	tournament := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournament.ID, golferEntity.ID)
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		Tournament:       balldontlie.TournamentRef{ID: 1},
@@ -29,7 +30,7 @@ func TestUpsertRound_Create(t *testing.T) {
 		ParRelativeScore: intPtr(-4),
 	}
 
-	created, err := svc.UpsertRound(ctx, entry.ID, bdlRound)
+	created, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
 
 	require.NoError(t, err)
 	require.NotNil(t, created)
@@ -42,9 +43,8 @@ func TestUpsertRound_Update(t *testing.T) {
 	ctx := context.Background()
 	svc := newTestService(t)
 
-	tournament := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournament.ID, golferEntity.ID)
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		RoundNumber:      1,
@@ -52,13 +52,13 @@ func TestUpsertRound_Update(t *testing.T) {
 		ParRelativeScore: intPtr(-4),
 	}
 
-	_, err := svc.UpsertRound(ctx, entry.ID, bdlRound)
+	_, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
 	require.NoError(t, err)
 
 	bdlRound.Score = intPtr(70)
 	bdlRound.ParRelativeScore = intPtr(-2)
 
-	updated, err := svc.UpsertRound(ctx, entry.ID, bdlRound)
+	updated, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
 
 	require.NoError(t, err)
 	assert.Equal(t, 70, *updated.Score)
@@ -69,12 +69,11 @@ func TestUpsertHoleScore_Create(t *testing.T) {
 	ctx := context.Background()
 	svc := newTestService(t)
 
-	tournament := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournament.ID, golferEntity.ID)
 
 	bdlRoundResult := &balldontlie.PlayerRoundResult{RoundNumber: 1}
-	roundRecord, err := svc.UpsertRound(ctx, entry.ID, bdlRoundResult)
+	roundRecord, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRoundResult)
 	require.NoError(t, err)
 
 	bdlScorecard := &balldontlie.PlayerScorecard{
@@ -102,12 +101,11 @@ func TestUpsertHoleScore_Update(t *testing.T) {
 	ctx := context.Background()
 	svc := newTestService(t)
 
-	tournament := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
-	entry := testutil.CreateLeaderboardEntry(t, svc.db, tournament.ID, golferEntity.ID)
 
 	bdlRoundResult := &balldontlie.PlayerRoundResult{RoundNumber: 1}
-	roundRecord, err := svc.UpsertRound(ctx, entry.ID, bdlRoundResult)
+	roundRecord, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRoundResult)
 	require.NoError(t, err)
 
 	bdlScorecard := &balldontlie.PlayerScorecard{
@@ -131,4 +129,61 @@ func TestUpsertHoleScore_Update(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, scores, 1)
 	assert.Equal(t, 3, *scores[0].Score)
+}
+
+func TestUpsertRound_VerifiesDirectEdges(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService(t)
+
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
+
+	bdlRound := &balldontlie.PlayerRoundResult{
+		RoundNumber:      1,
+		Score:            intPtr(68),
+		ParRelativeScore: intPtr(-4),
+	}
+
+	created, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
+	require.NoError(t, err)
+
+	roundWithEdges, err := svc.db.Round.Query().
+		Where(round.IDEQ(created.ID)).
+		WithTournament().
+		WithGolfer().
+		Only(ctx)
+	require.NoError(t, err)
+
+	assert.NotNil(t, roundWithEdges.Edges.Tournament)
+	assert.Equal(t, tournamentEntity.ID, roundWithEdges.Edges.Tournament.ID)
+	assert.NotNil(t, roundWithEdges.Edges.Golfer)
+	assert.Equal(t, golferEntity.ID, roundWithEdges.Edges.Golfer.ID)
+}
+
+func TestUpsertRound_UniqueConstraint(t *testing.T) {
+	ctx := context.Background()
+	svc := newTestService(t)
+
+	tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
+
+	bdlRound := &balldontlie.PlayerRoundResult{
+		RoundNumber: 1,
+	}
+
+	_, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
+	require.NoError(t, err)
+
+	_, err = svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
+	require.NoError(t, err)
+
+	count, err := svc.db.Round.Query().
+		Where(
+			round.HasTournamentWith(tournament.IDEQ(tournamentEntity.ID)),
+			round.HasGolferWith(golfer.IDEQ(golferEntity.ID)),
+			round.RoundNumberEQ(1),
+		).
+		Count(ctx)
+	require.NoError(t, err)
+	assert.Equal(t, 1, count, "should only create one round for same tournament/golfer/round_number")
 }

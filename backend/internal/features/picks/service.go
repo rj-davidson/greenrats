@@ -14,10 +14,11 @@ import (
 	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/golferseason"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/placement"
+	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
@@ -450,11 +451,13 @@ func (s *Service) GetLeaguePicksEnhanced(ctx context.Context, leagueID, tourname
 		return nil, fmt.Errorf("failed to count league members: %w", err)
 	}
 
-	var leaderboardMap map[uuid.UUID]*ent.LeaderboardEntry
+	var placementMap map[uuid.UUID]*ent.Placement
 	var roundsMap map[uuid.UUID][]*ent.Round
 	status := "upcoming"
+	isCompleted := false
 	if tournamentEnt != nil {
 		status = string(tournaments.DeriveStatus(tournamentEnt))
+		isCompleted = tournamentEnt.Edges.Champion != nil
 	}
 
 	if status != "upcoming" {
@@ -466,33 +469,43 @@ func (s *Service) GetLeaguePicksEnhanced(ctx context.Context, leagueID, tourname
 		}
 
 		if len(golferIDs) > 0 {
-			query := s.db.LeaderboardEntry.Query().
-				Where(
-					leaderboardentry.HasTournamentWith(tournament.IDEQ(tournamentID)),
-					leaderboardentry.HasGolferWith(golfer.IDIn(golferIDs...)),
-				).
-				WithGolfer()
+			if isCompleted {
+				placements, err := s.db.Placement.Query().
+					Where(
+						placement.HasTournamentWith(tournament.IDEQ(tournamentID)),
+						placement.HasGolferWith(golfer.IDIn(golferIDs...)),
+					).
+					WithGolfer().
+					All(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get placements: %w", err)
+				}
+
+				placementMap = make(map[uuid.UUID]*ent.Placement, len(placements))
+				for _, p := range placements {
+					if p.Edges.Golfer != nil {
+						placementMap[p.Edges.Golfer.ID] = p
+					}
+				}
+			}
 
 			if includeRounds {
-				query = query.WithRounds(func(q *ent.RoundQuery) {
-					q.Order(ent.Asc("round_number"))
-				})
-			}
+				rounds, err := s.db.Round.Query().
+					Where(
+						round.HasTournamentWith(tournament.IDEQ(tournamentID)),
+						round.HasGolferWith(golfer.IDIn(golferIDs...)),
+					).
+					WithGolfer().
+					Order(ent.Asc(round.FieldRoundNumber)).
+					All(ctx)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get rounds: %w", err)
+				}
 
-			entries, err := query.All(ctx)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get leaderboard entries: %w", err)
-			}
-
-			leaderboardMap = make(map[uuid.UUID]*ent.LeaderboardEntry, len(entries))
-			if includeRounds {
-				roundsMap = make(map[uuid.UUID][]*ent.Round, len(entries))
-			}
-			for _, e := range entries {
-				if e.Edges.Golfer != nil {
-					leaderboardMap[e.Edges.Golfer.ID] = e
-					if includeRounds {
-						roundsMap[e.Edges.Golfer.ID] = e.Edges.Rounds
+				roundsMap = make(map[uuid.UUID][]*ent.Round, len(golferIDs))
+				for _, r := range rounds {
+					if r.Edges.Golfer != nil {
+						roundsMap[r.Edges.Golfer.ID] = append(roundsMap[r.Edges.Golfer.ID], r)
 					}
 				}
 			}
@@ -500,9 +513,9 @@ func (s *Service) GetLeaguePicksEnhanced(ctx context.Context, leagueID, tourname
 	}
 
 	positionCounts := make(map[int]int)
-	for _, e := range leaderboardMap {
-		if !e.Cut && e.Position > 0 {
-			positionCounts[e.Position]++
+	for _, p := range placementMap {
+		if p.Status != placement.StatusCut && p.PositionNumeric != nil && *p.PositionNumeric > 0 {
+			positionCounts[*p.PositionNumeric]++
 		}
 	}
 
@@ -528,27 +541,43 @@ func (s *Service) GetLeaguePicksEnhanced(ctx context.Context, leagueID, tourname
 			entry.GolferImageURL = *p.Edges.Golfer.ImageURL
 		}
 
-		if lb, ok := leaderboardMap[p.Edges.Golfer.ID]; ok {
+		if pl, ok := placementMap[p.Edges.Golfer.ID]; ok {
 			posDisplay := "-"
-			if lb.Cut {
+			if pl.Status == placement.StatusCut {
 				posDisplay = "CUT"
-			} else if lb.Position > 0 {
-				if positionCounts[lb.Position] > 1 {
-					posDisplay = fmt.Sprintf("T%d", lb.Position)
+			} else if pl.Status == placement.StatusWithdrawn {
+				posDisplay = "WD"
+			} else if pl.PositionNumeric != nil && *pl.PositionNumeric > 0 {
+				if positionCounts[*pl.PositionNumeric] > 1 {
+					posDisplay = fmt.Sprintf("T%d", *pl.PositionNumeric)
 				} else {
-					posDisplay = fmt.Sprintf("%d", lb.Position)
+					posDisplay = fmt.Sprintf("%d", *pl.PositionNumeric)
 				}
 			}
 
+			position := 0
+			if pl.PositionNumeric != nil {
+				position = *pl.PositionNumeric
+			}
+
+			score := 0
+			if pl.ParRelativeScore != nil {
+				score = *pl.ParRelativeScore
+			}
+
+			totalStrokes := 0
+			if pl.TotalScore != nil {
+				totalStrokes = *pl.TotalScore
+			}
+
 			leaderboardData := &PickLeaderboardData{
-				Position:        lb.Position,
+				Position:        position,
 				PositionDisplay: posDisplay,
-				Score:           lb.Score,
-				Thru:            lb.Thru,
-				CurrentRound:    lb.CurrentRound,
-				Cut:             lb.Cut,
-				Status:          string(lb.Status),
-				Earnings:        lb.Earnings,
+				Score:           score,
+				Thru:            totalStrokes,
+				CurrentRound:    4,
+				Status:          string(pl.Status),
+				Earnings:        pl.Earnings,
 			}
 
 			if includeRounds {
@@ -1331,67 +1360,67 @@ func (s *Service) GetUserPublicPicks(ctx context.Context, leagueID, userID uuid.
 		TournamentID uuid.UUID
 		GolferID     uuid.UUID
 	}
-	leaderboardKeys := make([]pickKey, 0, len(picks))
+	placementKeys := make([]pickKey, 0, len(picks))
 	for _, p := range picks {
 		if p.Edges.Golfer != nil && p.Edges.Tournament != nil {
-			leaderboardKeys = append(leaderboardKeys, pickKey{
+			placementKeys = append(placementKeys, pickKey{
 				TournamentID: p.Edges.Tournament.ID,
 				GolferID:     p.Edges.Golfer.ID,
 			})
 		}
 	}
 
-	leaderboardMap := make(map[pickKey]*ent.LeaderboardEntry)
-	if len(leaderboardKeys) > 0 {
+	placementMap := make(map[pickKey]*ent.Placement)
+	if len(placementKeys) > 0 {
 		tournamentIDs := make([]uuid.UUID, 0)
 		golferIDs := make([]uuid.UUID, 0)
 		seen := make(map[uuid.UUID]bool)
-		for _, k := range leaderboardKeys {
+		for _, k := range placementKeys {
 			if !seen[k.TournamentID] {
 				tournamentIDs = append(tournamentIDs, k.TournamentID)
 				seen[k.TournamentID] = true
 			}
 		}
 		seen = make(map[uuid.UUID]bool)
-		for _, k := range leaderboardKeys {
+		for _, k := range placementKeys {
 			if !seen[k.GolferID] {
 				golferIDs = append(golferIDs, k.GolferID)
 				seen[k.GolferID] = true
 			}
 		}
 
-		entries, err := s.db.LeaderboardEntry.
+		placements, err := s.db.Placement.
 			Query().
 			Where(
-				leaderboardentry.HasTournamentWith(tournament.IDIn(tournamentIDs...)),
-				leaderboardentry.HasGolferWith(golfer.IDIn(golferIDs...)),
+				placement.HasTournamentWith(tournament.IDIn(tournamentIDs...)),
+				placement.HasGolferWith(golfer.IDIn(golferIDs...)),
 			).
 			WithTournament().
 			WithGolfer().
 			All(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get leaderboard entries: %w", err)
+			return nil, fmt.Errorf("failed to get placements: %w", err)
 		}
 
-		for _, e := range entries {
-			if e.Edges.Tournament != nil && e.Edges.Golfer != nil {
-				key := pickKey{TournamentID: e.Edges.Tournament.ID, GolferID: e.Edges.Golfer.ID}
-				leaderboardMap[key] = e
+		for _, pl := range placements {
+			if pl.Edges.Tournament != nil && pl.Edges.Golfer != nil {
+				key := pickKey{TournamentID: pl.Edges.Tournament.ID, GolferID: pl.Edges.Golfer.ID}
+				placementMap[key] = pl
 			}
 		}
 	}
 
 	positionCounts := make(map[uuid.UUID]map[int]int)
-	for _, e := range leaderboardMap {
-		if e.Edges.Tournament == nil {
+	for _, pl := range placementMap {
+		if pl.Edges.Tournament == nil {
 			continue
 		}
-		tid := e.Edges.Tournament.ID
+		tid := pl.Edges.Tournament.ID
 		if positionCounts[tid] == nil {
 			positionCounts[tid] = make(map[int]int)
 		}
-		if !e.Cut && e.Position > 0 {
-			positionCounts[tid][e.Position]++
+		if pl.Status != placement.StatusCut && pl.PositionNumeric != nil && *pl.PositionNumeric > 0 {
+			positionCounts[tid][*pl.PositionNumeric]++
 		}
 	}
 
@@ -1405,16 +1434,18 @@ func (s *Service) GetUserPublicPicks(ctx context.Context, leagueID, userID uuid.
 		var earnings int
 		var posDisplay string
 
-		if lbEntry, ok := leaderboardMap[key]; ok {
-			earnings = lbEntry.Earnings
-			if lbEntry.Cut {
+		if pl, ok := placementMap[key]; ok {
+			earnings = pl.Earnings
+			if pl.Status == placement.StatusCut {
 				posDisplay = "CUT"
-			} else if lbEntry.Position > 0 {
+			} else if pl.Status == placement.StatusWithdrawn {
+				posDisplay = "WD"
+			} else if pl.PositionNumeric != nil && *pl.PositionNumeric > 0 {
 				tid := p.Edges.Tournament.ID
-				if positionCounts[tid] != nil && positionCounts[tid][lbEntry.Position] > 1 {
-					posDisplay = fmt.Sprintf("T%d", lbEntry.Position)
+				if positionCounts[tid] != nil && positionCounts[tid][*pl.PositionNumeric] > 1 {
+					posDisplay = fmt.Sprintf("T%d", *pl.PositionNumeric)
 				} else {
-					posDisplay = fmt.Sprintf("%d", lbEntry.Position)
+					posDisplay = fmt.Sprintf("%d", *pl.PositionNumeric)
 				}
 			}
 		}

@@ -10,7 +10,7 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/golfer"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
+	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 )
@@ -89,38 +89,27 @@ func (i *Ingester) syncTournamentScorecards(ctx context.Context, t *ent.Tourname
 
 	playerIDs := make(map[int]bool)
 	roundsProcessed := 0
-	processedEntries := make(map[uuid.UUID]bool)
 
 	for idx := range roundResults {
 		result := &roundResults[idx]
 		playerIDs[result.Player.ID] = true
 
-		entry, err := i.db.LeaderboardEntry.Query().
-			Where(
-				leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
-				leaderboardentry.HasGolferWith(golfer.BdlID(result.Player.ID)),
-			).
+		g, err := i.db.Golfer.Query().
+			Where(golfer.BdlID(result.Player.ID)).
 			Only(ctx)
 		if err != nil {
 			continue
 		}
 
-		_, err = i.syncService.UpsertRound(ctx, entry.ID, result)
+		_, err = i.syncService.UpsertRound(ctx, t.ID, g.ID, result)
 		if err != nil {
 			i.logger.Error("failed to upsert round", "player", result.Player.DisplayName, "round", result.RoundNumber, "error", err)
 			continue
 		}
-		processedEntries[entry.ID] = true
 		roundsProcessed++
 	}
 
-	holesProcessed := i.fetchAndProcessScorecardsParallel(ctx, t, playerIDs, processedEntries)
-
-	for entryID := range processedEntries {
-		if err := i.syncService.UpdateLeaderboardProgress(ctx, entryID); err != nil {
-			i.logger.Error("failed to update progress", "entry_id", entryID, "error", err)
-		}
-	}
+	holesProcessed := i.fetchAndProcessScorecardsParallel(ctx, t, playerIDs)
 
 	i.logger.Debug("synced scorecards", "tournament", t.Name, "rounds", roundsProcessed, "holes", holesProcessed)
 	SyncRecordsProcessed.WithLabelValues("scorecards", "rounds").Add(float64(roundsProcessed))
@@ -128,7 +117,7 @@ func (i *Ingester) syncTournamentScorecards(ctx context.Context, t *ent.Tourname
 	return nil
 }
 
-func (i *Ingester) fetchAndProcessScorecardsParallel(ctx context.Context, t *ent.Tournament, playerIDs map[int]bool, processedEntries map[uuid.UUID]bool) int {
+func (i *Ingester) fetchAndProcessScorecardsParallel(ctx context.Context, t *ent.Tournament, playerIDs map[int]bool) int {
 	resultsCh := make(chan playerScorecardResult)
 	sem := make(chan struct{}, maxConcurrentFetches)
 
@@ -157,63 +146,56 @@ func (i *Ingester) fetchAndProcessScorecardsParallel(ctx context.Context, t *ent
 			i.logger.Error("failed to fetch scorecards", "player_id", result.playerID, "error", result.err)
 			continue
 		}
-		holes, entryID := i.processPlayerScorecards(ctx, t, result.scorecards)
+		holes := i.processPlayerScorecards(ctx, t, result.scorecards)
 		holesProcessed += holes
-		if entryID != nil {
-			processedEntries[*entryID] = true
-		}
 	}
 
 	return holesProcessed
 }
 
-func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournament, scorecards []balldontlie.PlayerScorecard) (int, *uuid.UUID) {
+func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournament, scorecards []balldontlie.PlayerScorecard) int {
 	holesProcessed := 0
-	var entryID *uuid.UUID
 	for idx := range scorecards {
 		sc := &scorecards[idx]
 
-		entry, err := i.db.LeaderboardEntry.Query().
-			Where(
-				leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID)),
-				leaderboardentry.HasGolferWith(golfer.BdlID(sc.Player.ID)),
-			).
-			WithRounds().
+		g, err := i.db.Golfer.Query().
+			Where(golfer.BdlID(sc.Player.ID)).
 			Only(ctx)
 		if err != nil {
 			continue
 		}
 
-		if entryID == nil {
-			entryID = &entry.ID
-		}
+		existingRound, err := i.db.Round.Query().
+			Where(
+				round.HasTournamentWith(tournament.IDEQ(t.ID)),
+				round.HasGolferWith(golfer.IDEQ(g.ID)),
+				round.RoundNumberEQ(sc.RoundNumber),
+			).
+			Only(ctx)
 
-		var roundID *uuid.UUID
-		for _, r := range entry.Edges.Rounds {
-			if r.RoundNumber == sc.RoundNumber {
-				roundID = &r.ID
-				break
-			}
-		}
-		if roundID == nil {
+		var roundID uuid.UUID
+		if ent.IsNotFound(err) {
 			roundResult := &balldontlie.PlayerRoundResult{
 				RoundNumber: sc.RoundNumber,
 				Player:      sc.Player,
 			}
-			newRound, err := i.syncService.UpsertRound(ctx, entry.ID, roundResult)
+			newRound, err := i.syncService.UpsertRound(ctx, t.ID, g.ID, roundResult)
 			if err != nil {
 				i.logger.Error("failed to create round for scorecard", "player", sc.Player.DisplayName, "round", sc.RoundNumber, "error", err)
 				continue
 			}
-			roundID = &newRound.ID
-			entry.Edges.Rounds = append(entry.Edges.Rounds, newRound)
+			roundID = newRound.ID
+		} else if err != nil {
+			continue
+		} else {
+			roundID = existingRound.ID
 		}
 
-		if err := i.syncService.UpsertHoleScore(ctx, *roundID, sc); err != nil {
+		if err := i.syncService.UpsertHoleScore(ctx, roundID, sc); err != nil {
 			i.logger.Error("failed to upsert hole score", "player", sc.Player.DisplayName, "round", sc.RoundNumber, "hole", sc.HoleNumber, "error", err)
 			continue
 		}
 		holesProcessed++
 	}
-	return holesProcessed, entryID
+	return holesProcessed
 }

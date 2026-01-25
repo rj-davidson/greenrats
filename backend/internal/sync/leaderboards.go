@@ -9,9 +9,9 @@ import (
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
-func (i *Ingester) syncLeaderboards(ctx context.Context) error {
+func (i *Ingester) syncPlacements(ctx context.Context) error {
 	start := time.Now()
-	i.logger.Info("sync started", "type", "leaderboards")
+	i.logger.Info("sync started", "type", "placements")
 
 	now := time.Now().UTC()
 	tournaments, err := i.db.Tournament.Query().
@@ -21,14 +21,14 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) error {
 		).
 		All(ctx)
 	if err != nil {
-		SyncErrors.WithLabelValues("leaderboards").Inc()
-		SyncRunsTotal.WithLabelValues("leaderboards", "error").Inc()
+		SyncErrors.WithLabelValues("placements").Inc()
+		SyncRunsTotal.WithLabelValues("placements", "error").Inc()
 		return fmt.Errorf("query active tournaments: %w", err)
 	}
 
 	if len(tournaments) == 0 {
 		i.logger.Debug("no active tournaments found")
-		SyncRunsTotal.WithLabelValues("leaderboards", "skipped").Inc()
+		SyncRunsTotal.WithLabelValues("placements", "skipped").Inc()
 		return nil
 	}
 
@@ -39,28 +39,28 @@ func (i *Ingester) syncLeaderboards(ctx context.Context) error {
 			continue
 		}
 
-		if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
+		if err := i.syncTournamentPlacements(ctx, t); err != nil {
 			if isContextError(err) {
-				return fmt.Errorf("sync leaderboard for %s: %w", t.Name, err)
+				return fmt.Errorf("sync placements for %s: %w", t.Name, err)
 			}
-			SyncErrors.WithLabelValues("leaderboards").Inc()
+			SyncErrors.WithLabelValues("placements").Inc()
 			continue
 		}
 		synced++
 	}
 
-	i.recordSync(ctx, "leaderboards")
+	i.recordSync(ctx, "placements")
 	duration := time.Since(start)
-	SyncDuration.WithLabelValues("leaderboards").Observe(duration.Seconds())
-	SyncRecordsProcessed.WithLabelValues("leaderboards", "tournaments").Add(float64(synced))
-	SyncRunsTotal.WithLabelValues("leaderboards", "success").Inc()
-	LastSyncTimestamp.WithLabelValues("leaderboards").Set(float64(time.Now().Unix()))
-	i.logger.Info("sync completed", "type", "leaderboards", "duration", duration, "tournaments_synced", synced)
+	SyncDuration.WithLabelValues("placements").Observe(duration.Seconds())
+	SyncRecordsProcessed.WithLabelValues("placements", "tournaments").Add(float64(synced))
+	SyncRunsTotal.WithLabelValues("placements", "success").Inc()
+	LastSyncTimestamp.WithLabelValues("placements").Set(float64(time.Now().Unix()))
+	i.logger.Info("sync completed", "type", "placements", "duration", duration, "tournaments_synced", synced)
 	return nil
 }
 
-func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournament) error {
-	i.logger.Debug("syncing leaderboard", "tournament", t.Name)
+func (i *Ingester) syncTournamentPlacements(ctx context.Context, t *ent.Tournament) error {
+	i.logger.Debug("syncing placements", "tournament", t.Name)
 
 	results, err := i.ballDontLie.GetTournamentResults(ctx, *t.BdlID)
 	if err != nil {
@@ -71,15 +71,15 @@ func (i *Ingester) syncTournamentLeaderboard(ctx context.Context, t *ent.Tournam
 
 	processed := 0
 	for idx := range results {
-		if err := i.syncService.UpsertLeaderboardEntry(ctx, t, &results[idx]); err != nil {
+		if err := i.syncService.UpsertPlacement(ctx, t, &results[idx]); err != nil {
 			if isContextError(err) {
-				return fmt.Errorf("upsert entry for %s: %w", results[idx].Player.DisplayName, err)
+				return fmt.Errorf("upsert placement for %s: %w", results[idx].Player.DisplayName, err)
 			}
 			continue
 		}
 		processed++
 	}
 
-	SyncRecordsProcessed.WithLabelValues("leaderboards", "entries").Add(float64(processed))
+	SyncRecordsProcessed.WithLabelValues("placements", "entries").Add(float64(processed))
 	return nil
 }

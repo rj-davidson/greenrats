@@ -7,12 +7,10 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// Round holds the schema definition for the Round entity.
 type Round struct {
 	ent.Schema
 }
 
-// Mixin of the Round.
 func (Round) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
@@ -20,7 +18,6 @@ func (Round) Mixin() []ent.Mixin {
 	}
 }
 
-// Fields of the Round.
 func (Round) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("round_number").
@@ -39,10 +36,13 @@ func (Round) Fields() []ent.Field {
 	}
 }
 
-// Edges of the Round.
 func (Round) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("leaderboard_entry", LeaderboardEntry.Type).
+		edge.From("tournament", Tournament.Type).
+			Ref("rounds").
+			Unique().
+			Required(),
+		edge.From("golfer", Golfer.Type).
 			Ref("rounds").
 			Unique().
 			Required(),
@@ -53,10 +53,9 @@ func (Round) Edges() []ent.Edge {
 	}
 }
 
-// Indexes of the Round.
 func (Round) Indexes() []ent.Index {
 	return []ent.Index{
-		index.Edges("leaderboard_entry").
+		index.Edges("tournament", "golfer").
 			Fields("round_number").
 			Unique(),
 	}

@@ -10,9 +10,9 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/golfer"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/features/tournaments"
 )
@@ -93,67 +93,67 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		TournamentID uuid.UUID
 		GolferID     uuid.UUID
 	}
-	leaderboardKeys := make([]pickKey, 0, len(picks))
+	placementKeys := make([]pickKey, 0, len(picks))
 	for _, p := range picks {
 		if p.Edges.Golfer != nil && p.Edges.Tournament != nil {
-			leaderboardKeys = append(leaderboardKeys, pickKey{
+			placementKeys = append(placementKeys, pickKey{
 				TournamentID: p.Edges.Tournament.ID,
 				GolferID:     p.Edges.Golfer.ID,
 			})
 		}
 	}
 
-	leaderboardMap := make(map[pickKey]*ent.LeaderboardEntry)
-	if len(leaderboardKeys) > 0 {
+	placementMap := make(map[pickKey]*ent.Placement)
+	if len(placementKeys) > 0 {
 		tournamentIDs := make([]uuid.UUID, 0)
 		golferIDs := make([]uuid.UUID, 0)
 		seen := make(map[uuid.UUID]bool)
-		for _, k := range leaderboardKeys {
+		for _, k := range placementKeys {
 			if !seen[k.TournamentID] {
 				tournamentIDs = append(tournamentIDs, k.TournamentID)
 				seen[k.TournamentID] = true
 			}
 		}
 		seen = make(map[uuid.UUID]bool)
-		for _, k := range leaderboardKeys {
+		for _, k := range placementKeys {
 			if !seen[k.GolferID] {
 				golferIDs = append(golferIDs, k.GolferID)
 				seen[k.GolferID] = true
 			}
 		}
 
-		entries, err := s.db.LeaderboardEntry.
+		placements, err := s.db.Placement.
 			Query().
 			Where(
-				leaderboardentry.HasTournamentWith(tournament.IDIn(tournamentIDs...)),
-				leaderboardentry.HasGolferWith(golfer.IDIn(golferIDs...)),
+				placement.HasTournamentWith(tournament.IDIn(tournamentIDs...)),
+				placement.HasGolferWith(golfer.IDIn(golferIDs...)),
 			).
 			WithTournament().
 			WithGolfer().
 			All(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get leaderboard entries: %w", err)
+			return nil, fmt.Errorf("failed to get placements: %w", err)
 		}
 
-		for _, e := range entries {
-			if e.Edges.Tournament != nil && e.Edges.Golfer != nil {
-				key := pickKey{TournamentID: e.Edges.Tournament.ID, GolferID: e.Edges.Golfer.ID}
-				leaderboardMap[key] = e
+		for _, pl := range placements {
+			if pl.Edges.Tournament != nil && pl.Edges.Golfer != nil {
+				key := pickKey{TournamentID: pl.Edges.Tournament.ID, GolferID: pl.Edges.Golfer.ID}
+				placementMap[key] = pl
 			}
 		}
 	}
 
 	positionCounts := make(map[uuid.UUID]map[int]int)
-	for _, e := range leaderboardMap {
-		if e.Edges.Tournament == nil {
+	for _, pl := range placementMap {
+		if pl.Edges.Tournament == nil {
 			continue
 		}
-		tid := e.Edges.Tournament.ID
+		tid := pl.Edges.Tournament.ID
 		if positionCounts[tid] == nil {
 			positionCounts[tid] = make(map[int]int)
 		}
-		if !e.Cut && e.Position > 0 {
-			positionCounts[tid][e.Position]++
+		if pl.Status != placement.StatusCut && pl.PositionNumeric != nil && *pl.PositionNumeric > 0 {
+			positionCounts[tid][*pl.PositionNumeric]++
 		}
 	}
 
@@ -191,18 +191,20 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 
 		if p.Edges.Golfer != nil && p.Edges.Tournament != nil {
 			key := pickKey{TournamentID: p.Edges.Tournament.ID, GolferID: p.Edges.Golfer.ID}
-			if lbEntry, ok := leaderboardMap[key]; ok {
-				pickEarnings = lbEntry.Earnings
+			if pl, ok := placementMap[key]; ok {
+				pickEarnings = pl.Earnings
 				data.Earnings += pickEarnings
 
-				if lbEntry.Cut {
+				if pl.Status == placement.StatusCut {
 					posDisplay = "CUT"
-				} else if lbEntry.Position > 0 {
+				} else if pl.Status == placement.StatusWithdrawn {
+					posDisplay = "WD"
+				} else if pl.PositionNumeric != nil && *pl.PositionNumeric > 0 {
 					tid := p.Edges.Tournament.ID
-					if positionCounts[tid] != nil && positionCounts[tid][lbEntry.Position] > 1 {
-						posDisplay = fmt.Sprintf("T%d", lbEntry.Position)
+					if positionCounts[tid] != nil && positionCounts[tid][*pl.PositionNumeric] > 1 {
+						posDisplay = fmt.Sprintf("T%d", *pl.PositionNumeric)
 					} else {
-						posDisplay = fmt.Sprintf("%d", lbEntry.Position)
+						posDisplay = fmt.Sprintf("%d", *pl.PositionNumeric)
 					}
 				}
 			}

@@ -158,7 +158,7 @@ function LeaderboardRow({
   onToggle,
   onHover,
 }: LeaderboardRowProps) {
-  const isCut = entry.cut;
+  const isCut = entry.status === "cut";
 
   return (
     <TableRow

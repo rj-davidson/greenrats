@@ -14,10 +14,10 @@ import (
 	"github.com/rj-davidson/greenrats/ent/golfer"
 	"github.com/rj-davidson/greenrats/ent/golferseason"
 	"github.com/rj-davidson/greenrats/ent/holescore"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
 	"github.com/rj-davidson/greenrats/ent/pick"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/schema"
 	"github.com/rj-davidson/greenrats/ent/season"
@@ -198,55 +198,6 @@ func init() {
 	holescoreDescID := holescoreMixinFields0[0].Descriptor()
 	// holescore.DefaultID holds the default value on creation for the id field.
 	holescore.DefaultID = holescoreDescID.Default.(func() uuid.UUID)
-	leaderboardentryMixin := schema.LeaderboardEntry{}.Mixin()
-	leaderboardentryMixinFields0 := leaderboardentryMixin[0].Fields()
-	_ = leaderboardentryMixinFields0
-	leaderboardentryMixinFields1 := leaderboardentryMixin[1].Fields()
-	_ = leaderboardentryMixinFields1
-	leaderboardentryFields := schema.LeaderboardEntry{}.Fields()
-	_ = leaderboardentryFields
-	// leaderboardentryDescCreatedAt is the schema descriptor for created_at field.
-	leaderboardentryDescCreatedAt := leaderboardentryMixinFields1[0].Descriptor()
-	// leaderboardentry.DefaultCreatedAt holds the default value on creation for the created_at field.
-	leaderboardentry.DefaultCreatedAt = leaderboardentryDescCreatedAt.Default.(func() time.Time)
-	// leaderboardentryDescUpdatedAt is the schema descriptor for updated_at field.
-	leaderboardentryDescUpdatedAt := leaderboardentryMixinFields1[1].Descriptor()
-	// leaderboardentry.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	leaderboardentry.DefaultUpdatedAt = leaderboardentryDescUpdatedAt.Default.(func() time.Time)
-	// leaderboardentry.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	leaderboardentry.UpdateDefaultUpdatedAt = leaderboardentryDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// leaderboardentryDescPosition is the schema descriptor for position field.
-	leaderboardentryDescPosition := leaderboardentryFields[0].Descriptor()
-	// leaderboardentry.DefaultPosition holds the default value on creation for the position field.
-	leaderboardentry.DefaultPosition = leaderboardentryDescPosition.Default.(int)
-	// leaderboardentryDescCut is the schema descriptor for cut field.
-	leaderboardentryDescCut := leaderboardentryFields[1].Descriptor()
-	// leaderboardentry.DefaultCut holds the default value on creation for the cut field.
-	leaderboardentry.DefaultCut = leaderboardentryDescCut.Default.(bool)
-	// leaderboardentryDescScore is the schema descriptor for score field.
-	leaderboardentryDescScore := leaderboardentryFields[2].Descriptor()
-	// leaderboardentry.DefaultScore holds the default value on creation for the score field.
-	leaderboardentry.DefaultScore = leaderboardentryDescScore.Default.(int)
-	// leaderboardentryDescTotalStrokes is the schema descriptor for total_strokes field.
-	leaderboardentryDescTotalStrokes := leaderboardentryFields[3].Descriptor()
-	// leaderboardentry.DefaultTotalStrokes holds the default value on creation for the total_strokes field.
-	leaderboardentry.DefaultTotalStrokes = leaderboardentryDescTotalStrokes.Default.(int)
-	// leaderboardentryDescEarnings is the schema descriptor for earnings field.
-	leaderboardentryDescEarnings := leaderboardentryFields[4].Descriptor()
-	// leaderboardentry.DefaultEarnings holds the default value on creation for the earnings field.
-	leaderboardentry.DefaultEarnings = leaderboardentryDescEarnings.Default.(int)
-	// leaderboardentryDescCurrentRound is the schema descriptor for current_round field.
-	leaderboardentryDescCurrentRound := leaderboardentryFields[6].Descriptor()
-	// leaderboardentry.DefaultCurrentRound holds the default value on creation for the current_round field.
-	leaderboardentry.DefaultCurrentRound = leaderboardentryDescCurrentRound.Default.(int)
-	// leaderboardentryDescThru is the schema descriptor for thru field.
-	leaderboardentryDescThru := leaderboardentryFields[7].Descriptor()
-	// leaderboardentry.DefaultThru holds the default value on creation for the thru field.
-	leaderboardentry.DefaultThru = leaderboardentryDescThru.Default.(int)
-	// leaderboardentryDescID is the schema descriptor for id field.
-	leaderboardentryDescID := leaderboardentryMixinFields0[0].Descriptor()
-	// leaderboardentry.DefaultID holds the default value on creation for the id field.
-	leaderboardentry.DefaultID = leaderboardentryDescID.Default.(func() uuid.UUID)
 	leagueMixin := schema.League{}.Mixin()
 	leagueMixinFields0 := leagueMixin[0].Fields()
 	_ = leagueMixinFields0
@@ -332,6 +283,35 @@ func init() {
 	pickDescID := pickMixinFields0[0].Descriptor()
 	// pick.DefaultID holds the default value on creation for the id field.
 	pick.DefaultID = pickDescID.Default.(func() uuid.UUID)
+	placementMixin := schema.Placement{}.Mixin()
+	placementMixinFields0 := placementMixin[0].Fields()
+	_ = placementMixinFields0
+	placementMixinFields1 := placementMixin[1].Fields()
+	_ = placementMixinFields1
+	placementFields := schema.Placement{}.Fields()
+	_ = placementFields
+	// placementDescCreatedAt is the schema descriptor for created_at field.
+	placementDescCreatedAt := placementMixinFields1[0].Descriptor()
+	// placement.DefaultCreatedAt holds the default value on creation for the created_at field.
+	placement.DefaultCreatedAt = placementDescCreatedAt.Default.(func() time.Time)
+	// placementDescUpdatedAt is the schema descriptor for updated_at field.
+	placementDescUpdatedAt := placementMixinFields1[1].Descriptor()
+	// placement.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	placement.DefaultUpdatedAt = placementDescUpdatedAt.Default.(func() time.Time)
+	// placement.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	placement.UpdateDefaultUpdatedAt = placementDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// placementDescPosition is the schema descriptor for position field.
+	placementDescPosition := placementFields[0].Descriptor()
+	// placement.DefaultPosition holds the default value on creation for the position field.
+	placement.DefaultPosition = placementDescPosition.Default.(string)
+	// placementDescEarnings is the schema descriptor for earnings field.
+	placementDescEarnings := placementFields[4].Descriptor()
+	// placement.DefaultEarnings holds the default value on creation for the earnings field.
+	placement.DefaultEarnings = placementDescEarnings.Default.(int)
+	// placementDescID is the schema descriptor for id field.
+	placementDescID := placementMixinFields0[0].Descriptor()
+	// placement.DefaultID holds the default value on creation for the id field.
+	placement.DefaultID = placementDescID.Default.(func() uuid.UUID)
 	roundMixin := schema.Round{}.Mixin()
 	roundMixinFields0 := roundMixin[0].Fields()
 	_ = roundMixinFields0

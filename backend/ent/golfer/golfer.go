@@ -63,8 +63,10 @@ const (
 	EdgePicks = "picks"
 	// EdgeFieldEntries holds the string denoting the field_entries edge name in mutations.
 	EdgeFieldEntries = "field_entries"
-	// EdgeLeaderboardEntries holds the string denoting the leaderboard_entries edge name in mutations.
-	EdgeLeaderboardEntries = "leaderboard_entries"
+	// EdgePlacements holds the string denoting the placements edge name in mutations.
+	EdgePlacements = "placements"
+	// EdgeRounds holds the string denoting the rounds edge name in mutations.
+	EdgeRounds = "rounds"
 	// EdgeSeasons holds the string denoting the seasons edge name in mutations.
 	EdgeSeasons = "seasons"
 	// Table holds the table name of the golfer in the database.
@@ -83,13 +85,20 @@ const (
 	FieldEntriesInverseTable = "field_entries"
 	// FieldEntriesColumn is the table column denoting the field_entries relation/edge.
 	FieldEntriesColumn = "golfer_field_entries"
-	// LeaderboardEntriesTable is the table that holds the leaderboard_entries relation/edge.
-	LeaderboardEntriesTable = "leaderboard_entries"
-	// LeaderboardEntriesInverseTable is the table name for the LeaderboardEntry entity.
-	// It exists in this package in order to avoid circular dependency with the "leaderboardentry" package.
-	LeaderboardEntriesInverseTable = "leaderboard_entries"
-	// LeaderboardEntriesColumn is the table column denoting the leaderboard_entries relation/edge.
-	LeaderboardEntriesColumn = "golfer_leaderboard_entries"
+	// PlacementsTable is the table that holds the placements relation/edge.
+	PlacementsTable = "placements"
+	// PlacementsInverseTable is the table name for the Placement entity.
+	// It exists in this package in order to avoid circular dependency with the "placement" package.
+	PlacementsInverseTable = "placements"
+	// PlacementsColumn is the table column denoting the placements relation/edge.
+	PlacementsColumn = "golfer_placements"
+	// RoundsTable is the table that holds the rounds relation/edge.
+	RoundsTable = "rounds"
+	// RoundsInverseTable is the table name for the Round entity.
+	// It exists in this package in order to avoid circular dependency with the "round" package.
+	RoundsInverseTable = "rounds"
+	// RoundsColumn is the table column denoting the rounds relation/edge.
+	RoundsColumn = "golfer_rounds"
 	// SeasonsTable is the table that holds the seasons relation/edge.
 	SeasonsTable = "golfer_seasons"
 	// SeasonsInverseTable is the table name for the GolferSeason entity.
@@ -299,17 +308,31 @@ func ByFieldEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
-// ByLeaderboardEntriesCount orders the results by leaderboard_entries count.
-func ByLeaderboardEntriesCount(opts ...sql.OrderTermOption) OrderOption {
+// ByPlacementsCount orders the results by placements count.
+func ByPlacementsCount(opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborsCount(s, newLeaderboardEntriesStep(), opts...)
+		sqlgraph.OrderByNeighborsCount(s, newPlacementsStep(), opts...)
 	}
 }
 
-// ByLeaderboardEntries orders the results by leaderboard_entries terms.
-func ByLeaderboardEntries(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+// ByPlacements orders the results by placements terms.
+func ByPlacements(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	return func(s *sql.Selector) {
-		sqlgraph.OrderByNeighborTerms(s, newLeaderboardEntriesStep(), append([]sql.OrderTerm{term}, terms...)...)
+		sqlgraph.OrderByNeighborTerms(s, newPlacementsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
+// ByRoundsCount orders the results by rounds count.
+func ByRoundsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newRoundsStep(), opts...)
+	}
+}
+
+// ByRounds orders the results by rounds terms.
+func ByRounds(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newRoundsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
 
@@ -340,11 +363,18 @@ func newFieldEntriesStep() *sqlgraph.Step {
 		sqlgraph.Edge(sqlgraph.O2M, false, FieldEntriesTable, FieldEntriesColumn),
 	)
 }
-func newLeaderboardEntriesStep() *sqlgraph.Step {
+func newPlacementsStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
-		sqlgraph.To(LeaderboardEntriesInverseTable, FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, LeaderboardEntriesTable, LeaderboardEntriesColumn),
+		sqlgraph.To(PlacementsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, PlacementsTable, PlacementsColumn),
+	)
+}
+func newRoundsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(RoundsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, RoundsTable, RoundsColumn),
 	)
 }
 func newSeasonsStep() *sqlgraph.Step {

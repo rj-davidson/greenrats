@@ -83,8 +83,8 @@ func (i *Ingester) Run(ctx context.Context) {
 		i.runSync(ctx, "sync_players", i.syncPlayers)
 		lastPlayerSync = time.Now()
 	}
-	if i.shouldSync(ctx, "leaderboards", i.getLeaderboardInterval(ctx)) {
-		i.runSync(ctx, "sync_leaderboards", i.syncLeaderboards)
+	if i.shouldSync(ctx, "placements", i.getPlacementsInterval(ctx)) {
+		i.runSync(ctx, "sync_placements", i.syncPlacements)
 		lastLeaderboardSync = time.Now()
 	} else {
 		lastLeaderboardSync = time.Now()
@@ -122,9 +122,9 @@ func (i *Ingester) Run(ctx context.Context) {
 				lastTournamentSync = now
 			}
 
-			leaderboardInterval := i.getLeaderboardInterval(ctx)
-			if now.Sub(lastLeaderboardSync) >= leaderboardInterval {
-				i.runSync(ctx, "sync_leaderboards", i.syncLeaderboards)
+			placementsInterval := i.getPlacementsInterval(ctx)
+			if now.Sub(lastLeaderboardSync) >= placementsInterval {
+				i.runSync(ctx, "sync_placements", i.syncPlacements)
 				lastLeaderboardSync = now
 			}
 
@@ -166,7 +166,7 @@ func (i *Ingester) Run(ctx context.Context) {
 	}
 }
 
-func (i *Ingester) getLeaderboardInterval(ctx context.Context) time.Duration {
+func (i *Ingester) getPlacementsInterval(ctx context.Context) time.Duration {
 	if i.isAnyTournamentInPlayHours(ctx) {
 		return LeaderboardPlayInterval
 	}
@@ -279,7 +279,7 @@ func (i *Ingester) initialize(ctx context.Context) {
 	i.runSync(ctx, "sync_tournaments", i.syncTournaments)
 	i.runSync(ctx, "sync_courses", i.syncCourses)
 	i.runSync(ctx, "sync_fields_init", i.syncAllFields)
-	i.runSync(ctx, "sync_leaderboards_init", i.syncAllLeaderboards)
+	i.runSync(ctx, "sync_placements_init", i.syncAllPlacements)
 	i.runSync(ctx, "sync_rounds_init", i.syncAllRounds)
 	i.runSync(ctx, "sync_earnings_init", i.syncAllEarnings)
 	i.runSync(ctx, "sync_golfer_stats", i.syncGolferSeasonStats)
@@ -373,9 +373,9 @@ func (i *Ingester) syncAllRounds(ctx context.Context) error {
 	return nil
 }
 
-func (i *Ingester) syncAllLeaderboards(ctx context.Context) error {
+func (i *Ingester) syncAllPlacements(ctx context.Context) error {
 	start := time.Now()
-	i.logger.Info("sync started", "type", "leaderboards_init")
+	i.logger.Info("sync started", "type", "placements_init")
 
 	now := time.Now().UTC()
 	tournaments, err := i.db.Tournament.Query().
@@ -390,22 +390,22 @@ func (i *Ingester) syncAllLeaderboards(ctx context.Context) error {
 	}
 
 	if len(tournaments) == 0 {
-		i.logger.Debug("no active tournaments found for leaderboard initialization")
+		i.logger.Debug("no active tournaments found for placements initialization")
 		return nil
 	}
 
 	synced := 0
 	for _, t := range tournaments {
-		if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
+		if err := i.syncTournamentPlacements(ctx, t); err != nil {
 			if isContextError(err) {
-				return fmt.Errorf("sync leaderboard for %s: %w", t.Name, err)
+				return fmt.Errorf("sync placements for %s: %w", t.Name, err)
 			}
 			continue
 		}
 		synced++
 	}
 
-	i.logger.Info("sync completed", "type", "leaderboards_init", "duration", time.Since(start), "tournaments_synced", synced)
+	i.logger.Info("sync completed", "type", "placements_init", "duration", time.Since(start), "tournaments_synced", synced)
 	return nil
 }
 
@@ -442,9 +442,9 @@ func (i *Ingester) syncAllEarnings(ctx context.Context) error {
 			continue
 		}
 
-		if err := i.syncTournamentLeaderboard(ctx, t); err != nil {
+		if err := i.syncTournamentPlacements(ctx, t); err != nil {
 			if isContextError(err) {
-				return fmt.Errorf("sync leaderboard for %s: %w", t.Name, err)
+				return fmt.Errorf("sync placements for %s: %w", t.Name, err)
 			}
 			continue
 		}

@@ -10,7 +10,7 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/golfer"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/config"
@@ -122,8 +122,8 @@ func (s *IngestService) SyncLeaderboard(ctx context.Context, tournamentID uuid.U
 	s.logger.Info("fetched results", "tournament", t.Name, "count", len(results))
 
 	for idx := range results {
-		if err := s.syncService.UpsertLeaderboardEntry(ctx, t, &results[idx]); err != nil {
-			s.logger.Warn("failed to upsert entry", "player", results[idx].Player.DisplayName, "error", err)
+		if err := s.syncService.UpsertPlacement(ctx, t, &results[idx]); err != nil {
+			s.logger.Warn("failed to upsert placement", "player", results[idx].Player.DisplayName, "error", err)
 			continue
 		}
 	}
@@ -145,26 +145,26 @@ func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID
 		year = t.EndDate.Year()
 	}
 
-	entries, err := s.db.LeaderboardEntry.Query().
-		Where(leaderboardentry.HasTournamentWith(tournament.IDEQ(t.ID))).
+	placements, err := s.db.Placement.Query().
+		Where(placement.HasTournamentWith(tournament.IDEQ(t.ID))).
 		WithGolfer().
 		All(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to query leaderboard entries: %w", err)
+		return fmt.Errorf("failed to query placements: %w", err)
 	}
 
-	if len(entries) == 0 {
-		s.logger.Info("no leaderboard entries, skipping earnings sync", "tournament", t.Name)
+	if len(placements) == 0 {
+		s.logger.Info("no placements, skipping earnings sync", "tournament", t.Name)
 		return nil
 	}
 
-	golferInputs := make([]openai.GolferInput, 0, len(entries))
-	entryByGolferID := make(map[string]*ent.LeaderboardEntry)
-	for _, entry := range entries {
-		if entry.Edges.Golfer == nil || entry.Cut || entry.Position == 0 {
+	golferInputs := make([]openai.GolferInput, 0, len(placements))
+	placementByGolferID := make(map[string]*ent.Placement)
+	for _, p := range placements {
+		if p.Edges.Golfer == nil || p.Status == placement.StatusCut || (p.PositionNumeric == nil || *p.PositionNumeric == 0) {
 			continue
 		}
-		g := entry.Edges.Golfer
+		g := p.Edges.Golfer
 		input := openai.GolferInput{
 			GolferID: g.ID.String(),
 			Name:     g.Name,
@@ -176,7 +176,7 @@ func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID
 			input.LastName = *g.LastName
 		}
 		golferInputs = append(golferInputs, input)
-		entryByGolferID[g.ID.String()] = entry
+		placementByGolferID[g.ID.String()] = p
 	}
 
 	if len(golferInputs) == 0 {
@@ -203,7 +203,7 @@ func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID
 	}
 
 	s.logger.Info("using OpenAI for golfer matching", "count", len(golferInputs), "tournament", t.Name)
-	updated := s.matchWithOpenAI(ctx, t, exaContent.String(), golferInputs, entryByGolferID)
+	updated := s.matchWithOpenAI(ctx, t, exaContent.String(), golferInputs, placementByGolferID)
 
 	s.logger.Info("earnings sync completed", "tournament", t.Name, "updated", updated)
 	return nil
@@ -248,7 +248,7 @@ func (s *IngestService) matchWithOpenAI(
 	t *ent.Tournament,
 	content string,
 	golferInputs []openai.GolferInput,
-	entryByGolferID map[string]*ent.LeaderboardEntry,
+	placementByGolferID map[string]*ent.Placement,
 ) int {
 	leaderboard, err := s.openai.ParseLeaderboardContent(ctx, content, t.Name)
 	if err != nil {
@@ -279,13 +279,13 @@ func (s *IngestService) matchWithOpenAI(
 
 	var updated int
 	for _, r := range allResults {
-		entry, ok := entryByGolferID[r.GolferID]
+		p, ok := placementByGolferID[r.GolferID]
 		if !ok {
 			continue
 		}
 
-		if entry.Earnings != r.Earnings {
-			_, err := entry.Update().
+		if p.Earnings != r.Earnings {
+			_, err := p.Update().
 				SetEarnings(r.Earnings).
 				Save(ctx)
 			if err != nil {

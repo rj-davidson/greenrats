@@ -29,7 +29,6 @@ export const pickLeaderboardDataSchema = z.object({
   score: z.number(),
   thru: z.number(),
   current_round: z.number(),
-  cut: z.boolean(),
   status: z.string(),
   earnings: z.number(),
   rounds: z.array(pickRoundScoreSchema).optional(),

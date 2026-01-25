@@ -28,14 +28,14 @@ type Tx struct {
 	GolferSeason *GolferSeasonClient
 	// HoleScore is the client for interacting with the HoleScore builders.
 	HoleScore *HoleScoreClient
-	// LeaderboardEntry is the client for interacting with the LeaderboardEntry builders.
-	LeaderboardEntry *LeaderboardEntryClient
 	// League is the client for interacting with the League builders.
 	League *LeagueClient
 	// LeagueMembership is the client for interacting with the LeagueMembership builders.
 	LeagueMembership *LeagueMembershipClient
 	// Pick is the client for interacting with the Pick builders.
 	Pick *PickClient
+	// Placement is the client for interacting with the Placement builders.
+	Placement *PlacementClient
 	// Round is the client for interacting with the Round builders.
 	Round *RoundClient
 	// Season is the client for interacting with the Season builders.
@@ -185,10 +185,10 @@ func (tx *Tx) init() {
 	tx.Golfer = NewGolferClient(tx.config)
 	tx.GolferSeason = NewGolferSeasonClient(tx.config)
 	tx.HoleScore = NewHoleScoreClient(tx.config)
-	tx.LeaderboardEntry = NewLeaderboardEntryClient(tx.config)
 	tx.League = NewLeagueClient(tx.config)
 	tx.LeagueMembership = NewLeagueMembershipClient(tx.config)
 	tx.Pick = NewPickClient(tx.config)
+	tx.Placement = NewPlacementClient(tx.config)
 	tx.Round = NewRoundClient(tx.config)
 	tx.Season = NewSeasonClient(tx.config)
 	tx.SyncStatus = NewSyncStatusClient(tx.config)

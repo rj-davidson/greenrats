@@ -11,8 +11,8 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/fieldentry"
-	"github.com/rj-davidson/greenrats/ent/leaderboardentry"
 	"github.com/rj-davidson/greenrats/ent/leaguemembership"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/season"
 )
 
@@ -471,55 +471,59 @@ func (f *Factory) CreateFieldEntry(t *ent.Tournament, g *ent.Golfer, opts ...Fie
 	return entry
 }
 
-type LeaderboardEntryOption func(*ent.LeaderboardEntryCreate)
+type PlacementOption func(*ent.PlacementCreate)
 
-func WithPosition(pos int) LeaderboardEntryOption {
-	return func(lec *ent.LeaderboardEntryCreate) {
-		lec.SetPosition(pos)
+func WithPosition(pos int) PlacementOption {
+	return func(pc *ent.PlacementCreate) {
+		pc.SetPositionNumeric(pos)
+		pc.SetPosition(fmt.Sprintf("%d", pos))
 	}
 }
 
-func WithCut(cut bool) LeaderboardEntryOption {
-	return func(lec *ent.LeaderboardEntryCreate) {
-		lec.SetCut(cut)
+func WithPlacementStatus(status placement.Status) PlacementOption {
+	return func(pc *ent.PlacementCreate) {
+		pc.SetStatus(status)
 	}
 }
 
-func WithScore(score int) LeaderboardEntryOption {
-	return func(lec *ent.LeaderboardEntryCreate) {
-		lec.SetScore(score)
+func WithParRelativeScore(score int) PlacementOption {
+	return func(pc *ent.PlacementCreate) {
+		pc.SetParRelativeScore(score)
 	}
 }
 
-func WithEarnings(earnings int) LeaderboardEntryOption {
-	return func(lec *ent.LeaderboardEntryCreate) {
-		lec.SetEarnings(earnings)
+func WithEarnings(earnings int) PlacementOption {
+	return func(pc *ent.PlacementCreate) {
+		pc.SetEarnings(earnings)
 	}
 }
 
-func WithEntryStatus(status leaderboardentry.Status) LeaderboardEntryOption {
-	return func(lec *ent.LeaderboardEntryCreate) {
-		lec.SetStatus(status)
+func WithCut(cut bool) PlacementOption {
+	return func(pc *ent.PlacementCreate) {
+		if cut {
+			pc.SetStatus(placement.StatusCut)
+			pc.SetPosition("CUT")
+		}
 	}
 }
 
-func (f *Factory) CreateLeaderboardEntry(t *ent.Tournament, g *ent.Golfer, opts ...LeaderboardEntryOption) *ent.LeaderboardEntry {
+func (f *Factory) CreatePlacement(t *ent.Tournament, g *ent.Golfer, opts ...PlacementOption) *ent.Placement {
 	f.t.Helper()
 
-	create := f.db.LeaderboardEntry.Create().
+	create := f.db.Placement.Create().
 		SetTournament(t).
 		SetGolfer(g).
-		SetStatus(leaderboardentry.StatusPending)
+		SetStatus(placement.StatusFinished)
 
 	for _, opt := range opts {
 		opt(create)
 	}
 
-	entry, err := create.Save(f.ctx)
+	p, err := create.Save(f.ctx)
 	if err != nil {
-		f.t.Fatalf("failed to create leaderboard entry: %v", err)
+		f.t.Fatalf("failed to create placement: %v", err)
 	}
-	return entry
+	return p
 }
 
 type PickOption func(*ent.PickCreate)
@@ -625,19 +629,19 @@ func CreateFieldEntry(t *testing.T, db *ent.Client, tournamentID, golferID uuid.
 	return entry
 }
 
-func CreateLeaderboardEntry(t *testing.T, db *ent.Client, tournamentID, golferID uuid.UUID) *ent.LeaderboardEntry {
+func CreatePlacement(t *testing.T, db *ent.Client, tournamentID, golferID uuid.UUID) *ent.Placement {
 	t.Helper()
 	ctx := context.Background()
 
-	entry, err := db.LeaderboardEntry.Create().
+	p, err := db.Placement.Create().
 		SetTournamentID(tournamentID).
 		SetGolferID(golferID).
-		SetStatus(leaderboardentry.StatusPending).
+		SetStatus(placement.StatusFinished).
 		Save(ctx)
 	if err != nil {
-		t.Fatalf("failed to create leaderboard entry: %v", err)
+		t.Fatalf("failed to create placement: %v", err)
 	}
-	return entry
+	return p
 }
 
 func CreateSeason(t *testing.T, db *ent.Client, year int) *ent.Season {
