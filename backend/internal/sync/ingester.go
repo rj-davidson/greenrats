@@ -18,6 +18,7 @@ const (
 	TournamentSyncInterval  = 24 * time.Hour
 	PlacementSyncInterval   = 1 * time.Hour
 	ScorecardSyncInterval   = 10 * time.Minute
+	CompletionCheckInterval = 30 * time.Minute
 	ReminderCheckInterval   = 1 * time.Hour
 	EarningsCheckInterval   = 6 * time.Hour
 	GolferStatsSyncInterval = 7 * 24 * time.Hour
@@ -69,7 +70,7 @@ func (i *Ingester) Run(ctx context.Context) {
 
 	var lastTournamentSync, lastLeaderboardSync, lastScorecardSync time.Time
 	var lastFieldSync, lastEarningsSync, lastPlayerSync, lastReminderSync time.Time
-	var lastCourseSync, lastGolferStatsSync time.Time
+	var lastCourseSync, lastGolferStatsSync, lastCompletionCheck time.Time
 
 	i.logger.Info("ingester started, checking for required initial syncs")
 	if i.shouldSync(ctx, "tournaments", TournamentSyncInterval) {
@@ -129,6 +130,11 @@ func (i *Ingester) Run(ctx context.Context) {
 			if i.isAnyTournamentInPlayHours(ctx) && now.Sub(lastScorecardSync) >= ScorecardSyncInterval {
 				i.runSyncAsync(ctx, "sync_scorecards", &i.scorecardSyncRunning, i.syncScorecards)
 				lastScorecardSync = now
+			}
+
+			if i.shouldCheckCompletionNow() && now.Sub(lastCompletionCheck) >= CompletionCheckInterval {
+				i.runSync(ctx, "check_completion", i.checkTournamentCompletion)
+				lastCompletionCheck = now
 			}
 
 			if i.shouldSyncFieldsNow() && now.Sub(lastFieldSync) >= 23*time.Hour {
@@ -251,6 +257,23 @@ func (i *Ingester) shouldSyncGolferStatsNow() bool {
 	}
 	now := time.Now().In(loc)
 	return now.Weekday() == GolferStatsSyncDay && now.Hour() == 4 && now.Minute() < 5
+}
+
+func (i *Ingester) shouldCheckCompletionNow() bool {
+	loc, err := time.LoadLocation("America/New_York")
+	if err != nil {
+		i.logger.Error("failed to load timezone", "error", err)
+		return false
+	}
+	now := time.Now().In(loc)
+
+	day := now.Weekday()
+	if day != time.Sunday && day != time.Monday {
+		return false
+	}
+
+	hour := now.Hour()
+	return hour >= PlayHoursStart && hour < PlayHoursEnd
 }
 
 func (i *Ingester) needsInitialization(ctx context.Context) bool {
