@@ -1,5 +1,6 @@
 export { CommissionerPanel } from "@/features/leagues/components/CommissionerPanel";
 export { LeagueActivity } from "@/features/leagues/components/LeagueActivity";
+export { MemberManagement } from "@/features/leagues/components/MemberManagement";
 export { PickManagement } from "@/features/leagues/components/PickManagement";
 export { CreateLeagueDialog } from "@/features/leagues/components/CreateLeagueDialog";
 export { CreateLeagueForm } from "@/features/leagues/components/CreateLeagueForm";

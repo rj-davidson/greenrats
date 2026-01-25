@@ -105,6 +105,7 @@ const (
 	ActionTypeJoinCodeReset   ActionType = "join_code_reset"
 	ActionTypeJoiningDisabled ActionType = "joining_disabled"
 	ActionTypeJoiningEnabled  ActionType = "joining_enabled"
+	ActionTypeMemberRemoved   ActionType = "member_removed"
 )
 
 func (at ActionType) String() string {
@@ -114,7 +115,7 @@ func (at ActionType) String() string {
 // ActionTypeValidator is a validator for the "action_type" field enum values. It is called by the builders before save.
 func ActionTypeValidator(at ActionType) error {
 	switch at {
-	case ActionTypePickChange, ActionTypeJoinCodeReset, ActionTypeJoiningDisabled, ActionTypeJoiningEnabled:
+	case ActionTypePickChange, ActionTypeJoinCodeReset, ActionTypeJoiningDisabled, ActionTypeJoiningEnabled, ActionTypeMemberRemoved:
 		return nil
 	default:
 		return fmt.Errorf("commissioneraction: invalid enum value for action_type field: %q", at)

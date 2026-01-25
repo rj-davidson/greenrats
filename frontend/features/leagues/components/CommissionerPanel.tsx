@@ -16,6 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/shadcn/dialog";
+import { MemberManagement } from "@/features/leagues/components/MemberManagement";
 import { PickManagement } from "@/features/leagues/components/PickManagement";
 import { useRegenerateJoinCode, useSetJoiningEnabled } from "@/features/leagues/queries";
 import type { League } from "@/features/leagues/types";
@@ -119,6 +120,8 @@ export function CommissionerPanel({ league }: CommissionerPanelProps) {
           )}
         </CardContent>
       </Card>
+
+      <MemberManagement leagueId={league.id} />
 
       <PickManagement leagueId={league.id} />
 

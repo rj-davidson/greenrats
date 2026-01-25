@@ -289,3 +289,99 @@ func TestHandler_SetJoiningEnabled(t *testing.T) {
 		assert.Equal(t, fiber.StatusForbidden, resp.StatusCode)
 	})
 }
+
+func TestHandler_RemoveMember(t *testing.T) {
+	t.Run("removes member successfully", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+
+		app := testutil.NewTestApp(t).WithDBUser(owner)
+		app.App.Delete("/leagues/:id/members/:userId", handler.RemoveMember)
+
+		resp := app.Delete("/leagues/" + league.ID.String() + "/members/" + member.ID.String())
+
+		assert.Equal(t, fiber.StatusNoContent, resp.StatusCode)
+	})
+
+	t.Run("returns 401 when not authenticated", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+
+		app := testutil.NewTestApp(t)
+		app.App.Delete("/leagues/:id/members/:userId", handler.RemoveMember)
+
+		resp := app.Delete("/leagues/" + league.ID.String() + "/members/" + member.ID.String())
+
+		assert.Equal(t, fiber.StatusUnauthorized, resp.StatusCode)
+	})
+
+	t.Run("returns 403 when not commissioner", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+		otherMember := factory.CreateUser()
+		factory.AddUserToLeague(otherMember, league)
+
+		app := testutil.NewTestApp(t).WithDBUser(member)
+		app.App.Delete("/leagues/:id/members/:userId", handler.RemoveMember)
+
+		resp := app.Delete("/leagues/" + league.ID.String() + "/members/" + otherMember.ID.String())
+
+		assert.Equal(t, fiber.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("returns 403 when trying to remove owner", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+
+		app := testutil.NewTestApp(t).WithDBUser(owner)
+		app.App.Delete("/leagues/:id/members/:userId", handler.RemoveMember)
+
+		resp := app.Delete("/leagues/" + league.ID.String() + "/members/" + owner.ID.String())
+
+		assert.Equal(t, fiber.StatusForbidden, resp.StatusCode)
+	})
+
+	t.Run("returns 404 when member not found", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, discardLogger())
+		handler := NewHandler(service, nil, discardLogger())
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		nonMember := factory.CreateUser()
+
+		app := testutil.NewTestApp(t).WithDBUser(owner)
+		app.App.Delete("/leagues/:id/members/:userId", handler.RemoveMember)
+
+		resp := app.Delete("/leagues/" + league.ID.String() + "/members/" + nonMember.ID.String())
+
+		assert.Equal(t, fiber.StatusNotFound, resp.StatusCode)
+	})
+}

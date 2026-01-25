@@ -22,7 +22,7 @@ func (CommissionerAction) Mixin() []ent.Mixin {
 func (CommissionerAction) Fields() []ent.Field {
 	return []ent.Field{
 		field.Enum("action_type").
-			Values("pick_change", "join_code_reset", "joining_disabled", "joining_enabled"),
+			Values("pick_change", "join_code_reset", "joining_disabled", "joining_enabled", "member_removed"),
 		field.String("description").
 			NotEmpty(),
 		field.JSON("metadata", map[string]any{}).

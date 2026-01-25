@@ -97,6 +97,7 @@ export const commissionerActionTypeSchema = z.enum([
   "join_code_reset",
   "joining_disabled",
   "joining_enabled",
+  "member_removed",
 ]);
 
 export type CommissionerActionType = z.infer<typeof commissionerActionTypeSchema>;

@@ -30,14 +30,16 @@ const (
 )
 
 var (
-	ErrLeagueNotFound  = errors.New("league not found")
-	ErrInvalidJoinCode = errors.New("invalid join code")
-	ErrAlreadyMember   = errors.New("already a member of this league")
-	ErrJoiningDisabled = errors.New("joining is disabled for this league")
-	ErrLeagueFull      = errors.New("league has reached maximum members")
-	ErrNotCommissioner = errors.New("only the commissioner can perform this action")
-	ErrUserNotFound    = errors.New("user not found")
-	ErrSeasonNotFound  = errors.New("season not found")
+	ErrLeagueNotFound    = errors.New("league not found")
+	ErrInvalidJoinCode   = errors.New("invalid join code")
+	ErrAlreadyMember     = errors.New("already a member of this league")
+	ErrJoiningDisabled   = errors.New("joining is disabled for this league")
+	ErrLeagueFull        = errors.New("league has reached maximum members")
+	ErrNotCommissioner   = errors.New("only the commissioner can perform this action")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrSeasonNotFound    = errors.New("season not found")
+	ErrCannotRemoveOwner = errors.New("cannot remove the league owner")
+	ErrMemberNotFound    = errors.New("member not found in this league")
 )
 
 type Service struct {
@@ -454,6 +456,82 @@ func (s *Service) SetJoiningEnabled(ctx context.Context, leagueID, commissionerI
 		Role:           string(leaguemembership.RoleOwner),
 		MemberCount:    memberCount,
 	}, nil
+}
+
+func (s *Service) RemoveMember(ctx context.Context, leagueID, commissionerID, memberID uuid.UUID) error {
+	isOwner, err := s.isLeagueOwner(ctx, leagueID, commissionerID)
+	if err != nil {
+		return err
+	}
+	if !isOwner {
+		return ErrNotCommissioner
+	}
+
+	membership, err := s.db.LeagueMembership.Query().
+		Where(
+			leaguemembership.HasLeagueWith(league.IDEQ(leagueID)),
+			leaguemembership.HasUserWith(user.IDEQ(memberID)),
+		).
+		WithUser().
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return ErrMemberNotFound
+		}
+		return fmt.Errorf("failed to find member: %w", err)
+	}
+
+	if membership.Role == leaguemembership.RoleOwner {
+		return ErrCannotRemoveOwner
+	}
+
+	var memberName string
+	if membership.Edges.User != nil && membership.Edges.User.DisplayName != nil {
+		memberName = *membership.Edges.User.DisplayName
+	}
+
+	tx, err := s.db.Tx(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to start transaction: %w", err)
+	}
+	defer func() {
+		if err != nil {
+			_ = tx.Rollback()
+		}
+	}()
+
+	_, err = tx.Pick.Delete().
+		Where(
+			pick.HasLeagueWith(league.IDEQ(leagueID)),
+			pick.HasUserWith(user.IDEQ(memberID)),
+		).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete member picks: %w", err)
+	}
+
+	err = tx.LeagueMembership.DeleteOne(membership).Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to delete membership: %w", err)
+	}
+
+	_, err = tx.CommissionerAction.
+		Create().
+		SetActionType(commissioneraction.ActionTypeMemberRemoved).
+		SetDescription(fmt.Sprintf("Removed %s from the league", memberName)).
+		SetLeagueID(leagueID).
+		SetCommissionerID(commissionerID).
+		SetAffectedUserID(memberID).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to log action: %w", err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return fmt.Errorf("failed to commit transaction: %w", err)
+	}
+
+	return nil
 }
 
 func (s *Service) isLeagueOwner(ctx context.Context, leagueID, userID uuid.UUID) (bool, error) {

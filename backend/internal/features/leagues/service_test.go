@@ -457,3 +457,117 @@ func TestService_GetLeagueMembers(t *testing.T) {
 		require.ErrorIs(t, err, ErrNotCommissioner)
 	})
 }
+
+func TestService_RemoveMember(t *testing.T) {
+	t.Run("owner can remove member", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, testLogger())
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+
+		err := service.RemoveMember(ctx, league.ID, owner.ID, member.ID)
+
+		require.NoError(t, err)
+
+		resp, err := service.GetLeagueMembers(ctx, league.ID, owner.ID, nil)
+		require.NoError(t, err)
+		assert.Equal(t, 1, resp.Total)
+	})
+
+	t.Run("removes member picks when removed", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, testLogger())
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+
+		tourn := factory.CreateCompletedTournament()
+		golfer := factory.CreateGolfer()
+		factory.CreatePick(member, tourn, golfer, league)
+
+		err := service.RemoveMember(ctx, league.ID, owner.ID, member.ID)
+
+		require.NoError(t, err)
+
+		pickCount, err := db.Pick.Query().Count(ctx)
+		require.NoError(t, err)
+		assert.Equal(t, 0, pickCount)
+	})
+
+	t.Run("logs commissioner action when member removed", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, testLogger())
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+
+		err := service.RemoveMember(ctx, league.ID, owner.ID, member.ID)
+		require.NoError(t, err)
+
+		actions, err := service.GetCommissionerActions(ctx, league.ID, owner.ID)
+		require.NoError(t, err)
+		require.Equal(t, 1, actions.Total)
+		assert.Equal(t, "member_removed", actions.Actions[0].ActionType)
+		assert.Equal(t, member.ID, actions.Actions[0].AffectedUserID)
+	})
+
+	t.Run("returns error when trying to remove owner", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, testLogger())
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+
+		err := service.RemoveMember(ctx, league.ID, owner.ID, owner.ID)
+
+		require.ErrorIs(t, err, ErrCannotRemoveOwner)
+	})
+
+	t.Run("returns error when not commissioner", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, testLogger())
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		member := factory.CreateUser()
+		factory.AddUserToLeague(member, league)
+		otherMember := factory.CreateUser()
+		factory.AddUserToLeague(otherMember, league)
+
+		err := service.RemoveMember(ctx, league.ID, member.ID, otherMember.ID)
+
+		require.ErrorIs(t, err, ErrNotCommissioner)
+	})
+
+	t.Run("returns error when member not found", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db, 2026, testLogger())
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		nonMember := factory.CreateUser()
+
+		err := service.RemoveMember(ctx, league.ID, owner.ID, nonMember.ID)
+
+		require.ErrorIs(t, err, ErrMemberNotFound)
+	})
+}

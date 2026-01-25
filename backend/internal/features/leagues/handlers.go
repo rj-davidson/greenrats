@@ -34,6 +34,7 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Get("/:id/tournaments", h.GetLeagueTournaments)
 	group.Get("/:id/commissioner-actions", h.GetCommissionerActions)
 	group.Get("/:id/members", h.GetLeagueMembers)
+	group.Delete("/:id/members/:userId", h.RemoveMember)
 	group.Post("/join", h.JoinLeague)
 	group.Post("/:id/regenerate-code", h.RegenerateJoinCode)
 	group.Patch("/:id/joining", h.SetJoiningEnabled)
@@ -313,6 +314,36 @@ func (h *Handler) GetLeagueMembers(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
+func (h *Handler) RemoveMember(c *fiber.Ctx) error {
+	userID := auth.GetDBUserID(c)
+	if userID == uuid.Nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "authentication required",
+		})
+	}
+
+	leagueID, err := uuid.FromString(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid league id",
+		})
+	}
+
+	memberID, err := uuid.FromString(c.Params("userId"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid user id",
+		})
+	}
+
+	err = h.service.RemoveMember(c.UserContext(), leagueID, userID, memberID)
+	if err != nil {
+		return h.handleServiceError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
 func (h *Handler) handleServiceError(c *fiber.Ctx, err error) error {
 	switch {
 	case errors.Is(err, ErrLeagueNotFound):
@@ -342,6 +373,14 @@ func (h *Handler) handleServiceError(c *fiber.Ctx, err error) error {
 	case errors.Is(err, ErrNotMember):
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"error": "you are not a member of this league",
+		})
+	case errors.Is(err, ErrCannotRemoveOwner):
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "cannot remove the league owner",
+		})
+	case errors.Is(err, ErrMemberNotFound):
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "member not found in this league",
 		})
 	default:
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

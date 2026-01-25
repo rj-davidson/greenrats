@@ -165,3 +165,18 @@ export function useSetJoiningEnabled() {
     },
   });
 }
+
+export function useRemoveMember() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ leagueId, userId }: { leagueId: string; userId: string }) => {
+      return makeClientRequest.del(`/api/v1/leagues/${leagueId}/members/${userId}`);
+    },
+    onSuccess: (_data, { leagueId }) => {
+      void queryClient.invalidateQueries({ queryKey: buildLeagueDetailKey(leagueId) });
+      void queryClient.invalidateQueries({ queryKey: buildLeagueMembersKey(leagueId) });
+      void queryClient.invalidateQueries({ queryKey: buildCommissionerActionsKey(leagueId) });
+    },
+  });
+}

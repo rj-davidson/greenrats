@@ -11,7 +11,7 @@ var (
 	// CommissionerActionsColumns holds the columns for the "commissioner_actions" table.
 	CommissionerActionsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
-		{Name: "action_type", Type: field.TypeEnum, Enums: []string{"pick_change", "join_code_reset", "joining_disabled", "joining_enabled"}},
+		{Name: "action_type", Type: field.TypeEnum, Enums: []string{"pick_change", "join_code_reset", "joining_disabled", "joining_enabled", "member_removed"}},
 		{Name: "description", Type: field.TypeString},
 		{Name: "metadata", Type: field.TypeJSON, Nullable: true, SchemaType: map[string]string{"postgres": "jsonb"}},
 		{Name: "created_at", Type: field.TypeTime},

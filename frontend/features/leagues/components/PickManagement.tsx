@@ -1,5 +1,6 @@
 "use client";
 
+import { SearchableSelect } from "@/components/core/searchable-select";
 import { Button } from "@/components/shadcn/button";
 import {
   Card,
@@ -156,38 +157,37 @@ export function PickManagement({ leagueId }: PickManagementProps) {
             <div className="space-y-2">
               <label className="text-sm font-medium">2. Select Member</label>
               {membersLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-12 w-full" />
-                  ))}
-                </div>
+                <Skeleton className="h-10 w-full" />
               ) : !membersData?.members.length ? (
                 <p className="text-sm text-muted-foreground">No members found</p>
               ) : (
-                <div className="h-48 overflow-y-auto rounded-md border p-2">
-                  {membersData.members.map((member) => (
-                    <button
-                      key={member.id}
-                      type="button"
-                      onClick={() => handleMemberSelect(member)}
-                      className={cn(
-                        "w-full rounded-md p-2 text-left transition-colors hover:bg-accent",
-                        selectedMember?.id === member.id && "bg-accent",
-                      )}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{member.display_name}</span>
-                        {member.pick ? (
-                          <span className="text-sm text-muted-foreground">
-                            {member.pick.golfer_name}
-                          </span>
-                        ) : (
-                          <span className="text-sm text-muted-foreground italic">No pick</span>
-                        )}
+                <SearchableSelect
+                  items={membersData.members}
+                  value={selectedMember}
+                  onSelect={handleMemberSelect}
+                  getKey={(member) => member.id}
+                  getLabel={(member) => member.display_name}
+                  placeholder="Search for a member..."
+                  searchPlaceholder="Type to search..."
+                  emptyMessage="No members found."
+                  renderItem={(member, isSelected) => (
+                    <div className="flex w-full items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckIcon
+                          className={cn("size-4", isSelected ? "opacity-100" : "opacity-0")}
+                        />
+                        <span>{member.display_name}</span>
                       </div>
-                    </button>
-                  ))}
-                </div>
+                      {member.pick ? (
+                        <span className="text-xs text-muted-foreground">
+                          {member.pick.golfer_name}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground italic">No pick</span>
+                      )}
+                    </div>
+                  )}
+                />
               )}
             </div>
           )}
@@ -199,57 +199,43 @@ export function PickManagement({ leagueId }: PickManagementProps) {
                 3. Select {selectedMember.pick ? "New " : ""}Golfer
               </label>
               {golfersLoading ? (
-                <div className="space-y-2">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <Skeleton key={i} className="h-10 w-full" />
-                  ))}
-                </div>
+                <Skeleton className="h-10 w-full" />
               ) : !golfersData?.golfers.length ? (
                 <p className="text-sm text-muted-foreground">No golfers available</p>
               ) : (
-                <div className="h-64 overflow-y-auto rounded-md border p-2">
-                  {golfersData.golfers.map((golfer) => {
+                <SearchableSelect
+                  items={golfersData.golfers}
+                  value={selectedGolfer}
+                  onSelect={handleGolferSelect}
+                  getKey={(golfer) => golfer.id}
+                  getLabel={(golfer) => golfer.name}
+                  placeholder="Search for a golfer..."
+                  searchPlaceholder="Type to search..."
+                  emptyMessage="No golfers found."
+                  isItemDisabled={(golfer) =>
+                    golfer.is_used || golfer.id === selectedMember.pick?.golfer_id
+                  }
+                  renderItem={(golfer, isSelected) => {
                     const isCurrentPick = golfer.id === selectedMember.pick?.golfer_id;
                     return (
-                      <button
-                        key={golfer.id}
-                        type="button"
-                        onClick={() => handleGolferSelect(golfer)}
-                        disabled={golfer.is_used || isCurrentPick}
-                        className={cn(
-                          "w-full rounded-md p-2 text-left transition-colors",
-                          !golfer.is_used && !isCurrentPick && "hover:bg-accent",
-                          selectedGolfer?.id === golfer.id && "bg-accent",
-                          (golfer.is_used || isCurrentPick) && "cursor-not-allowed opacity-50",
-                        )}
-                      >
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {selectedGolfer?.id === golfer.id && (
-                              <CheckIcon className="size-4 text-primary" />
-                            )}
-                            <span className={cn(isCurrentPick && "font-medium")}>
-                              {golfer.name}
-                            </span>
-                            {isCurrentPick && (
-                              <span className="text-xs text-muted-foreground">(current)</span>
-                            )}
-                          </div>
-                          {golfer.is_used && (
-                            <span className="text-xs text-muted-foreground">
-                              Used for {golfer.used_for_tournament}
-                            </span>
+                      <div className="flex w-full items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <CheckIcon
+                            className={cn("size-4", isSelected ? "opacity-100" : "opacity-0")}
+                          />
+                          <span className={cn(isCurrentPick && "font-medium")}>{golfer.name}</span>
+                          {isCurrentPick && (
+                            <span className="text-xs text-muted-foreground">(current)</span>
                           )}
-                          {golfer.owgr ? (
-                            <span className="text-xs text-muted-foreground">
-                              OWGR: {golfer.owgr}
-                            </span>
-                          ) : null}
                         </div>
-                      </button>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {golfer.is_used && <span>Used: {golfer.used_for_tournament}</span>}
+                          {golfer.owgr && <span>OWGR: {golfer.owgr}</span>}
+                        </div>
+                      </div>
                     );
-                  })}
-                </div>
+                  }}
+                />
               )}
             </div>
           )}
