@@ -20,12 +20,12 @@ type SyncStatus struct {
 }
 
 var SyncExpectedMaxAges = map[string]time.Duration{
-	"tournaments":  TournamentSyncInterval + (30 * time.Minute),
-	"players":      7 * 24 * time.Hour,
-	"leaderboards": LeaderboardIdleInterval + (30 * time.Minute),
-	"earnings":     EarningsCheckInterval + (1 * time.Hour),
-	"fields":       24*time.Hour + (1 * time.Hour),
-	"scorecards":   ScorecardSyncInterval + (30 * time.Minute),
+	"tournaments": TournamentSyncInterval + (30 * time.Minute),
+	"players":     7 * 24 * time.Hour,
+	"placements":  PlacementSyncInterval + (30 * time.Minute),
+	"earnings":    EarningsCheckInterval + (1 * time.Hour),
+	"fields":      24*time.Hour + (1 * time.Hour),
+	"scorecards":  ScorecardSyncInterval + (30 * time.Minute),
 }
 
 func GetHealthStatus(ctx context.Context, db *ent.Client) (*SyncHealthStatus, error) {

@@ -5,7 +5,8 @@ import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { useLeague } from "@/features/leagues/queries";
 import { useLeaguePicks } from "@/features/picks/queries";
-import { ExpandableLeaderboardTable } from "@/features/tournaments/components/ExpandableLeaderboardTable";
+import { LiveExpandableLeaderboard } from "@/features/tournaments/components/live";
+import { PlacementExpandableLeaderboard } from "@/features/tournaments/components/placement";
 import { useTournament } from "@/features/tournaments/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { CalendarIcon } from "lucide-react";
@@ -85,11 +86,19 @@ export default function TournamentDetailPage() {
           {formatDateRange(tournament.start_date, tournament.end_date)}
         </div>
       </div>
-      <ExpandableLeaderboardTable
-        tournamentId={tournamentId}
-        leagueId={leagueId}
-        highlightedGolferId={userPickedGolferId}
-      />
+      {tournament.status === "completed" ? (
+        <PlacementExpandableLeaderboard
+          tournamentId={tournamentId}
+          leagueId={leagueId}
+          highlightedGolferId={userPickedGolferId}
+        />
+      ) : (
+        <LiveExpandableLeaderboard
+          tournamentId={tournamentId}
+          leagueId={leagueId}
+          highlightedGolferId={userPickedGolferId}
+        />
+      )}
     </div>
   );
 }

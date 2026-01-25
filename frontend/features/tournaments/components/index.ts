@@ -1,3 +1,3 @@
-export { ExpandableLeaderboardTable } from "@/features/tournaments/components/ExpandableLeaderboardTable";
-export { LeaderboardTable } from "@/features/tournaments/components/LeaderboardTable";
+export { LiveLeaderboardTable, LiveExpandableLeaderboard } from "./live";
+export { PlacementLeaderboardTable, PlacementExpandableLeaderboard } from "./placement";
 export { UserPicksByLeague } from "@/features/tournaments/components/UserPicksByLeague";

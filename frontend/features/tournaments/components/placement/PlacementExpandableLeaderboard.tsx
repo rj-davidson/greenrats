@@ -1,12 +1,7 @@
 "use client";
 
-import { GolfScorecard } from "./GolfScorecard";
-import {
-  formatScoreToPar,
-  formatThru,
-  getCurrentRoundScore,
-  getRoundLabel,
-} from "./leaderboard-utils";
+import { GolfScorecard } from "../GolfScorecard";
+import { formatScoreToPar } from "../leaderboard-utils";
 import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import {
@@ -23,13 +18,21 @@ import { cn } from "@/lib/utils";
 import { ChevronDownIcon, ChevronRightIcon, UserCheck } from "lucide-react";
 import { Fragment, useCallback, useState } from "react";
 
-interface ExpandableLeaderboardTableProps {
+interface PlacementExpandableLeaderboardProps {
   tournamentId: string;
   leagueId?: string;
   highlightedGolferId?: string;
 }
 
-function LeaderboardSkeleton() {
+function formatEarnings(earnings: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(earnings);
+}
+
+function PlacementLeaderboardSkeleton() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 10 }).map((_, i) => (
@@ -39,11 +42,11 @@ function LeaderboardSkeleton() {
   );
 }
 
-export function ExpandableLeaderboardTable({
+export function PlacementExpandableLeaderboard({
   tournamentId,
   leagueId,
   highlightedGolferId,
-}: ExpandableLeaderboardTableProps) {
+}: PlacementExpandableLeaderboardProps) {
   const [expandedGolferId, setExpandedGolferId] = useState<string | null>(null);
 
   const { data, isLoading, error } = useLeaderboard(tournamentId, { leagueId });
@@ -55,13 +58,13 @@ export function ExpandableLeaderboardTable({
   }, []);
 
   if (isLoading) {
-    return <LeaderboardSkeleton />;
+    return <PlacementLeaderboardSkeleton />;
   }
 
   if (error) {
     return (
       <div className="rounded-lg border border-dashed p-8 text-center">
-        <p className="text-muted-foreground">Failed to load leaderboard. Please try again.</p>
+        <p className="text-muted-foreground">Failed to load results. Please try again.</p>
       </div>
     );
   }
@@ -69,23 +72,20 @@ export function ExpandableLeaderboardTable({
   if (!data || data.entries.length === 0) {
     return (
       <div className="rounded-lg border border-dashed p-8 text-center">
-        <p className="text-muted-foreground">No leaderboard data available yet.</p>
+        <p className="text-muted-foreground">No results available yet.</p>
       </div>
     );
   }
-
-  const currentRound = data.current_round;
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-12"></TableHead>
-          <TableHead className="w-16">Pos</TableHead>
+          <TableHead className="w-24">Pos</TableHead>
           <TableHead>Player</TableHead>
-          <TableHead className="w-16">{getRoundLabel(currentRound)}</TableHead>
-          <TableHead className="w-16">Thru</TableHead>
           <TableHead className="w-20">Total</TableHead>
+          <TableHead className="w-28 text-right">Earnings</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -97,7 +97,7 @@ export function ExpandableLeaderboardTable({
 
           return (
             <Fragment key={entry.golfer_id}>
-              <LeaderboardRow
+              <PlacementLeaderboardRow
                 entry={entry}
                 isExpanded={isExpanded}
                 isHighlighted={entry.golfer_id === highlightedGolferId}
@@ -106,7 +106,7 @@ export function ExpandableLeaderboardTable({
               />
               {isExpanded && entryWithHoles && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="px-2 py-0">
+                  <TableCell colSpan={5} className="px-2 py-0">
                     {entry.picked_by && entry.picked_by.length > 0 && (
                       <div className="px-2 pt-2 text-sm text-muted-foreground">
                         <span>Picked by:</span>
@@ -128,7 +128,7 @@ export function ExpandableLeaderboardTable({
               )}
               {isExpanded && !entryWithHoles && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="p-4">
+                  <TableCell colSpan={5} className="p-4">
                     <div className="flex justify-center">
                       <Skeleton className="h-32 w-full max-w-2xl" />
                     </div>
@@ -143,7 +143,7 @@ export function ExpandableLeaderboardTable({
   );
 }
 
-interface LeaderboardRowProps {
+interface PlacementLeaderboardRowProps {
   entry: LeaderboardEntry;
   isExpanded: boolean;
   isHighlighted: boolean;
@@ -151,14 +151,15 @@ interface LeaderboardRowProps {
   onHover: () => void;
 }
 
-function LeaderboardRow({
+function PlacementLeaderboardRow({
   entry,
   isExpanded,
   isHighlighted,
   onToggle,
   onHover,
-}: LeaderboardRowProps) {
+}: PlacementLeaderboardRowProps) {
   const isCut = entry.status === "cut";
+  const isWithdrawn = entry.status === "withdrawn";
 
   return (
     <TableRow
@@ -178,7 +179,19 @@ function LeaderboardRow({
         )}
       </TableCell>
       <TableCell className={cn("font-medium", isHighlighted && "font-bold")}>
-        {entry.position_display}
+        <div className="flex items-center gap-2">
+          <span>{entry.position_display}</span>
+          {isCut && (
+            <Badge variant="outline" className="text-xs">
+              CUT
+            </Badge>
+          )}
+          {isWithdrawn && (
+            <Badge variant="outline" className="text-xs">
+              WD
+            </Badge>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         <div className="flex items-center gap-2">
@@ -191,12 +204,11 @@ function LeaderboardRow({
           )}
         </div>
       </TableCell>
-      <TableCell className="font-mono">{getCurrentRoundScore(entry)}</TableCell>
-      <TableCell className="text-muted-foreground">
-        {formatThru(entry.thru, entry.status)}
-      </TableCell>
       <TableCell className={cn("font-mono", entry.score < 0 && "text-primary")}>
         {formatScoreToPar(entry.score)}
+      </TableCell>
+      <TableCell className="text-right font-mono">
+        {entry.earnings > 0 ? formatEarnings(entry.earnings) : "-"}
       </TableCell>
     </TableRow>
   );

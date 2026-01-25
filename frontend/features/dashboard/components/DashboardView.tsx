@@ -9,7 +9,8 @@ import { PrimaryTournamentCard } from "@/features/dashboard/components/PrimaryTo
 import { QuickJoinInput } from "@/features/dashboard/components/QuickJoinInput";
 import { CreateLeagueDialog } from "@/features/leagues/components/CreateLeagueDialog";
 import { useUserLeagues } from "@/features/leagues/queries";
-import { LeaderboardTable } from "@/features/tournaments/components/LeaderboardTable";
+import { LiveLeaderboardTable } from "@/features/tournaments/components/live";
+import { PlacementLeaderboardTable } from "@/features/tournaments/components/placement";
 import { UserPicksByLeague } from "@/features/tournaments/components/UserPicksByLeague";
 import { useCurrentTournament } from "@/features/tournaments/queries";
 import { UsersIcon } from "lucide-react";
@@ -36,7 +37,11 @@ function TournamentSection() {
       <UserPicksByLeague tournamentId={tournament.id} />
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Leaderboard</h2>
-        <LeaderboardTable tournamentId={tournament.id} limit={6} />
+        {tournament.status === "completed" ? (
+          <PlacementLeaderboardTable tournamentId={tournament.id} limit={6} />
+        ) : (
+          <LiveLeaderboardTable tournamentId={tournament.id} limit={6} />
+        )}
       </section>
     </>
   );

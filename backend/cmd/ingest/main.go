@@ -91,8 +91,7 @@ func run() error {
 
 	logger.Info("GreenRats Ingest Service started",
 		"tournament_interval", sync.TournamentSyncInterval,
-		"leaderboard_play_interval", sync.LeaderboardPlayInterval,
-		"leaderboard_idle_interval", sync.LeaderboardIdleInterval,
+		"placement_interval", sync.PlacementSyncInterval,
 		"scorecard_interval", sync.ScorecardSyncInterval,
 	)
 

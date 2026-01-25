@@ -12,44 +12,23 @@ import {
 import { useLeaderboard } from "@/features/tournaments/queries";
 import type { LeaderboardEntry } from "@/features/tournaments/types";
 import { cn } from "@/lib/utils";
+import {
+  formatScoreToPar,
+  formatThru,
+  getCurrentRoundScore,
+  getRoundLabel,
+} from "../leaderboard-utils";
 
-interface LeaderboardTableProps {
+interface LiveLeaderboardTableProps {
   tournamentId: string;
   limit?: number;
 }
 
-function formatScore(score: number): string {
-  if (score === 0) return "E";
-  return score > 0 ? `+${score}` : `${score}`;
-}
-
-function formatThru(thru: number, status: string): string {
-  if (status === "finished") return "F";
-  if (thru === 0) return "-";
-  if (thru === 18) return "F";
-  return `${thru}`;
-}
-
-function formatEarnings(earnings: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(earnings);
-}
-
-function LeaderboardRow({
-  entry,
-  showEarnings,
-}: {
-  entry: LeaderboardEntry;
-  showEarnings: boolean;
-}) {
-  const isCut = entry.status === "cut";
-  const isTopThree = entry.position >= 1 && entry.position <= 3 && !isCut;
+function LiveLeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
+  const isTopThree = entry.position >= 1 && entry.position <= 3;
 
   return (
-    <TableRow className={cn(isCut && "text-muted-foreground")}>
+    <TableRow>
       <TableCell className={cn("font-medium", isTopThree && "font-bold text-primary")}>
         {entry.position_display}
       </TableCell>
@@ -59,22 +38,16 @@ function LeaderboardRow({
         </div>
       </TableCell>
       <TableCell className="text-muted-foreground">{entry.country_code}</TableCell>
+      <TableCell className="font-mono">{getCurrentRoundScore(entry)}</TableCell>
+      <TableCell className="text-muted-foreground">{formatThru(entry.thru, entry.status)}</TableCell>
       <TableCell className={cn("font-mono", entry.score < 0 && "text-primary")}>
-        {formatScore(entry.score)}
+        {formatScoreToPar(entry.score)}
       </TableCell>
-      <TableCell className="text-muted-foreground">
-        {formatThru(entry.thru, entry.status)}
-      </TableCell>
-      {showEarnings && (
-        <TableCell className="text-right font-mono">
-          {entry.earnings > 0 ? formatEarnings(entry.earnings) : "-"}
-        </TableCell>
-      )}
     </TableRow>
   );
 }
 
-function LeaderboardSkeleton() {
+function LiveLeaderboardSkeleton() {
   return (
     <div className="space-y-2">
       {Array.from({ length: 10 }).map((_, i) => (
@@ -84,11 +57,11 @@ function LeaderboardSkeleton() {
   );
 }
 
-export function LeaderboardTable({ tournamentId, limit }: LeaderboardTableProps) {
+export function LiveLeaderboardTable({ tournamentId, limit }: LiveLeaderboardTableProps) {
   const { data, isLoading, error } = useLeaderboard(tournamentId);
 
   if (isLoading) {
-    return <LeaderboardSkeleton />;
+    return <LiveLeaderboardSkeleton />;
   }
 
   if (error) {
@@ -108,7 +81,7 @@ export function LeaderboardTable({ tournamentId, limit }: LeaderboardTableProps)
   }
 
   const entries = limit ? data.entries.slice(0, limit) : data.entries;
-  const showEarnings = data.entries.some((entry) => entry.earnings > 0);
+  const currentRound = data.current_round;
 
   return (
     <Table>
@@ -117,14 +90,14 @@ export function LeaderboardTable({ tournamentId, limit }: LeaderboardTableProps)
           <TableHead className="w-16">Pos</TableHead>
           <TableHead>Player</TableHead>
           <TableHead className="w-20">Country</TableHead>
-          <TableHead className="w-20">Score</TableHead>
+          <TableHead className="w-16">{getRoundLabel(currentRound)}</TableHead>
           <TableHead className="w-16">Thru</TableHead>
-          {showEarnings && <TableHead className="w-28 text-right">Earnings</TableHead>}
+          <TableHead className="w-20">Total</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {entries.map((entry) => (
-          <LeaderboardRow key={entry.golfer_id} entry={entry} showEarnings={showEarnings} />
+          <LiveLeaderboardRow key={entry.golfer_id} entry={entry} />
         ))}
       </TableBody>
     </Table>

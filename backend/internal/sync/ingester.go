@@ -16,8 +16,7 @@ import (
 
 const (
 	TournamentSyncInterval  = 24 * time.Hour
-	LeaderboardPlayInterval = 5 * time.Minute
-	LeaderboardIdleInterval = 1 * time.Hour
+	PlacementSyncInterval   = 1 * time.Hour
 	ScorecardSyncInterval   = 10 * time.Minute
 	ReminderCheckInterval   = 1 * time.Hour
 	EarningsCheckInterval   = 6 * time.Hour
@@ -83,7 +82,7 @@ func (i *Ingester) Run(ctx context.Context) {
 		i.runSync(ctx, "sync_players", i.syncPlayers)
 		lastPlayerSync = time.Now()
 	}
-	if i.shouldSync(ctx, "placements", i.getPlacementsInterval(ctx)) {
+	if i.shouldSync(ctx, "placements", PlacementSyncInterval) {
 		i.runSync(ctx, "sync_placements", i.syncPlacements)
 		lastLeaderboardSync = time.Now()
 	} else {
@@ -122,8 +121,7 @@ func (i *Ingester) Run(ctx context.Context) {
 				lastTournamentSync = now
 			}
 
-			placementsInterval := i.getPlacementsInterval(ctx)
-			if now.Sub(lastLeaderboardSync) >= placementsInterval {
+			if now.Sub(lastLeaderboardSync) >= PlacementSyncInterval {
 				i.runSync(ctx, "sync_placements", i.syncPlacements)
 				lastLeaderboardSync = now
 			}
@@ -164,13 +162,6 @@ func (i *Ingester) Run(ctx context.Context) {
 			}
 		}
 	}
-}
-
-func (i *Ingester) getPlacementsInterval(ctx context.Context) time.Duration {
-	if i.isAnyTournamentInPlayHours(ctx) {
-		return LeaderboardPlayInterval
-	}
-	return LeaderboardIdleInterval
 }
 
 func (i *Ingester) isAnyTournamentInPlayHours(ctx context.Context) bool {
