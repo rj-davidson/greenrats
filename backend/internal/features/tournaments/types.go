@@ -66,21 +66,23 @@ type HoleScore struct {
 
 // LeaderboardEntry represents a golfer's position on the tournament leaderboard.
 type LeaderboardEntry struct {
-	Position        int          `json:"position"`
-	PositionDisplay string       `json:"position_display"`
-	GolferID        string       `json:"golfer_id"`
-	GolferName      string       `json:"golfer_name"`
-	CountryCode     string       `json:"country_code"`
-	Country         string       `json:"country,omitempty"`
-	ImageURL        string       `json:"image_url,omitempty"`
-	Score           int          `json:"score"`
-	TotalStrokes    int          `json:"total_strokes"`
-	Thru            int          `json:"thru"`
-	CurrentRound    int          `json:"current_round"`
-	Status          string       `json:"status"`
-	Earnings        int          `json:"earnings"`
-	Rounds          []RoundScore `json:"rounds"`
-	PickedBy        []string     `json:"picked_by,omitempty"`
+	Position         int          `json:"position"`
+	PositionDisplay  string       `json:"position_display"`
+	PreviousPosition *int         `json:"previous_position,omitempty"`
+	PositionChange   *int         `json:"position_change,omitempty"`
+	GolferID         string       `json:"golfer_id"`
+	GolferName       string       `json:"golfer_name"`
+	CountryCode      string       `json:"country_code"`
+	Country          string       `json:"country,omitempty"`
+	ImageURL         string       `json:"image_url,omitempty"`
+	Score            int          `json:"score"`
+	TotalStrokes     int          `json:"total_strokes"`
+	Thru             int          `json:"thru"`
+	CurrentRound     int          `json:"current_round"`
+	Status           string       `json:"status"`
+	Earnings         int          `json:"earnings"`
+	Rounds           []RoundScore `json:"rounds"`
+	PickedBy         []string     `json:"picked_by,omitempty"`
 }
 
 // GetLeaderboardRequest represents optional query parameters for leaderboard.

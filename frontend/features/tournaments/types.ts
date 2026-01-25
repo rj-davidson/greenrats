@@ -46,6 +46,8 @@ export const roundScoreSchema = z.object({
 export const leaderboardEntrySchema = z.object({
   position: z.number(),
   position_display: z.string(),
+  previous_position: z.number().nullable().optional(),
+  position_change: z.number().nullable().optional(),
   golfer_id: z.string(),
   golfer_name: z.string(),
   country_code: z.string(),

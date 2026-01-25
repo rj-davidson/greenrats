@@ -484,6 +484,8 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 		currentPos += count
 	}
 
+	previousPositions := s.calculatePreviousPositions(sortedGolfers, maxRound)
+
 	result := make([]LeaderboardEntry, 0, len(sortedGolfers))
 	currentPos = 1
 
@@ -510,6 +512,12 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 			Status:          "active",
 			Earnings:        0,
 			Rounds:          make([]RoundScore, 0, len(data.rounds)),
+		}
+
+		if prevPos, ok := previousPositions[data.golfer.ID.String()]; ok {
+			entry.PreviousPosition = &prevPos
+			change := prevPos - currentPos
+			entry.PositionChange = &change
 		}
 
 		if data.golfer.Country != nil {
@@ -558,6 +566,46 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 		Entries:        result,
 		Total:          len(result),
 	}, nil
+}
+
+func (s *Service) calculatePreviousPositions(golfers []*golferRoundData, currentRound int) map[string]int {
+	if currentRound < 2 {
+		return nil
+	}
+
+	type prevScore struct {
+		golferID string
+		score    int
+	}
+
+	prevScores := make([]prevScore, 0, len(golfers))
+	for _, data := range golfers {
+		cumulative := 0
+		for _, r := range data.rounds {
+			if r.RoundNumber < currentRound && r.ParRelativeScore != nil {
+				cumulative += *r.ParRelativeScore
+			}
+		}
+		prevScores = append(prevScores, prevScore{
+			golferID: data.golfer.ID.String(),
+			score:    cumulative,
+		})
+	}
+
+	sort.Slice(prevScores, func(i, j int) bool {
+		return prevScores[i].score < prevScores[j].score
+	})
+
+	positions := make(map[string]int)
+	currentPos := 1
+	for i, ps := range prevScores {
+		if i > 0 && ps.score != prevScores[i-1].score {
+			currentPos = i + 1
+		}
+		positions[ps.golferID] = currentPos
+	}
+
+	return positions
 }
 
 func (s *Service) GetField(ctx context.Context, id string) (*GetFieldResponse, error) {

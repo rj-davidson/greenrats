@@ -7,6 +7,7 @@ import {
   getCurrentRoundScore,
   getRoundLabel,
 } from "../leaderboard-utils";
+import { PositionChangeIndicator } from "./PositionChangeIndicator";
 import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import {
@@ -76,12 +77,15 @@ export function LiveExpandableLeaderboard({
 
   const currentRound = data.current_round;
 
+  const showPositionChange = currentRound >= 2;
+
   return (
     <Table>
       <TableHeader>
         <TableRow>
           <TableHead className="w-12"></TableHead>
           <TableHead className="w-16">Pos</TableHead>
+          {showPositionChange && <TableHead className="w-12">+/-</TableHead>}
           <TableHead>Player</TableHead>
           <TableHead className="w-16">{getRoundLabel(currentRound)}</TableHead>
           <TableHead className="w-16">Thru</TableHead>
@@ -99,14 +103,16 @@ export function LiveExpandableLeaderboard({
             <Fragment key={entry.golfer_id}>
               <LiveLeaderboardRow
                 entry={entry}
+                tournamentRound={currentRound}
                 isExpanded={isExpanded}
                 isHighlighted={entry.golfer_id === highlightedGolferId}
+                showPositionChange={showPositionChange}
                 onToggle={() => toggleExpand(entry.golfer_id)}
                 onHover={prefetch}
               />
               {isExpanded && entryWithHoles && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="px-2 py-0">
+                  <TableCell colSpan={showPositionChange ? 7 : 6} className="px-2 py-0">
                     {entry.picked_by && entry.picked_by.length > 0 && (
                       <div className="px-2 pt-2 text-sm text-muted-foreground">
                         <span>Picked by:</span>
@@ -128,7 +134,7 @@ export function LiveExpandableLeaderboard({
               )}
               {isExpanded && !entryWithHoles && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={6} className="p-4">
+                  <TableCell colSpan={showPositionChange ? 7 : 6} className="p-4">
                     <div className="flex justify-center">
                       <Skeleton className="h-32 w-full max-w-2xl" />
                     </div>
@@ -145,19 +151,25 @@ export function LiveExpandableLeaderboard({
 
 interface LiveLeaderboardRowProps {
   entry: LeaderboardEntry;
+  tournamentRound: number;
   isExpanded: boolean;
   isHighlighted: boolean;
+  showPositionChange: boolean;
   onToggle: () => void;
   onHover: () => void;
 }
 
 function LiveLeaderboardRow({
   entry,
+  tournamentRound,
   isExpanded,
   isHighlighted,
+  showPositionChange,
   onToggle,
   onHover,
 }: LiveLeaderboardRowProps) {
+  const playerBehind = entry.current_round < tournamentRound;
+
   return (
     <TableRow
       className={cn(
@@ -177,6 +189,15 @@ function LiveLeaderboardRow({
       <TableCell className={cn("font-medium", isHighlighted && "font-bold")}>
         {entry.position_display}
       </TableCell>
+      {showPositionChange && (
+        <TableCell>
+          {playerBehind ? (
+            <span className="text-muted-foreground">-</span>
+          ) : (
+            <PositionChangeIndicator change={entry.position_change} />
+          )}
+        </TableCell>
+      )}
       <TableCell>
         <div className="flex items-center gap-2">
           <span className={cn(isHighlighted && "font-bold")}>{entry.golfer_name}</span>
@@ -188,9 +209,11 @@ function LiveLeaderboardRow({
           )}
         </div>
       </TableCell>
-      <TableCell className="font-mono">{getCurrentRoundScore(entry)}</TableCell>
+      <TableCell className="font-mono">
+        {playerBehind ? "-" : getCurrentRoundScore(entry)}
+      </TableCell>
       <TableCell className="text-muted-foreground">
-        {formatThru(entry.thru, entry.status)}
+        {playerBehind ? "-" : formatThru(entry.thru, entry.status)}
       </TableCell>
       <TableCell className={cn("font-mono", entry.score < 0 && "text-primary")}>
         {formatScoreToPar(entry.score)}

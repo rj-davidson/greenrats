@@ -19,6 +19,7 @@ import {
   getCurrentRoundScore,
   getRoundLabel,
 } from "@/features/tournaments/components/leaderboard-utils";
+import { PositionChangeIndicator } from "@/features/tournaments/components/live/PositionChangeIndicator";
 import { useLeaderboard } from "@/features/tournaments/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { cn } from "@/lib/utils";
@@ -75,6 +76,7 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
 
   const title = activeTournament ? activeTournament.name : "Leaderboard";
   const currentRound = leaderboardData?.current_round ?? 1;
+  const showPositionChange = currentRound >= 2;
 
   return (
     <DashboardCard
@@ -88,6 +90,7 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
           <TableHeader>
             <TableRow>
               <TableHead className="w-12">Pos</TableHead>
+              {showPositionChange && <TableHead className="w-10">+/-</TableHead>}
               <TableHead>Player</TableHead>
               <TableHead className="text-right">{getRoundLabel(currentRound)}</TableHead>
               <TableHead className="text-right">Thru</TableHead>
@@ -97,9 +100,19 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
           <TableBody>
             {displayEntries.map((entry) => {
               const isUserPick = entry.golfer_id === userPickGolferId;
+              const playerBehind = entry.current_round < currentRound;
               return (
                 <TableRow key={entry.golfer_id} className={cn(isUserPick && "bg-primary/5")}>
                   <TableCell className="font-medium">{entry.position_display}</TableCell>
+                  {showPositionChange && (
+                    <TableCell>
+                      {playerBehind ? (
+                        <span className="text-muted-foreground">-</span>
+                      ) : (
+                        <PositionChangeIndicator change={entry.position_change} />
+                      )}
+                    </TableCell>
+                  )}
                   <TableCell className="flex items-center gap-2">
                     <span className="truncate">{entry.golfer_name}</span>
                     {isUserPick && (
@@ -109,10 +122,10 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                     )}
                   </TableCell>
                   <TableCell className="text-right font-mono">
-                    {getCurrentRoundScore(entry)}
+                    {playerBehind ? "-" : getCurrentRoundScore(entry)}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">
-                    {formatThru(entry.thru, entry.status)}
+                    {playerBehind ? "-" : formatThru(entry.thru, entry.status)}
                   </TableCell>
                   <TableCell className="text-right font-mono">
                     {formatScoreToPar(entry.score)}
@@ -123,28 +136,45 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
             {showUserBubble && (
               <>
                 <TableRow>
-                  <TableCell colSpan={5} className="py-1 text-center text-xs text-muted-foreground">
+                  <TableCell
+                    colSpan={showPositionChange ? 6 : 5}
+                    className="py-1 text-center text-xs text-muted-foreground"
+                  >
                     ...
                   </TableCell>
                 </TableRow>
-                <TableRow className="bg-primary/5">
-                  <TableCell className="font-medium">{userPickEntry.position_display}</TableCell>
-                  <TableCell className="flex items-center gap-2">
-                    <span className="truncate">{userPickEntry.golfer_name}</span>
-                    <Badge variant="outline" className="text-xs">
-                      Pick
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    {getCurrentRoundScore(userPickEntry)}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {formatThru(userPickEntry.thru, userPickEntry.status)}
-                  </TableCell>
-                  <TableCell className="text-right font-mono">
-                    {formatScoreToPar(userPickEntry.score)}
-                  </TableCell>
-                </TableRow>
+                {(() => {
+                  const userPlayerBehind = userPickEntry.current_round < currentRound;
+                  return (
+                    <TableRow className="bg-primary/5">
+                      <TableCell className="font-medium">{userPickEntry.position_display}</TableCell>
+                      {showPositionChange && (
+                        <TableCell>
+                          {userPlayerBehind ? (
+                            <span className="text-muted-foreground">-</span>
+                          ) : (
+                            <PositionChangeIndicator change={userPickEntry.position_change} />
+                          )}
+                        </TableCell>
+                      )}
+                      <TableCell className="flex items-center gap-2">
+                        <span className="truncate">{userPickEntry.golfer_name}</span>
+                        <Badge variant="outline" className="text-xs">
+                          Pick
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {userPlayerBehind ? "-" : getCurrentRoundScore(userPickEntry)}
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {userPlayerBehind ? "-" : formatThru(userPickEntry.thru, userPickEntry.status)}
+                      </TableCell>
+                      <TableCell className="text-right font-mono">
+                        {formatScoreToPar(userPickEntry.score)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })()}
               </>
             )}
           </TableBody>

@@ -24,8 +24,15 @@ interface LiveLeaderboardTableProps {
   limit?: number;
 }
 
-function LiveLeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
+function LiveLeaderboardRow({
+  entry,
+  tournamentRound,
+}: {
+  entry: LeaderboardEntry;
+  tournamentRound: number;
+}) {
   const isTopThree = entry.position >= 1 && entry.position <= 3;
+  const playerBehind = entry.current_round < tournamentRound;
 
   return (
     <TableRow>
@@ -38,8 +45,12 @@ function LiveLeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
         </div>
       </TableCell>
       <TableCell className="text-muted-foreground">{entry.country_code}</TableCell>
-      <TableCell className="font-mono">{getCurrentRoundScore(entry)}</TableCell>
-      <TableCell className="text-muted-foreground">{formatThru(entry.thru, entry.status)}</TableCell>
+      <TableCell className="font-mono">
+        {playerBehind ? "-" : getCurrentRoundScore(entry)}
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {playerBehind ? "-" : formatThru(entry.thru, entry.status)}
+      </TableCell>
       <TableCell className={cn("font-mono", entry.score < 0 && "text-primary")}>
         {formatScoreToPar(entry.score)}
       </TableCell>
@@ -97,7 +108,7 @@ export function LiveLeaderboardTable({ tournamentId, limit }: LiveLeaderboardTab
       </TableHeader>
       <TableBody>
         {entries.map((entry) => (
-          <LiveLeaderboardRow key={entry.golfer_id} entry={entry} />
+          <LiveLeaderboardRow key={entry.golfer_id} entry={entry} tournamentRound={currentRound} />
         ))}
       </TableBody>
     </Table>
