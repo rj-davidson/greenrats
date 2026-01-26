@@ -99,8 +99,7 @@ export function TournamentPickHeader({
 
   const countdownLabel = pickWindowState === "not_open" ? "Opens in" : "Closes in";
 
-  const showPickWindowTimes =
-    pickWindowState === "open" && pickWindowOpensAt && pickWindowClosesAt;
+  const showPickWindowTimes = pickWindowState === "open" && pickWindowOpensAt && pickWindowClosesAt;
 
   return (
     <Card>

@@ -45,7 +45,9 @@ export default function TournamentDetailPage() {
 
   const currentPickGolferName = useMemo(() => {
     if (!pickFieldData?.current_pick_golfer_id) return undefined;
-    const entry = pickFieldData.entries.find((e) => e.golfer_id === pickFieldData.current_pick_golfer_id);
+    const entry = pickFieldData.entries.find(
+      (e) => e.golfer_id === pickFieldData.current_pick_golfer_id,
+    );
     return entry?.golfer_name;
   }, [pickFieldData]);
 

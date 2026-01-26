@@ -62,7 +62,7 @@ export function BreadcrumbsProvider({ children, league }: BreadcrumbsProviderPro
   const [extraCrumbs, setExtraCrumbs] = useState<BreadcrumbItemData[]>([]);
   const value = useMemo(
     () => ({ extraCrumbs, setExtraCrumbs, league: league ?? null }),
-    [extraCrumbs, league]
+    [extraCrumbs, league],
   );
 
   return <BreadcrumbsContext.Provider value={value}>{children}</BreadcrumbsContext.Provider>;
