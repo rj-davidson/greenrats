@@ -87,7 +87,7 @@ export default function LeagueDashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(400px,1fr))] gap-6">
         <ActionCard leagueId={leagueId} />
 
         {hasActiveTournament && (
