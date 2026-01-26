@@ -2,6 +2,7 @@
 
 import { DashboardCard } from "./DashboardCard";
 import { Button } from "@/components/shadcn/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
 import {
   Table,
   TableBody,
@@ -55,9 +56,14 @@ export function StandingsCard({ leagueId }: StandingsCardProps) {
   if (!data?.entries.length && !isLoading) {
     return (
       <DashboardCard title="Standings" icon={<UsersIcon className="size-4" />} action={action}>
-        <div className="py-4 text-center text-sm text-muted-foreground">
-          No picks have been made yet.
-        </div>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>No standings yet</EmptyTitle>
+            <EmptyDescription>
+              Standings will appear once league members start making picks.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </DashboardCard>
     );
   }

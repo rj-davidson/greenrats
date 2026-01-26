@@ -3,6 +3,7 @@
 import { DashboardCard } from "./DashboardCard";
 import { Badge } from "@/components/shadcn/badge";
 import { Button } from "@/components/shadcn/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
 import {
   Table,
   TableBody,
@@ -158,7 +159,14 @@ export function RecentTournamentResultsCard({ leagueId }: RecentTournamentResult
           </TableBody>
         </Table>
       ) : (
-        <p className="text-sm text-muted-foreground">Final standings not available yet.</p>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>Results pending</EmptyTitle>
+            <EmptyDescription>
+              Final standings will be posted after the tournament concludes.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </DashboardCard>
   );

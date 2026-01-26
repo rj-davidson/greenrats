@@ -3,6 +3,7 @@
 import { DashboardCard } from "./DashboardCard";
 import { Badge } from "@/components/shadcn/badge";
 import { Button } from "@/components/shadcn/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
 import { useLeagueTournaments } from "@/features/leagues/queries";
 import { useLeaguePicks } from "@/features/picks/queries";
 import {
@@ -266,11 +267,25 @@ export function ActivePickScorecardCard({ leagueId }: ActivePickScorecardCardPro
               </table>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">Scorecard data not available yet.</p>
+            <Empty className="border-none py-4">
+              <EmptyHeader>
+                <EmptyTitle>Waiting for round data</EmptyTitle>
+                <EmptyDescription>
+                  Hole-by-hole scores will appear once play begins.
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No pick for current tournament.</p>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>No scorecard available</EmptyTitle>
+            <EmptyDescription>
+              Hole-by-hole scores will appear once play begins.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </DashboardCard>
   );

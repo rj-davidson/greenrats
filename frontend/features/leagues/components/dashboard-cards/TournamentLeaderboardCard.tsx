@@ -3,6 +3,7 @@
 import { DashboardCard } from "./DashboardCard";
 import { Badge } from "@/components/shadcn/badge";
 import { Button } from "@/components/shadcn/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
 import {
   Table,
   TableBody,
@@ -212,7 +213,14 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
           </TableBody>
         </Table>
       ) : (
-        <p className="text-sm text-muted-foreground">Leaderboard data not available yet.</p>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>Waiting for scores</EmptyTitle>
+            <EmptyDescription>
+              The leaderboard will update once the tournament begins.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </DashboardCard>
   );

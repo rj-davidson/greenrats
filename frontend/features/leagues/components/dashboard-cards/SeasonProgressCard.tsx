@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardCard } from "./DashboardCard";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
 import { Progress } from "@/components/shadcn/progress";
 import { useLeagueTournaments } from "@/features/leagues/queries";
 import type { LeagueTournament } from "@/features/leagues/types";
@@ -68,7 +69,14 @@ export function SeasonProgressCard({ leagueId }: SeasonProgressCardProps) {
           )}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">No tournaments scheduled</p>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>No schedule yet</EmptyTitle>
+            <EmptyDescription>
+              The tournament schedule will appear once it&apos;s published.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </DashboardCard>
   );

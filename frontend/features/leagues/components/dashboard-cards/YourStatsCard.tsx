@@ -1,6 +1,7 @@
 "use client";
 
 import { DashboardCard } from "./DashboardCard";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
 import { useLeagueLeaderboard } from "@/features/leaderboards/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { TrophyIcon } from "lucide-react";
@@ -55,7 +56,14 @@ export function YourStatsCard({ leagueId }: YourStatsCardProps) {
           ) : null}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">Make your first pick to see your stats!</p>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>No stats yet</EmptyTitle>
+            <EmptyDescription>
+              Your rankings and earnings will appear after your first pick.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       )}
     </DashboardCard>
   );

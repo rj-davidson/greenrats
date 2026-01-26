@@ -2,6 +2,7 @@
 
 import { DashboardCard } from "./DashboardCard";
 import { Button } from "@/components/shadcn/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
 import { useUserPicks } from "@/features/picks/queries";
 import { HistoryIcon } from "lucide-react";
 import Link from "next/link";
@@ -48,7 +49,14 @@ export function PickHistoryCard({ leagueId }: PickHistoryCardProps) {
   if (!picks.length && !isLoading) {
     return (
       <DashboardCard title="Pick History" icon={<HistoryIcon className="size-4" />} action={action}>
-        <p className="text-sm text-muted-foreground">You haven&apos;t made any picks yet.</p>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>No picks yet</EmptyTitle>
+            <EmptyDescription>
+              Your pick history will appear here as you make selections throughout the season.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </DashboardCard>
     );
   }

@@ -3,6 +3,7 @@
 import { DashboardCard } from "./DashboardCard";
 import { Badge } from "@/components/shadcn/badge";
 import { Button } from "@/components/shadcn/button";
+import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
 import { useLeagueTournaments } from "@/features/leagues/queries";
 import type { LeagueTournament } from "@/features/leagues/types";
 import { formatCountdown, getPickWindowState } from "@/features/picks/utils";
@@ -108,7 +109,14 @@ export function ActionCard({ leagueId }: ActionCardProps) {
   if (!data?.tournaments.length) {
     return (
       <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
-        <p className="text-sm text-muted-foreground">No upcoming tournaments</p>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>No tournaments scheduled</EmptyTitle>
+            <EmptyDescription>
+              Check back soon for upcoming events.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </DashboardCard>
     );
   }
@@ -118,7 +126,14 @@ export function ActionCard({ leagueId }: ActionCardProps) {
   if (!tournament) {
     return (
       <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
-        <p className="text-sm text-muted-foreground">No upcoming tournaments</p>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>No upcoming picks</EmptyTitle>
+            <EmptyDescription>
+              All pick windows are currently closed. Check back soon.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
       </DashboardCard>
     );
   }
@@ -239,7 +254,10 @@ export function ActionCard({ leagueId }: ActionCardProps) {
       <div className="space-y-3">
         <span className="font-medium">{tournament.name}</span>
         <TournamentDetails tournament={tournament} />
-        <p className="text-sm text-muted-foreground">No pick made for this tournament</p>
+        <div className="rounded-lg bg-muted/50 p-3">
+          <p className="text-sm text-muted-foreground">Pick window closed</p>
+          <p className="font-medium">No selection made</p>
+        </div>
       </div>
     </DashboardCard>
   );
