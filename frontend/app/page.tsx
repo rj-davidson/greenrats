@@ -37,7 +37,7 @@ function HeroSection() {
         </span>
         <span className="flex items-center gap-1.5">
           <TrophyIcon className="size-4 text-primary" />
-          Track real earnings
+          Track league standings
         </span>
         <span className="flex items-center gap-1.5">
           <UsersIcon className="size-4 text-primary" />
@@ -92,15 +92,15 @@ function HowItWorksSection() {
     },
     {
       icon: <TrophyIcon className="size-8" />,
-      title: "Track Earnings",
+      title: "Track Standings",
       description:
-        "Your picks earn real prize money from each tournament. Watch your total grow all season.",
+        "League standings are based on your picks' tournament prize money. Watch your total climb all season.",
     },
     {
       icon: <UsersIcon className="size-8" />,
       title: "Compete in Leagues",
       description:
-        "Create or join leagues with friends. The highest total earnings at season end wins.",
+        "Create or join leagues with friends. The highest total at season end wins.",
     },
   ];
 
