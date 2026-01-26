@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/gofrs/uuid/v5"
 
@@ -14,6 +13,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/league"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
+	tournamentfeature "github.com/rj-davidson/greenrats/internal/features/tournaments"
 )
 
 var ErrLeagueNotFound = errors.New("league not found")
@@ -101,10 +101,9 @@ func (s *Service) ListTournaments(ctx context.Context) (*ListTournamentsResponse
 		return nil, fmt.Errorf("failed to query tournaments: %w", err)
 	}
 
-	now := time.Now().UTC()
 	result := make([]AdminTournament, len(tournaments))
 	for i, t := range tournaments {
-		status := deriveAdminTournamentStatus(t, now)
+		status := string(tournamentfeature.DeriveStatus(t))
 		result[i] = AdminTournament{
 			ID:        t.ID,
 			Name:      t.Name,
@@ -120,20 +119,11 @@ func (s *Service) ListTournaments(ctx context.Context) (*ListTournamentsResponse
 	}, nil
 }
 
-func deriveAdminTournamentStatus(t *ent.Tournament, now time.Time) string {
-	if t.Edges.Champion != nil {
-		return "completed"
-	}
-
-	if t.PickWindowClosesAt != nil && now.After(*t.PickWindowClosesAt) {
-		return "active"
-	}
-	return "upcoming"
-}
-
-var ErrTournamentNotFound = errors.New("tournament not found")
-var ErrGolferNotFound = errors.New("golfer not found")
-var ErrEntryNotFound = errors.New("entry not found")
+var (
+	ErrTournamentNotFound = errors.New("tournament not found")
+	ErrGolferNotFound     = errors.New("golfer not found")
+	ErrEntryNotFound      = errors.New("entry not found")
+)
 
 func (s *Service) ListTournamentField(ctx context.Context, tournamentID uuid.UUID) (*ListFieldResponse, error) {
 	entries, err := s.db.FieldEntry.Query().
