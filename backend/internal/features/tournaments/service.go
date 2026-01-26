@@ -383,6 +383,7 @@ type golferRoundData struct {
 	currentRound int
 	thru         int
 	status       placement.Status
+	earnings     int
 }
 
 func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, includeHoles bool, golferPicksMap map[uuid.UUID][]string) (*GetLeaderboardResponse, error) {
@@ -394,10 +395,17 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 		return nil, fmt.Errorf("failed to get placements: %w", err)
 	}
 
-	statusMap := make(map[uuid.UUID]placement.Status)
+	type placementInfo struct {
+		status   placement.Status
+		earnings int
+	}
+	placementMap := make(map[uuid.UUID]placementInfo)
 	for _, p := range placements {
 		if p.Edges.Golfer != nil {
-			statusMap[p.Edges.Golfer.ID] = p.Status
+			placementMap[p.Edges.Golfer.ID] = placementInfo{
+				status:   p.Status,
+				earnings: p.Earnings,
+			}
 		}
 	}
 
@@ -428,10 +436,12 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 		golferID := r.Edges.Golfer.ID
 		data, ok := golferData[golferID]
 		if !ok {
+			info := placementMap[golferID]
 			data = &golferRoundData{
-				golfer: r.Edges.Golfer,
-				rounds: make([]*ent.Round, 0, 4),
-				status: statusMap[golferID],
+				golfer:   r.Edges.Golfer,
+				rounds:   make([]*ent.Round, 0, 4),
+				status:   info.status,
+				earnings: info.earnings,
 			}
 			golferData[golferID] = data
 		}
@@ -530,7 +540,7 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 			Thru:         data.thru,
 			CurrentRound: data.currentRound,
 			Status:       status,
-			Earnings:     0,
+			Earnings:     data.earnings,
 			Rounds:       make([]RoundScore, 0, len(data.rounds)),
 		}
 
