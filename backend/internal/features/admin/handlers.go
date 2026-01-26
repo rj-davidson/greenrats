@@ -38,7 +38,6 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	automations.Post("/sync-tournaments", h.SyncTournaments)
 	automations.Post("/sync-players", h.SyncPlayers)
 	automations.Post("/sync-leaderboard/:tournamentId", h.SyncLeaderboard)
-	automations.Post("/sync-earnings/:tournamentId", h.SyncEarnings)
 	automations.Post("/sync-field/:tournamentId", h.SyncField)
 	automations.Post("/sync-courses", h.SyncCourses)
 	automations.Post("/sync-golfer-stats", h.SyncGolferSeasonStats)
@@ -146,27 +145,6 @@ func (h *Handler) SyncLeaderboard(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusAccepted).JSON(TriggerResponse{
 		Message: "Leaderboard sync started",
-	})
-}
-
-func (h *Handler) SyncEarnings(c *fiber.Ctx) error {
-	idParam := c.Params("tournamentId")
-	id, err := uuid.FromString(idParam)
-	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid tournament id",
-		})
-	}
-
-	go func() {
-		ctx := context.Background()
-		if err := h.ingestService.SyncEarnings(ctx, id); err != nil {
-			h.logger.Error("earnings sync failed", "error", err, "tournament_id", id)
-		}
-	}()
-
-	return c.Status(fiber.StatusAccepted).JSON(TriggerResponse{
-		Message: "Earnings sync started",
 	})
 }
 

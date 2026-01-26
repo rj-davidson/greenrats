@@ -4,20 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/golfer"
-	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/season"
-	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
-	"github.com/rj-davidson/greenrats/internal/external/exa"
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
-	"github.com/rj-davidson/greenrats/internal/external/openai"
 	"github.com/rj-davidson/greenrats/internal/features/golfers"
 	"github.com/rj-davidson/greenrats/internal/sync"
 )
@@ -27,8 +22,6 @@ type IngestService struct {
 	config      *config.Config
 	ballDontLie *balldontlie.Client
 	syncService *sync.Service
-	exa         *exa.Client
-	openai      *openai.Client
 	golfers     *golfers.Service
 	logger      *slog.Logger
 }
@@ -38,8 +31,6 @@ func NewIngestService(
 	cfg *config.Config,
 	ballDontLie *balldontlie.Client,
 	googlemapsClient *googlemaps.Client,
-	exaClient *exa.Client,
-	openaiClient *openai.Client,
 	golfersSvc *golfers.Service,
 	logger *slog.Logger,
 ) *IngestService {
@@ -48,8 +39,6 @@ func NewIngestService(
 		config:      cfg,
 		ballDontLie: ballDontLie,
 		syncService: sync.NewService(db, googlemapsClient, logger),
-		exa:         exaClient,
-		openai:      openaiClient,
 		golfers:     golfersSvc,
 		logger:      logger,
 	}
@@ -132,83 +121,6 @@ func (s *IngestService) SyncLeaderboard(ctx context.Context, tournamentID uuid.U
 	return nil
 }
 
-func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID) error {
-	t, err := s.db.Tournament.Get(ctx, tournamentID)
-	if err != nil {
-		return fmt.Errorf("failed to find tournament: %w", err)
-	}
-
-	s.logger.Info("starting earnings sync", "tournament", t.Name)
-
-	year := t.SeasonYear
-	if year == 0 {
-		year = t.EndDate.Year()
-	}
-
-	placements, err := s.db.Placement.Query().
-		Where(placement.HasTournamentWith(tournament.IDEQ(t.ID))).
-		WithGolfer().
-		All(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to query placements: %w", err)
-	}
-
-	if len(placements) == 0 {
-		s.logger.Info("no placements, skipping earnings sync", "tournament", t.Name)
-		return nil
-	}
-
-	golferInputs := make([]openai.GolferInput, 0, len(placements))
-	placementByGolferID := make(map[string]*ent.Placement)
-	for _, p := range placements {
-		if p.Edges.Golfer == nil || p.Status == placement.StatusCut || (p.PositionNumeric == nil || *p.PositionNumeric == 0) {
-			continue
-		}
-		g := p.Edges.Golfer
-		input := openai.GolferInput{
-			GolferID: g.ID.String(),
-			Name:     g.Name,
-		}
-		if g.FirstName != nil {
-			input.FirstName = *g.FirstName
-		}
-		if g.LastName != nil {
-			input.LastName = *g.LastName
-		}
-		golferInputs = append(golferInputs, input)
-		placementByGolferID[g.ID.String()] = p
-	}
-
-	if len(golferInputs) == 0 {
-		s.logger.Info("no eligible golfers for earnings sync", "tournament", t.Name)
-		return nil
-	}
-
-	exaResponse, err := s.exa.SearchEarnings(ctx, t.Name, year)
-	if err != nil {
-		return fmt.Errorf("failed to search earnings via Exa: %w", err)
-	}
-
-	if len(exaResponse.Results) == 0 {
-		s.logger.Warn("no Exa results found", "tournament", t.Name)
-		return nil
-	}
-
-	s.logger.Debug("exa results", "tournament", t.Name, "count", len(exaResponse.Results))
-
-	var exaContent strings.Builder
-	for _, result := range exaResponse.Results {
-		exaContent.WriteString(result.Text)
-		exaContent.WriteString("\n\n")
-	}
-
-	s.logger.Info("using OpenAI for golfer matching", "count", len(golferInputs), "tournament", t.Name)
-	updated := s.matchWithOpenAI(ctx, t, exaContent.String(), golferInputs, placementByGolferID)
-
-	s.logger.Info("earnings sync completed", "tournament", t.Name, "updated", updated)
-	return nil
-}
-
 func (s *IngestService) SyncField(ctx context.Context, tournamentID uuid.UUID) error {
 	t, err := s.db.Tournament.Get(ctx, tournamentID)
 	if err != nil {
@@ -239,64 +151,6 @@ func (s *IngestService) SyncField(ctx context.Context, tournamentID uuid.UUID) e
 
 	s.logger.Info("field sync completed", "tournament", t.Name, "processed", processed)
 	return nil
-}
-
-const earningsBatchSize = 10
-
-func (s *IngestService) matchWithOpenAI(
-	ctx context.Context,
-	t *ent.Tournament,
-	content string,
-	golferInputs []openai.GolferInput,
-	placementByGolferID map[string]*ent.Placement,
-) int {
-	leaderboard, err := s.openai.ParseLeaderboardContent(ctx, content, t.Name)
-	if err != nil {
-		s.logger.Warn("failed to parse leaderboard content via OpenAI", "error", err)
-		return 0
-	}
-
-	if len(leaderboard.Entries) == 0 {
-		s.logger.Debug("no leaderboard entries parsed", "tournament", t.Name)
-		return 0
-	}
-
-	var allResults []openai.EarningsResult
-	numBatches := (len(golferInputs) + earningsBatchSize - 1) / earningsBatchSize
-	for batch := range numBatches {
-		start := batch * earningsBatchSize
-		end := min(start+earningsBatchSize, len(golferInputs))
-		batchGolfers := golferInputs[start:end]
-
-		results, err := s.openai.MatchPlayersToLeaderboard(ctx, leaderboard, batchGolfers)
-		if err != nil {
-			s.logger.Warn("failed to match batch", "batch", batch+1, "tournament", t.Name, "error", err)
-			continue
-		}
-
-		allResults = append(allResults, results...)
-	}
-
-	var updated int
-	for _, r := range allResults {
-		p, ok := placementByGolferID[r.GolferID]
-		if !ok {
-			continue
-		}
-
-		if p.Earnings != r.Earnings {
-			_, err := p.Update().
-				SetEarnings(r.Earnings).
-				Save(ctx)
-			if err != nil {
-				s.logger.Warn("failed to update earnings", "golfer_id", r.GolferID, "error", err)
-				continue
-			}
-			updated++
-		}
-	}
-
-	return updated
 }
 
 func (s *IngestService) SyncCourses(ctx context.Context) error {

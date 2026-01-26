@@ -28,11 +28,6 @@ type Config struct {
 	FromEmail    string `mapstructure:"FROM_EMAIL"`
 	SendEmails   bool   `mapstructure:"SEND_EMAILS"`
 
-	OpenAIAPIKey string `mapstructure:"OPENAI_API_KEY"`
-	OpenAIModel  string `mapstructure:"OPENAI_MODEL"`
-
-	ExaAPIKey string `mapstructure:"EXA_API_KEY"`
-
 	CurrentSeason int `mapstructure:"CURRENT_SEASON"`
 
 	AdminEmails []string `mapstructure:"-"`
@@ -54,9 +49,6 @@ func Load() (*Config, error) {
 	v.SetDefault("RESEND_API_KEY", "")
 	v.SetDefault("FROM_EMAIL", "noreply@greenrats.com")
 	v.SetDefault("SEND_EMAILS", false)
-	v.SetDefault("OPENAI_API_KEY", "")
-	v.SetDefault("OPENAI_MODEL", "gpt-4o-mini")
-	v.SetDefault("EXA_API_KEY", "")
 	v.SetDefault("CURRENT_SEASON", 2026)
 
 	v.SetConfigName(".env")
@@ -82,9 +74,6 @@ func Load() (*Config, error) {
 	_ = v.BindEnv("RESEND_API_KEY")
 	_ = v.BindEnv("FROM_EMAIL")
 	_ = v.BindEnv("SEND_EMAILS")
-	_ = v.BindEnv("OPENAI_API_KEY")
-	_ = v.BindEnv("OPENAI_MODEL")
-	_ = v.BindEnv("EXA_API_KEY")
 	_ = v.BindEnv("CURRENT_SEASON")
 
 	var cfg Config

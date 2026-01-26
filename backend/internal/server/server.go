@@ -14,9 +14,7 @@ import (
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
-	"github.com/rj-davidson/greenrats/internal/external/exa"
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
-	"github.com/rj-davidson/greenrats/internal/external/openai"
 	"github.com/rj-davidson/greenrats/internal/features/admin"
 	"github.com/rj-davidson/greenrats/internal/features/golfers"
 	"github.com/rj-davidson/greenrats/internal/features/users"
@@ -84,8 +82,6 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 	emailClient := email.New(cfg, logger)
 
 	bdlClient := balldontlie.New(cfg.BallDontLieAPIKey, cfg.BallDontLieBaseURL, cfg.IsDevelopment(), logger)
-	exaClient := exa.New(cfg.ExaAPIKey, logger)
-	openaiClient := openai.New(cfg.OpenAIAPIKey, cfg.OpenAIModel, logger)
 	golferSvc := golfers.NewService(db)
 
 	var gmapsClient *googlemaps.Client
@@ -98,7 +94,7 @@ func New(cfg *config.Config, db *ent.Client) *Server {
 	}
 
 	adminIngestSvc := admin.NewIngestService(
-		db, cfg, bdlClient, gmapsClient, exaClient, openaiClient, golferSvc, logger,
+		db, cfg, bdlClient, gmapsClient, golferSvc, logger,
 	)
 
 	s := &Server{
