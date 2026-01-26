@@ -141,7 +141,7 @@ function StandingsRow({
 }: StandingsRowProps) {
   return (
     <TableRow
-      className={cn("cursor-pointer", isCurrentUser && "bg-primary/5 font-medium")}
+      className={cn("cursor-pointer", isCurrentUser && "bg-primary/20 hover:bg-primary/25")}
       onClick={onToggle}
       onPointerEnter={onHover}
     >
@@ -152,9 +152,11 @@ function StandingsRow({
           <ChevronRightIcon className="h-4 w-4" />
         )}
       </TableCell>
-      <TableCell className="w-16">{entry.rank_display}</TableCell>
+      <TableCell className={cn("w-16", isCurrentUser && "font-bold")}>
+        {entry.rank_display}
+      </TableCell>
       <TableCell>
-        {entry.user_display_name}
+        <span className={cn(isCurrentUser && "font-bold")}>{entry.user_display_name}</span>
         {isCurrentUser && <span className="ml-2 text-sm text-muted-foreground">(you)</span>}
       </TableCell>
       {showCurrentPick && <TableCell>{entry.current_pick?.golfer_name ?? "--"}</TableCell>}

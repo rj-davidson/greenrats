@@ -112,9 +112,7 @@ export function ActionCard({ leagueId }: ActionCardProps) {
         <Empty className="border-none py-4">
           <EmptyHeader>
             <EmptyTitle>No tournaments scheduled</EmptyTitle>
-            <EmptyDescription>
-              Check back soon for upcoming events.
-            </EmptyDescription>
+            <EmptyDescription>Check back soon for upcoming events.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       </DashboardCard>

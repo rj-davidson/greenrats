@@ -281,9 +281,7 @@ export function ActivePickScorecardCard({ leagueId }: ActivePickScorecardCardPro
         <Empty className="border-none py-4">
           <EmptyHeader>
             <EmptyTitle>No scorecard available</EmptyTitle>
-            <EmptyDescription>
-              Hole-by-hole scores will appear once play begins.
-            </EmptyDescription>
+            <EmptyDescription>Hole-by-hole scores will appear once play begins.</EmptyDescription>
           </EmptyHeader>
         </Empty>
       )}
