@@ -1,6 +1,5 @@
 "use client";
 
-import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Card, CardContent, CardHeader } from "@/components/shadcn/card";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import {
@@ -19,7 +18,7 @@ import {
 import { useLeague, useLeagueTournaments } from "@/features/leagues/queries";
 import { UsersIcon } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 
 export default function LeagueDashboardPage() {
   const params = useParams<{ leagueId: string }>();
@@ -27,16 +26,8 @@ export default function LeagueDashboardPage() {
 
   const { data: leagueData, isLoading: leagueLoading } = useLeague(leagueId);
   const { data: tournamentsData } = useLeagueTournaments(leagueId);
-  const { setExtraCrumbs } = useBreadcrumbs();
 
   const league = leagueData?.league;
-
-  useEffect(() => {
-    if (league?.name) {
-      setExtraCrumbs([{ name: league.name }]);
-    }
-    return () => setExtraCrumbs([]);
-  }, [league?.name, setExtraCrumbs]);
 
   const hasActiveTournament = useMemo(() => {
     return tournamentsData?.tournaments.some((t) => t.status === "active") ?? false;

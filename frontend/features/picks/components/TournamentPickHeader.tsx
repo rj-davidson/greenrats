@@ -2,21 +2,24 @@
 
 import { Badge } from "@/components/shadcn/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/card";
-import type { GetPickFieldResponse, PickWindowState } from "@/features/picks/types";
+import type { PickWindowState } from "@/features/picks/types";
 import { formatPickWindowDate, formatCountdown } from "@/features/picks/utils";
-import {
-  CalendarIcon,
-  ClockIcon,
-  LockIcon,
-  MapPinIcon,
-  TrophyIcon,
-  UnlockIcon,
-  UserIcon,
-} from "lucide-react";
+import { CalendarIcon, MapPinIcon, TrophyIcon, UserIcon } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 interface TournamentPickHeaderProps {
-  data: GetPickFieldResponse;
+  tournamentName: string;
+  startDate: string;
+  endDate: string;
+  isLive?: boolean;
+  course?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  purse?: number | null;
+  pickWindowState?: PickWindowState;
+  pickWindowOpensAt?: string | null;
+  pickWindowClosesAt?: string | null;
   currentPickGolferName?: string;
 }
 
@@ -42,41 +45,33 @@ function formatDateRange(startDate: string, endDate: string): string {
   return `${startMonth} ${startDay} - ${endMonth} ${endDay}`;
 }
 
-function getPickWindowBadge(state: PickWindowState) {
-  switch (state) {
-    case "open":
-      return (
-        <Badge variant="default" className="gap-1">
-          <UnlockIcon className="size-3" />
-          Open
-        </Badge>
-      );
-    case "not_open":
-      return (
-        <Badge variant="secondary" className="gap-1">
-          <ClockIcon className="size-3" />
-          Not Yet Open
-        </Badge>
-      );
-    case "closed":
-      return (
-        <Badge variant="secondary" className="gap-1">
-          <LockIcon className="size-3" />
-          Closed
-        </Badge>
-      );
-  }
+function getCountdownTarget(
+  pickWindowState?: PickWindowState,
+  pickWindowOpensAt?: string | null,
+  pickWindowClosesAt?: string | null,
+): string | null {
+  if (!pickWindowState || pickWindowState === "closed") return null;
+  return pickWindowState === "not_open"
+    ? (pickWindowOpensAt ?? null)
+    : (pickWindowClosesAt ?? null);
 }
 
-function getCountdownTarget(data: GetPickFieldResponse): string | null {
-  if (data.pick_window_state === "closed") return null;
-  return data.pick_window_state === "not_open"
-    ? (data.pick_window_opens_at ?? null)
-    : (data.pick_window_closes_at ?? null);
-}
-
-export function TournamentPickHeader({ data, currentPickGolferName }: TournamentPickHeaderProps) {
-  const targetDate = getCountdownTarget(data);
+export function TournamentPickHeader({
+  tournamentName,
+  startDate,
+  endDate,
+  isLive,
+  course,
+  city,
+  state,
+  country,
+  purse,
+  pickWindowState,
+  pickWindowOpensAt,
+  pickWindowClosesAt,
+  currentPickGolferName,
+}: TournamentPickHeaderProps) {
+  const targetDate = getCountdownTarget(pickWindowState, pickWindowOpensAt, pickWindowClosesAt);
 
   const initialCountdown = useMemo(
     () => (targetDate ? formatCountdown(targetDate) : ""),
@@ -100,23 +95,30 @@ export function TournamentPickHeader({ data, currentPickGolferName }: Tournament
     return () => clearInterval(interval);
   }, [targetDate]);
 
-  const location = [data.course, data.city, data.state, data.country].filter(Boolean).join(", ");
+  const location = [course, city, state, country].filter(Boolean).join(", ");
 
-  const countdownLabel = data.pick_window_state === "not_open" ? "Opens in" : "Closes in";
+  const countdownLabel = pickWindowState === "not_open" ? "Opens in" : "Closes in";
+
+  const showPickWindowTimes =
+    pickWindowState === "open" && pickWindowOpensAt && pickWindowClosesAt;
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-start justify-between gap-2">
-          <CardTitle className="text-xl">{data.tournament_name}</CardTitle>
-          {getPickWindowBadge(data.pick_window_state)}
+          <CardTitle className="text-xl">{tournamentName}</CardTitle>
+          {isLive && (
+            <Badge variant="default" className="text-xs">
+              Live
+            </Badge>
+          )}
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <CalendarIcon className="size-4" />
-            <span>{formatDateRange(data.start_date, data.end_date)}</span>
+            <span>{formatDateRange(startDate, endDate)}</span>
           </div>
           {location && (
             <div className="flex items-center gap-1.5">
@@ -124,34 +126,32 @@ export function TournamentPickHeader({ data, currentPickGolferName }: Tournament
               <span>{location}</span>
             </div>
           )}
-          {data.purse && (
+          {purse && (
             <div className="flex items-center gap-1.5">
               <TrophyIcon className="size-4" />
-              <span>{formatCurrency(data.purse)} Purse</span>
+              <span>{formatCurrency(purse)} Purse</span>
             </div>
           )}
         </div>
 
-        {data.pick_window_state !== "closed" &&
-          data.pick_window_opens_at &&
-          data.pick_window_closes_at && (
-            <div className="flex flex-wrap gap-4 rounded-lg bg-muted/50 p-3 text-sm">
-              <div>
-                <span className="text-muted-foreground">Opens: </span>
-                <span>{formatPickWindowDate(data.pick_window_opens_at)}</span>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Closes: </span>
-                <span>{formatPickWindowDate(data.pick_window_closes_at)}</span>
-              </div>
-              {countdown && (
-                <div className="font-medium">
-                  <span className="text-muted-foreground">{countdownLabel}: </span>
-                  <span className="text-primary">{countdown}</span>
-                </div>
-              )}
+        {showPickWindowTimes && (
+          <div className="flex flex-wrap gap-4 rounded-lg bg-muted/50 p-3 text-sm">
+            <div>
+              <span className="text-muted-foreground">Opens: </span>
+              <span>{formatPickWindowDate(pickWindowOpensAt)}</span>
             </div>
-          )}
+            <div>
+              <span className="text-muted-foreground">Closes: </span>
+              <span>{formatPickWindowDate(pickWindowClosesAt)}</span>
+            </div>
+            {countdown && (
+              <div className="font-medium">
+                <span className="text-muted-foreground">{countdownLabel}: </span>
+                <span className="text-primary">{countdown}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {currentPickGolferName && (
           <div className="flex items-center gap-3 rounded-lg border bg-primary/5 p-3">

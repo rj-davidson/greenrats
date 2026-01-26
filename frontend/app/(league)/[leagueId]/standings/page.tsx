@@ -18,11 +18,9 @@ export default function StandingsPage() {
   const league = leagueData?.league;
 
   useEffect(() => {
-    if (league?.name) {
-      setExtraCrumbs([{ name: league.name, path: `/${leagueId}` }]);
-    }
+    setExtraCrumbs([{ name: "Standings" }]);
     return () => setExtraCrumbs([]);
-  }, [league?.name, leagueId, setExtraCrumbs]);
+  }, [setExtraCrumbs]);
 
   return (
     <div className="space-y-6">

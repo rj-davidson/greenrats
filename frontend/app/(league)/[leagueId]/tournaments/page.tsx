@@ -19,11 +19,9 @@ export default function TournamentsPage() {
   const tournaments = tournamentsData?.tournaments ?? [];
 
   useEffect(() => {
-    if (league?.name) {
-      setExtraCrumbs([{ name: league.name, path: `/${leagueId}` }]);
-    }
+    setExtraCrumbs([{ name: "Tournaments" }]);
     return () => setExtraCrumbs([]);
-  }, [league?.name, leagueId, setExtraCrumbs]);
+  }, [setExtraCrumbs]);
 
   return (
     <div className="space-y-6">

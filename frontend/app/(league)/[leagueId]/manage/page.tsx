@@ -17,11 +17,9 @@ export default function ManagePage() {
   const isOwner = league?.role === "owner";
 
   useEffect(() => {
-    if (league?.name) {
-      setExtraCrumbs([{ name: league.name, path: `/${leagueId}` }]);
-    }
+    setExtraCrumbs([{ name: "Manage" }]);
     return () => setExtraCrumbs([]);
-  }, [league?.name, leagueId, setExtraCrumbs]);
+  }, [setExtraCrumbs]);
 
   if (!isLoading && league && !isOwner) {
     notFound();

@@ -40,16 +40,30 @@ type BreadcrumbItemData = {
   path?: string;
 };
 
+type LeagueContext = {
+  id: string;
+  name: string;
+};
+
 type BreadcrumbsContextValue = {
   extraCrumbs: BreadcrumbItemData[];
   setExtraCrumbs: Dispatch<SetStateAction<BreadcrumbItemData[]>>;
+  league: LeagueContext | null;
 };
 
 const BreadcrumbsContext = createContext<BreadcrumbsContextValue | null>(null);
 
-export function BreadcrumbsProvider({ children }: { children: ReactNode }) {
+interface BreadcrumbsProviderProps {
+  children: ReactNode;
+  league?: LeagueContext;
+}
+
+export function BreadcrumbsProvider({ children, league }: BreadcrumbsProviderProps) {
   const [extraCrumbs, setExtraCrumbs] = useState<BreadcrumbItemData[]>([]);
-  const value = useMemo(() => ({ extraCrumbs, setExtraCrumbs }), [extraCrumbs]);
+  const value = useMemo(
+    () => ({ extraCrumbs, setExtraCrumbs, league: league ?? null }),
+    [extraCrumbs, league]
+  );
 
   return <BreadcrumbsContext.Provider value={value}>{children}</BreadcrumbsContext.Provider>;
 }
@@ -66,7 +80,7 @@ export function useBreadcrumbs() {
 
 export function Breadcrumbs() {
   const pathname = usePathname();
-  const { extraCrumbs } = useBreadcrumbs();
+  const { extraCrumbs, league } = useBreadcrumbs();
 
   const baseCrumbs = useMemo(() => {
     if (!pathname) return [];
@@ -104,6 +118,44 @@ export function Breadcrumbs() {
       isLast: index === merged.length - 1,
     }));
   }, [baseCrumbs, extraCrumbs]);
+
+  if (league) {
+    const isOnDashboard = breadcrumbs.length === 0;
+
+    return (
+      <Breadcrumb className="min-w-0">
+        <BreadcrumbList className="flex-nowrap">
+          <BreadcrumbItem className="min-w-0">
+            {isOnDashboard ? (
+              <BreadcrumbPage className="truncate">{league.name}</BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink asChild>
+                <Link href={`/${league.id}`} className="truncate">
+                  {league.name}
+                </Link>
+              </BreadcrumbLink>
+            )}
+          </BreadcrumbItem>
+          {breadcrumbs.map((crumb) => (
+            <Fragment key={crumb.name}>
+              <BreadcrumbSeparator className="shrink-0" />
+              <BreadcrumbItem className="min-w-0">
+                {crumb.isLast || !crumb.path ? (
+                  <BreadcrumbPage className="truncate">{crumb.name}</BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink asChild>
+                    <Link href={crumb.path} className="truncate">
+                      {crumb.name}
+                    </Link>
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </Fragment>
+          ))}
+        </BreadcrumbList>
+      </Breadcrumb>
+    );
+  }
 
   if (breadcrumbs.length === 0) {
     return null;

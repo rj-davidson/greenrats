@@ -3,7 +3,6 @@
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Button } from "@/components/shadcn/button";
 import { LeagueActivity } from "@/features/leagues/components";
-import { useLeague } from "@/features/leagues/queries";
 import { ArrowLeftIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -13,17 +12,12 @@ export default function AuditPage() {
   const params = useParams<{ leagueId: string }>();
   const leagueId = params.leagueId;
 
-  const { data: leagueData } = useLeague(leagueId);
   const { setExtraCrumbs } = useBreadcrumbs();
 
-  const league = leagueData?.league;
-
   useEffect(() => {
-    if (league?.name) {
-      setExtraCrumbs([{ name: league.name, path: `/${leagueId}` }]);
-    }
+    setExtraCrumbs([{ name: "Audit Log" }]);
     return () => setExtraCrumbs([]);
-  }, [league?.name, leagueId, setExtraCrumbs]);
+  }, [setExtraCrumbs]);
 
   return (
     <div className="space-y-6">

@@ -1,7 +1,6 @@
 "use client";
 
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
-import { Badge } from "@/components/shadcn/badge";
 import {
   Empty,
   EmptyContent,
@@ -11,7 +10,6 @@ import {
   EmptyTitle,
 } from "@/components/shadcn/empty";
 import { Skeleton } from "@/components/shadcn/skeleton";
-import { useLeague } from "@/features/leagues/queries";
 import {
   PickFieldTable,
   PickFieldSkeleton,
@@ -23,30 +21,20 @@ import { LiveExpandableLeaderboard } from "@/features/tournaments/components/liv
 import { PlacementExpandableLeaderboard } from "@/features/tournaments/components/placement";
 import { useTournament } from "@/features/tournaments/queries";
 import { useCurrentUser } from "@/features/users/queries";
-import { CalendarIcon, ClockIcon } from "lucide-react";
+import { ClockIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
-
-function formatDateRange(startDate: string, endDate: string): string {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric", year: "numeric" };
-
-  return `${start.toLocaleDateString("en-US", options)} - ${end.toLocaleDateString("en-US", options)}`;
-}
 
 export default function TournamentDetailPage() {
   const params = useParams<{ leagueId: string; tournamentId: string }>();
   const { leagueId, tournamentId } = params;
 
-  const { data: leagueData } = useLeague(leagueId);
   const { data: tournamentData, isLoading: tournamentLoading } = useTournament(tournamentId);
   const { data: picksData } = useLeaguePicks(leagueId, tournamentId);
   const { data: pickFieldData, isLoading: pickFieldLoading } = usePickField(leagueId, tournamentId);
   const { data: currentUser } = useCurrentUser();
   const { setExtraCrumbs } = useBreadcrumbs();
 
-  const league = leagueData?.league;
   const tournament = tournamentData?.tournament;
 
   const userPickedGolferId = useMemo(() => {
@@ -62,16 +50,15 @@ export default function TournamentDetailPage() {
   }, [pickFieldData]);
 
   useEffect(() => {
-    const crumbs: { name: string; path?: string }[] = [];
-    if (league?.name) {
-      crumbs.push({ name: league.name, path: `/${leagueId}` });
-    }
+    const crumbs: { name: string; path?: string }[] = [
+      { name: "Tournaments", path: `/${leagueId}/tournaments` },
+    ];
     if (tournament?.name) {
       crumbs.push({ name: tournament.name });
     }
     setExtraCrumbs(crumbs);
     return () => setExtraCrumbs([]);
-  }, [league?.name, tournament?.name, leagueId, setExtraCrumbs]);
+  }, [tournament?.name, leagueId, setExtraCrumbs]);
 
   if (tournamentLoading || pickFieldLoading) {
     return (
@@ -96,7 +83,20 @@ export default function TournamentDetailPage() {
   if (pickFieldData?.pick_window_state === "open") {
     return (
       <div className="space-y-6">
-        <TournamentPickHeader data={pickFieldData} currentPickGolferName={currentPickGolferName} />
+        <TournamentPickHeader
+          tournamentName={pickFieldData.tournament_name}
+          startDate={pickFieldData.start_date}
+          endDate={pickFieldData.end_date}
+          course={pickFieldData.course}
+          city={pickFieldData.city}
+          state={pickFieldData.state}
+          country={pickFieldData.country}
+          purse={pickFieldData.purse}
+          pickWindowState={pickFieldData.pick_window_state}
+          pickWindowOpensAt={pickFieldData.pick_window_opens_at}
+          pickWindowClosesAt={pickFieldData.pick_window_closes_at}
+          currentPickGolferName={currentPickGolferName}
+        />
         <PickFieldTable data={pickFieldData} leagueId={leagueId} />
       </div>
     );
@@ -106,13 +106,16 @@ export default function TournamentDetailPage() {
     const opensAt = pickFieldData.pick_window_opens_at;
     return (
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">{tournament.name}</h1>
-          <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-            <CalendarIcon className="size-4" />
-            {formatDateRange(tournament.start_date, tournament.end_date)}
-          </div>
-        </div>
+        <TournamentPickHeader
+          tournamentName={tournament.name}
+          startDate={tournament.start_date}
+          endDate={tournament.end_date}
+          course={tournament.course}
+          city={tournament.city}
+          state={tournament.state}
+          country={tournament.country}
+          purse={tournament.purse}
+        />
         <Empty>
           <EmptyHeader>
             <EmptyMedia variant="icon">
@@ -139,20 +142,17 @@ export default function TournamentDetailPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{tournament.name}</h1>
-          {tournament.status === "active" && (
-            <Badge variant="default" className="text-xs">
-              Live
-            </Badge>
-          )}
-        </div>
-        <div className="mt-1 flex items-center gap-2 text-muted-foreground">
-          <CalendarIcon className="size-4" />
-          {formatDateRange(tournament.start_date, tournament.end_date)}
-        </div>
-      </div>
+      <TournamentPickHeader
+        tournamentName={tournament.name}
+        startDate={tournament.start_date}
+        endDate={tournament.end_date}
+        isLive={tournament.status === "active"}
+        course={tournament.course}
+        city={tournament.city}
+        state={tournament.state}
+        country={tournament.country}
+        purse={tournament.purse}
+      />
       {tournament.status === "completed" ? (
         <PlacementExpandableLeaderboard
           tournamentId={tournamentId}

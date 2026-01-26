@@ -49,7 +49,7 @@ export default async function LeagueLayout({ children, params }: LeagueLayoutPro
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
       <SidebarProvider>
-        <BreadcrumbsProvider>
+        <BreadcrumbsProvider league={{ id: league.id, name: league.name }}>
           <LeagueSidebar
             league={league as { id: string; name: string; role: "owner" | "member" }}
           />
