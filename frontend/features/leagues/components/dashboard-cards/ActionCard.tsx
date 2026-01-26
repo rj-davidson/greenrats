@@ -142,7 +142,7 @@ export function ActionCard({ leagueId }: ActionCardProps) {
             </div>
             <TournamentDetails tournament={tournament} />
             <Link
-              href={`/${leagueId}/tournaments/${tournament.id}/pick`}
+              href={`/${leagueId}/tournaments/${tournament.id}`}
               className="bg-shimmer block rounded-lg p-3 transition-opacity hover:opacity-80"
             >
               <p className="text-sm text-muted-foreground">Your pick</p>
@@ -183,7 +183,7 @@ export function ActionCard({ leagueId }: ActionCardProps) {
             </span>
           </div>
           <Button asChild className="w-full">
-            <Link href={`/${leagueId}/tournaments/${tournament.id}/pick`}>Make Your Pick</Link>
+            <Link href={`/${leagueId}/tournaments/${tournament.id}`}>Make Your Pick</Link>
           </Button>
         </div>
       </DashboardCard>
@@ -219,7 +219,7 @@ export function ActionCard({ leagueId }: ActionCardProps) {
           </div>
           <TournamentDetails tournament={tournament} />
           <Link
-            href={`/${leagueId}/tournaments/${tournament.id}/pick`}
+            href={`/${leagueId}/tournaments/${tournament.id}`}
             className="block rounded-lg bg-muted/50 p-3 transition-opacity hover:opacity-80"
           >
             <p className="text-sm text-muted-foreground">Your pick</p>

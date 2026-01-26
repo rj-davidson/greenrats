@@ -2,14 +2,28 @@
 
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Badge } from "@/components/shadcn/badge";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/shadcn/empty";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { useLeague } from "@/features/leagues/queries";
-import { useLeaguePicks } from "@/features/picks/queries";
+import {
+  PickFieldTable,
+  PickFieldSkeleton,
+  TournamentPickHeader,
+} from "@/features/picks/components";
+import { useLeaguePicks, usePickField } from "@/features/picks/queries";
+import { formatCountdown, formatPickWindowDate } from "@/features/picks/utils";
 import { LiveExpandableLeaderboard } from "@/features/tournaments/components/live";
 import { PlacementExpandableLeaderboard } from "@/features/tournaments/components/placement";
 import { useTournament } from "@/features/tournaments/queries";
 import { useCurrentUser } from "@/features/users/queries";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, ClockIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo } from "react";
 
@@ -28,6 +42,7 @@ export default function TournamentDetailPage() {
   const { data: leagueData } = useLeague(leagueId);
   const { data: tournamentData, isLoading: tournamentLoading } = useTournament(tournamentId);
   const { data: picksData } = useLeaguePicks(leagueId, tournamentId);
+  const { data: pickFieldData, isLoading: pickFieldLoading } = usePickField(leagueId, tournamentId);
   const { data: currentUser } = useCurrentUser();
   const { setExtraCrumbs } = useBreadcrumbs();
 
@@ -39,6 +54,12 @@ export default function TournamentDetailPage() {
     const entry = picksData.entries.find((p) => p.user_id === currentUser.id);
     return entry?.golfer_id;
   }, [currentUser, picksData]);
+
+  const currentPickGolferName = useMemo(() => {
+    if (!pickFieldData?.current_pick_golfer_id) return undefined;
+    const entry = pickFieldData.entries.find((e) => e.golfer_id === pickFieldData.current_pick_golfer_id);
+    return entry?.golfer_name;
+  }, [pickFieldData]);
 
   useEffect(() => {
     const crumbs: { name: string; path?: string }[] = [];
@@ -52,20 +73,66 @@ export default function TournamentDetailPage() {
     return () => setExtraCrumbs([]);
   }, [league?.name, tournament?.name, leagueId, setExtraCrumbs]);
 
-  if (tournamentLoading) {
+  if (tournamentLoading || pickFieldLoading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-20 w-full" />
-        <Skeleton className="h-96 w-full" />
+        <PickFieldSkeleton />
       </div>
     );
   }
 
   if (!tournament) {
     return (
-      <div className="text-center">
-        <h1 className="mb-2 text-2xl font-bold">Tournament Not Found</h1>
-        <p className="text-muted-foreground">The tournament you are looking for does not exist.</p>
+      <Empty>
+        <EmptyHeader>
+          <EmptyTitle>Tournament Not Found</EmptyTitle>
+          <EmptyDescription>The tournament you are looking for does not exist.</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
+    );
+  }
+
+  if (pickFieldData?.pick_window_state === "open") {
+    return (
+      <div className="space-y-6">
+        <TournamentPickHeader data={pickFieldData} currentPickGolferName={currentPickGolferName} />
+        <PickFieldTable data={pickFieldData} leagueId={leagueId} />
+      </div>
+    );
+  }
+
+  if (pickFieldData?.pick_window_state === "not_open") {
+    const opensAt = pickFieldData.pick_window_opens_at;
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">{tournament.name}</h1>
+          <div className="mt-1 flex items-center gap-2 text-muted-foreground">
+            <CalendarIcon className="size-4" />
+            {formatDateRange(tournament.start_date, tournament.end_date)}
+          </div>
+        </div>
+        <Empty>
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <ClockIcon />
+            </EmptyMedia>
+            <EmptyTitle>Pick window not yet open</EmptyTitle>
+            <EmptyDescription>
+              Check back soon to make your pick for this tournament.
+            </EmptyDescription>
+          </EmptyHeader>
+          {opensAt && (
+            <EmptyContent>
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">Opens in</p>
+                <p className="text-2xl font-bold">{formatCountdown(opensAt)}</p>
+                <p className="text-xs text-muted-foreground">{formatPickWindowDate(opensAt)}</p>
+              </div>
+            </EmptyContent>
+          )}
+        </Empty>
       </div>
     );
   }
