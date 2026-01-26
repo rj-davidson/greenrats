@@ -23,6 +23,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -416,6 +417,27 @@ func init() {
 	tournamentDescID := tournamentMixinFields0[0].Descriptor()
 	// tournament.DefaultID holds the default value on creation for the id field.
 	tournament.DefaultID = tournamentDescID.Default.(func() uuid.UUID)
+	tournamentcourseMixin := schema.TournamentCourse{}.Mixin()
+	tournamentcourseMixinFields0 := tournamentcourseMixin[0].Fields()
+	_ = tournamentcourseMixinFields0
+	tournamentcourseMixinFields1 := tournamentcourseMixin[1].Fields()
+	_ = tournamentcourseMixinFields1
+	tournamentcourseFields := schema.TournamentCourse{}.Fields()
+	_ = tournamentcourseFields
+	// tournamentcourseDescCreatedAt is the schema descriptor for created_at field.
+	tournamentcourseDescCreatedAt := tournamentcourseMixinFields1[0].Descriptor()
+	// tournamentcourse.DefaultCreatedAt holds the default value on creation for the created_at field.
+	tournamentcourse.DefaultCreatedAt = tournamentcourseDescCreatedAt.Default.(func() time.Time)
+	// tournamentcourseDescUpdatedAt is the schema descriptor for updated_at field.
+	tournamentcourseDescUpdatedAt := tournamentcourseMixinFields1[1].Descriptor()
+	// tournamentcourse.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	tournamentcourse.DefaultUpdatedAt = tournamentcourseDescUpdatedAt.Default.(func() time.Time)
+	// tournamentcourse.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	tournamentcourse.UpdateDefaultUpdatedAt = tournamentcourseDescUpdatedAt.UpdateDefault.(func() time.Time)
+	// tournamentcourseDescID is the schema descriptor for id field.
+	tournamentcourseDescID := tournamentcourseMixinFields0[0].Descriptor()
+	// tournamentcourse.DefaultID holds the default value on creation for the id field.
+	tournamentcourse.DefaultID = tournamentcourseDescID.Default.(func() uuid.UUID)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0

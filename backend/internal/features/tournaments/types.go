@@ -10,23 +10,41 @@ var (
 	ErrTournamentNotFound  = errors.New("tournament not found")
 )
 
+// CourseInfo represents course information in API responses.
+type CourseInfo struct {
+	ID      string `json:"id"`
+	Name    string `json:"name"`
+	Par     int    `json:"par,omitempty"`
+	Yardage int    `json:"yardage,omitempty"`
+	City    string `json:"city,omitempty"`
+	State   string `json:"state,omitempty"`
+	Country string `json:"country,omitempty"`
+}
+
+// TournamentCourseInfo represents a course used in a tournament.
+type TournamentCourseInfo struct {
+	Course CourseInfo `json:"course"`
+	Rounds []int      `json:"rounds"`
+}
+
 // Tournament represents a golf tournament.
 type Tournament struct {
-	ID                 string     `json:"id"`
-	Name               string     `json:"name"`
-	StartDate          time.Time  `json:"start_date"`
-	EndDate            time.Time  `json:"end_date"`
-	Status             string     `json:"status"` // upcoming, active, completed
-	Course             string     `json:"course,omitempty"`
-	Purse              float64    `json:"purse,omitempty"`
-	City               string     `json:"city,omitempty"`
-	State              string     `json:"state,omitempty"`
-	Country            string     `json:"country,omitempty"`
-	Timezone           string     `json:"timezone,omitempty"`
-	PickWindowOpensAt  *time.Time `json:"pick_window_opens_at,omitempty"`
-	PickWindowClosesAt *time.Time `json:"pick_window_closes_at,omitempty"`
-	ChampionID         string     `json:"champion_id,omitempty"`
-	ChampionName       string     `json:"champion_name,omitempty"`
+	ID                 string                 `json:"id"`
+	Name               string                 `json:"name"`
+	StartDate          time.Time              `json:"start_date"`
+	EndDate            time.Time              `json:"end_date"`
+	Status             string                 `json:"status"` // upcoming, active, completed
+	Course             string                 `json:"course,omitempty"`
+	Courses            []TournamentCourseInfo `json:"courses,omitempty"`
+	Purse              float64                `json:"purse,omitempty"`
+	City               string                 `json:"city,omitempty"`
+	State              string                 `json:"state,omitempty"`
+	Country            string                 `json:"country,omitempty"`
+	Timezone           string                 `json:"timezone,omitempty"`
+	PickWindowOpensAt  *time.Time             `json:"pick_window_opens_at,omitempty"`
+	PickWindowClosesAt *time.Time             `json:"pick_window_closes_at,omitempty"`
+	ChampionID         string                 `json:"champion_id,omitempty"`
+	ChampionName       string                 `json:"champion_name,omitempty"`
 }
 
 // ListTournamentsRequest represents the request parameters for listing tournaments.
@@ -55,6 +73,7 @@ type RoundScore struct {
 	ParRelativeScore *int        `json:"par_relative_score"`
 	TeeTime          *time.Time  `json:"tee_time,omitempty"`
 	Holes            []HoleScore `json:"holes,omitempty"`
+	Course           *CourseInfo `json:"course,omitempty"`
 }
 
 // HoleScore represents a golfer's score on a single hole.

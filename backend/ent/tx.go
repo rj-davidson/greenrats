@@ -44,6 +44,8 @@ type Tx struct {
 	SyncStatus *SyncStatusClient
 	// Tournament is the client for interacting with the Tournament builders.
 	Tournament *TournamentClient
+	// TournamentCourse is the client for interacting with the TournamentCourse builders.
+	TournamentCourse *TournamentCourseClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -193,6 +195,7 @@ func (tx *Tx) init() {
 	tx.Season = NewSeasonClient(tx.config)
 	tx.SyncStatus = NewSyncStatusClient(tx.config)
 	tx.Tournament = NewTournamentClient(tx.config)
+	tx.TournamentCourse = NewTournamentCourseClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

@@ -175,11 +175,11 @@ func (c *Client) GetTournaments(ctx context.Context, season int) ([]Tournament, 
 		}
 
 		_ = result
-		for _, tournament := range response.Data {
-			if tournament.ID > 42 {
+		for i := range response.Data {
+			if response.Data[i].ID > 42 {
 				continue
 			}
-			allTournaments = append(allTournaments, tournament)
+			allTournaments = append(allTournaments, response.Data[i])
 		}
 
 		if response.Meta.NextCursor == 0 {

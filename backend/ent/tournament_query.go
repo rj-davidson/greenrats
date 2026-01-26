@@ -23,24 +23,26 @@ import (
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
 )
 
 // TournamentQuery is the builder for querying Tournament entities.
 type TournamentQuery struct {
 	config
-	ctx                *QueryContext
-	order              []tournament.OrderOption
-	inters             []Interceptor
-	predicates         []predicate.Tournament
-	withPicks          *PickQuery
-	withFieldEntries   *FieldEntryQuery
-	withPlacements     *PlacementQuery
-	withRounds         *RoundQuery
-	withEmailReminders *EmailReminderQuery
-	withChampion       *GolferQuery
-	withSeason         *SeasonQuery
-	withCourseRef      *CourseQuery
-	withFKs            bool
+	ctx                   *QueryContext
+	order                 []tournament.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.Tournament
+	withPicks             *PickQuery
+	withFieldEntries      *FieldEntryQuery
+	withPlacements        *PlacementQuery
+	withRounds            *RoundQuery
+	withEmailReminders    *EmailReminderQuery
+	withTournamentCourses *TournamentCourseQuery
+	withChampion          *GolferQuery
+	withSeason            *SeasonQuery
+	withCourseRef         *CourseQuery
+	withFKs               bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -180,6 +182,28 @@ func (_q *TournamentQuery) QueryEmailReminders() *EmailReminderQuery {
 			sqlgraph.From(tournament.Table, tournament.FieldID, selector),
 			sqlgraph.To(emailreminder.Table, emailreminder.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, tournament.EmailRemindersTable, tournament.EmailRemindersColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTournamentCourses chains the current query on the "tournament_courses" edge.
+func (_q *TournamentQuery) QueryTournamentCourses() *TournamentCourseQuery {
+	query := (&TournamentCourseClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournament.Table, tournament.FieldID, selector),
+			sqlgraph.To(tournamentcourse.Table, tournamentcourse.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tournament.TournamentCoursesTable, tournament.TournamentCoursesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -440,19 +464,20 @@ func (_q *TournamentQuery) Clone() *TournamentQuery {
 		return nil
 	}
 	return &TournamentQuery{
-		config:             _q.config,
-		ctx:                _q.ctx.Clone(),
-		order:              append([]tournament.OrderOption{}, _q.order...),
-		inters:             append([]Interceptor{}, _q.inters...),
-		predicates:         append([]predicate.Tournament{}, _q.predicates...),
-		withPicks:          _q.withPicks.Clone(),
-		withFieldEntries:   _q.withFieldEntries.Clone(),
-		withPlacements:     _q.withPlacements.Clone(),
-		withRounds:         _q.withRounds.Clone(),
-		withEmailReminders: _q.withEmailReminders.Clone(),
-		withChampion:       _q.withChampion.Clone(),
-		withSeason:         _q.withSeason.Clone(),
-		withCourseRef:      _q.withCourseRef.Clone(),
+		config:                _q.config,
+		ctx:                   _q.ctx.Clone(),
+		order:                 append([]tournament.OrderOption{}, _q.order...),
+		inters:                append([]Interceptor{}, _q.inters...),
+		predicates:            append([]predicate.Tournament{}, _q.predicates...),
+		withPicks:             _q.withPicks.Clone(),
+		withFieldEntries:      _q.withFieldEntries.Clone(),
+		withPlacements:        _q.withPlacements.Clone(),
+		withRounds:            _q.withRounds.Clone(),
+		withEmailReminders:    _q.withEmailReminders.Clone(),
+		withTournamentCourses: _q.withTournamentCourses.Clone(),
+		withChampion:          _q.withChampion.Clone(),
+		withSeason:            _q.withSeason.Clone(),
+		withCourseRef:         _q.withCourseRef.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -511,6 +536,17 @@ func (_q *TournamentQuery) WithEmailReminders(opts ...func(*EmailReminderQuery))
 		opt(query)
 	}
 	_q.withEmailReminders = query
+	return _q
+}
+
+// WithTournamentCourses tells the query-builder to eager-load the nodes that are connected to
+// the "tournament_courses" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *TournamentQuery) WithTournamentCourses(opts ...func(*TournamentCourseQuery)) *TournamentQuery {
+	query := (&TournamentCourseClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTournamentCourses = query
 	return _q
 }
 
@@ -626,12 +662,13 @@ func (_q *TournamentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 		nodes       = []*Tournament{}
 		withFKs     = _q.withFKs
 		_spec       = _q.querySpec()
-		loadedTypes = [8]bool{
+		loadedTypes = [9]bool{
 			_q.withPicks != nil,
 			_q.withFieldEntries != nil,
 			_q.withPlacements != nil,
 			_q.withRounds != nil,
 			_q.withEmailReminders != nil,
+			_q.withTournamentCourses != nil,
 			_q.withChampion != nil,
 			_q.withSeason != nil,
 			_q.withCourseRef != nil,
@@ -693,6 +730,15 @@ func (_q *TournamentQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*T
 		if err := _q.loadEmailReminders(ctx, query, nodes,
 			func(n *Tournament) { n.Edges.EmailReminders = []*EmailReminder{} },
 			func(n *Tournament, e *EmailReminder) { n.Edges.EmailReminders = append(n.Edges.EmailReminders, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTournamentCourses; query != nil {
+		if err := _q.loadTournamentCourses(ctx, query, nodes,
+			func(n *Tournament) { n.Edges.TournamentCourses = []*TournamentCourse{} },
+			func(n *Tournament, e *TournamentCourse) {
+				n.Edges.TournamentCourses = append(n.Edges.TournamentCourses, e)
+			}); err != nil {
 			return nil, err
 		}
 	}
@@ -867,6 +913,37 @@ func (_q *TournamentQuery) loadEmailReminders(ctx context.Context, query *EmailR
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "tournament_email_reminders" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *TournamentQuery) loadTournamentCourses(ctx context.Context, query *TournamentCourseQuery, nodes []*Tournament, init func(*Tournament), assign func(*Tournament, *TournamentCourse)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Tournament)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.TournamentCourse(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(tournament.TournamentCoursesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.tournament_tournament_courses
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "tournament_tournament_courses" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "tournament_tournament_courses" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

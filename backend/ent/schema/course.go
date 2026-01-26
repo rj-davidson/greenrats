@@ -75,5 +75,6 @@ func (Course) Edges() []ent.Edge {
 		edge.To("holes", CourseHole.Type),
 		edge.To("tournaments", Tournament.Type),
 		edge.To("rounds", Round.Type),
+		edge.To("tournament_courses", TournamentCourse.Type),
 	}
 }

@@ -24,19 +24,25 @@ type Player struct {
 	Active            bool    `json:"active"`
 }
 
+type TournamentCourse struct {
+	Course CourseRef `json:"course"`
+	Rounds []int     `json:"rounds"`
+}
+
 type Tournament struct {
-	ID         int     `json:"id"`
-	Season     int     `json:"season"`
-	Name       string  `json:"name"`
-	StartDate  string  `json:"start_date"`
-	EndDate    *string `json:"end_date"`
-	City       *string `json:"city"`
-	State      *string `json:"state"`
-	Country    *string `json:"country"`
-	CourseName *string `json:"course_name"`
-	Purse      *string `json:"purse"`
-	Status     *string `json:"status"`
-	Champion   *Player `json:"champion"`
+	ID         int                `json:"id"`
+	Season     int                `json:"season"`
+	Name       string             `json:"name"`
+	StartDate  string             `json:"start_date"`
+	EndDate    *string            `json:"end_date"`
+	City       *string            `json:"city"`
+	State      *string            `json:"state"`
+	Country    *string            `json:"country"`
+	CourseName *string            `json:"course_name"`
+	Courses    []TournamentCourse `json:"courses"`
+	Purse      *string            `json:"purse"`
+	Status     *string            `json:"status"`
+	Champion   *Player            `json:"champion"`
 }
 
 type Course struct {
@@ -146,6 +152,7 @@ type PlayerSeasonStat struct {
 
 type PlayerScorecard struct {
 	Tournament  TournamentRef `json:"tournament"`
+	Course      *CourseRef    `json:"course"`
 	Player      Player        `json:"player"`
 	RoundNumber int           `json:"round_number"`
 	HoleNumber  int           `json:"hole_number"`
@@ -164,17 +171,18 @@ type TournamentField struct {
 }
 
 type TournamentRef struct {
-	ID         int     `json:"id"`
-	Season     int     `json:"season"`
-	Name       string  `json:"name"`
-	StartDate  string  `json:"start_date"`
-	EndDate    *string `json:"end_date"`
-	City       *string `json:"city"`
-	State      *string `json:"state"`
-	Country    *string `json:"country"`
-	CourseName *string `json:"course_name"`
-	Purse      *string `json:"purse"`
-	Status     *string `json:"status"`
+	ID         int                `json:"id"`
+	Season     int                `json:"season"`
+	Name       string             `json:"name"`
+	StartDate  string             `json:"start_date"`
+	EndDate    *string            `json:"end_date"`
+	City       *string            `json:"city"`
+	State      *string            `json:"state"`
+	Country    *string            `json:"country"`
+	CourseName *string            `json:"course_name"`
+	Courses    []TournamentCourse `json:"courses"`
+	Purse      *string            `json:"purse"`
+	Status     *string            `json:"status"`
 }
 
 type CourseRef struct {

@@ -74,6 +74,8 @@ type TournamentEdges struct {
 	Rounds []*Round `json:"rounds,omitempty"`
 	// EmailReminders holds the value of the email_reminders edge.
 	EmailReminders []*EmailReminder `json:"email_reminders,omitempty"`
+	// TournamentCourses holds the value of the tournament_courses edge.
+	TournamentCourses []*TournamentCourse `json:"tournament_courses,omitempty"`
 	// Champion holds the value of the champion edge.
 	Champion *Golfer `json:"champion,omitempty"`
 	// Season holds the value of the season edge.
@@ -82,7 +84,7 @@ type TournamentEdges struct {
 	CourseRef *Course `json:"course_ref,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [8]bool
+	loadedTypes [9]bool
 }
 
 // PicksOrErr returns the Picks value or an error if the edge
@@ -130,12 +132,21 @@ func (e TournamentEdges) EmailRemindersOrErr() ([]*EmailReminder, error) {
 	return nil, &NotLoadedError{edge: "email_reminders"}
 }
 
+// TournamentCoursesOrErr returns the TournamentCourses value or an error if the edge
+// was not loaded in eager-loading.
+func (e TournamentEdges) TournamentCoursesOrErr() ([]*TournamentCourse, error) {
+	if e.loadedTypes[5] {
+		return e.TournamentCourses, nil
+	}
+	return nil, &NotLoadedError{edge: "tournament_courses"}
+}
+
 // ChampionOrErr returns the Champion value or an error if the edge
 // was not loaded in eager-loading, or loaded but was not found.
 func (e TournamentEdges) ChampionOrErr() (*Golfer, error) {
 	if e.Champion != nil {
 		return e.Champion, nil
-	} else if e.loadedTypes[5] {
+	} else if e.loadedTypes[6] {
 		return nil, &NotFoundError{label: golfer.Label}
 	}
 	return nil, &NotLoadedError{edge: "champion"}
@@ -146,7 +157,7 @@ func (e TournamentEdges) ChampionOrErr() (*Golfer, error) {
 func (e TournamentEdges) SeasonOrErr() (*Season, error) {
 	if e.Season != nil {
 		return e.Season, nil
-	} else if e.loadedTypes[6] {
+	} else if e.loadedTypes[7] {
 		return nil, &NotFoundError{label: season.Label}
 	}
 	return nil, &NotLoadedError{edge: "season"}
@@ -157,7 +168,7 @@ func (e TournamentEdges) SeasonOrErr() (*Season, error) {
 func (e TournamentEdges) CourseRefOrErr() (*Course, error) {
 	if e.CourseRef != nil {
 		return e.CourseRef, nil
-	} else if e.loadedTypes[7] {
+	} else if e.loadedTypes[8] {
 		return nil, &NotFoundError{label: course.Label}
 	}
 	return nil, &NotLoadedError{edge: "course_ref"}
@@ -366,6 +377,11 @@ func (_m *Tournament) QueryRounds() *RoundQuery {
 // QueryEmailReminders queries the "email_reminders" edge of the Tournament entity.
 func (_m *Tournament) QueryEmailReminders() *EmailReminderQuery {
 	return NewTournamentClient(_m.config).QueryEmailReminders(_m)
+}
+
+// QueryTournamentCourses queries the "tournament_courses" edge of the Tournament entity.
+func (_m *Tournament) QueryTournamentCourses() *TournamentCourseQuery {
+	return NewTournamentClient(_m.config).QueryTournamentCourses(_m)
 }
 
 // QueryChampion queries the "champion" edge of the Tournament entity.

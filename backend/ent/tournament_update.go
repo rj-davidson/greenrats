@@ -22,6 +22,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
 )
 
 // TournamentUpdate is the builder for updating Tournament entities.
@@ -395,6 +396,21 @@ func (_u *TournamentUpdate) AddEmailReminders(v ...*EmailReminder) *TournamentUp
 	return _u.AddEmailReminderIDs(ids...)
 }
 
+// AddTournamentCourseIDs adds the "tournament_courses" edge to the TournamentCourse entity by IDs.
+func (_u *TournamentUpdate) AddTournamentCourseIDs(ids ...uuid.UUID) *TournamentUpdate {
+	_u.mutation.AddTournamentCourseIDs(ids...)
+	return _u
+}
+
+// AddTournamentCourses adds the "tournament_courses" edges to the TournamentCourse entity.
+func (_u *TournamentUpdate) AddTournamentCourses(v ...*TournamentCourse) *TournamentUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTournamentCourseIDs(ids...)
+}
+
 // SetChampionID sets the "champion" edge to the Golfer entity by ID.
 func (_u *TournamentUpdate) SetChampionID(id uuid.UUID) *TournamentUpdate {
 	_u.mutation.SetChampionID(id)
@@ -552,6 +568,27 @@ func (_u *TournamentUpdate) RemoveEmailReminders(v ...*EmailReminder) *Tournamen
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailReminderIDs(ids...)
+}
+
+// ClearTournamentCourses clears all "tournament_courses" edges to the TournamentCourse entity.
+func (_u *TournamentUpdate) ClearTournamentCourses() *TournamentUpdate {
+	_u.mutation.ClearTournamentCourses()
+	return _u
+}
+
+// RemoveTournamentCourseIDs removes the "tournament_courses" edge to TournamentCourse entities by IDs.
+func (_u *TournamentUpdate) RemoveTournamentCourseIDs(ids ...uuid.UUID) *TournamentUpdate {
+	_u.mutation.RemoveTournamentCourseIDs(ids...)
+	return _u
+}
+
+// RemoveTournamentCourses removes "tournament_courses" edges to TournamentCourse entities.
+func (_u *TournamentUpdate) RemoveTournamentCourses(v ...*TournamentCourse) *TournamentUpdate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTournamentCourseIDs(ids...)
 }
 
 // ClearChampion clears the "champion" edge to the Golfer entity.
@@ -935,6 +972,51 @@ func (_u *TournamentUpdate) sqlSave(ctx context.Context) (_node int, err error) 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TournamentCoursesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournament.TournamentCoursesTable,
+			Columns: []string{tournament.TournamentCoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamentcourse.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTournamentCoursesIDs(); len(nodes) > 0 && !_u.mutation.TournamentCoursesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournament.TournamentCoursesTable,
+			Columns: []string{tournament.TournamentCoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamentcourse.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TournamentCoursesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournament.TournamentCoursesTable,
+			Columns: []string{tournament.TournamentCoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamentcourse.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {
@@ -1407,6 +1489,21 @@ func (_u *TournamentUpdateOne) AddEmailReminders(v ...*EmailReminder) *Tournamen
 	return _u.AddEmailReminderIDs(ids...)
 }
 
+// AddTournamentCourseIDs adds the "tournament_courses" edge to the TournamentCourse entity by IDs.
+func (_u *TournamentUpdateOne) AddTournamentCourseIDs(ids ...uuid.UUID) *TournamentUpdateOne {
+	_u.mutation.AddTournamentCourseIDs(ids...)
+	return _u
+}
+
+// AddTournamentCourses adds the "tournament_courses" edges to the TournamentCourse entity.
+func (_u *TournamentUpdateOne) AddTournamentCourses(v ...*TournamentCourse) *TournamentUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddTournamentCourseIDs(ids...)
+}
+
 // SetChampionID sets the "champion" edge to the Golfer entity by ID.
 func (_u *TournamentUpdateOne) SetChampionID(id uuid.UUID) *TournamentUpdateOne {
 	_u.mutation.SetChampionID(id)
@@ -1564,6 +1661,27 @@ func (_u *TournamentUpdateOne) RemoveEmailReminders(v ...*EmailReminder) *Tourna
 		ids[i] = v[i].ID
 	}
 	return _u.RemoveEmailReminderIDs(ids...)
+}
+
+// ClearTournamentCourses clears all "tournament_courses" edges to the TournamentCourse entity.
+func (_u *TournamentUpdateOne) ClearTournamentCourses() *TournamentUpdateOne {
+	_u.mutation.ClearTournamentCourses()
+	return _u
+}
+
+// RemoveTournamentCourseIDs removes the "tournament_courses" edge to TournamentCourse entities by IDs.
+func (_u *TournamentUpdateOne) RemoveTournamentCourseIDs(ids ...uuid.UUID) *TournamentUpdateOne {
+	_u.mutation.RemoveTournamentCourseIDs(ids...)
+	return _u
+}
+
+// RemoveTournamentCourses removes "tournament_courses" edges to TournamentCourse entities.
+func (_u *TournamentUpdateOne) RemoveTournamentCourses(v ...*TournamentCourse) *TournamentUpdateOne {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveTournamentCourseIDs(ids...)
 }
 
 // ClearChampion clears the "champion" edge to the Golfer entity.
@@ -1977,6 +2095,51 @@ func (_u *TournamentUpdateOne) sqlSave(ctx context.Context) (_node *Tournament, 
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(emailreminder.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.TournamentCoursesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournament.TournamentCoursesTable,
+			Columns: []string{tournament.TournamentCoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamentcourse.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedTournamentCoursesIDs(); len(nodes) > 0 && !_u.mutation.TournamentCoursesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournament.TournamentCoursesTable,
+			Columns: []string{tournament.TournamentCoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamentcourse.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.TournamentCoursesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   tournament.TournamentCoursesTable,
+			Columns: []string{tournament.TournamentCoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamentcourse.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

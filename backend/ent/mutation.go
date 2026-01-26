@@ -29,6 +29,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -57,6 +58,7 @@ const (
 	TypeSeason             = "Season"
 	TypeSyncStatus         = "SyncStatus"
 	TypeTournament         = "Tournament"
+	TypeTournamentCourse   = "TournamentCourse"
 	TypeUser               = "User"
 )
 
@@ -764,41 +766,44 @@ func (m *CommissionerActionMutation) ResetEdge(name string) error {
 // CourseMutation represents an operation that mutates the Course nodes in the graph.
 type CourseMutation struct {
 	config
-	op                 Op
-	typ                string
-	id                 *uuid.UUID
-	created_at         *time.Time
-	updated_at         *time.Time
-	bdl_id             *int
-	addbdl_id          *int
-	pga_tour_id        *string
-	name               *string
-	par                *int
-	addpar             *int
-	yardage            *int
-	addyardage         *int
-	city               *string
-	state              *string
-	country            *string
-	established        *int
-	addestablished     *int
-	architect          *string
-	fairway_grass      *string
-	rough_grass        *string
-	green_grass        *string
-	clearedFields      map[string]struct{}
-	holes              map[uuid.UUID]struct{}
-	removedholes       map[uuid.UUID]struct{}
-	clearedholes       bool
-	tournaments        map[uuid.UUID]struct{}
-	removedtournaments map[uuid.UUID]struct{}
-	clearedtournaments bool
-	rounds             map[uuid.UUID]struct{}
-	removedrounds      map[uuid.UUID]struct{}
-	clearedrounds      bool
-	done               bool
-	oldValue           func(context.Context) (*Course, error)
-	predicates         []predicate.Course
+	op                        Op
+	typ                       string
+	id                        *uuid.UUID
+	created_at                *time.Time
+	updated_at                *time.Time
+	bdl_id                    *int
+	addbdl_id                 *int
+	pga_tour_id               *string
+	name                      *string
+	par                       *int
+	addpar                    *int
+	yardage                   *int
+	addyardage                *int
+	city                      *string
+	state                     *string
+	country                   *string
+	established               *int
+	addestablished            *int
+	architect                 *string
+	fairway_grass             *string
+	rough_grass               *string
+	green_grass               *string
+	clearedFields             map[string]struct{}
+	holes                     map[uuid.UUID]struct{}
+	removedholes              map[uuid.UUID]struct{}
+	clearedholes              bool
+	tournaments               map[uuid.UUID]struct{}
+	removedtournaments        map[uuid.UUID]struct{}
+	clearedtournaments        bool
+	rounds                    map[uuid.UUID]struct{}
+	removedrounds             map[uuid.UUID]struct{}
+	clearedrounds             bool
+	tournament_courses        map[uuid.UUID]struct{}
+	removedtournament_courses map[uuid.UUID]struct{}
+	clearedtournament_courses bool
+	done                      bool
+	oldValue                  func(context.Context) (*Course, error)
+	predicates                []predicate.Course
 }
 
 var _ ent.Mutation = (*CourseMutation)(nil)
@@ -1847,6 +1852,60 @@ func (m *CourseMutation) ResetRounds() {
 	m.removedrounds = nil
 }
 
+// AddTournamentCourseIDs adds the "tournament_courses" edge to the TournamentCourse entity by ids.
+func (m *CourseMutation) AddTournamentCourseIDs(ids ...uuid.UUID) {
+	if m.tournament_courses == nil {
+		m.tournament_courses = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.tournament_courses[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTournamentCourses clears the "tournament_courses" edge to the TournamentCourse entity.
+func (m *CourseMutation) ClearTournamentCourses() {
+	m.clearedtournament_courses = true
+}
+
+// TournamentCoursesCleared reports if the "tournament_courses" edge to the TournamentCourse entity was cleared.
+func (m *CourseMutation) TournamentCoursesCleared() bool {
+	return m.clearedtournament_courses
+}
+
+// RemoveTournamentCourseIDs removes the "tournament_courses" edge to the TournamentCourse entity by IDs.
+func (m *CourseMutation) RemoveTournamentCourseIDs(ids ...uuid.UUID) {
+	if m.removedtournament_courses == nil {
+		m.removedtournament_courses = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.tournament_courses, ids[i])
+		m.removedtournament_courses[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTournamentCourses returns the removed IDs of the "tournament_courses" edge to the TournamentCourse entity.
+func (m *CourseMutation) RemovedTournamentCoursesIDs() (ids []uuid.UUID) {
+	for id := range m.removedtournament_courses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TournamentCoursesIDs returns the "tournament_courses" edge IDs in the mutation.
+func (m *CourseMutation) TournamentCoursesIDs() (ids []uuid.UUID) {
+	for id := range m.tournament_courses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTournamentCourses resets all changes to the "tournament_courses" edge.
+func (m *CourseMutation) ResetTournamentCourses() {
+	m.tournament_courses = nil
+	m.clearedtournament_courses = false
+	m.removedtournament_courses = nil
+}
+
 // Where appends a list predicates to the CourseMutation builder.
 func (m *CourseMutation) Where(ps ...predicate.Course) {
 	m.predicates = append(m.predicates, ps...)
@@ -2344,7 +2403,7 @@ func (m *CourseMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *CourseMutation) AddedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.holes != nil {
 		edges = append(edges, course.EdgeHoles)
 	}
@@ -2353,6 +2412,9 @@ func (m *CourseMutation) AddedEdges() []string {
 	}
 	if m.rounds != nil {
 		edges = append(edges, course.EdgeRounds)
+	}
+	if m.tournament_courses != nil {
+		edges = append(edges, course.EdgeTournamentCourses)
 	}
 	return edges
 }
@@ -2379,13 +2441,19 @@ func (m *CourseMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case course.EdgeTournamentCourses:
+		ids := make([]ent.Value, 0, len(m.tournament_courses))
+		for id := range m.tournament_courses {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *CourseMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.removedholes != nil {
 		edges = append(edges, course.EdgeHoles)
 	}
@@ -2394,6 +2462,9 @@ func (m *CourseMutation) RemovedEdges() []string {
 	}
 	if m.removedrounds != nil {
 		edges = append(edges, course.EdgeRounds)
+	}
+	if m.removedtournament_courses != nil {
+		edges = append(edges, course.EdgeTournamentCourses)
 	}
 	return edges
 }
@@ -2420,13 +2491,19 @@ func (m *CourseMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case course.EdgeTournamentCourses:
+		ids := make([]ent.Value, 0, len(m.removedtournament_courses))
+		for id := range m.removedtournament_courses {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *CourseMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 3)
+	edges := make([]string, 0, 4)
 	if m.clearedholes {
 		edges = append(edges, course.EdgeHoles)
 	}
@@ -2435,6 +2512,9 @@ func (m *CourseMutation) ClearedEdges() []string {
 	}
 	if m.clearedrounds {
 		edges = append(edges, course.EdgeRounds)
+	}
+	if m.clearedtournament_courses {
+		edges = append(edges, course.EdgeTournamentCourses)
 	}
 	return edges
 }
@@ -2449,6 +2529,8 @@ func (m *CourseMutation) EdgeCleared(name string) bool {
 		return m.clearedtournaments
 	case course.EdgeRounds:
 		return m.clearedrounds
+	case course.EdgeTournamentCourses:
+		return m.clearedtournament_courses
 	}
 	return false
 }
@@ -2473,6 +2555,9 @@ func (m *CourseMutation) ResetEdge(name string) error {
 		return nil
 	case course.EdgeRounds:
 		m.ResetRounds()
+		return nil
+	case course.EdgeTournamentCourses:
+		m.ResetTournamentCourses()
 		return nil
 	}
 	return fmt.Errorf("unknown Course edge %s", name)
@@ -15199,53 +15284,56 @@ func (m *SyncStatusMutation) ResetEdge(name string) error {
 // TournamentMutation represents an operation that mutates the Tournament nodes in the graph.
 type TournamentMutation struct {
 	config
-	op                     Op
-	typ                    string
-	id                     *uuid.UUID
-	created_at             *time.Time
-	updated_at             *time.Time
-	bdl_id                 *int
-	addbdl_id              *int
-	pga_tour_id            *string
-	name                   *string
-	start_date             *time.Time
-	end_date               *time.Time
-	season_year            *int
-	addseason_year         *int
-	course                 *string
-	city                   *string
-	state                  *string
-	country                *string
-	timezone               *string
-	pick_window_opens_at   *time.Time
-	pick_window_closes_at  *time.Time
-	purse                  *int
-	addpurse               *int
-	clearedFields          map[string]struct{}
-	picks                  map[uuid.UUID]struct{}
-	removedpicks           map[uuid.UUID]struct{}
-	clearedpicks           bool
-	field_entries          map[uuid.UUID]struct{}
-	removedfield_entries   map[uuid.UUID]struct{}
-	clearedfield_entries   bool
-	placements             map[uuid.UUID]struct{}
-	removedplacements      map[uuid.UUID]struct{}
-	clearedplacements      bool
-	rounds                 map[uuid.UUID]struct{}
-	removedrounds          map[uuid.UUID]struct{}
-	clearedrounds          bool
-	email_reminders        map[uuid.UUID]struct{}
-	removedemail_reminders map[uuid.UUID]struct{}
-	clearedemail_reminders bool
-	champion               *uuid.UUID
-	clearedchampion        bool
-	season                 *uuid.UUID
-	clearedseason          bool
-	course_ref             *uuid.UUID
-	clearedcourse_ref      bool
-	done                   bool
-	oldValue               func(context.Context) (*Tournament, error)
-	predicates             []predicate.Tournament
+	op                        Op
+	typ                       string
+	id                        *uuid.UUID
+	created_at                *time.Time
+	updated_at                *time.Time
+	bdl_id                    *int
+	addbdl_id                 *int
+	pga_tour_id               *string
+	name                      *string
+	start_date                *time.Time
+	end_date                  *time.Time
+	season_year               *int
+	addseason_year            *int
+	course                    *string
+	city                      *string
+	state                     *string
+	country                   *string
+	timezone                  *string
+	pick_window_opens_at      *time.Time
+	pick_window_closes_at     *time.Time
+	purse                     *int
+	addpurse                  *int
+	clearedFields             map[string]struct{}
+	picks                     map[uuid.UUID]struct{}
+	removedpicks              map[uuid.UUID]struct{}
+	clearedpicks              bool
+	field_entries             map[uuid.UUID]struct{}
+	removedfield_entries      map[uuid.UUID]struct{}
+	clearedfield_entries      bool
+	placements                map[uuid.UUID]struct{}
+	removedplacements         map[uuid.UUID]struct{}
+	clearedplacements         bool
+	rounds                    map[uuid.UUID]struct{}
+	removedrounds             map[uuid.UUID]struct{}
+	clearedrounds             bool
+	email_reminders           map[uuid.UUID]struct{}
+	removedemail_reminders    map[uuid.UUID]struct{}
+	clearedemail_reminders    bool
+	tournament_courses        map[uuid.UUID]struct{}
+	removedtournament_courses map[uuid.UUID]struct{}
+	clearedtournament_courses bool
+	champion                  *uuid.UUID
+	clearedchampion           bool
+	season                    *uuid.UUID
+	clearedseason             bool
+	course_ref                *uuid.UUID
+	clearedcourse_ref         bool
+	done                      bool
+	oldValue                  func(context.Context) (*Tournament, error)
+	predicates                []predicate.Tournament
 }
 
 var _ ent.Mutation = (*TournamentMutation)(nil)
@@ -16390,6 +16478,60 @@ func (m *TournamentMutation) ResetEmailReminders() {
 	m.removedemail_reminders = nil
 }
 
+// AddTournamentCourseIDs adds the "tournament_courses" edge to the TournamentCourse entity by ids.
+func (m *TournamentMutation) AddTournamentCourseIDs(ids ...uuid.UUID) {
+	if m.tournament_courses == nil {
+		m.tournament_courses = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		m.tournament_courses[ids[i]] = struct{}{}
+	}
+}
+
+// ClearTournamentCourses clears the "tournament_courses" edge to the TournamentCourse entity.
+func (m *TournamentMutation) ClearTournamentCourses() {
+	m.clearedtournament_courses = true
+}
+
+// TournamentCoursesCleared reports if the "tournament_courses" edge to the TournamentCourse entity was cleared.
+func (m *TournamentMutation) TournamentCoursesCleared() bool {
+	return m.clearedtournament_courses
+}
+
+// RemoveTournamentCourseIDs removes the "tournament_courses" edge to the TournamentCourse entity by IDs.
+func (m *TournamentMutation) RemoveTournamentCourseIDs(ids ...uuid.UUID) {
+	if m.removedtournament_courses == nil {
+		m.removedtournament_courses = make(map[uuid.UUID]struct{})
+	}
+	for i := range ids {
+		delete(m.tournament_courses, ids[i])
+		m.removedtournament_courses[ids[i]] = struct{}{}
+	}
+}
+
+// RemovedTournamentCourses returns the removed IDs of the "tournament_courses" edge to the TournamentCourse entity.
+func (m *TournamentMutation) RemovedTournamentCoursesIDs() (ids []uuid.UUID) {
+	for id := range m.removedtournament_courses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// TournamentCoursesIDs returns the "tournament_courses" edge IDs in the mutation.
+func (m *TournamentMutation) TournamentCoursesIDs() (ids []uuid.UUID) {
+	for id := range m.tournament_courses {
+		ids = append(ids, id)
+	}
+	return
+}
+
+// ResetTournamentCourses resets all changes to the "tournament_courses" edge.
+func (m *TournamentMutation) ResetTournamentCourses() {
+	m.tournament_courses = nil
+	m.clearedtournament_courses = false
+	m.removedtournament_courses = nil
+}
+
 // SetChampionID sets the "champion" edge to the Golfer entity by id.
 func (m *TournamentMutation) SetChampionID(id uuid.UUID) {
 	m.champion = &id
@@ -16997,7 +17139,7 @@ func (m *TournamentMutation) ResetField(name string) error {
 
 // AddedEdges returns all edge names that were set/added in this mutation.
 func (m *TournamentMutation) AddedEdges() []string {
-	edges := make([]string, 0, 8)
+	edges := make([]string, 0, 9)
 	if m.picks != nil {
 		edges = append(edges, tournament.EdgePicks)
 	}
@@ -17012,6 +17154,9 @@ func (m *TournamentMutation) AddedEdges() []string {
 	}
 	if m.email_reminders != nil {
 		edges = append(edges, tournament.EdgeEmailReminders)
+	}
+	if m.tournament_courses != nil {
+		edges = append(edges, tournament.EdgeTournamentCourses)
 	}
 	if m.champion != nil {
 		edges = append(edges, tournament.EdgeChampion)
@@ -17059,6 +17204,12 @@ func (m *TournamentMutation) AddedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case tournament.EdgeTournamentCourses:
+		ids := make([]ent.Value, 0, len(m.tournament_courses))
+		for id := range m.tournament_courses {
+			ids = append(ids, id)
+		}
+		return ids
 	case tournament.EdgeChampion:
 		if id := m.champion; id != nil {
 			return []ent.Value{*id}
@@ -17077,7 +17228,7 @@ func (m *TournamentMutation) AddedIDs(name string) []ent.Value {
 
 // RemovedEdges returns all edge names that were removed in this mutation.
 func (m *TournamentMutation) RemovedEdges() []string {
-	edges := make([]string, 0, 8)
+	edges := make([]string, 0, 9)
 	if m.removedpicks != nil {
 		edges = append(edges, tournament.EdgePicks)
 	}
@@ -17092,6 +17243,9 @@ func (m *TournamentMutation) RemovedEdges() []string {
 	}
 	if m.removedemail_reminders != nil {
 		edges = append(edges, tournament.EdgeEmailReminders)
+	}
+	if m.removedtournament_courses != nil {
+		edges = append(edges, tournament.EdgeTournamentCourses)
 	}
 	return edges
 }
@@ -17130,13 +17284,19 @@ func (m *TournamentMutation) RemovedIDs(name string) []ent.Value {
 			ids = append(ids, id)
 		}
 		return ids
+	case tournament.EdgeTournamentCourses:
+		ids := make([]ent.Value, 0, len(m.removedtournament_courses))
+		for id := range m.removedtournament_courses {
+			ids = append(ids, id)
+		}
+		return ids
 	}
 	return nil
 }
 
 // ClearedEdges returns all edge names that were cleared in this mutation.
 func (m *TournamentMutation) ClearedEdges() []string {
-	edges := make([]string, 0, 8)
+	edges := make([]string, 0, 9)
 	if m.clearedpicks {
 		edges = append(edges, tournament.EdgePicks)
 	}
@@ -17151,6 +17311,9 @@ func (m *TournamentMutation) ClearedEdges() []string {
 	}
 	if m.clearedemail_reminders {
 		edges = append(edges, tournament.EdgeEmailReminders)
+	}
+	if m.clearedtournament_courses {
+		edges = append(edges, tournament.EdgeTournamentCourses)
 	}
 	if m.clearedchampion {
 		edges = append(edges, tournament.EdgeChampion)
@@ -17178,6 +17341,8 @@ func (m *TournamentMutation) EdgeCleared(name string) bool {
 		return m.clearedrounds
 	case tournament.EdgeEmailReminders:
 		return m.clearedemail_reminders
+	case tournament.EdgeTournamentCourses:
+		return m.clearedtournament_courses
 	case tournament.EdgeChampion:
 		return m.clearedchampion
 	case tournament.EdgeSeason:
@@ -17224,6 +17389,9 @@ func (m *TournamentMutation) ResetEdge(name string) error {
 	case tournament.EdgeEmailReminders:
 		m.ResetEmailReminders()
 		return nil
+	case tournament.EdgeTournamentCourses:
+		m.ResetTournamentCourses()
+		return nil
 	case tournament.EdgeChampion:
 		m.ResetChampion()
 		return nil
@@ -17235,6 +17403,611 @@ func (m *TournamentMutation) ResetEdge(name string) error {
 		return nil
 	}
 	return fmt.Errorf("unknown Tournament edge %s", name)
+}
+
+// TournamentCourseMutation represents an operation that mutates the TournamentCourse nodes in the graph.
+type TournamentCourseMutation struct {
+	config
+	op                Op
+	typ               string
+	id                *uuid.UUID
+	created_at        *time.Time
+	updated_at        *time.Time
+	rounds            *[]int
+	appendrounds      []int
+	clearedFields     map[string]struct{}
+	tournament        *uuid.UUID
+	clearedtournament bool
+	course            *uuid.UUID
+	clearedcourse     bool
+	done              bool
+	oldValue          func(context.Context) (*TournamentCourse, error)
+	predicates        []predicate.TournamentCourse
+}
+
+var _ ent.Mutation = (*TournamentCourseMutation)(nil)
+
+// tournamentcourseOption allows management of the mutation configuration using functional options.
+type tournamentcourseOption func(*TournamentCourseMutation)
+
+// newTournamentCourseMutation creates new mutation for the TournamentCourse entity.
+func newTournamentCourseMutation(c config, op Op, opts ...tournamentcourseOption) *TournamentCourseMutation {
+	m := &TournamentCourseMutation{
+		config:        c,
+		op:            op,
+		typ:           TypeTournamentCourse,
+		clearedFields: make(map[string]struct{}),
+	}
+	for _, opt := range opts {
+		opt(m)
+	}
+	return m
+}
+
+// withTournamentCourseID sets the ID field of the mutation.
+func withTournamentCourseID(id uuid.UUID) tournamentcourseOption {
+	return func(m *TournamentCourseMutation) {
+		var (
+			err   error
+			once  sync.Once
+			value *TournamentCourse
+		)
+		m.oldValue = func(ctx context.Context) (*TournamentCourse, error) {
+			once.Do(func() {
+				if m.done {
+					err = errors.New("querying old values post mutation is not allowed")
+				} else {
+					value, err = m.Client().TournamentCourse.Get(ctx, id)
+				}
+			})
+			return value, err
+		}
+		m.id = &id
+	}
+}
+
+// withTournamentCourse sets the old TournamentCourse of the mutation.
+func withTournamentCourse(node *TournamentCourse) tournamentcourseOption {
+	return func(m *TournamentCourseMutation) {
+		m.oldValue = func(context.Context) (*TournamentCourse, error) {
+			return node, nil
+		}
+		m.id = &node.ID
+	}
+}
+
+// Client returns a new `ent.Client` from the mutation. If the mutation was
+// executed in a transaction (ent.Tx), a transactional client is returned.
+func (m TournamentCourseMutation) Client() *Client {
+	client := &Client{config: m.config}
+	client.init()
+	return client
+}
+
+// Tx returns an `ent.Tx` for mutations that were executed in transactions;
+// it returns an error otherwise.
+func (m TournamentCourseMutation) Tx() (*Tx, error) {
+	if _, ok := m.driver.(*txDriver); !ok {
+		return nil, errors.New("ent: mutation is not running in a transaction")
+	}
+	tx := &Tx{config: m.config}
+	tx.init()
+	return tx, nil
+}
+
+// SetID sets the value of the id field. Note that this
+// operation is only accepted on creation of TournamentCourse entities.
+func (m *TournamentCourseMutation) SetID(id uuid.UUID) {
+	m.id = &id
+}
+
+// ID returns the ID value in the mutation. Note that the ID is only available
+// if it was provided to the builder or after it was returned from the database.
+func (m *TournamentCourseMutation) ID() (id uuid.UUID, exists bool) {
+	if m.id == nil {
+		return
+	}
+	return *m.id, true
+}
+
+// IDs queries the database and returns the entity ids that match the mutation's predicate.
+// That means, if the mutation is applied within a transaction with an isolation level such
+// as sql.LevelSerializable, the returned ids match the ids of the rows that will be updated
+// or updated by the mutation.
+func (m *TournamentCourseMutation) IDs(ctx context.Context) ([]uuid.UUID, error) {
+	switch {
+	case m.op.Is(OpUpdateOne | OpDeleteOne):
+		id, exists := m.ID()
+		if exists {
+			return []uuid.UUID{id}, nil
+		}
+		fallthrough
+	case m.op.Is(OpUpdate | OpDelete):
+		return m.Client().TournamentCourse.Query().Where(m.predicates...).IDs(ctx)
+	default:
+		return nil, fmt.Errorf("IDs is not allowed on %s operations", m.op)
+	}
+}
+
+// SetCreatedAt sets the "created_at" field.
+func (m *TournamentCourseMutation) SetCreatedAt(t time.Time) {
+	m.created_at = &t
+}
+
+// CreatedAt returns the value of the "created_at" field in the mutation.
+func (m *TournamentCourseMutation) CreatedAt() (r time.Time, exists bool) {
+	v := m.created_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldCreatedAt returns the old "created_at" field's value of the TournamentCourse entity.
+// If the TournamentCourse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentCourseMutation) OldCreatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldCreatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldCreatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldCreatedAt: %w", err)
+	}
+	return oldValue.CreatedAt, nil
+}
+
+// ResetCreatedAt resets all changes to the "created_at" field.
+func (m *TournamentCourseMutation) ResetCreatedAt() {
+	m.created_at = nil
+}
+
+// SetUpdatedAt sets the "updated_at" field.
+func (m *TournamentCourseMutation) SetUpdatedAt(t time.Time) {
+	m.updated_at = &t
+}
+
+// UpdatedAt returns the value of the "updated_at" field in the mutation.
+func (m *TournamentCourseMutation) UpdatedAt() (r time.Time, exists bool) {
+	v := m.updated_at
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldUpdatedAt returns the old "updated_at" field's value of the TournamentCourse entity.
+// If the TournamentCourse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentCourseMutation) OldUpdatedAt(ctx context.Context) (v time.Time, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldUpdatedAt is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldUpdatedAt requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldUpdatedAt: %w", err)
+	}
+	return oldValue.UpdatedAt, nil
+}
+
+// ResetUpdatedAt resets all changes to the "updated_at" field.
+func (m *TournamentCourseMutation) ResetUpdatedAt() {
+	m.updated_at = nil
+}
+
+// SetRounds sets the "rounds" field.
+func (m *TournamentCourseMutation) SetRounds(i []int) {
+	m.rounds = &i
+	m.appendrounds = nil
+}
+
+// Rounds returns the value of the "rounds" field in the mutation.
+func (m *TournamentCourseMutation) Rounds() (r []int, exists bool) {
+	v := m.rounds
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldRounds returns the old "rounds" field's value of the TournamentCourse entity.
+// If the TournamentCourse object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *TournamentCourseMutation) OldRounds(ctx context.Context) (v []int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldRounds is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldRounds requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldRounds: %w", err)
+	}
+	return oldValue.Rounds, nil
+}
+
+// AppendRounds adds i to the "rounds" field.
+func (m *TournamentCourseMutation) AppendRounds(i []int) {
+	m.appendrounds = append(m.appendrounds, i...)
+}
+
+// AppendedRounds returns the list of values that were appended to the "rounds" field in this mutation.
+func (m *TournamentCourseMutation) AppendedRounds() ([]int, bool) {
+	if len(m.appendrounds) == 0 {
+		return nil, false
+	}
+	return m.appendrounds, true
+}
+
+// ClearRounds clears the value of the "rounds" field.
+func (m *TournamentCourseMutation) ClearRounds() {
+	m.rounds = nil
+	m.appendrounds = nil
+	m.clearedFields[tournamentcourse.FieldRounds] = struct{}{}
+}
+
+// RoundsCleared returns if the "rounds" field was cleared in this mutation.
+func (m *TournamentCourseMutation) RoundsCleared() bool {
+	_, ok := m.clearedFields[tournamentcourse.FieldRounds]
+	return ok
+}
+
+// ResetRounds resets all changes to the "rounds" field.
+func (m *TournamentCourseMutation) ResetRounds() {
+	m.rounds = nil
+	m.appendrounds = nil
+	delete(m.clearedFields, tournamentcourse.FieldRounds)
+}
+
+// SetTournamentID sets the "tournament" edge to the Tournament entity by id.
+func (m *TournamentCourseMutation) SetTournamentID(id uuid.UUID) {
+	m.tournament = &id
+}
+
+// ClearTournament clears the "tournament" edge to the Tournament entity.
+func (m *TournamentCourseMutation) ClearTournament() {
+	m.clearedtournament = true
+}
+
+// TournamentCleared reports if the "tournament" edge to the Tournament entity was cleared.
+func (m *TournamentCourseMutation) TournamentCleared() bool {
+	return m.clearedtournament
+}
+
+// TournamentID returns the "tournament" edge ID in the mutation.
+func (m *TournamentCourseMutation) TournamentID() (id uuid.UUID, exists bool) {
+	if m.tournament != nil {
+		return *m.tournament, true
+	}
+	return
+}
+
+// TournamentIDs returns the "tournament" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// TournamentID instead. It exists only for internal usage by the builders.
+func (m *TournamentCourseMutation) TournamentIDs() (ids []uuid.UUID) {
+	if id := m.tournament; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetTournament resets all changes to the "tournament" edge.
+func (m *TournamentCourseMutation) ResetTournament() {
+	m.tournament = nil
+	m.clearedtournament = false
+}
+
+// SetCourseID sets the "course" edge to the Course entity by id.
+func (m *TournamentCourseMutation) SetCourseID(id uuid.UUID) {
+	m.course = &id
+}
+
+// ClearCourse clears the "course" edge to the Course entity.
+func (m *TournamentCourseMutation) ClearCourse() {
+	m.clearedcourse = true
+}
+
+// CourseCleared reports if the "course" edge to the Course entity was cleared.
+func (m *TournamentCourseMutation) CourseCleared() bool {
+	return m.clearedcourse
+}
+
+// CourseID returns the "course" edge ID in the mutation.
+func (m *TournamentCourseMutation) CourseID() (id uuid.UUID, exists bool) {
+	if m.course != nil {
+		return *m.course, true
+	}
+	return
+}
+
+// CourseIDs returns the "course" edge IDs in the mutation.
+// Note that IDs always returns len(IDs) <= 1 for unique edges, and you should use
+// CourseID instead. It exists only for internal usage by the builders.
+func (m *TournamentCourseMutation) CourseIDs() (ids []uuid.UUID) {
+	if id := m.course; id != nil {
+		ids = append(ids, *id)
+	}
+	return
+}
+
+// ResetCourse resets all changes to the "course" edge.
+func (m *TournamentCourseMutation) ResetCourse() {
+	m.course = nil
+	m.clearedcourse = false
+}
+
+// Where appends a list predicates to the TournamentCourseMutation builder.
+func (m *TournamentCourseMutation) Where(ps ...predicate.TournamentCourse) {
+	m.predicates = append(m.predicates, ps...)
+}
+
+// WhereP appends storage-level predicates to the TournamentCourseMutation builder. Using this method,
+// users can use type-assertion to append predicates that do not depend on any generated package.
+func (m *TournamentCourseMutation) WhereP(ps ...func(*sql.Selector)) {
+	p := make([]predicate.TournamentCourse, len(ps))
+	for i := range ps {
+		p[i] = ps[i]
+	}
+	m.Where(p...)
+}
+
+// Op returns the operation name.
+func (m *TournamentCourseMutation) Op() Op {
+	return m.op
+}
+
+// SetOp allows setting the mutation operation.
+func (m *TournamentCourseMutation) SetOp(op Op) {
+	m.op = op
+}
+
+// Type returns the node type of this mutation (TournamentCourse).
+func (m *TournamentCourseMutation) Type() string {
+	return m.typ
+}
+
+// Fields returns all fields that were changed during this mutation. Note that in
+// order to get all numeric fields that were incremented/decremented, call
+// AddedFields().
+func (m *TournamentCourseMutation) Fields() []string {
+	fields := make([]string, 0, 3)
+	if m.created_at != nil {
+		fields = append(fields, tournamentcourse.FieldCreatedAt)
+	}
+	if m.updated_at != nil {
+		fields = append(fields, tournamentcourse.FieldUpdatedAt)
+	}
+	if m.rounds != nil {
+		fields = append(fields, tournamentcourse.FieldRounds)
+	}
+	return fields
+}
+
+// Field returns the value of a field with the given name. The second boolean
+// return value indicates that this field was not set, or was not defined in the
+// schema.
+func (m *TournamentCourseMutation) Field(name string) (ent.Value, bool) {
+	switch name {
+	case tournamentcourse.FieldCreatedAt:
+		return m.CreatedAt()
+	case tournamentcourse.FieldUpdatedAt:
+		return m.UpdatedAt()
+	case tournamentcourse.FieldRounds:
+		return m.Rounds()
+	}
+	return nil, false
+}
+
+// OldField returns the old value of the field from the database. An error is
+// returned if the mutation operation is not UpdateOne, or the query to the
+// database failed.
+func (m *TournamentCourseMutation) OldField(ctx context.Context, name string) (ent.Value, error) {
+	switch name {
+	case tournamentcourse.FieldCreatedAt:
+		return m.OldCreatedAt(ctx)
+	case tournamentcourse.FieldUpdatedAt:
+		return m.OldUpdatedAt(ctx)
+	case tournamentcourse.FieldRounds:
+		return m.OldRounds(ctx)
+	}
+	return nil, fmt.Errorf("unknown TournamentCourse field %s", name)
+}
+
+// SetField sets the value of a field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TournamentCourseMutation) SetField(name string, value ent.Value) error {
+	switch name {
+	case tournamentcourse.FieldCreatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetCreatedAt(v)
+		return nil
+	case tournamentcourse.FieldUpdatedAt:
+		v, ok := value.(time.Time)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetUpdatedAt(v)
+		return nil
+	case tournamentcourse.FieldRounds:
+		v, ok := value.([]int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetRounds(v)
+		return nil
+	}
+	return fmt.Errorf("unknown TournamentCourse field %s", name)
+}
+
+// AddedFields returns all numeric fields that were incremented/decremented during
+// this mutation.
+func (m *TournamentCourseMutation) AddedFields() []string {
+	return nil
+}
+
+// AddedField returns the numeric value that was incremented/decremented on a field
+// with the given name. The second boolean return value indicates that this field
+// was not set, or was not defined in the schema.
+func (m *TournamentCourseMutation) AddedField(name string) (ent.Value, bool) {
+	return nil, false
+}
+
+// AddField adds the value to the field with the given name. It returns an error if
+// the field is not defined in the schema, or if the type mismatched the field
+// type.
+func (m *TournamentCourseMutation) AddField(name string, value ent.Value) error {
+	switch name {
+	}
+	return fmt.Errorf("unknown TournamentCourse numeric field %s", name)
+}
+
+// ClearedFields returns all nullable fields that were cleared during this
+// mutation.
+func (m *TournamentCourseMutation) ClearedFields() []string {
+	var fields []string
+	if m.FieldCleared(tournamentcourse.FieldRounds) {
+		fields = append(fields, tournamentcourse.FieldRounds)
+	}
+	return fields
+}
+
+// FieldCleared returns a boolean indicating if a field with the given name was
+// cleared in this mutation.
+func (m *TournamentCourseMutation) FieldCleared(name string) bool {
+	_, ok := m.clearedFields[name]
+	return ok
+}
+
+// ClearField clears the value of the field with the given name. It returns an
+// error if the field is not defined in the schema.
+func (m *TournamentCourseMutation) ClearField(name string) error {
+	switch name {
+	case tournamentcourse.FieldRounds:
+		m.ClearRounds()
+		return nil
+	}
+	return fmt.Errorf("unknown TournamentCourse nullable field %s", name)
+}
+
+// ResetField resets all changes in the mutation for the field with the given name.
+// It returns an error if the field is not defined in the schema.
+func (m *TournamentCourseMutation) ResetField(name string) error {
+	switch name {
+	case tournamentcourse.FieldCreatedAt:
+		m.ResetCreatedAt()
+		return nil
+	case tournamentcourse.FieldUpdatedAt:
+		m.ResetUpdatedAt()
+		return nil
+	case tournamentcourse.FieldRounds:
+		m.ResetRounds()
+		return nil
+	}
+	return fmt.Errorf("unknown TournamentCourse field %s", name)
+}
+
+// AddedEdges returns all edge names that were set/added in this mutation.
+func (m *TournamentCourseMutation) AddedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.tournament != nil {
+		edges = append(edges, tournamentcourse.EdgeTournament)
+	}
+	if m.course != nil {
+		edges = append(edges, tournamentcourse.EdgeCourse)
+	}
+	return edges
+}
+
+// AddedIDs returns all IDs (to other nodes) that were added for the given edge
+// name in this mutation.
+func (m *TournamentCourseMutation) AddedIDs(name string) []ent.Value {
+	switch name {
+	case tournamentcourse.EdgeTournament:
+		if id := m.tournament; id != nil {
+			return []ent.Value{*id}
+		}
+	case tournamentcourse.EdgeCourse:
+		if id := m.course; id != nil {
+			return []ent.Value{*id}
+		}
+	}
+	return nil
+}
+
+// RemovedEdges returns all edge names that were removed in this mutation.
+func (m *TournamentCourseMutation) RemovedEdges() []string {
+	edges := make([]string, 0, 2)
+	return edges
+}
+
+// RemovedIDs returns all IDs (to other nodes) that were removed for the edge with
+// the given name in this mutation.
+func (m *TournamentCourseMutation) RemovedIDs(name string) []ent.Value {
+	return nil
+}
+
+// ClearedEdges returns all edge names that were cleared in this mutation.
+func (m *TournamentCourseMutation) ClearedEdges() []string {
+	edges := make([]string, 0, 2)
+	if m.clearedtournament {
+		edges = append(edges, tournamentcourse.EdgeTournament)
+	}
+	if m.clearedcourse {
+		edges = append(edges, tournamentcourse.EdgeCourse)
+	}
+	return edges
+}
+
+// EdgeCleared returns a boolean which indicates if the edge with the given name
+// was cleared in this mutation.
+func (m *TournamentCourseMutation) EdgeCleared(name string) bool {
+	switch name {
+	case tournamentcourse.EdgeTournament:
+		return m.clearedtournament
+	case tournamentcourse.EdgeCourse:
+		return m.clearedcourse
+	}
+	return false
+}
+
+// ClearEdge clears the value of the edge with the given name. It returns an error
+// if that edge is not defined in the schema.
+func (m *TournamentCourseMutation) ClearEdge(name string) error {
+	switch name {
+	case tournamentcourse.EdgeTournament:
+		m.ClearTournament()
+		return nil
+	case tournamentcourse.EdgeCourse:
+		m.ClearCourse()
+		return nil
+	}
+	return fmt.Errorf("unknown TournamentCourse unique edge %s", name)
+}
+
+// ResetEdge resets all changes to the edge with the given name in this mutation.
+// It returns an error if the edge is not defined in the schema.
+func (m *TournamentCourseMutation) ResetEdge(name string) error {
+	switch name {
+	case tournamentcourse.EdgeTournament:
+		m.ResetTournament()
+		return nil
+	case tournamentcourse.EdgeCourse:
+		m.ResetCourse()
+		return nil
+	}
+	return fmt.Errorf("unknown TournamentCourse edge %s", name)
 }
 
 // UserMutation represents an operation that mutates the User nodes in the graph.

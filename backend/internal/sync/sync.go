@@ -21,6 +21,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
 	"github.com/rj-davidson/greenrats/internal/external/pgatour"
@@ -228,6 +229,34 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 		}
 
 		s.logger.Debug("updated tournament", "name", t.Name)
+	}
+
+	if len(t.Courses) > 0 {
+		for _, tc := range t.Courses {
+			courseEnt, err := s.UpsertCourseFromRef(ctx, &tc.Course)
+			if err != nil {
+				s.logger.Warn("failed to upsert course from tournament",
+					"tournament", t.Name,
+					"course", tc.Course.Name,
+					"error", err)
+				continue
+			}
+
+			if err := s.UpsertTournamentCourse(ctx, result.Tournament.ID, courseEnt.ID, tc.Rounds); err != nil {
+				s.logger.Warn("failed to upsert tournament course",
+					"tournament", t.Name,
+					"course", tc.Course.Name,
+					"error", err)
+			}
+		}
+
+		if result.Tournament.Course == nil || *result.Tournament.Course == "" {
+			courseName := t.Courses[0].Course.Name
+			_, err := result.Tournament.Update().SetCourse(courseName).Save(ctx)
+			if err != nil {
+				s.logger.Warn("failed to set primary course name", "error", err)
+			}
+		}
 	}
 
 	return result, nil
@@ -794,6 +823,108 @@ func (s *Service) UpsertCourseHole(ctx context.Context, courseID uuid.UUID, h *b
 	return nil
 }
 
+func (s *Service) UpsertCourseFromRef(ctx context.Context, ref *balldontlie.CourseRef) (*ent.Course, error) {
+	existing, err := s.db.Course.Query().
+		Where(course.BdlID(ref.ID)).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		builder := s.db.Course.Create().
+			SetBdlID(ref.ID).
+			SetName(ref.Name)
+
+		if ref.Par != nil {
+			builder.SetPar(*ref.Par)
+		}
+		if ref.City != nil {
+			builder.SetCity(*ref.City)
+		}
+		if ref.State != nil {
+			builder.SetState(*ref.State)
+		}
+		if ref.Country != nil {
+			builder.SetCountry(*ref.Country)
+		}
+		if ref.Yardage != nil && *ref.Yardage != "" {
+			if yardage, err := strconv.Atoi(*ref.Yardage); err == nil {
+				builder.SetYardage(yardage)
+			}
+		}
+
+		created, err := builder.Save(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create course: %w", err)
+		}
+		s.logger.Debug("created course from ref", "name", ref.Name)
+		return created, nil
+
+	case err != nil:
+		return nil, fmt.Errorf("failed to query course: %w", err)
+
+	default:
+		return existing, nil
+	}
+}
+
+func (s *Service) UpsertTournamentCourse(ctx context.Context, tournamentID, courseID uuid.UUID, rounds []int) error {
+	existing, err := s.db.TournamentCourse.Query().
+		Where(
+			tournamentcourse.HasTournamentWith(tournament.IDEQ(tournamentID)),
+			tournamentcourse.HasCourseWith(course.IDEQ(courseID)),
+		).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		_, err := s.db.TournamentCourse.Create().
+			SetTournamentID(tournamentID).
+			SetCourseID(courseID).
+			SetRounds(rounds).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create tournament course: %w", err)
+		}
+
+	case err != nil:
+		return fmt.Errorf("failed to query tournament course: %w", err)
+
+	default:
+		_, err := existing.Update().
+			SetRounds(rounds).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update tournament course: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) getCourseForRound(ctx context.Context, tournamentID uuid.UUID, roundNumber int) *uuid.UUID {
+	tcs, err := s.db.TournamentCourse.Query().
+		Where(tournamentcourse.HasTournamentWith(tournament.IDEQ(tournamentID))).
+		WithCourse().
+		All(ctx)
+	if err != nil || len(tcs) == 0 {
+		return nil
+	}
+
+	if len(tcs) == 1 {
+		return &tcs[0].Edges.Course.ID
+	}
+
+	for _, tc := range tcs {
+		for _, r := range tc.Rounds {
+			if r == roundNumber {
+				return &tc.Edges.Course.ID
+			}
+		}
+	}
+
+	return nil
+}
+
 func (s *Service) UpsertRound(ctx context.Context, tournamentID, golferID uuid.UUID, r *balldontlie.PlayerRoundResult) (*ent.Round, error) {
 	existing, err := s.db.Round.Query().
 		Where(
@@ -803,12 +934,18 @@ func (s *Service) UpsertRound(ctx context.Context, tournamentID, golferID uuid.U
 		).
 		Only(ctx)
 
+	courseID := s.getCourseForRound(ctx, tournamentID, r.RoundNumber)
+
 	switch {
 	case ent.IsNotFound(err):
 		builder := s.db.Round.Create().
 			SetTournamentID(tournamentID).
 			SetGolferID(golferID).
 			SetRoundNumber(r.RoundNumber)
+
+		if courseID != nil {
+			builder.SetCourseID(*courseID)
+		}
 
 		if r.Score != nil {
 			builder.SetScore(*r.Score)
@@ -829,6 +966,9 @@ func (s *Service) UpsertRound(ctx context.Context, tournamentID, golferID uuid.U
 	default:
 		updater := existing.Update()
 
+		if courseID != nil {
+			updater.SetCourseID(*courseID)
+		}
 		if r.Score != nil {
 			updater.SetScore(*r.Score)
 		}

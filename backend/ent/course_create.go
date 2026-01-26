@@ -15,6 +15,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/coursehole"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
 )
 
 // CourseCreate is the builder for creating a Course entity.
@@ -285,6 +286,21 @@ func (_c *CourseCreate) AddRounds(v ...*Round) *CourseCreate {
 	return _c.AddRoundIDs(ids...)
 }
 
+// AddTournamentCourseIDs adds the "tournament_courses" edge to the TournamentCourse entity by IDs.
+func (_c *CourseCreate) AddTournamentCourseIDs(ids ...uuid.UUID) *CourseCreate {
+	_c.mutation.AddTournamentCourseIDs(ids...)
+	return _c
+}
+
+// AddTournamentCourses adds the "tournament_courses" edges to the TournamentCourse entity.
+func (_c *CourseCreate) AddTournamentCourses(v ...*TournamentCourse) *CourseCreate {
+	ids := make([]uuid.UUID, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _c.AddTournamentCourseIDs(ids...)
+}
+
 // Mutation returns the CourseMutation object of the builder.
 func (_c *CourseCreate) Mutation() *CourseMutation {
 	return _c.mutation
@@ -486,6 +502,22 @@ func (_c *CourseCreate) createSpec() (*Course, *sqlgraph.CreateSpec) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(round.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := _c.mutation.TournamentCoursesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   course.TournamentCoursesTable,
+			Columns: []string{course.TournamentCoursesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(tournamentcourse.FieldID, field.TypeUUID),
 			},
 		}
 		for _, k := range nodes {

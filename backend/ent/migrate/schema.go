@@ -584,6 +584,42 @@ var (
 			},
 		},
 	}
+	// TournamentCoursesColumns holds the columns for the "tournament_courses" table.
+	TournamentCoursesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeUUID},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "rounds", Type: field.TypeJSON, Nullable: true},
+		{Name: "course_tournament_courses", Type: field.TypeUUID},
+		{Name: "tournament_tournament_courses", Type: field.TypeUUID},
+	}
+	// TournamentCoursesTable holds the schema information for the "tournament_courses" table.
+	TournamentCoursesTable = &schema.Table{
+		Name:       "tournament_courses",
+		Columns:    TournamentCoursesColumns,
+		PrimaryKey: []*schema.Column{TournamentCoursesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "tournament_courses_courses_tournament_courses",
+				Columns:    []*schema.Column{TournamentCoursesColumns[4]},
+				RefColumns: []*schema.Column{CoursesColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "tournament_courses_tournaments_tournament_courses",
+				Columns:    []*schema.Column{TournamentCoursesColumns[5]},
+				RefColumns: []*schema.Column{TournamentsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "tournamentcourse_tournament_tournament_courses_course_tournament_courses",
+				Unique:  true,
+				Columns: []*schema.Column{TournamentCoursesColumns[5], TournamentCoursesColumns[4]},
+			},
+		},
+	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
@@ -618,6 +654,7 @@ var (
 		SeasonsTable,
 		SyncStatusTable,
 		TournamentsTable,
+		TournamentCoursesTable,
 		UsersTable,
 	}
 )
@@ -652,4 +689,6 @@ func init() {
 	TournamentsTable.ForeignKeys[0].RefTable = CoursesTable
 	TournamentsTable.ForeignKeys[1].RefTable = SeasonsTable
 	TournamentsTable.ForeignKeys[2].RefTable = GolfersTable
+	TournamentCoursesTable.ForeignKeys[0].RefTable = CoursesTable
+	TournamentCoursesTable.ForeignKeys[1].RefTable = TournamentsTable
 }

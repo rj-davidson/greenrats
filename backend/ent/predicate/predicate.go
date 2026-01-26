@@ -54,5 +54,8 @@ type SyncStatus func(*sql.Selector)
 // Tournament is the predicate function for tournament builders.
 type Tournament func(*sql.Selector)
 
+// TournamentCourse is the predicate function for tournamentcourse builders.
+type TournamentCourse func(*sql.Selector)
+
 // User is the predicate function for user builders.
 type User func(*sql.Selector)

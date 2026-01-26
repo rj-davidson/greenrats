@@ -2,6 +2,21 @@ import { z } from "zod";
 
 export const tournamentStatusSchema = z.enum(["upcoming", "active", "completed"]);
 
+export const courseInfoSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  par: z.number().optional(),
+  yardage: z.number().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+});
+
+export const tournamentCourseInfoSchema = z.object({
+  course: courseInfoSchema,
+  rounds: z.array(z.number()),
+});
+
 export const tournamentSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -9,6 +24,7 @@ export const tournamentSchema = z.object({
   end_date: z.string(),
   status: tournamentStatusSchema,
   course: z.string().optional(),
+  courses: z.array(tournamentCourseInfoSchema).optional(),
   purse: z.number().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
@@ -41,6 +57,7 @@ export const roundScoreSchema = z.object({
   par_relative_score: z.number().nullable(),
   tee_time: z.string().optional(),
   holes: z.array(holeScoreSchema).optional(),
+  course: courseInfoSchema.optional(),
 });
 
 export const leaderboardEntryRawSchema = z.object({
@@ -108,6 +125,8 @@ export const getFieldResponseSchema = z.object({
 
 export type TournamentStatus = z.infer<typeof tournamentStatusSchema>;
 export type Tournament = z.infer<typeof tournamentSchema>;
+export type CourseInfo = z.infer<typeof courseInfoSchema>;
+export type TournamentCourseInfo = z.infer<typeof tournamentCourseInfoSchema>;
 export type ListTournamentsResponse = z.infer<typeof listTournamentsResponseSchema>;
 export type GetTournamentResponse = z.infer<typeof getTournamentResponseSchema>;
 export type HoleScore = z.infer<typeof holeScoreSchema>;

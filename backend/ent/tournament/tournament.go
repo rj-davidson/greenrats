@@ -57,6 +57,8 @@ const (
 	EdgeRounds = "rounds"
 	// EdgeEmailReminders holds the string denoting the email_reminders edge name in mutations.
 	EdgeEmailReminders = "email_reminders"
+	// EdgeTournamentCourses holds the string denoting the tournament_courses edge name in mutations.
+	EdgeTournamentCourses = "tournament_courses"
 	// EdgeChampion holds the string denoting the champion edge name in mutations.
 	EdgeChampion = "champion"
 	// EdgeSeason holds the string denoting the season edge name in mutations.
@@ -100,6 +102,13 @@ const (
 	EmailRemindersInverseTable = "email_reminders"
 	// EmailRemindersColumn is the table column denoting the email_reminders relation/edge.
 	EmailRemindersColumn = "tournament_email_reminders"
+	// TournamentCoursesTable is the table that holds the tournament_courses relation/edge.
+	TournamentCoursesTable = "tournament_courses"
+	// TournamentCoursesInverseTable is the table name for the TournamentCourse entity.
+	// It exists in this package in order to avoid circular dependency with the "tournamentcourse" package.
+	TournamentCoursesInverseTable = "tournament_courses"
+	// TournamentCoursesColumn is the table column denoting the tournament_courses relation/edge.
+	TournamentCoursesColumn = "tournament_tournament_courses"
 	// ChampionTable is the table that holds the champion relation/edge.
 	ChampionTable = "tournaments"
 	// ChampionInverseTable is the table name for the Golfer entity.
@@ -338,6 +347,20 @@ func ByEmailReminders(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 	}
 }
 
+// ByTournamentCoursesCount orders the results by tournament_courses count.
+func ByTournamentCoursesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTournamentCoursesStep(), opts...)
+	}
+}
+
+// ByTournamentCourses orders the results by tournament_courses terms.
+func ByTournamentCourses(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTournamentCoursesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+
 // ByChampionField orders the results by champion field.
 func ByChampionField(field string, opts ...sql.OrderTermOption) OrderOption {
 	return func(s *sql.Selector) {
@@ -391,6 +414,13 @@ func newEmailRemindersStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(EmailRemindersInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, EmailRemindersTable, EmailRemindersColumn),
+	)
+}
+func newTournamentCoursesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TournamentCoursesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TournamentCoursesTable, TournamentCoursesColumn),
 	)
 }
 func newChampionStep() *sqlgraph.Step {

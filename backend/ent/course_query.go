@@ -18,18 +18,20 @@ import (
 	"github.com/rj-davidson/greenrats/ent/predicate"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
 )
 
 // CourseQuery is the builder for querying Course entities.
 type CourseQuery struct {
 	config
-	ctx             *QueryContext
-	order           []course.OrderOption
-	inters          []Interceptor
-	predicates      []predicate.Course
-	withHoles       *CourseHoleQuery
-	withTournaments *TournamentQuery
-	withRounds      *RoundQuery
+	ctx                   *QueryContext
+	order                 []course.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.Course
+	withHoles             *CourseHoleQuery
+	withTournaments       *TournamentQuery
+	withRounds            *RoundQuery
+	withTournamentCourses *TournamentCourseQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -125,6 +127,28 @@ func (_q *CourseQuery) QueryRounds() *RoundQuery {
 			sqlgraph.From(course.Table, course.FieldID, selector),
 			sqlgraph.To(round.Table, round.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, course.RoundsTable, course.RoundsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryTournamentCourses chains the current query on the "tournament_courses" edge.
+func (_q *CourseQuery) QueryTournamentCourses() *TournamentCourseQuery {
+	query := (&TournamentCourseClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(course.Table, course.FieldID, selector),
+			sqlgraph.To(tournamentcourse.Table, tournamentcourse.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, course.TournamentCoursesTable, course.TournamentCoursesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -319,14 +343,15 @@ func (_q *CourseQuery) Clone() *CourseQuery {
 		return nil
 	}
 	return &CourseQuery{
-		config:          _q.config,
-		ctx:             _q.ctx.Clone(),
-		order:           append([]course.OrderOption{}, _q.order...),
-		inters:          append([]Interceptor{}, _q.inters...),
-		predicates:      append([]predicate.Course{}, _q.predicates...),
-		withHoles:       _q.withHoles.Clone(),
-		withTournaments: _q.withTournaments.Clone(),
-		withRounds:      _q.withRounds.Clone(),
+		config:                _q.config,
+		ctx:                   _q.ctx.Clone(),
+		order:                 append([]course.OrderOption{}, _q.order...),
+		inters:                append([]Interceptor{}, _q.inters...),
+		predicates:            append([]predicate.Course{}, _q.predicates...),
+		withHoles:             _q.withHoles.Clone(),
+		withTournaments:       _q.withTournaments.Clone(),
+		withRounds:            _q.withRounds.Clone(),
+		withTournamentCourses: _q.withTournamentCourses.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -363,6 +388,17 @@ func (_q *CourseQuery) WithRounds(opts ...func(*RoundQuery)) *CourseQuery {
 		opt(query)
 	}
 	_q.withRounds = query
+	return _q
+}
+
+// WithTournamentCourses tells the query-builder to eager-load the nodes that are connected to
+// the "tournament_courses" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *CourseQuery) WithTournamentCourses(opts ...func(*TournamentCourseQuery)) *CourseQuery {
+	query := (&TournamentCourseClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withTournamentCourses = query
 	return _q
 }
 
@@ -444,10 +480,11 @@ func (_q *CourseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cours
 	var (
 		nodes       = []*Course{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
+		loadedTypes = [4]bool{
 			_q.withHoles != nil,
 			_q.withTournaments != nil,
 			_q.withRounds != nil,
+			_q.withTournamentCourses != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -486,6 +523,13 @@ func (_q *CourseQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Cours
 		if err := _q.loadRounds(ctx, query, nodes,
 			func(n *Course) { n.Edges.Rounds = []*Round{} },
 			func(n *Course, e *Round) { n.Edges.Rounds = append(n.Edges.Rounds, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withTournamentCourses; query != nil {
+		if err := _q.loadTournamentCourses(ctx, query, nodes,
+			func(n *Course) { n.Edges.TournamentCourses = []*TournamentCourse{} },
+			func(n *Course, e *TournamentCourse) { n.Edges.TournamentCourses = append(n.Edges.TournamentCourses, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -580,6 +624,37 @@ func (_q *CourseQuery) loadRounds(ctx context.Context, query *RoundQuery, nodes 
 		node, ok := nodeids[*fk]
 		if !ok {
 			return fmt.Errorf(`unexpected referenced foreign-key "course_rounds" returned %v for node %v`, *fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *CourseQuery) loadTournamentCourses(ctx context.Context, query *TournamentCourseQuery, nodes []*Course, init func(*Course), assign func(*Course, *TournamentCourse)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[uuid.UUID]*Course)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	query.withFKs = true
+	query.Where(predicate.TournamentCourse(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(course.TournamentCoursesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.course_tournament_courses
+		if fk == nil {
+			return fmt.Errorf(`foreign-key "course_tournament_courses" is nil for node %v`, n.ID)
+		}
+		node, ok := nodeids[*fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "course_tournament_courses" returned %v for node %v`, *fk, n.ID)
 		}
 		assign(node, n)
 	}

@@ -72,6 +72,7 @@ func (Tournament) Edges() []ent.Edge {
 		edge.To("placements", Placement.Type),
 		edge.To("rounds", Round.Type),
 		edge.To("email_reminders", EmailReminder.Type),
+		edge.To("tournament_courses", TournamentCourse.Type),
 		edge.To("champion", Golfer.Type).
 			Unique(),
 		edge.From("season", Season.Type).

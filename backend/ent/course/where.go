@@ -1145,6 +1145,29 @@ func HasRoundsWith(preds ...predicate.Round) predicate.Course {
 	})
 }
 
+// HasTournamentCourses applies the HasEdge predicate on the "tournament_courses" edge.
+func HasTournamentCourses() predicate.Course {
+	return predicate.Course(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, TournamentCoursesTable, TournamentCoursesColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	})
+}
+
+// HasTournamentCoursesWith applies the HasEdge predicate on the "tournament_courses" edge with a given conditions (other predicates).
+func HasTournamentCoursesWith(preds ...predicate.TournamentCourse) predicate.Course {
+	return predicate.Course(func(s *sql.Selector) {
+		step := newTournamentCoursesStep()
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	})
+}
+
 // And groups predicates with the AND operator between them.
 func And(predicates ...predicate.Course) predicate.Course {
 	return predicate.Course(sql.AndPredicates(predicates...))

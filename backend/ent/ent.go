@@ -28,6 +28,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -105,6 +106,7 @@ func checkColumn(t, c string) error {
 			season.Table:             season.ValidColumn,
 			syncstatus.Table:         syncstatus.ValidColumn,
 			tournament.Table:         tournament.ValidColumn,
+			tournamentcourse.Table:   tournamentcourse.ValidColumn,
 			user.Table:               user.ValidColumn,
 		})
 	})

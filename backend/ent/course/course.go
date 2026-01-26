@@ -51,6 +51,8 @@ const (
 	EdgeTournaments = "tournaments"
 	// EdgeRounds holds the string denoting the rounds edge name in mutations.
 	EdgeRounds = "rounds"
+	// EdgeTournamentCourses holds the string denoting the tournament_courses edge name in mutations.
+	EdgeTournamentCourses = "tournament_courses"
 	// Table holds the table name of the course in the database.
 	Table = "courses"
 	// HolesTable is the table that holds the holes relation/edge.
@@ -74,6 +76,13 @@ const (
 	RoundsInverseTable = "rounds"
 	// RoundsColumn is the table column denoting the rounds relation/edge.
 	RoundsColumn = "course_rounds"
+	// TournamentCoursesTable is the table that holds the tournament_courses relation/edge.
+	TournamentCoursesTable = "tournament_courses"
+	// TournamentCoursesInverseTable is the table name for the TournamentCourse entity.
+	// It exists in this package in order to avoid circular dependency with the "tournamentcourse" package.
+	TournamentCoursesInverseTable = "tournament_courses"
+	// TournamentCoursesColumn is the table column denoting the tournament_courses relation/edge.
+	TournamentCoursesColumn = "course_tournament_courses"
 )
 
 // Columns holds all SQL columns for course fields.
@@ -243,6 +252,20 @@ func ByRounds(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
 		sqlgraph.OrderByNeighborTerms(s, newRoundsStep(), append([]sql.OrderTerm{term}, terms...)...)
 	}
 }
+
+// ByTournamentCoursesCount orders the results by tournament_courses count.
+func ByTournamentCoursesCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newTournamentCoursesStep(), opts...)
+	}
+}
+
+// ByTournamentCourses orders the results by tournament_courses terms.
+func ByTournamentCourses(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newTournamentCoursesStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
 func newHolesStep() *sqlgraph.Step {
 	return sqlgraph.NewStep(
 		sqlgraph.From(Table, FieldID),
@@ -262,5 +285,12 @@ func newRoundsStep() *sqlgraph.Step {
 		sqlgraph.From(Table, FieldID),
 		sqlgraph.To(RoundsInverseTable, FieldID),
 		sqlgraph.Edge(sqlgraph.O2M, false, RoundsTable, RoundsColumn),
+	)
+}
+func newTournamentCoursesStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(TournamentCoursesInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, TournamentCoursesTable, TournamentCoursesColumn),
 	)
 }

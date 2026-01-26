@@ -32,6 +32,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/syncstatus"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
 	"github.com/rj-davidson/greenrats/ent/user"
 )
 
@@ -72,6 +73,8 @@ type Client struct {
 	SyncStatus *SyncStatusClient
 	// Tournament is the client for interacting with the Tournament builders.
 	Tournament *TournamentClient
+	// TournamentCourse is the client for interacting with the TournamentCourse builders.
+	TournamentCourse *TournamentCourseClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 }
@@ -101,6 +104,7 @@ func (c *Client) init() {
 	c.Season = NewSeasonClient(c.config)
 	c.SyncStatus = NewSyncStatusClient(c.config)
 	c.Tournament = NewTournamentClient(c.config)
+	c.TournamentCourse = NewTournamentCourseClient(c.config)
 	c.User = NewUserClient(c.config)
 }
 
@@ -210,6 +214,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Season:             NewSeasonClient(cfg),
 		SyncStatus:         NewSyncStatusClient(cfg),
 		Tournament:         NewTournamentClient(cfg),
+		TournamentCourse:   NewTournamentCourseClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -246,6 +251,7 @@ func (c *Client) BeginTx(ctx context.Context, opts *sql.TxOptions) (*Tx, error) 
 		Season:             NewSeasonClient(cfg),
 		SyncStatus:         NewSyncStatusClient(cfg),
 		Tournament:         NewTournamentClient(cfg),
+		TournamentCourse:   NewTournamentCourseClient(cfg),
 		User:               NewUserClient(cfg),
 	}, nil
 }
@@ -278,7 +284,8 @@ func (c *Client) Use(hooks ...Hook) {
 	for _, n := range []interface{ Use(...Hook) }{
 		c.CommissionerAction, c.Course, c.CourseHole, c.EmailReminder, c.FieldEntry,
 		c.Golfer, c.GolferSeason, c.HoleScore, c.League, c.LeagueMembership, c.Pick,
-		c.Placement, c.Round, c.Season, c.SyncStatus, c.Tournament, c.User,
+		c.Placement, c.Round, c.Season, c.SyncStatus, c.Tournament, c.TournamentCourse,
+		c.User,
 	} {
 		n.Use(hooks...)
 	}
@@ -290,7 +297,8 @@ func (c *Client) Intercept(interceptors ...Interceptor) {
 	for _, n := range []interface{ Intercept(...Interceptor) }{
 		c.CommissionerAction, c.Course, c.CourseHole, c.EmailReminder, c.FieldEntry,
 		c.Golfer, c.GolferSeason, c.HoleScore, c.League, c.LeagueMembership, c.Pick,
-		c.Placement, c.Round, c.Season, c.SyncStatus, c.Tournament, c.User,
+		c.Placement, c.Round, c.Season, c.SyncStatus, c.Tournament, c.TournamentCourse,
+		c.User,
 	} {
 		n.Intercept(interceptors...)
 	}
@@ -331,6 +339,8 @@ func (c *Client) Mutate(ctx context.Context, m Mutation) (Value, error) {
 		return c.SyncStatus.mutate(ctx, m)
 	case *TournamentMutation:
 		return c.Tournament.mutate(ctx, m)
+	case *TournamentCourseMutation:
+		return c.TournamentCourse.mutate(ctx, m)
 	case *UserMutation:
 		return c.User.mutate(ctx, m)
 	default:
@@ -668,6 +678,22 @@ func (c *CourseClient) QueryRounds(_m *Course) *RoundQuery {
 			sqlgraph.From(course.Table, course.FieldID, id),
 			sqlgraph.To(round.Table, round.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, course.RoundsTable, course.RoundsColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryTournamentCourses queries the tournament_courses edge of a Course.
+func (c *CourseClient) QueryTournamentCourses(_m *Course) *TournamentCourseQuery {
+	query := (&TournamentCourseClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(course.Table, course.FieldID, id),
+			sqlgraph.To(tournamentcourse.Table, tournamentcourse.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, course.TournamentCoursesTable, course.TournamentCoursesColumn),
 		)
 		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
 		return fromV, nil
@@ -3209,6 +3235,22 @@ func (c *TournamentClient) QueryEmailReminders(_m *Tournament) *EmailReminderQue
 	return query
 }
 
+// QueryTournamentCourses queries the tournament_courses edge of a Tournament.
+func (c *TournamentClient) QueryTournamentCourses(_m *Tournament) *TournamentCourseQuery {
+	query := (&TournamentCourseClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournament.Table, tournament.FieldID, id),
+			sqlgraph.To(tournamentcourse.Table, tournamentcourse.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, tournament.TournamentCoursesTable, tournament.TournamentCoursesColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
 // QueryChampion queries the champion edge of a Tournament.
 func (c *TournamentClient) QueryChampion(_m *Tournament) *GolferQuery {
 	query := (&GolferClient{config: c.config}).Query()
@@ -3279,6 +3321,171 @@ func (c *TournamentClient) mutate(ctx context.Context, m *TournamentMutation) (V
 		return (&TournamentDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
 	default:
 		return nil, fmt.Errorf("ent: unknown Tournament mutation op: %q", m.Op())
+	}
+}
+
+// TournamentCourseClient is a client for the TournamentCourse schema.
+type TournamentCourseClient struct {
+	config
+}
+
+// NewTournamentCourseClient returns a client for the TournamentCourse from the given config.
+func NewTournamentCourseClient(c config) *TournamentCourseClient {
+	return &TournamentCourseClient{config: c}
+}
+
+// Use adds a list of mutation hooks to the hooks stack.
+// A call to `Use(f, g, h)` equals to `tournamentcourse.Hooks(f(g(h())))`.
+func (c *TournamentCourseClient) Use(hooks ...Hook) {
+	c.hooks.TournamentCourse = append(c.hooks.TournamentCourse, hooks...)
+}
+
+// Intercept adds a list of query interceptors to the interceptors stack.
+// A call to `Intercept(f, g, h)` equals to `tournamentcourse.Intercept(f(g(h())))`.
+func (c *TournamentCourseClient) Intercept(interceptors ...Interceptor) {
+	c.inters.TournamentCourse = append(c.inters.TournamentCourse, interceptors...)
+}
+
+// Create returns a builder for creating a TournamentCourse entity.
+func (c *TournamentCourseClient) Create() *TournamentCourseCreate {
+	mutation := newTournamentCourseMutation(c.config, OpCreate)
+	return &TournamentCourseCreate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// CreateBulk returns a builder for creating a bulk of TournamentCourse entities.
+func (c *TournamentCourseClient) CreateBulk(builders ...*TournamentCourseCreate) *TournamentCourseCreateBulk {
+	return &TournamentCourseCreateBulk{config: c.config, builders: builders}
+}
+
+// MapCreateBulk creates a bulk creation builder from the given slice. For each item in the slice, the function creates
+// a builder and applies setFunc on it.
+func (c *TournamentCourseClient) MapCreateBulk(slice any, setFunc func(*TournamentCourseCreate, int)) *TournamentCourseCreateBulk {
+	rv := reflect.ValueOf(slice)
+	if rv.Kind() != reflect.Slice {
+		return &TournamentCourseCreateBulk{err: fmt.Errorf("calling to TournamentCourseClient.MapCreateBulk with wrong type %T, need slice", slice)}
+	}
+	builders := make([]*TournamentCourseCreate, rv.Len())
+	for i := 0; i < rv.Len(); i++ {
+		builders[i] = c.Create()
+		setFunc(builders[i], i)
+	}
+	return &TournamentCourseCreateBulk{config: c.config, builders: builders}
+}
+
+// Update returns an update builder for TournamentCourse.
+func (c *TournamentCourseClient) Update() *TournamentCourseUpdate {
+	mutation := newTournamentCourseMutation(c.config, OpUpdate)
+	return &TournamentCourseUpdate{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *TournamentCourseClient) UpdateOne(_m *TournamentCourse) *TournamentCourseUpdateOne {
+	mutation := newTournamentCourseMutation(c.config, OpUpdateOne, withTournamentCourse(_m))
+	return &TournamentCourseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *TournamentCourseClient) UpdateOneID(id uuid.UUID) *TournamentCourseUpdateOne {
+	mutation := newTournamentCourseMutation(c.config, OpUpdateOne, withTournamentCourseID(id))
+	return &TournamentCourseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// Delete returns a delete builder for TournamentCourse.
+func (c *TournamentCourseClient) Delete() *TournamentCourseDelete {
+	mutation := newTournamentCourseMutation(c.config, OpDelete)
+	return &TournamentCourseDelete{config: c.config, hooks: c.Hooks(), mutation: mutation}
+}
+
+// DeleteOne returns a builder for deleting the given entity.
+func (c *TournamentCourseClient) DeleteOne(_m *TournamentCourse) *TournamentCourseDeleteOne {
+	return c.DeleteOneID(_m.ID)
+}
+
+// DeleteOneID returns a builder for deleting the given entity by its id.
+func (c *TournamentCourseClient) DeleteOneID(id uuid.UUID) *TournamentCourseDeleteOne {
+	builder := c.Delete().Where(tournamentcourse.ID(id))
+	builder.mutation.id = &id
+	builder.mutation.op = OpDeleteOne
+	return &TournamentCourseDeleteOne{builder}
+}
+
+// Query returns a query builder for TournamentCourse.
+func (c *TournamentCourseClient) Query() *TournamentCourseQuery {
+	return &TournamentCourseQuery{
+		config: c.config,
+		ctx:    &QueryContext{Type: TypeTournamentCourse},
+		inters: c.Interceptors(),
+	}
+}
+
+// Get returns a TournamentCourse entity by its id.
+func (c *TournamentCourseClient) Get(ctx context.Context, id uuid.UUID) (*TournamentCourse, error) {
+	return c.Query().Where(tournamentcourse.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *TournamentCourseClient) GetX(ctx context.Context, id uuid.UUID) *TournamentCourse {
+	obj, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return obj
+}
+
+// QueryTournament queries the tournament edge of a TournamentCourse.
+func (c *TournamentCourseClient) QueryTournament(_m *TournamentCourse) *TournamentQuery {
+	query := (&TournamentClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournamentcourse.Table, tournamentcourse.FieldID, id),
+			sqlgraph.To(tournament.Table, tournament.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, tournamentcourse.TournamentTable, tournamentcourse.TournamentColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// QueryCourse queries the course edge of a TournamentCourse.
+func (c *TournamentCourseClient) QueryCourse(_m *TournamentCourse) *CourseQuery {
+	query := (&CourseClient{config: c.config}).Query()
+	query.path = func(context.Context) (fromV *sql.Selector, _ error) {
+		id := _m.ID
+		step := sqlgraph.NewStep(
+			sqlgraph.From(tournamentcourse.Table, tournamentcourse.FieldID, id),
+			sqlgraph.To(course.Table, course.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, tournamentcourse.CourseTable, tournamentcourse.CourseColumn),
+		)
+		fromV = sqlgraph.Neighbors(_m.driver.Dialect(), step)
+		return fromV, nil
+	}
+	return query
+}
+
+// Hooks returns the client hooks.
+func (c *TournamentCourseClient) Hooks() []Hook {
+	return c.hooks.TournamentCourse
+}
+
+// Interceptors returns the client interceptors.
+func (c *TournamentCourseClient) Interceptors() []Interceptor {
+	return c.inters.TournamentCourse
+}
+
+func (c *TournamentCourseClient) mutate(ctx context.Context, m *TournamentCourseMutation) (Value, error) {
+	switch m.Op() {
+	case OpCreate:
+		return (&TournamentCourseCreate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdate:
+		return (&TournamentCourseUpdate{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpUpdateOne:
+		return (&TournamentCourseUpdateOne{config: c.config, hooks: c.Hooks(), mutation: m}).Save(ctx)
+	case OpDelete, OpDeleteOne:
+		return (&TournamentCourseDelete{config: c.config, hooks: c.Hooks(), mutation: m}).Exec(ctx)
+	default:
+		return nil, fmt.Errorf("ent: unknown TournamentCourse mutation op: %q", m.Op())
 	}
 }
 
@@ -3500,11 +3707,11 @@ type (
 	hooks struct {
 		CommissionerAction, Course, CourseHole, EmailReminder, FieldEntry, Golfer,
 		GolferSeason, HoleScore, League, LeagueMembership, Pick, Placement, Round,
-		Season, SyncStatus, Tournament, User []ent.Hook
+		Season, SyncStatus, Tournament, TournamentCourse, User []ent.Hook
 	}
 	inters struct {
 		CommissionerAction, Course, CourseHole, EmailReminder, FieldEntry, Golfer,
 		GolferSeason, HoleScore, League, LeagueMembership, Pick, Placement, Round,
-		Season, SyncStatus, Tournament, User []ent.Interceptor
+		Season, SyncStatus, Tournament, TournamentCourse, User []ent.Interceptor
 	}
 )

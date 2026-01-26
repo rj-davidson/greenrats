@@ -71,7 +71,12 @@ func (s *Service) List(ctx context.Context, req ListTournamentsRequest) (*ListTo
 		query = query.Offset(req.Offset)
 	}
 
-	results, err := query.WithChampion().All(ctx)
+	results, err := query.
+		WithChampion().
+		WithTournamentCourses(func(q *ent.TournamentCourseQuery) {
+			q.WithCourse()
+		}).
+		All(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list tournaments: %w", err)
 	}
@@ -96,6 +101,9 @@ func (s *Service) GetByID(ctx context.Context, id string) (*Tournament, error) {
 	t, err := s.db.Tournament.Query().
 		Where(tournament.IDEQ(uid)).
 		WithChampion().
+		WithTournamentCourses(func(q *ent.TournamentCourseQuery) {
+			q.WithCourse()
+		}).
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -117,6 +125,9 @@ func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 		).
 		Order(ent.Asc(tournament.FieldStartDate)).
 		WithChampion().
+		WithTournamentCourses(func(q *ent.TournamentCourseQuery) {
+			q.WithCourse()
+		}).
 		First(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {
@@ -738,6 +749,39 @@ func toTournament(t *ent.Tournament) Tournament {
 	if hasChampion {
 		result.ChampionID = t.Edges.Champion.ID.String()
 		result.ChampionName = t.Edges.Champion.Name
+	}
+
+	if len(t.Edges.TournamentCourses) > 0 {
+		result.Courses = make([]TournamentCourseInfo, 0, len(t.Edges.TournamentCourses))
+		for _, tc := range t.Edges.TournamentCourses {
+			if tc.Edges.Course == nil {
+				continue
+			}
+			c := tc.Edges.Course
+			courseInfo := CourseInfo{
+				ID:   c.ID.String(),
+				Name: c.Name,
+			}
+			if c.Par != nil {
+				courseInfo.Par = *c.Par
+			}
+			if c.Yardage != nil {
+				courseInfo.Yardage = *c.Yardage
+			}
+			if c.City != nil {
+				courseInfo.City = *c.City
+			}
+			if c.State != nil {
+				courseInfo.State = *c.State
+			}
+			if c.Country != nil {
+				courseInfo.Country = *c.Country
+			}
+			result.Courses = append(result.Courses, TournamentCourseInfo{
+				Course: courseInfo,
+				Rounds: tc.Rounds,
+			})
+		}
 	}
 
 	return result
