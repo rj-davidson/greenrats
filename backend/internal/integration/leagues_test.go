@@ -158,10 +158,8 @@ func TestLeaguesIntegration(t *testing.T) {
 		assert.Equal(t, 2, result.Total)
 		assert.Equal(t, "First Place", result.Entries[0].DisplayName)
 		assert.Equal(t, 500000, result.Entries[0].Earnings)
-		assert.Equal(t, 1, result.Entries[0].Rank)
 		assert.Equal(t, "Second Place", result.Entries[1].DisplayName)
 		assert.Equal(t, 250000, result.Entries[1].Earnings)
-		assert.Equal(t, 2, result.Entries[1].Rank)
 	})
 
 	t.Run("league tournaments view", func(t *testing.T) {

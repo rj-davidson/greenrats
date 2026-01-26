@@ -11,7 +11,9 @@
     "lint": "oxlint --type-aware --fix && eslint . --cache --fix",
     "lint:check": "oxlint --type-aware && eslint .",
     "format": "oxfmt",
-    "format:check": "oxfmt --check"
+    "format:check": "oxfmt --check",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",

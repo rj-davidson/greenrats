@@ -277,31 +277,12 @@ func (s *Service) getCompletedLeaderboard(ctx context.Context, t *ent.Tournament
 		return false
 	})
 
-	positionCounts := make(map[int]int)
-	for _, p := range placements {
-		if p.Status == placement.StatusFinished && p.PositionNumeric != nil && *p.PositionNumeric > 0 {
-			positionCounts[*p.PositionNumeric]++
-		}
-	}
-
 	maxRound := 0
 	result := make([]LeaderboardEntry, 0, len(placements))
 	for _, p := range placements {
 		g := p.Edges.Golfer
 		if g == nil {
 			continue
-		}
-
-		posDisplay := p.Position
-		if posDisplay == "" {
-			posDisplay = "-"
-		}
-		if p.Status == placement.StatusFinished && p.PositionNumeric != nil && *p.PositionNumeric > 0 {
-			if positionCounts[*p.PositionNumeric] > 1 {
-				posDisplay = fmt.Sprintf("T%d", *p.PositionNumeric)
-			} else {
-				posDisplay = fmt.Sprintf("%d", *p.PositionNumeric)
-			}
 		}
 
 		position := 0
@@ -333,18 +314,17 @@ func (s *Service) getCompletedLeaderboard(ctx context.Context, t *ent.Tournament
 		status := string(p.Status)
 
 		entry := LeaderboardEntry{
-			Position:        position,
-			PositionDisplay: posDisplay,
-			GolferID:        g.ID.String(),
-			GolferName:      g.Name,
-			CountryCode:     g.CountryCode,
-			Score:           score,
-			TotalStrokes:    totalStrokes,
-			Thru:            thru,
-			CurrentRound:    currentRound,
-			Status:          status,
-			Earnings:        p.Earnings,
-			Rounds:          make([]RoundScore, 0, 4),
+			Position:     position,
+			GolferID:     g.ID.String(),
+			GolferName:   g.Name,
+			CountryCode:  g.CountryCode,
+			Score:        score,
+			TotalStrokes: totalStrokes,
+			Thru:         thru,
+			CurrentRound: currentRound,
+			Status:       status,
+			Earnings:     p.Earnings,
+			Rounds:       make([]RoundScore, 0, 4),
 		}
 
 		if g.Country != nil {
@@ -513,28 +493,14 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 		}
 	}
 
-	positionCounts := make(map[int]int)
-	currentPos := 1
-	for i := 0; i < len(activeGolfers); {
-		score := activeGolfers[i].totalPar
-		count := 0
-		for j := i; j < len(activeGolfers) && activeGolfers[j].totalPar == score; j++ {
-			count++
-		}
-		positionCounts[currentPos] = count
-		i += count
-		currentPos += count
-	}
-
 	previousPositions := s.calculatePreviousPositions(activeGolfers, maxRound)
 
 	result := make([]LeaderboardEntry, 0, len(sortedGolfers))
-	currentPos = 1
+	currentPos := 1
 	activeIdx := 0
 
 	for _, data := range sortedGolfers {
 		statusGroup := getStatusGroup(data.status)
-		var posDisplay string
 		var position int
 		var status string
 
@@ -544,35 +510,28 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 				currentPos = activeIdx + 1
 			}
 			position = currentPos
-			posDisplay = fmt.Sprintf("%d", currentPos)
-			if positionCounts[currentPos] > 1 {
-				posDisplay = fmt.Sprintf("T%d", currentPos)
-			}
 			status = "active"
 			activeIdx++
 		case 1:
 			position = 0
-			posDisplay = "CUT"
 			status = "cut"
 		default:
 			position = 0
-			posDisplay = "WD"
 			status = "withdrawn"
 		}
 
 		entry := LeaderboardEntry{
-			Position:        position,
-			PositionDisplay: posDisplay,
-			GolferID:        data.golfer.ID.String(),
-			GolferName:      data.golfer.Name,
-			CountryCode:     data.golfer.CountryCode,
-			Score:           data.totalPar,
-			TotalStrokes:    data.totalScore,
-			Thru:            data.thru,
-			CurrentRound:    data.currentRound,
-			Status:          status,
-			Earnings:        0,
-			Rounds:          make([]RoundScore, 0, len(data.rounds)),
+			Position:     position,
+			GolferID:     data.golfer.ID.String(),
+			GolferName:   data.golfer.Name,
+			CountryCode:  data.golfer.CountryCode,
+			Score:        data.totalPar,
+			TotalStrokes: data.totalScore,
+			Thru:         data.thru,
+			CurrentRound: data.currentRound,
+			Status:       status,
+			Earnings:     0,
+			Rounds:       make([]RoundScore, 0, len(data.rounds)),
 		}
 
 		if statusGroup == 0 {

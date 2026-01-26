@@ -67,7 +67,6 @@ type HoleScore struct {
 // LeaderboardEntry represents a golfer's position on the tournament leaderboard.
 type LeaderboardEntry struct {
 	Position         int          `json:"position"`
-	PositionDisplay  string       `json:"position_display"`
 	PreviousPosition *int         `json:"previous_position,omitempty"`
 	PositionChange   *int         `json:"position_change,omitempty"`
 	GolferID         string       `json:"golfer_id"`

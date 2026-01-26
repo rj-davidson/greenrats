@@ -84,9 +84,9 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, 3, resp.Total)
-		assert.Equal(t, 1, resp.Entries[0].Rank)
-		assert.Equal(t, 1, resp.Entries[1].Rank)
-		assert.Equal(t, 3, resp.Entries[2].Rank)
+		assert.Equal(t, 100000, resp.Entries[0].Earnings)
+		assert.Equal(t, 100000, resp.Entries[1].Earnings)
+		assert.Equal(t, 50000, resp.Entries[2].Earnings)
 	})
 
 	t.Run("sorts ties alphabetically", func(t *testing.T) {

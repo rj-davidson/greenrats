@@ -227,8 +227,8 @@ func TestService_GetLeaderboard(t *testing.T) {
 		resp, err := service.GetLeaderboard(ctx, tourn.ID.String(), false, "")
 
 		require.NoError(t, err)
-		assert.Equal(t, "T2", resp.Entries[0].PositionDisplay)
-		assert.Equal(t, "T2", resp.Entries[1].PositionDisplay)
+		assert.Equal(t, 2, resp.Entries[0].Position)
+		assert.Equal(t, 2, resp.Entries[1].Position)
 	})
 
 	t.Run("sorts cut players separately", func(t *testing.T) {
@@ -248,8 +248,10 @@ func TestService_GetLeaderboard(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.Equal(t, 2, resp.Total)
-		assert.Equal(t, "10", resp.Entries[0].PositionDisplay)
-		assert.Equal(t, "CUT", resp.Entries[1].PositionDisplay)
+		assert.Equal(t, 10, resp.Entries[0].Position)
+		assert.Equal(t, "finished", resp.Entries[0].Status)
+		assert.Equal(t, 0, resp.Entries[1].Position)
+		assert.Equal(t, "cut", resp.Entries[1].Status)
 	})
 
 	t.Run("returns ErrTournamentNotFound when tournament not found", func(t *testing.T) {

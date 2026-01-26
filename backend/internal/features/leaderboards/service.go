@@ -35,8 +35,6 @@ func (s *Service) GetLeagueLeaderboard(ctx context.Context, leagueID uuid.UUID, 
 	entries := make([]LeaderboardEntry, len(resp.Entries))
 	for i, e := range resp.Entries {
 		entries[i] = LeaderboardEntry{
-			Rank:        e.Rank,
-			RankDisplay: e.RankDisplay,
 			UserID:      e.UserID,
 			DisplayName: e.UserDisplayName,
 			Earnings:    e.TotalEarnings,
@@ -143,20 +141,6 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		}
 	}
 
-	positionCounts := make(map[uuid.UUID]map[int]int)
-	for _, pl := range placementMap {
-		if pl.Edges.Tournament == nil {
-			continue
-		}
-		tid := pl.Edges.Tournament.ID
-		if positionCounts[tid] == nil {
-			positionCounts[tid] = make(map[int]int)
-		}
-		if pl.Status != placement.StatusCut && pl.PositionNumeric != nil && *pl.PositionNumeric > 0 {
-			positionCounts[tid][*pl.PositionNumeric]++
-		}
-	}
-
 	type userPickData struct {
 		DisplayName string
 		Earnings    int
@@ -187,26 +171,17 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		}
 
 		var pickEarnings int
-		var posDisplay string
+		var position int
+		var status string
 
 		if p.Edges.Golfer != nil && p.Edges.Tournament != nil {
 			key := pickKey{TournamentID: p.Edges.Tournament.ID, GolferID: p.Edges.Golfer.ID}
 			if pl, ok := placementMap[key]; ok {
 				pickEarnings = pl.Earnings
 				data.Earnings += pickEarnings
-
-				switch {
-				case pl.Status == placement.StatusCut:
-					posDisplay = "CUT"
-				case pl.Status == placement.StatusWithdrawn:
-					posDisplay = "WD"
-				case pl.PositionNumeric != nil && *pl.PositionNumeric > 0:
-					tid := p.Edges.Tournament.ID
-					if positionCounts[tid] != nil && positionCounts[tid][*pl.PositionNumeric] > 1 {
-						posDisplay = fmt.Sprintf("T%d", *pl.PositionNumeric)
-					} else {
-						posDisplay = fmt.Sprintf("%d", *pl.PositionNumeric)
-					}
+				status = string(pl.Status)
+				if pl.PositionNumeric != nil {
+					position = *pl.PositionNumeric
 				}
 			}
 
@@ -221,12 +196,13 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 
 			if includePicks {
 				data.Picks = append(data.Picks, PickHistory{
-					TournamentID:    p.Edges.Tournament.ID,
-					TournamentName:  p.Edges.Tournament.Name,
-					GolferID:        p.Edges.Golfer.ID,
-					GolferName:      p.Edges.Golfer.Name,
-					PositionDisplay: posDisplay,
-					Earnings:        pickEarnings,
+					TournamentID:   p.Edges.Tournament.ID,
+					TournamentName: p.Edges.Tournament.Name,
+					GolferID:       p.Edges.Golfer.ID,
+					GolferName:     p.Edges.Golfer.Name,
+					Position:       position,
+					Status:         status,
+					Earnings:       pickEarnings,
 				})
 			}
 		}
@@ -260,26 +236,6 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		}
 		return entries[i].UserDisplayName < entries[j].UserDisplayName
 	})
-
-	currentRank := 1
-	for i := range entries {
-		if i > 0 && entries[i].TotalEarnings < entries[i-1].TotalEarnings {
-			currentRank = i + 1
-		}
-		entries[i].Rank = currentRank
-	}
-
-	rankCounts := make(map[int]int)
-	for _, e := range entries {
-		rankCounts[e.Rank]++
-	}
-	for i := range entries {
-		if rankCounts[entries[i].Rank] > 1 {
-			entries[i].RankDisplay = fmt.Sprintf("T%d", entries[i].Rank)
-		} else {
-			entries[i].RankDisplay = fmt.Sprintf("%d", entries[i].Rank)
-		}
-	}
 
 	var activeTournamentResponse *ActiveTournament
 	if activeTournament != nil {

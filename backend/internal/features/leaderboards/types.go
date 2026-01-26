@@ -21,8 +21,6 @@ type ActiveTournament struct {
 }
 
 type LeaderboardEntry struct {
-	Rank        int       `json:"rank"`
-	RankDisplay string    `json:"rank_display"`
 	UserID      uuid.UUID `json:"user_id"`
 	DisplayName string    `json:"display_name"`
 	Earnings    int       `json:"earnings"`
@@ -36,17 +34,16 @@ type LeagueLeaderboardResponse struct {
 }
 
 type PickHistory struct {
-	TournamentID    uuid.UUID `json:"tournament_id"`
-	TournamentName  string    `json:"tournament_name"`
-	GolferID        uuid.UUID `json:"golfer_id"`
-	GolferName      string    `json:"golfer_name"`
-	PositionDisplay string    `json:"position_display,omitempty"`
-	Earnings        int       `json:"earnings"`
+	TournamentID   uuid.UUID `json:"tournament_id"`
+	TournamentName string    `json:"tournament_name"`
+	GolferID       uuid.UUID `json:"golfer_id"`
+	GolferName     string    `json:"golfer_name"`
+	Position       int       `json:"position"`
+	Status         string    `json:"status"`
+	Earnings       int       `json:"earnings"`
 }
 
 type StandingsEntry struct {
-	Rank            int           `json:"rank"`
-	RankDisplay     string        `json:"rank_display"`
 	UserID          uuid.UUID     `json:"user_id"`
 	UserDisplayName string        `json:"user_display_name"`
 	TotalEarnings   int           `json:"total_earnings"`

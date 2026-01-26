@@ -43,9 +43,8 @@ export const roundScoreSchema = z.object({
   holes: z.array(holeScoreSchema).optional(),
 });
 
-export const leaderboardEntrySchema = z.object({
+export const leaderboardEntryRawSchema = z.object({
   position: z.number(),
-  position_display: z.string(),
   previous_position: z.number().nullable().optional(),
   position_change: z.number().nullable().optional(),
   golfer_id: z.string(),
@@ -63,13 +62,29 @@ export const leaderboardEntrySchema = z.object({
   picked_by: z.array(z.string()).optional(),
 });
 
-export const getLeaderboardResponseSchema = z.object({
+export type LeaderboardEntryRaw = z.infer<typeof leaderboardEntryRawSchema>;
+
+export interface LeaderboardEntry extends LeaderboardEntryRaw {
+  position_display: string;
+}
+
+export const getLeaderboardResponseRawSchema = z.object({
   tournament_id: z.string(),
   tournament_name: z.string(),
   current_round: z.number(),
-  entries: z.array(leaderboardEntrySchema),
+  entries: z.array(leaderboardEntryRawSchema),
   total: z.number(),
 });
+
+export type GetLeaderboardResponseRaw = z.infer<typeof getLeaderboardResponseRawSchema>;
+
+export interface GetLeaderboardResponse {
+  tournament_id: string;
+  tournament_name: string;
+  current_round: number;
+  entries: LeaderboardEntry[];
+  total: number;
+}
 
 export const fieldEntrySchema = z.object({
   golfer_id: z.string(),
@@ -97,7 +112,5 @@ export type ListTournamentsResponse = z.infer<typeof listTournamentsResponseSche
 export type GetTournamentResponse = z.infer<typeof getTournamentResponseSchema>;
 export type HoleScore = z.infer<typeof holeScoreSchema>;
 export type RoundScore = z.infer<typeof roundScoreSchema>;
-export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
-export type GetLeaderboardResponse = z.infer<typeof getLeaderboardResponseSchema>;
 export type FieldEntry = z.infer<typeof fieldEntrySchema>;
 export type GetFieldResponse = z.infer<typeof getFieldResponseSchema>;

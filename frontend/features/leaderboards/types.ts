@@ -17,52 +17,79 @@ export const activeTournamentSchema = z.object({
 export type CurrentPick = z.infer<typeof currentPickSchema>;
 export type ActiveTournament = z.infer<typeof activeTournamentSchema>;
 
-export const leaderboardEntrySchema = z.object({
-  rank: z.number(),
-  rank_display: z.string(),
+export const leaderboardEntryRawSchema = z.object({
   user_id: z.string(),
   display_name: z.string(),
   earnings: z.number(),
   pick_count: z.number(),
 });
 
-export type LeaderboardEntry = z.infer<typeof leaderboardEntrySchema>;
+export type LeaderboardEntryRaw = z.infer<typeof leaderboardEntryRawSchema>;
 
-export const leagueLeaderboardResponseSchema = z.object({
-  entries: z.array(leaderboardEntrySchema),
+export interface LeaderboardEntry extends LeaderboardEntryRaw {
+  rank: number;
+  rank_display: string;
+}
+
+export const leagueLeaderboardResponseRawSchema = z.object({
+  entries: z.array(leaderboardEntryRawSchema),
   total: z.number(),
   season_year: z.number(),
 });
 
-export type LeagueLeaderboardResponse = z.infer<typeof leagueLeaderboardResponseSchema>;
+export type LeagueLeaderboardResponseRaw = z.infer<typeof leagueLeaderboardResponseRawSchema>;
 
-export const pickHistorySchema = z.object({
+export interface LeagueLeaderboardResponse {
+  entries: LeaderboardEntry[];
+  total: number;
+  season_year: number;
+}
+
+export const pickHistoryRawSchema = z.object({
   tournament_id: z.string(),
   tournament_name: z.string(),
   golfer_id: z.string(),
   golfer_name: z.string(),
-  position_display: z.string().optional(),
+  position: z.number(),
+  status: z.string(),
   earnings: z.number(),
 });
 
-export const standingsEntrySchema = z.object({
-  rank: z.number(),
-  rank_display: z.string(),
+export type PickHistoryRaw = z.infer<typeof pickHistoryRawSchema>;
+
+export interface PickHistory extends PickHistoryRaw {
+  position_display: string;
+}
+
+export const standingsEntryRawSchema = z.object({
   user_id: z.string(),
   user_display_name: z.string(),
   total_earnings: z.number(),
   pick_count: z.number(),
   current_pick: currentPickSchema.optional(),
-  picks: z.array(pickHistorySchema).optional(),
+  picks: z.array(pickHistoryRawSchema).optional(),
 });
 
-export const leagueStandingsResponseSchema = z.object({
-  entries: z.array(standingsEntrySchema),
+export type StandingsEntryRaw = z.infer<typeof standingsEntryRawSchema>;
+
+export interface StandingsEntry extends Omit<StandingsEntryRaw, "picks"> {
+  rank: number;
+  rank_display: string;
+  picks?: PickHistory[];
+}
+
+export const leagueStandingsResponseRawSchema = z.object({
+  entries: z.array(standingsEntryRawSchema),
   total: z.number(),
   season_year: z.number(),
   active_tournament: activeTournamentSchema.optional(),
 });
 
-export type PickHistory = z.infer<typeof pickHistorySchema>;
-export type StandingsEntry = z.infer<typeof standingsEntrySchema>;
-export type LeagueStandingsResponse = z.infer<typeof leagueStandingsResponseSchema>;
+export type LeagueStandingsResponseRaw = z.infer<typeof leagueStandingsResponseRawSchema>;
+
+export interface LeagueStandingsResponse {
+  entries: StandingsEntry[];
+  total: number;
+  season_year: number;
+  active_tournament?: ActiveTournament;
+}

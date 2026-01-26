@@ -1,10 +1,13 @@
 import type {
   GetFieldResponse,
   GetLeaderboardResponse,
+  GetLeaderboardResponseRaw,
   GetTournamentResponse,
+  LeaderboardEntry,
   ListTournamentsResponse,
   TournamentStatus,
 } from "@/features/tournaments/types";
+import { buildPositionCounts, formatPositionDisplay } from "@/lib/leaderboard";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
@@ -75,6 +78,23 @@ interface LeaderboardOptions {
   leagueId?: string;
 }
 
+function transformLeaderboardResponse(data: GetLeaderboardResponseRaw): GetLeaderboardResponse {
+  const positionCounts = buildPositionCounts(data.entries);
+
+  const entries: LeaderboardEntry[] = data.entries.map((entry) => ({
+    ...entry,
+    position_display: formatPositionDisplay(entry.position, entry.status, positionCounts),
+  }));
+
+  return {
+    tournament_id: data.tournament_id,
+    tournament_name: data.tournament_name,
+    current_round: data.current_round,
+    entries,
+    total: data.total,
+  };
+}
+
 export function buildGetLeaderboardQueryOptions(
   id: string,
   options: LeaderboardOptions = {},
@@ -84,12 +104,17 @@ export function buildGetLeaderboardQueryOptions(
   if (options.include) params.include = options.include;
   if (options.leagueId) params.league_id = options.leagueId;
 
-  return queryOptions<GetLeaderboardResponse>({
+  return queryOptions<GetLeaderboardResponse, Error, GetLeaderboardResponse>({
     queryKey: buildLeaderboardKey(id, options.include, options.leagueId),
-    queryFn: () =>
-      requestor.get<GetLeaderboardResponse>(`/api/v1/tournaments/${id}/leaderboard`, {
-        params: Object.keys(params).length > 0 ? params : undefined,
-      }),
+    queryFn: async () => {
+      const raw = await requestor.get<GetLeaderboardResponseRaw>(
+        `/api/v1/tournaments/${id}/leaderboard`,
+        {
+          params: Object.keys(params).length > 0 ? params : undefined,
+        },
+      );
+      return transformLeaderboardResponse(raw);
+    },
     enabled: !!id,
   });
 }
