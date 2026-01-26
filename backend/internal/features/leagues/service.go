@@ -26,7 +26,7 @@ import (
 const (
 	joinCodeLength  = 6
 	joinCodeCharset = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-	maxMembers      = 200
+	maxMembers      = 300
 )
 
 var (
