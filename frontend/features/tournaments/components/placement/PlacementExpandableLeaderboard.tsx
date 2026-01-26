@@ -18,11 +18,11 @@ import { cn } from "@/lib/utils";
 import { ChevronDownIcon, ChevronRightIcon, UserCheck } from "lucide-react";
 import { Fragment, useCallback, useState } from "react";
 
-interface PlacementExpandableLeaderboardProps {
+type PlacementExpandableLeaderboardProps = {
   tournamentId: string;
   leagueId?: string;
   highlightedGolferId?: string;
-}
+};
 
 function formatEarnings(earnings: number): string {
   return new Intl.NumberFormat("en-US", {
@@ -81,10 +81,10 @@ export function PlacementExpandableLeaderboard({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-12"></TableHead>
-          <TableHead className="w-24">Pos</TableHead>
+          <TableHead className="w-6"></TableHead>
+          <TableHead className="w-6">Pos</TableHead>
           <TableHead>Player</TableHead>
-          <TableHead className="w-20">Total</TableHead>
+          <TableHead className="w-6">Total</TableHead>
           <TableHead className="w-28 text-right">Earnings</TableHead>
         </TableRow>
       </TableHeader>
@@ -165,7 +165,7 @@ function PlacementLeaderboardRow({
     <TableRow
       className={cn(
         "cursor-pointer",
-        isCut && "text-muted-foreground",
+        (isCut || isWithdrawn) && "text-muted-foreground",
         isHighlighted && "bg-primary/20 hover:bg-primary/25",
       )}
       onClick={onToggle}
@@ -181,16 +181,6 @@ function PlacementLeaderboardRow({
       <TableCell className={cn("font-medium", isHighlighted && "font-bold")}>
         <div className="flex items-center gap-2">
           <span>{entry.position_display}</span>
-          {isCut && (
-            <Badge variant="outline" className="text-xs">
-              CUT
-            </Badge>
-          )}
-          {isWithdrawn && (
-            <Badge variant="outline" className="text-xs">
-              WD
-            </Badge>
-          )}
         </div>
       </TableCell>
       <TableCell>

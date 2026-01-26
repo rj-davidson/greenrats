@@ -1,5 +1,6 @@
 "use client";
 
+import { formatScoreToPar } from "../leaderboard-utils";
 import { Badge } from "@/components/shadcn/badge";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import {
@@ -13,7 +14,6 @@ import {
 import { useLeaderboard } from "@/features/tournaments/queries";
 import type { LeaderboardEntry } from "@/features/tournaments/types";
 import { cn } from "@/lib/utils";
-import { formatScoreToPar } from "../leaderboard-utils";
 
 interface PlacementLeaderboardTableProps {
   tournamentId: string;

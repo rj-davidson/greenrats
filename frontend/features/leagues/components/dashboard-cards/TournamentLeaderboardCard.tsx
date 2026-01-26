@@ -107,7 +107,10 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
               return (
                 <TableRow
                   key={entry.golfer_id}
-                  className={cn(isUserPick && "bg-primary/5", isInactive && "text-muted-foreground")}
+                  className={cn(
+                    isUserPick && "bg-primary/5",
+                    isInactive && "text-muted-foreground",
+                  )}
                 >
                   <TableCell className="font-medium">{entry.position_display}</TableCell>
                   {showPositionChange && (
@@ -133,7 +136,12 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                   <TableCell className="text-right text-muted-foreground">
                     {isInactive || playerBehind ? "-" : formatThru(entry.thru, entry.status)}
                   </TableCell>
-                  <TableCell className={cn("text-right font-mono", !isInactive && entry.score < 0 && "text-secondary-foreground font-bold")}>
+                  <TableCell
+                    className={cn(
+                      "text-right font-mono",
+                      !isInactive && entry.score < 0 && "font-bold text-secondary-foreground",
+                    )}
+                  >
                     {formatScoreToPar(entry.score)}
                   </TableCell>
                 </TableRow>
@@ -155,8 +163,12 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                   const userIsWithdrawn = userPickEntry.status === "withdrawn";
                   const userIsInactive = userIsCut || userIsWithdrawn;
                   return (
-                    <TableRow className={cn("bg-primary/5", userIsInactive && "text-muted-foreground")}>
-                      <TableCell className="font-medium">{userPickEntry.position_display}</TableCell>
+                    <TableRow
+                      className={cn("bg-primary/5", userIsInactive && "text-muted-foreground")}
+                    >
+                      <TableCell className="font-medium">
+                        {userPickEntry.position_display}
+                      </TableCell>
                       {showPositionChange && (
                         <TableCell>
                           {userIsInactive || userPlayerBehind ? (
@@ -173,7 +185,9 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-mono">
-                        {userIsInactive || userPlayerBehind ? "-" : getCurrentRoundScore(userPickEntry)}
+                        {userIsInactive || userPlayerBehind
+                          ? "-"
+                          : getCurrentRoundScore(userPickEntry)}
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
                         {userIsInactive || userPlayerBehind
@@ -183,7 +197,9 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                       <TableCell
                         className={cn(
                           "text-right font-mono",
-                          !userIsInactive && userPickEntry.score < 0 && "text-secondary-foreground font-bold",
+                          !userIsInactive &&
+                            userPickEntry.score < 0 &&
+                            "font-bold text-secondary-foreground",
                         )}
                       >
                         {formatScoreToPar(userPickEntry.score)}

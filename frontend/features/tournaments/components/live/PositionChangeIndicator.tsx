@@ -15,7 +15,12 @@ export function PositionChangeIndicator({ change, className }: PositionChangeInd
 
   if (change > 0) {
     return (
-      <span className={cn("flex items-center flex-nowrap gap-0 text-green-600 dark:text-green-400", className)}>
+      <span
+        className={cn(
+          "flex flex-nowrap items-center gap-0 text-green-600 dark:text-green-400",
+          className,
+        )}
+      >
         <MoveUpIcon className="inline size-3" />
         {change}
       </span>
@@ -23,7 +28,12 @@ export function PositionChangeIndicator({ change, className }: PositionChangeInd
   }
 
   return (
-    <span className={cn("flex items-center flex-nowrap gap-0 text-red-600 dark:text-red-400", className)}>
+    <span
+      className={cn(
+        "flex flex-nowrap items-center gap-0 text-red-600 dark:text-red-400",
+        className,
+      )}
+    >
       <MoveDownIcon className="inline size-3" />
       {Math.abs(change)}
     </span>

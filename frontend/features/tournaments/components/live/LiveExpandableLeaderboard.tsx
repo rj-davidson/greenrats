@@ -219,7 +219,12 @@ function LiveLeaderboardRow({
       <TableCell className="text-muted-foreground">
         {isInactive || playerBehind ? "-" : formatThru(entry.thru, entry.status)}
       </TableCell>
-      <TableCell className={cn("font-mono", entry.score < 0 && !isInactive && "text-secondary-foreground font-bold")}>
+      <TableCell
+        className={cn(
+          "font-mono",
+          entry.score < 0 && !isInactive && "font-bold text-secondary-foreground",
+        )}
+      >
         {formatScoreToPar(entry.score)}
       </TableCell>
     </TableRow>

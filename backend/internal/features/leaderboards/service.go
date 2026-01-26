@@ -195,11 +195,12 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 				pickEarnings = pl.Earnings
 				data.Earnings += pickEarnings
 
-				if pl.Status == placement.StatusCut {
+				switch {
+				case pl.Status == placement.StatusCut:
 					posDisplay = "CUT"
-				} else if pl.Status == placement.StatusWithdrawn {
+				case pl.Status == placement.StatusWithdrawn:
 					posDisplay = "WD"
-				} else if pl.PositionNumeric != nil && *pl.PositionNumeric > 0 {
+				case pl.PositionNumeric != nil && *pl.PositionNumeric > 0:
 					tid := p.Edges.Tournament.ID
 					if positionCounts[tid] != nil && positionCounts[tid][*pl.PositionNumeric] > 1 {
 						posDisplay = fmt.Sprintf("T%d", *pl.PositionNumeric)

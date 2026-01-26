@@ -174,7 +174,8 @@ func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournamen
 			Only(ctx)
 
 		var roundID uuid.UUID
-		if ent.IsNotFound(err) {
+		switch {
+		case ent.IsNotFound(err):
 			roundResult := &balldontlie.PlayerRoundResult{
 				RoundNumber: sc.RoundNumber,
 				Player:      sc.Player,
@@ -185,9 +186,9 @@ func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournamen
 				continue
 			}
 			roundID = newRound.ID
-		} else if err != nil {
+		case err != nil:
 			continue
-		} else {
+		default:
 			roundID = existingRound.ID
 		}
 

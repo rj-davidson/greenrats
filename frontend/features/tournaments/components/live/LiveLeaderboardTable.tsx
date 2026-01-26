@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  formatScoreToPar,
+  formatThru,
+  getCurrentRoundScore,
+  getRoundLabel,
+} from "../leaderboard-utils";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import {
   Table,
@@ -12,12 +18,6 @@ import {
 import { useLeaderboard } from "@/features/tournaments/queries";
 import type { LeaderboardEntry } from "@/features/tournaments/types";
 import { cn } from "@/lib/utils";
-import {
-  formatScoreToPar,
-  formatThru,
-  getCurrentRoundScore,
-  getRoundLabel,
-} from "../leaderboard-utils";
 
 interface LiveLeaderboardTableProps {
   tournamentId: string;
