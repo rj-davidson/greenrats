@@ -21,6 +21,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/user"
+	tournamentfeature "github.com/rj-davidson/greenrats/internal/features/tournaments"
 )
 
 const (
@@ -734,10 +735,9 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 		return nil, fmt.Errorf("failed to query tournaments: %w", err)
 	}
 
-	now := time.Now().UTC()
 	result := make([]LeagueTournament, 0, len(tournaments))
 	for _, t := range tournaments {
-		status := deriveLeagueTournamentStatus(t, now)
+		status := string(tournamentfeature.DeriveStatus(t))
 		lt := LeagueTournament{
 			ID:                 t.ID,
 			Name:               t.Name,
@@ -804,25 +804,4 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 		Tournaments: result,
 		Total:       len(result),
 	}, nil
-}
-
-func deriveLeagueTournamentStatus(t *ent.Tournament, now time.Time) string {
-	referenceTime := t.StartDate
-	if t.PickWindowOpensAt != nil {
-		referenceTime = *t.PickWindowOpensAt
-	}
-
-	endDateMidnight := time.Date(t.EndDate.Year(), t.EndDate.Month(), t.EndDate.Day(), 0, 0, 0, 0, time.UTC)
-	completedThreshold := endDateMidnight.AddDate(0, 0, 2)
-
-	if !now.Before(completedThreshold) {
-		return "completed"
-	}
-
-	upcomingThreshold := referenceTime.Add(-24 * time.Hour)
-	if now.Before(upcomingThreshold) {
-		return "upcoming"
-	}
-
-	return "active"
 }
