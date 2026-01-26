@@ -402,9 +402,25 @@ type golferRoundData struct {
 	totalPar     int
 	currentRound int
 	thru         int
+	status       placement.Status
 }
 
 func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, includeHoles bool, golferPicksMap map[uuid.UUID][]string) (*GetLeaderboardResponse, error) {
+	placements, err := s.db.Placement.Query().
+		Where(placement.HasTournamentWith(tournament.IDEQ(t.ID))).
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get placements: %w", err)
+	}
+
+	statusMap := make(map[uuid.UUID]placement.Status)
+	for _, p := range placements {
+		if p.Edges.Golfer != nil {
+			statusMap[p.Edges.Golfer.ID] = p.Status
+		}
+	}
+
 	roundQuery := s.db.Round.Query().
 		Where(round.HasTournamentWith(tournament.IDEQ(t.ID))).
 		WithGolfer().
@@ -435,6 +451,7 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 			data = &golferRoundData{
 				golfer: r.Edges.Golfer,
 				rounds: make([]*ent.Round, 0, 4),
+				status: statusMap[golferID],
 			}
 			golferData[golferID] = data
 		}
@@ -464,19 +481,44 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 		sortedGolfers = append(sortedGolfers, data)
 	}
 
+	getStatusGroup := func(status placement.Status) int {
+		switch status {
+		case placement.StatusCut:
+			return 1
+		case placement.StatusWithdrawn:
+			return 2
+		default:
+			return 0
+		}
+	}
+
 	sort.Slice(sortedGolfers, func(i, j int) bool {
-		if sortedGolfers[i].totalPar != sortedGolfers[j].totalPar {
-			return sortedGolfers[i].totalPar < sortedGolfers[j].totalPar
+		iGroup := getStatusGroup(sortedGolfers[i].status)
+		jGroup := getStatusGroup(sortedGolfers[j].status)
+		if iGroup != jGroup {
+			return iGroup < jGroup
+		}
+		if iGroup == 0 {
+			if sortedGolfers[i].totalPar != sortedGolfers[j].totalPar {
+				return sortedGolfers[i].totalPar < sortedGolfers[j].totalPar
+			}
 		}
 		return sortedGolfers[i].golfer.Name < sortedGolfers[j].golfer.Name
 	})
 
+	activeGolfers := make([]*golferRoundData, 0, len(sortedGolfers))
+	for _, data := range sortedGolfers {
+		if getStatusGroup(data.status) == 0 {
+			activeGolfers = append(activeGolfers, data)
+		}
+	}
+
 	positionCounts := make(map[int]int)
 	currentPos := 1
-	for i := 0; i < len(sortedGolfers); {
-		score := sortedGolfers[i].totalPar
+	for i := 0; i < len(activeGolfers); {
+		score := activeGolfers[i].totalPar
 		count := 0
-		for j := i; j < len(sortedGolfers) && sortedGolfers[j].totalPar == score; j++ {
+		for j := i; j < len(activeGolfers) && activeGolfers[j].totalPar == score; j++ {
 			count++
 		}
 		positionCounts[currentPos] = count
@@ -484,23 +526,42 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 		currentPos += count
 	}
 
-	previousPositions := s.calculatePreviousPositions(sortedGolfers, maxRound)
+	previousPositions := s.calculatePreviousPositions(activeGolfers, maxRound)
 
 	result := make([]LeaderboardEntry, 0, len(sortedGolfers))
 	currentPos = 1
+	activeIdx := 0
 
-	for i, data := range sortedGolfers {
-		if i > 0 && data.totalPar != sortedGolfers[i-1].totalPar {
-			currentPos = i + 1
-		}
+	for _, data := range sortedGolfers {
+		statusGroup := getStatusGroup(data.status)
+		var posDisplay string
+		var position int
+		var status string
 
-		posDisplay := fmt.Sprintf("%d", currentPos)
-		if positionCounts[currentPos] > 1 {
-			posDisplay = fmt.Sprintf("T%d", currentPos)
+		switch statusGroup {
+		case 0:
+			if activeIdx > 0 && data.totalPar != activeGolfers[activeIdx-1].totalPar {
+				currentPos = activeIdx + 1
+			}
+			position = currentPos
+			posDisplay = fmt.Sprintf("%d", currentPos)
+			if positionCounts[currentPos] > 1 {
+				posDisplay = fmt.Sprintf("T%d", currentPos)
+			}
+			status = "active"
+			activeIdx++
+		case 1:
+			position = 0
+			posDisplay = "CUT"
+			status = "cut"
+		default:
+			position = 0
+			posDisplay = "WD"
+			status = "withdrawn"
 		}
 
 		entry := LeaderboardEntry{
-			Position:        currentPos,
+			Position:        position,
 			PositionDisplay: posDisplay,
 			GolferID:        data.golfer.ID.String(),
 			GolferName:      data.golfer.Name,
@@ -509,15 +570,17 @@ func (s *Service) getLiveLeaderboard(ctx context.Context, t *ent.Tournament, inc
 			TotalStrokes:    data.totalScore,
 			Thru:            data.thru,
 			CurrentRound:    data.currentRound,
-			Status:          "active",
+			Status:          status,
 			Earnings:        0,
 			Rounds:          make([]RoundScore, 0, len(data.rounds)),
 		}
 
-		if prevPos, ok := previousPositions[data.golfer.ID.String()]; ok {
-			entry.PreviousPosition = &prevPos
-			change := prevPos - currentPos
-			entry.PositionChange = &change
+		if statusGroup == 0 {
+			if prevPos, ok := previousPositions[data.golfer.ID.String()]; ok {
+				entry.PreviousPosition = &prevPos
+				change := prevPos - position
+				entry.PositionChange = &change
+			}
 		}
 
 		if data.golfer.Country != nil {

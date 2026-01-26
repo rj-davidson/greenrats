@@ -101,12 +101,18 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
             {displayEntries.map((entry) => {
               const isUserPick = entry.golfer_id === userPickGolferId;
               const playerBehind = entry.current_round < currentRound;
+              const isCut = entry.status === "cut";
+              const isWithdrawn = entry.status === "withdrawn";
+              const isInactive = isCut || isWithdrawn;
               return (
-                <TableRow key={entry.golfer_id} className={cn(isUserPick && "bg-primary/5")}>
+                <TableRow
+                  key={entry.golfer_id}
+                  className={cn(isUserPick && "bg-primary/5", isInactive && "text-muted-foreground")}
+                >
                   <TableCell className="font-medium">{entry.position_display}</TableCell>
                   {showPositionChange && (
                     <TableCell>
-                      {playerBehind ? (
+                      {isInactive || playerBehind ? (
                         <span className="text-muted-foreground">-</span>
                       ) : (
                         <PositionChangeIndicator change={entry.position_change} />
@@ -122,12 +128,12 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                     )}
                   </TableCell>
                   <TableCell className="text-right font-mono">
-                    {playerBehind ? "-" : getCurrentRoundScore(entry)}
+                    {isInactive || playerBehind ? "-" : getCurrentRoundScore(entry)}
                   </TableCell>
                   <TableCell className="text-right text-muted-foreground">
-                    {playerBehind ? "-" : formatThru(entry.thru, entry.status)}
+                    {isInactive || playerBehind ? "-" : formatThru(entry.thru, entry.status)}
                   </TableCell>
-                  <TableCell className="text-right font-mono">
+                  <TableCell className={cn("text-right font-mono", !isInactive && entry.score < 0 && "text-primary")}>
                     {formatScoreToPar(entry.score)}
                   </TableCell>
                 </TableRow>
@@ -145,12 +151,15 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                 </TableRow>
                 {(() => {
                   const userPlayerBehind = userPickEntry.current_round < currentRound;
+                  const userIsCut = userPickEntry.status === "cut";
+                  const userIsWithdrawn = userPickEntry.status === "withdrawn";
+                  const userIsInactive = userIsCut || userIsWithdrawn;
                   return (
-                    <TableRow className="bg-primary/5">
+                    <TableRow className={cn("bg-primary/5", userIsInactive && "text-muted-foreground")}>
                       <TableCell className="font-medium">{userPickEntry.position_display}</TableCell>
                       {showPositionChange && (
                         <TableCell>
-                          {userPlayerBehind ? (
+                          {userIsInactive || userPlayerBehind ? (
                             <span className="text-muted-foreground">-</span>
                           ) : (
                             <PositionChangeIndicator change={userPickEntry.position_change} />
@@ -164,12 +173,19 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right font-mono">
-                        {userPlayerBehind ? "-" : getCurrentRoundScore(userPickEntry)}
+                        {userIsInactive || userPlayerBehind ? "-" : getCurrentRoundScore(userPickEntry)}
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
-                        {userPlayerBehind ? "-" : formatThru(userPickEntry.thru, userPickEntry.status)}
+                        {userIsInactive || userPlayerBehind
+                          ? "-"
+                          : formatThru(userPickEntry.thru, userPickEntry.status)}
                       </TableCell>
-                      <TableCell className="text-right font-mono">
+                      <TableCell
+                        className={cn(
+                          "text-right font-mono",
+                          !userIsInactive && userPickEntry.score < 0 && "text-primary",
+                        )}
+                      >
                         {formatScoreToPar(userPickEntry.score)}
                       </TableCell>
                     </TableRow>

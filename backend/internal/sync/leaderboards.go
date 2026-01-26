@@ -107,6 +107,52 @@ func (i *Ingester) syncPlacements(ctx context.Context) error {
 	return nil
 }
 
+func (i *Ingester) syncActivePlacements(ctx context.Context) error {
+	start := time.Now()
+	i.logger.Info("sync started", "type", "active_placements")
+
+	now := time.Now().UTC()
+	tournaments, err := i.db.Tournament.Query().
+		Where(
+			tournament.Not(tournament.HasChampion()),
+			tournament.PickWindowClosesAtLT(now),
+			tournament.BdlIDNotNil(),
+		).
+		All(ctx)
+	if err != nil {
+		SyncErrors.WithLabelValues("active_placements").Inc()
+		SyncRunsTotal.WithLabelValues("active_placements", "error").Inc()
+		return fmt.Errorf("query active tournaments: %w", err)
+	}
+
+	if len(tournaments) == 0 {
+		i.logger.Debug("no active tournaments found for placement sync")
+		SyncRunsTotal.WithLabelValues("active_placements", "skipped").Inc()
+		return nil
+	}
+
+	synced := 0
+	for _, t := range tournaments {
+		if err := i.syncTournamentPlacements(ctx, t); err != nil {
+			if isContextError(err) {
+				return fmt.Errorf("sync placements for %s: %w", t.Name, err)
+			}
+			SyncErrors.WithLabelValues("active_placements").Inc()
+			continue
+		}
+		synced++
+	}
+
+	i.recordSync(ctx, "active_placements")
+	duration := time.Since(start)
+	SyncDuration.WithLabelValues("active_placements").Observe(duration.Seconds())
+	SyncRecordsProcessed.WithLabelValues("active_placements", "tournaments").Add(float64(synced))
+	SyncRunsTotal.WithLabelValues("active_placements", "success").Inc()
+	LastSyncTimestamp.WithLabelValues("active_placements").Set(float64(time.Now().Unix()))
+	i.logger.Info("sync completed", "type", "active_placements", "duration", duration, "tournaments_synced", synced)
+	return nil
+}
+
 func (i *Ingester) syncTournamentPlacements(ctx context.Context, t *ent.Tournament) error {
 	i.logger.Debug("syncing placements", "tournament", t.Name)
 

@@ -15,21 +15,22 @@ import (
 )
 
 const (
-	TournamentSyncInterval  = 24 * time.Hour
-	PlacementSyncInterval   = 1 * time.Hour
-	ScorecardSyncInterval   = 10 * time.Minute
-	CompletionCheckInterval = 30 * time.Minute
-	ReminderCheckInterval   = 1 * time.Hour
-	EarningsCheckInterval   = 6 * time.Hour
-	GolferStatsSyncInterval = 7 * 24 * time.Hour
-	SchedulerTickInterval   = 1 * time.Minute
-	FieldSyncHour           = 9
-	PlayerSyncHour          = 21
-	CourseSyncHour          = 3
-	CourseSyncDay           = time.Sunday
-	GolferStatsSyncDay      = time.Monday
-	PlayHoursStart          = 9
-	PlayHoursEnd            = 21
+	TournamentSyncInterval      = 24 * time.Hour
+	PlacementSyncInterval       = 1 * time.Hour
+	ActivePlacementSyncInterval = 20 * time.Minute
+	ScorecardSyncInterval       = 10 * time.Minute
+	CompletionCheckInterval     = 30 * time.Minute
+	ReminderCheckInterval       = 1 * time.Hour
+	EarningsCheckInterval       = 6 * time.Hour
+	GolferStatsSyncInterval     = 7 * 24 * time.Hour
+	SchedulerTickInterval       = 1 * time.Minute
+	FieldSyncHour               = 9
+	PlayerSyncHour              = 21
+	CourseSyncHour              = 3
+	CourseSyncDay               = time.Sunday
+	GolferStatsSyncDay          = time.Monday
+	PlayHoursStart              = 9
+	PlayHoursEnd                = 21
 )
 
 type Ingester struct {
@@ -71,6 +72,7 @@ func (i *Ingester) Run(ctx context.Context) {
 	var lastTournamentSync, lastLeaderboardSync, lastScorecardSync time.Time
 	var lastFieldSync, lastEarningsSync, lastPlayerSync, lastReminderSync time.Time
 	var lastCourseSync, lastGolferStatsSync, lastCompletionCheck time.Time
+	var lastActivePlacementSync time.Time
 
 	i.logger.Info("ingester started, checking for required initial syncs")
 	if i.shouldSync(ctx, "tournaments", TournamentSyncInterval) {
@@ -93,6 +95,10 @@ func (i *Ingester) Run(ctx context.Context) {
 		if i.shouldSync(ctx, "scorecards", ScorecardSyncInterval) {
 			i.runSyncAsync(ctx, "sync_scorecards", &i.scorecardSyncRunning, i.syncScorecards)
 			lastScorecardSync = time.Now()
+		}
+		if i.shouldSync(ctx, "active_placements", ActivePlacementSyncInterval) {
+			i.runSync(ctx, "sync_active_placements", i.syncActivePlacements)
+			lastActivePlacementSync = time.Now()
 		}
 	}
 	if i.shouldSync(ctx, "earnings", EarningsCheckInterval) {
@@ -130,6 +136,11 @@ func (i *Ingester) Run(ctx context.Context) {
 			if i.isAnyTournamentInPlayHours(ctx) && now.Sub(lastScorecardSync) >= ScorecardSyncInterval {
 				i.runSyncAsync(ctx, "sync_scorecards", &i.scorecardSyncRunning, i.syncScorecards)
 				lastScorecardSync = now
+			}
+
+			if i.isAnyTournamentInPlayHours(ctx) && now.Sub(lastActivePlacementSync) >= ActivePlacementSyncInterval {
+				i.runSync(ctx, "sync_active_placements", i.syncActivePlacements)
+				lastActivePlacementSync = now
 			}
 
 			if i.shouldCheckCompletionNow() && now.Sub(lastCompletionCheck) >= CompletionCheckInterval {

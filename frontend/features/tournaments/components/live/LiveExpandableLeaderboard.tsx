@@ -169,12 +169,16 @@ function LiveLeaderboardRow({
   onHover,
 }: LiveLeaderboardRowProps) {
   const playerBehind = entry.current_round < tournamentRound;
+  const isCut = entry.status === "cut";
+  const isWithdrawn = entry.status === "withdrawn";
+  const isInactive = isCut || isWithdrawn;
 
   return (
     <TableRow
       className={cn(
         "cursor-pointer",
         isHighlighted && "bg-primary/20 hover:bg-primary/25",
+        isInactive && "text-muted-foreground",
       )}
       onClick={onToggle}
       onPointerEnter={onHover}
@@ -191,7 +195,7 @@ function LiveLeaderboardRow({
       </TableCell>
       {showPositionChange && (
         <TableCell>
-          {playerBehind ? (
+          {isInactive || playerBehind ? (
             <span className="text-muted-foreground">-</span>
           ) : (
             <PositionChangeIndicator change={entry.position_change} />
@@ -210,12 +214,12 @@ function LiveLeaderboardRow({
         </div>
       </TableCell>
       <TableCell className="font-mono">
-        {playerBehind ? "-" : getCurrentRoundScore(entry)}
+        {isInactive || playerBehind ? "-" : getCurrentRoundScore(entry)}
       </TableCell>
       <TableCell className="text-muted-foreground">
-        {playerBehind ? "-" : formatThru(entry.thru, entry.status)}
+        {isInactive || playerBehind ? "-" : formatThru(entry.thru, entry.status)}
       </TableCell>
-      <TableCell className={cn("font-mono", entry.score < 0 && "text-primary")}>
+      <TableCell className={cn("font-mono", entry.score < 0 && !isInactive && "text-primary")}>
         {formatScoreToPar(entry.score)}
       </TableCell>
     </TableRow>
