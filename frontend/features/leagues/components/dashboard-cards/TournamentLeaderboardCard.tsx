@@ -89,8 +89,8 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">Pos</TableHead>
-              {showPositionChange && <TableHead className="w-10">+/-</TableHead>}
+              <TableHead className="w-6">Pos</TableHead>
+              {showPositionChange && <TableHead className="w-6">+/-</TableHead>}
               <TableHead>Player</TableHead>
               <TableHead className="text-right">{getRoundLabel(currentRound)}</TableHead>
               <TableHead className="text-right">Thru</TableHead>
@@ -133,7 +133,7 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                   <TableCell className="text-right text-muted-foreground">
                     {isInactive || playerBehind ? "-" : formatThru(entry.thru, entry.status)}
                   </TableCell>
-                  <TableCell className={cn("text-right font-mono", !isInactive && entry.score < 0 && "text-primary")}>
+                  <TableCell className={cn("text-right font-mono", !isInactive && entry.score < 0 && "text-secondary-foreground font-bold")}>
                     {formatScoreToPar(entry.score)}
                   </TableCell>
                 </TableRow>
@@ -183,7 +183,7 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
                       <TableCell
                         className={cn(
                           "text-right font-mono",
-                          !userIsInactive && userPickEntry.score < 0 && "text-primary",
+                          !userIsInactive && userPickEntry.score < 0 && "text-secondary-foreground font-bold",
                         )}
                       >
                         {formatScoreToPar(userPickEntry.score)}

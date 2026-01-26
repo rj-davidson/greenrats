@@ -1,12 +1,12 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { MoveDownIcon, MoveUpIcon } from "lucide-react";
 
-interface PositionChangeIndicatorProps {
+type PositionChangeIndicatorProps = {
   change: number | null | undefined;
   className?: string;
-}
+};
 
 export function PositionChangeIndicator({ change, className }: PositionChangeIndicatorProps) {
   if (change == null || change === 0) {
@@ -15,16 +15,16 @@ export function PositionChangeIndicator({ change, className }: PositionChangeInd
 
   if (change > 0) {
     return (
-      <span className={cn("text-green-600 dark:text-green-400", className)}>
-        <ChevronUp className="inline size-3" />
+      <span className={cn("flex items-center flex-nowrap gap-0 text-green-600 dark:text-green-400", className)}>
+        <MoveUpIcon className="inline size-3" />
         {change}
       </span>
     );
   }
 
   return (
-    <span className={cn("text-red-600 dark:text-red-400", className)}>
-      <ChevronDown className="inline size-3" />
+    <span className={cn("flex items-center flex-nowrap gap-0 text-red-600 dark:text-red-400", className)}>
+      <MoveDownIcon className="inline size-3" />
       {Math.abs(change)}
     </span>
   );

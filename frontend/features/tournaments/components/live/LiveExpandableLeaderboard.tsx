@@ -83,13 +83,13 @@ export function LiveExpandableLeaderboard({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead className="w-12"></TableHead>
-          <TableHead className="w-16">Pos</TableHead>
-          {showPositionChange && <TableHead className="w-12">+/-</TableHead>}
+          <TableHead className="w-6"></TableHead>
+          <TableHead className="w-6">Pos</TableHead>
+          {showPositionChange && <TableHead className="w-6">+/-</TableHead>}
           <TableHead>Player</TableHead>
-          <TableHead className="w-16">{getRoundLabel(currentRound)}</TableHead>
-          <TableHead className="w-16">Thru</TableHead>
-          <TableHead className="w-20">Total</TableHead>
+          <TableHead className="w-8">{getRoundLabel(currentRound)}</TableHead>
+          <TableHead className="w-8">Thru</TableHead>
+          <TableHead className="w-8">Total</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -149,7 +149,7 @@ export function LiveExpandableLeaderboard({
   );
 }
 
-interface LiveLeaderboardRowProps {
+type LiveLeaderboardRowProps = {
   entry: LeaderboardEntry;
   tournamentRound: number;
   isExpanded: boolean;
@@ -157,7 +157,7 @@ interface LiveLeaderboardRowProps {
   showPositionChange: boolean;
   onToggle: () => void;
   onHover: () => void;
-}
+};
 
 function LiveLeaderboardRow({
   entry,
@@ -219,7 +219,7 @@ function LiveLeaderboardRow({
       <TableCell className="text-muted-foreground">
         {isInactive || playerBehind ? "-" : formatThru(entry.thru, entry.status)}
       </TableCell>
-      <TableCell className={cn("font-mono", entry.score < 0 && !isInactive && "text-primary")}>
+      <TableCell className={cn("font-mono", entry.score < 0 && !isInactive && "text-secondary-foreground font-bold")}>
         {formatScoreToPar(entry.score)}
       </TableCell>
     </TableRow>

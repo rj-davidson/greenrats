@@ -13,7 +13,7 @@ import {
 import { useLeagueLeaderboard } from "@/features/leaderboards/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { cn } from "@/lib/utils";
-import { TrophyIcon, UsersIcon } from "lucide-react";
+import { UsersIcon } from "lucide-react";
 import Link from "next/link";
 
 interface StandingsCardProps {
@@ -26,23 +26,6 @@ function formatEarnings(amount: number): string {
     currency: "USD",
     maximumFractionDigits: 0,
   }).format(amount);
-}
-
-function getRankDisplay(rank: number) {
-  if (rank === 1) {
-    return (
-      <span className="flex items-center gap-1 text-amber-500">
-        <TrophyIcon className="size-4" />1
-      </span>
-    );
-  }
-  if (rank === 2) {
-    return <span className="text-slate-400">{rank}</span>;
-  }
-  if (rank === 3) {
-    return <span className="text-amber-700">{rank}</span>;
-  }
-  return rank;
 }
 
 function getOrdinalSuffix(n: number): string {
@@ -95,7 +78,7 @@ export function StandingsCard({ leagueId }: StandingsCardProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-12">Rank</TableHead>
+            <TableHead className="w-6">#</TableHead>
             <TableHead>Player</TableHead>
             <TableHead className="text-right">Earnings</TableHead>
           </TableRow>
@@ -105,7 +88,7 @@ export function StandingsCard({ leagueId }: StandingsCardProps) {
             const isCurrentUser = currentUser?.id === entry.user_id;
             return (
               <TableRow key={entry.user_id} className={cn(isCurrentUser && "bg-primary/5")}>
-                <TableCell className="font-medium">{getRankDisplay(entry.rank)}</TableCell>
+                <TableCell className="font-medium">{entry.rank}</TableCell>
                 <TableCell>
                   {entry.display_name}
                   {isCurrentUser && (
