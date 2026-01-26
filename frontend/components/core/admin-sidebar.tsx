@@ -12,7 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/shadcn/sidebar";
-import { BotIcon, HomeIcon, SettingsIcon, TrophyIcon, UsersIcon } from "lucide-react";
+import { BotIcon, SettingsIcon, TrophyIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -60,20 +60,6 @@ export function AdminSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip="Back to Leagues">
-                  <Link href="/">
-                    <HomeIcon className="size-4" />
-                    <span>Back to Leagues</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

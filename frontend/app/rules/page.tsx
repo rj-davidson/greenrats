@@ -155,14 +155,9 @@ export default function RulesPage() {
 
         <Separator className="my-10" />
 
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center">
           <Link href="/login">
             <Button size="lg">Get Started</Button>
-          </Link>
-          <Link href="/">
-            <Button variant="outline" size="lg">
-              Back to Home
-            </Button>
           </Link>
         </div>
       </div>
