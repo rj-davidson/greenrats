@@ -17,6 +17,9 @@
 /.next/
 /out/
 
+# og preview (local development only)
+/app/og-preview
+
 # production
 /build
 
@@ -48,6 +51,3 @@ storybook-static
 
 # Sentry Config File
 .env.sentry-build-plugin
-
-# Local task tracking
-human-tasks.md

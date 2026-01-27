@@ -63,3 +63,6 @@ coverage/
 # Docker
 docker-compose.override.yml
 /backend/cmd/ingest/pricing_plans/*
+
+# Local task tracking
+human-tasks.md
