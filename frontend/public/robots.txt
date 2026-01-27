@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /callback
+Disallow: /onboarding
+Disallow: /create
+Disallow: /admin
+
+Sitemap: https://greenrats.com/sitemap.xml

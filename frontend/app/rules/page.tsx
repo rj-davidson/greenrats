@@ -1,6 +1,36 @@
 import { Button } from "@/components/shadcn/button";
 import { Separator } from "@/components/shadcn/separator";
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "How to Play",
+  description:
+    "Learn how greenrats fantasy golf leagues work: pick one golfer per tournament, no repeats all season, compete on your league leaderboard.",
+};
+
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: [
+    {
+      "@type": "Question",
+      name: "How do greenrats fantasy golf leagues work?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Create a league and invite friends. Each member picks one golfer per tournament - once picked, that golfer can't be used again all season. Track standings on your league leaderboard.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "Can I pick the same golfer twice?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "No, each golfer can only be picked once per season within a league.",
+      },
+    },
+  ],
+};
 
 function TheBasics() {
   return (
@@ -137,30 +167,36 @@ function WinningYourLeague() {
 
 export default function RulesPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center px-4 py-8 sm:px-8">
-      <div className="w-full max-w-2xl">
-        <div className="mb-12 text-center">
-          <h1 className="mb-2 text-4xl font-bold">How to Play</h1>
-          <p className="text-lg text-muted-foreground">
-            Everything you need to know to get started
-          </p>
-        </div>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <main className="flex min-h-screen flex-col items-center px-4 py-8 sm:px-8">
+        <div className="w-full max-w-2xl">
+          <div className="mb-12 text-center">
+            <h1 className="mb-2 text-4xl font-bold">How to Play</h1>
+            <p className="text-lg text-muted-foreground">
+              Everything you need to know to get started
+            </p>
+          </div>
 
-        <div className="space-y-10">
-          <TheBasics />
-          <MakingYourPick />
-          <Scoring />
-          <WinningYourLeague />
-        </div>
+          <div className="space-y-10">
+            <TheBasics />
+            <MakingYourPick />
+            <Scoring />
+            <WinningYourLeague />
+          </div>
 
-        <Separator className="my-10" />
+          <Separator className="my-10" />
 
-        <div className="flex justify-center">
-          <Link href="/login">
-            <Button size="lg">Get Started</Button>
-          </Link>
+          <div className="flex justify-center">
+            <Link href="/login">
+              <Button size="lg">Get Started</Button>
+            </Link>
+          </div>
         </div>
-      </div>
-    </main>
+      </main>
+    </>
   );
 }

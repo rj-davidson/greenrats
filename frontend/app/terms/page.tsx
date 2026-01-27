@@ -1,3 +1,12 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description:
+    "greenrats terms of service - rules and guidelines for using our fantasy golf league platform.",
+  robots: { index: true, follow: false },
+};
+
 const effectiveDate = "January 23, 2026";
 
 export default function TermsPage() {

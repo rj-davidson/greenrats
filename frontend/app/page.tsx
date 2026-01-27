@@ -16,6 +16,22 @@ import { CalendarCheckIcon, Rat, TrophyIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "greenrats",
+  description:
+    "Fantasy golf league manager - create pick'em leagues, track picks, and manage season-long standings",
+  url: "https://greenrats.com",
+  applicationCategory: "GameApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+};
+
 function HeroSection() {
   return (
     <section className="flex flex-col items-center py-12 text-center">
@@ -99,8 +115,7 @@ function HowItWorksSection() {
     {
       icon: <UsersIcon className="size-8" />,
       title: "Compete in Leagues",
-      description:
-        "Create or join leagues with friends. The highest total at season end wins.",
+      description: "Create or join leagues with friends. The highest total at season end wins.",
     },
   ];
 
@@ -143,12 +158,18 @@ function CtaSection() {
 
 function LandingPage() {
   return (
-    <main className="flex min-h-screen flex-col items-center px-4 py-8 sm:px-8">
-      <HeroSection />
-      <ShowcaseSection />
-      <HowItWorksSection />
-      <CtaSection />
-    </main>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <main className="flex min-h-screen flex-col items-center px-4 py-8 sm:px-8">
+        <HeroSection />
+        <ShowcaseSection />
+        <HowItWorksSection />
+        <CtaSection />
+      </main>
+    </>
   );
 }
 

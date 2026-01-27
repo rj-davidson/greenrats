@@ -23,8 +23,49 @@ const imFellFrenchCanon = IM_Fell_French_Canon({
 });
 
 export const metadata: Metadata = {
-  title: "greenrats - Golf Pick'em",
-  description: "Pick one golfer per tournament. Compete with friends. Track your earnings.",
+  metadataBase: new URL("https://greenrats.com"),
+  title: {
+    default: "greenrats - Fantasy Golf League Manager",
+    template: "%s | greenrats",
+  },
+  description:
+    "Create and manage fantasy golf pick'em leagues. Organize your group, track picks, and follow season-long standings.",
+  keywords: [
+    "fantasy golf league",
+    "golf pick em league",
+    "golf league manager",
+    "fantasy golf app",
+    "golf pick em",
+  ],
+  authors: [{ name: "greenrats" }],
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://greenrats.com",
+    siteName: "greenrats",
+    title: "greenrats - Fantasy Golf League Manager",
+    description:
+      "Create and manage fantasy golf pick'em leagues. Organize your group, track picks, and follow season-long standings.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "greenrats Fantasy Golf League Manager",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "greenrats - Fantasy Golf League Manager",
+    description:
+      "Create and manage fantasy golf pick'em leagues. Organize your group, track picks, and follow season-long standings.",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
 };
 
 export default function RootLayout({

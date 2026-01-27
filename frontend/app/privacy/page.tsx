@@ -1,3 +1,11 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "greenrats privacy policy - how we collect, use, and protect your data.",
+  robots: { index: true, follow: false },
+};
+
 const effectiveDate = "January 23, 2026";
 
 export default function PrivacyPage() {
