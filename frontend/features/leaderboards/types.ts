@@ -66,6 +66,7 @@ export const standingsEntryRawSchema = z.object({
   user_display_name: z.string(),
   total_earnings: z.number(),
   pick_count: z.number(),
+  has_current_pick: z.boolean().optional(),
   current_pick: currentPickSchema.optional(),
   picks: z.array(pickHistoryRawSchema).optional(),
 });
