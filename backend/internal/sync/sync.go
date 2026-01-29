@@ -1025,6 +1025,33 @@ func (s *Service) UpsertHoleScore(ctx context.Context, roundID uuid.UUID, h *bal
 		}
 	}
 
+	if err := s.updateRoundThru(ctx, roundID); err != nil {
+		s.logger.Warn("failed to update round thru", "round_id", roundID, "error", err)
+	}
+
+	return nil
+}
+
+func (s *Service) updateRoundThru(ctx context.Context, roundID uuid.UUID) error {
+	holeScores, err := s.db.HoleScore.Query().
+		Where(holescore.HasRoundWith(round.IDEQ(roundID))).
+		All(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query hole scores: %w", err)
+	}
+
+	thru := 0
+	for _, h := range holeScores {
+		if h.Score != nil {
+			thru++
+		}
+	}
+
+	_, err = s.db.Round.UpdateOneID(roundID).SetThru(thru).Save(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to update round thru: %w", err)
+	}
+
 	return nil
 }
 

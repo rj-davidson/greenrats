@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/shadcn/table";
-import { useLeaderboard, usePrefetchLeaderboardWithHoles } from "@/features/tournaments/queries";
+import { useLeaderboard, useScorecard } from "@/features/tournaments/queries";
 import type { LeaderboardEntry } from "@/features/tournaments/types";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, ChevronRightIcon, UserCheck } from "lucide-react";
@@ -48,8 +48,7 @@ export function LiveExpandableLeaderboard({
   const [expandedGolferId, setExpandedGolferId] = useState<string | null>(null);
 
   const { data, isLoading, error } = useLeaderboard(tournamentId, { leagueId });
-  const { data: dataWithHoles } = useLeaderboard(tournamentId, { include: "holes", leagueId });
-  const prefetch = usePrefetchLeaderboardWithHoles(tournamentId, leagueId);
+  const { data: scorecardData } = useScorecard(tournamentId, expandedGolferId);
 
   const toggleExpand = useCallback((golferId: string) => {
     setExpandedGolferId((prev) => (prev === golferId ? null : golferId));
@@ -95,9 +94,6 @@ export function LiveExpandableLeaderboard({
       <TableBody>
         {data.entries.map((entry) => {
           const isExpanded = expandedGolferId === entry.golfer_id;
-          const entryWithHoles = dataWithHoles?.entries.find(
-            (e) => e.golfer_id === entry.golfer_id,
-          );
 
           return (
             <Fragment key={entry.golfer_id}>
@@ -108,9 +104,8 @@ export function LiveExpandableLeaderboard({
                 isHighlighted={entry.golfer_id === highlightedGolferId}
                 showPositionChange={showPositionChange}
                 onToggle={() => toggleExpand(entry.golfer_id)}
-                onHover={prefetch}
               />
-              {isExpanded && entryWithHoles && (
+              {isExpanded && scorecardData && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={showPositionChange ? 7 : 6} className="px-2 py-0">
                     {entry.picked_by && entry.picked_by.length > 0 && (
@@ -126,13 +121,13 @@ export function LiveExpandableLeaderboard({
                       </div>
                     )}
                     <GolfScorecard
-                      rounds={entryWithHoles.rounds}
+                      rounds={scorecardData.rounds}
                       onClose={() => setExpandedGolferId(null)}
                     />
                   </TableCell>
                 </TableRow>
               )}
-              {isExpanded && !entryWithHoles && (
+              {isExpanded && !scorecardData && (
                 <TableRow className="hover:bg-transparent">
                   <TableCell colSpan={showPositionChange ? 7 : 6} className="p-4">
                     <div className="flex justify-center">
@@ -156,7 +151,6 @@ type LiveLeaderboardRowProps = {
   isHighlighted: boolean;
   showPositionChange: boolean;
   onToggle: () => void;
-  onHover: () => void;
 };
 
 function LiveLeaderboardRow({
@@ -166,7 +160,6 @@ function LiveLeaderboardRow({
   isHighlighted,
   showPositionChange,
   onToggle,
-  onHover,
 }: LiveLeaderboardRowProps) {
   const playerBehind = entry.current_round < tournamentRound;
   const isCut = entry.status === "cut";
@@ -181,7 +174,6 @@ function LiveLeaderboardRow({
         isInactive && "text-muted-foreground",
       )}
       onClick={onToggle}
-      onPointerEnter={onHover}
     >
       <TableCell className="text-muted-foreground">
         {isExpanded ? (

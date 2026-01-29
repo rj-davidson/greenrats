@@ -101,6 +101,20 @@ func (_c *RoundCreate) SetNillableTeeTime(v *time.Time) *RoundCreate {
 	return _c
 }
 
+// SetThru sets the "thru" field.
+func (_c *RoundCreate) SetThru(v int) *RoundCreate {
+	_c.mutation.SetThru(v)
+	return _c
+}
+
+// SetNillableThru sets the "thru" field if the given value is not nil.
+func (_c *RoundCreate) SetNillableThru(v *int) *RoundCreate {
+	if v != nil {
+		_c.SetThru(*v)
+	}
+	return _c
+}
+
 // SetID sets the "id" field.
 func (_c *RoundCreate) SetID(v uuid.UUID) *RoundCreate {
 	_c.mutation.SetID(v)
@@ -300,6 +314,10 @@ func (_c *RoundCreate) createSpec() (*Round, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.TeeTime(); ok {
 		_spec.SetField(round.FieldTeeTime, field.TypeTime, value)
 		_node.TeeTime = &value
+	}
+	if value, ok := _c.mutation.Thru(); ok {
+		_spec.SetField(round.FieldThru, field.TypeInt, value)
+		_node.Thru = &value
 	}
 	if nodes := _c.mutation.TournamentIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

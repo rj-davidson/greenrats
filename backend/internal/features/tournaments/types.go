@@ -8,6 +8,8 @@ import (
 var (
 	ErrInvalidTournamentID = errors.New("invalid tournament ID")
 	ErrTournamentNotFound  = errors.New("tournament not found")
+	ErrInvalidGolferID     = errors.New("invalid golfer ID")
+	ErrGolferNotFound      = errors.New("golfer not found")
 )
 
 // CourseInfo represents course information in API responses.
@@ -138,4 +140,13 @@ type GetFieldResponse struct {
 	TournamentName string       `json:"tournament_name"`
 	Entries        []FieldEntry `json:"entries"`
 	Total          int          `json:"total"`
+}
+
+// GetScorecardResponse represents the response for getting a golfer's scorecard.
+type GetScorecardResponse struct {
+	TournamentID   string       `json:"tournament_id"`
+	TournamentName string       `json:"tournament_name"`
+	GolferID       string       `json:"golfer_id"`
+	GolferName     string       `json:"golfer_name"`
+	Rounds         []RoundScore `json:"rounds"`
 }

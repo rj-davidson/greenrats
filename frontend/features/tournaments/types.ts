@@ -123,6 +123,14 @@ export const getFieldResponseSchema = z.object({
   total: z.number(),
 });
 
+export const getScorecardResponseSchema = z.object({
+  tournament_id: z.string(),
+  tournament_name: z.string(),
+  golfer_id: z.string(),
+  golfer_name: z.string(),
+  rounds: z.array(roundScoreSchema),
+});
+
 export type TournamentStatus = z.infer<typeof tournamentStatusSchema>;
 export type Tournament = z.infer<typeof tournamentSchema>;
 export type CourseInfo = z.infer<typeof courseInfoSchema>;
@@ -133,3 +141,4 @@ export type HoleScore = z.infer<typeof holeScoreSchema>;
 export type RoundScore = z.infer<typeof roundScoreSchema>;
 export type FieldEntry = z.infer<typeof fieldEntrySchema>;
 export type GetFieldResponse = z.infer<typeof getFieldResponseSchema>;
+export type GetScorecardResponse = z.infer<typeof getScorecardResponseSchema>;

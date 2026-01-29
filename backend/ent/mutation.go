@@ -12786,6 +12786,8 @@ type RoundMutation struct {
 	par_relative_score    *int
 	addpar_relative_score *int
 	tee_time              *time.Time
+	thru                  *int
+	addthru               *int
 	clearedFields         map[string]struct{}
 	tournament            *uuid.UUID
 	clearedtournament     bool
@@ -13222,6 +13224,76 @@ func (m *RoundMutation) ResetTeeTime() {
 	delete(m.clearedFields, round.FieldTeeTime)
 }
 
+// SetThru sets the "thru" field.
+func (m *RoundMutation) SetThru(i int) {
+	m.thru = &i
+	m.addthru = nil
+}
+
+// Thru returns the value of the "thru" field in the mutation.
+func (m *RoundMutation) Thru() (r int, exists bool) {
+	v := m.thru
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// OldThru returns the old "thru" field's value of the Round entity.
+// If the Round object wasn't provided to the builder, the object is fetched from the database.
+// An error is returned if the mutation operation is not UpdateOne, or the database query fails.
+func (m *RoundMutation) OldThru(ctx context.Context) (v *int, err error) {
+	if !m.op.Is(OpUpdateOne) {
+		return v, errors.New("OldThru is only allowed on UpdateOne operations")
+	}
+	if m.id == nil || m.oldValue == nil {
+		return v, errors.New("OldThru requires an ID field in the mutation")
+	}
+	oldValue, err := m.oldValue(ctx)
+	if err != nil {
+		return v, fmt.Errorf("querying old value for OldThru: %w", err)
+	}
+	return oldValue.Thru, nil
+}
+
+// AddThru adds i to the "thru" field.
+func (m *RoundMutation) AddThru(i int) {
+	if m.addthru != nil {
+		*m.addthru += i
+	} else {
+		m.addthru = &i
+	}
+}
+
+// AddedThru returns the value that was added to the "thru" field in this mutation.
+func (m *RoundMutation) AddedThru() (r int, exists bool) {
+	v := m.addthru
+	if v == nil {
+		return
+	}
+	return *v, true
+}
+
+// ClearThru clears the value of the "thru" field.
+func (m *RoundMutation) ClearThru() {
+	m.thru = nil
+	m.addthru = nil
+	m.clearedFields[round.FieldThru] = struct{}{}
+}
+
+// ThruCleared returns if the "thru" field was cleared in this mutation.
+func (m *RoundMutation) ThruCleared() bool {
+	_, ok := m.clearedFields[round.FieldThru]
+	return ok
+}
+
+// ResetThru resets all changes to the "thru" field.
+func (m *RoundMutation) ResetThru() {
+	m.thru = nil
+	m.addthru = nil
+	delete(m.clearedFields, round.FieldThru)
+}
+
 // SetTournamentID sets the "tournament" edge to the Tournament entity by id.
 func (m *RoundMutation) SetTournamentID(id uuid.UUID) {
 	m.tournament = &id
@@ -13427,7 +13499,7 @@ func (m *RoundMutation) Type() string {
 // order to get all numeric fields that were incremented/decremented, call
 // AddedFields().
 func (m *RoundMutation) Fields() []string {
-	fields := make([]string, 0, 6)
+	fields := make([]string, 0, 7)
 	if m.created_at != nil {
 		fields = append(fields, round.FieldCreatedAt)
 	}
@@ -13445,6 +13517,9 @@ func (m *RoundMutation) Fields() []string {
 	}
 	if m.tee_time != nil {
 		fields = append(fields, round.FieldTeeTime)
+	}
+	if m.thru != nil {
+		fields = append(fields, round.FieldThru)
 	}
 	return fields
 }
@@ -13466,6 +13541,8 @@ func (m *RoundMutation) Field(name string) (ent.Value, bool) {
 		return m.ParRelativeScore()
 	case round.FieldTeeTime:
 		return m.TeeTime()
+	case round.FieldThru:
+		return m.Thru()
 	}
 	return nil, false
 }
@@ -13487,6 +13564,8 @@ func (m *RoundMutation) OldField(ctx context.Context, name string) (ent.Value, e
 		return m.OldParRelativeScore(ctx)
 	case round.FieldTeeTime:
 		return m.OldTeeTime(ctx)
+	case round.FieldThru:
+		return m.OldThru(ctx)
 	}
 	return nil, fmt.Errorf("unknown Round field %s", name)
 }
@@ -13538,6 +13617,13 @@ func (m *RoundMutation) SetField(name string, value ent.Value) error {
 		}
 		m.SetTeeTime(v)
 		return nil
+	case round.FieldThru:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.SetThru(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Round field %s", name)
 }
@@ -13555,6 +13641,9 @@ func (m *RoundMutation) AddedFields() []string {
 	if m.addpar_relative_score != nil {
 		fields = append(fields, round.FieldParRelativeScore)
 	}
+	if m.addthru != nil {
+		fields = append(fields, round.FieldThru)
+	}
 	return fields
 }
 
@@ -13569,6 +13658,8 @@ func (m *RoundMutation) AddedField(name string) (ent.Value, bool) {
 		return m.AddedScore()
 	case round.FieldParRelativeScore:
 		return m.AddedParRelativeScore()
+	case round.FieldThru:
+		return m.AddedThru()
 	}
 	return nil, false
 }
@@ -13599,6 +13690,13 @@ func (m *RoundMutation) AddField(name string, value ent.Value) error {
 		}
 		m.AddParRelativeScore(v)
 		return nil
+	case round.FieldThru:
+		v, ok := value.(int)
+		if !ok {
+			return fmt.Errorf("unexpected type %T for field %s", value, name)
+		}
+		m.AddThru(v)
+		return nil
 	}
 	return fmt.Errorf("unknown Round numeric field %s", name)
 }
@@ -13615,6 +13713,9 @@ func (m *RoundMutation) ClearedFields() []string {
 	}
 	if m.FieldCleared(round.FieldTeeTime) {
 		fields = append(fields, round.FieldTeeTime)
+	}
+	if m.FieldCleared(round.FieldThru) {
+		fields = append(fields, round.FieldThru)
 	}
 	return fields
 }
@@ -13638,6 +13739,9 @@ func (m *RoundMutation) ClearField(name string) error {
 		return nil
 	case round.FieldTeeTime:
 		m.ClearTeeTime()
+		return nil
+	case round.FieldThru:
+		m.ClearThru()
 		return nil
 	}
 	return fmt.Errorf("unknown Round nullable field %s", name)
@@ -13664,6 +13768,9 @@ func (m *RoundMutation) ResetField(name string) error {
 		return nil
 	case round.FieldTeeTime:
 		m.ResetTeeTime()
+		return nil
+	case round.FieldThru:
+		m.ResetThru()
 		return nil
 	}
 	return fmt.Errorf("unknown Round field %s", name)

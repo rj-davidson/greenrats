@@ -86,6 +86,11 @@ func TeeTime(v time.Time) predicate.Round {
 	return predicate.Round(sql.FieldEQ(FieldTeeTime, v))
 }
 
+// Thru applies equality check predicate on the "thru" field. It's identical to ThruEQ.
+func Thru(v int) predicate.Round {
+	return predicate.Round(sql.FieldEQ(FieldThru, v))
+}
+
 // CreatedAtEQ applies the EQ predicate on the "created_at" field.
 func CreatedAtEQ(v time.Time) predicate.Round {
 	return predicate.Round(sql.FieldEQ(FieldCreatedAt, v))
@@ -354,6 +359,56 @@ func TeeTimeIsNil() predicate.Round {
 // TeeTimeNotNil applies the NotNil predicate on the "tee_time" field.
 func TeeTimeNotNil() predicate.Round {
 	return predicate.Round(sql.FieldNotNull(FieldTeeTime))
+}
+
+// ThruEQ applies the EQ predicate on the "thru" field.
+func ThruEQ(v int) predicate.Round {
+	return predicate.Round(sql.FieldEQ(FieldThru, v))
+}
+
+// ThruNEQ applies the NEQ predicate on the "thru" field.
+func ThruNEQ(v int) predicate.Round {
+	return predicate.Round(sql.FieldNEQ(FieldThru, v))
+}
+
+// ThruIn applies the In predicate on the "thru" field.
+func ThruIn(vs ...int) predicate.Round {
+	return predicate.Round(sql.FieldIn(FieldThru, vs...))
+}
+
+// ThruNotIn applies the NotIn predicate on the "thru" field.
+func ThruNotIn(vs ...int) predicate.Round {
+	return predicate.Round(sql.FieldNotIn(FieldThru, vs...))
+}
+
+// ThruGT applies the GT predicate on the "thru" field.
+func ThruGT(v int) predicate.Round {
+	return predicate.Round(sql.FieldGT(FieldThru, v))
+}
+
+// ThruGTE applies the GTE predicate on the "thru" field.
+func ThruGTE(v int) predicate.Round {
+	return predicate.Round(sql.FieldGTE(FieldThru, v))
+}
+
+// ThruLT applies the LT predicate on the "thru" field.
+func ThruLT(v int) predicate.Round {
+	return predicate.Round(sql.FieldLT(FieldThru, v))
+}
+
+// ThruLTE applies the LTE predicate on the "thru" field.
+func ThruLTE(v int) predicate.Round {
+	return predicate.Round(sql.FieldLTE(FieldThru, v))
+}
+
+// ThruIsNil applies the IsNil predicate on the "thru" field.
+func ThruIsNil() predicate.Round {
+	return predicate.Round(sql.FieldIsNull(FieldThru))
+}
+
+// ThruNotNil applies the NotNil predicate on the "thru" field.
+func ThruNotNil() predicate.Round {
+	return predicate.Round(sql.FieldNotNull(FieldThru))
 }
 
 // HasTournament applies the HasEdge predicate on the "tournament" edge.

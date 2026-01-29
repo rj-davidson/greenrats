@@ -2,6 +2,7 @@ import type {
   GetFieldResponse,
   GetLeaderboardResponse,
   GetLeaderboardResponseRaw,
+  GetScorecardResponse,
   GetTournamentResponse,
   LeaderboardEntry,
   ListTournamentsResponse,
@@ -11,8 +12,7 @@ import { buildPositionCounts, formatPositionDisplay } from "@/lib/leaderboard";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
-import { queryOptions, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { queryOptions, useQuery } from "@tanstack/react-query";
 
 interface ListTournamentsParams {
   season?: number;
@@ -34,6 +34,9 @@ export const buildLeaderboardKey = (id: string, include?: string, leagueId?: str
   [QueryKey.TOURNAMENTS, "leaderboard", id, include, leagueId] as const;
 
 export const buildFieldKey = (id: string) => [QueryKey.TOURNAMENTS, "field", id] as const;
+
+export const buildScorecardKey = (tournamentId: string, golferId: string) =>
+  [QueryKey.TOURNAMENTS, "scorecard", tournamentId, golferId] as const;
 
 // Query options builders
 export function buildGetTournamentsQueryOptions(
@@ -127,6 +130,22 @@ export function buildGetFieldQueryOptions(id: string, requestor: Requestor = mak
   });
 }
 
+export function buildGetScorecardQueryOptions(
+  tournamentId: string,
+  golferId: string,
+  requestor: Requestor = makeClientRequest,
+) {
+  return queryOptions<GetScorecardResponse>({
+    queryKey: buildScorecardKey(tournamentId, golferId),
+    queryFn: () =>
+      requestor.get<GetScorecardResponse>(
+        `/api/v1/tournaments/${tournamentId}/scorecard/${golferId}`,
+      ),
+    enabled: !!tournamentId && !!golferId,
+    staleTime: 30 * 1000,
+  });
+}
+
 // React hooks (convenience wrappers)
 export function useTournaments(params: ListTournamentsParams = {}) {
   return useQuery(buildGetTournamentsQueryOptions(params));
@@ -148,14 +167,13 @@ export function useTournamentField(id: string) {
   return useQuery(buildGetFieldQueryOptions(id));
 }
 
-export function usePrefetchLeaderboardWithHoles(tournamentId: string, leagueId?: string) {
-  const queryClient = useQueryClient();
-  return useCallback(() => {
-    void queryClient.prefetchQuery(
-      buildGetLeaderboardQueryOptions(tournamentId, { include: "holes", leagueId }),
-    );
-  }, [queryClient, tournamentId, leagueId]);
+export function useScorecard(tournamentId: string, golferId: string | null) {
+  return useQuery({
+    ...buildGetScorecardQueryOptions(tournamentId, golferId ?? ""),
+    enabled: !!tournamentId && !!golferId,
+  });
 }
+
 
 export function useCurrentTournament() {
   const { data: activeData, isLoading: activeLoading } = useActiveTournament();

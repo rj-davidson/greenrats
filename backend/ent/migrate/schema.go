@@ -468,6 +468,7 @@ var (
 		{Name: "score", Type: field.TypeInt, Nullable: true},
 		{Name: "par_relative_score", Type: field.TypeInt, Nullable: true},
 		{Name: "tee_time", Type: field.TypeTime, Nullable: true},
+		{Name: "thru", Type: field.TypeInt, Nullable: true},
 		{Name: "course_rounds", Type: field.TypeUUID, Nullable: true},
 		{Name: "golfer_rounds", Type: field.TypeUUID},
 		{Name: "tournament_rounds", Type: field.TypeUUID},
@@ -480,19 +481,19 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:     "rounds_courses_rounds",
-				Columns:    []*schema.Column{RoundsColumns[7]},
+				Columns:    []*schema.Column{RoundsColumns[8]},
 				RefColumns: []*schema.Column{CoursesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:     "rounds_golfers_rounds",
-				Columns:    []*schema.Column{RoundsColumns[8]},
+				Columns:    []*schema.Column{RoundsColumns[9]},
 				RefColumns: []*schema.Column{GolfersColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
 			{
 				Symbol:     "rounds_tournaments_rounds",
-				Columns:    []*schema.Column{RoundsColumns[9]},
+				Columns:    []*schema.Column{RoundsColumns[10]},
 				RefColumns: []*schema.Column{TournamentsColumns[0]},
 				OnDelete:   schema.NoAction,
 			},
@@ -501,7 +502,7 @@ var (
 			{
 				Name:    "round_round_number_tournament_rounds_golfer_rounds",
 				Unique:  true,
-				Columns: []*schema.Column{RoundsColumns[3], RoundsColumns[9], RoundsColumns[8]},
+				Columns: []*schema.Column{RoundsColumns[3], RoundsColumns[10], RoundsColumns[9]},
 			},
 		},
 	}

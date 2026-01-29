@@ -10,7 +10,7 @@ import {
   formatScoreToPar,
   getHoleScoreClass,
 } from "@/features/tournaments/components/leaderboard-utils";
-import { useLeaderboard } from "@/features/tournaments/queries";
+import { useLeaderboard, useScorecard } from "@/features/tournaments/queries";
 import type { HoleScore, RoundScore } from "@/features/tournaments/types";
 import { useCurrentUser } from "@/features/users/queries";
 import { cn } from "@/lib/utils";
@@ -69,22 +69,31 @@ export function ActivePickScorecardCard({ leagueId }: ActivePickScorecardCardPro
     activeTournament?.id ?? "",
   );
 
-  const { data: leaderboardData, isLoading: leaderboardLoading } = useLeaderboard(
-    activeTournament?.id ?? "",
-    { include: "holes" },
-  );
-
   const userPick = useMemo(() => {
     if (!currentUser || !picksData?.entries) return null;
     return picksData.entries.find((p) => p.user_id === currentUser.id) ?? null;
   }, [currentUser, picksData]);
+
+  const { data: leaderboardData, isLoading: leaderboardLoading } = useLeaderboard(
+    activeTournament?.id ?? "",
+  );
+
+  const { data: scorecardData, isLoading: scorecardLoading } = useScorecard(
+    activeTournament?.id ?? "",
+    userPick?.golfer_id ?? null,
+  );
 
   const golferData = useMemo(() => {
     if (!userPick || !leaderboardData?.entries) return null;
     return leaderboardData.entries.find((e) => e.golfer_id === userPick.golfer_id) ?? null;
   }, [userPick, leaderboardData]);
 
-  const isLoading = tournamentsLoading || picksLoading || leaderboardLoading;
+  const sortedRounds = useMemo(() => {
+    if (!scorecardData?.rounds) return [];
+    return [...scorecardData.rounds].sort((a, b) => a.round_number - b.round_number);
+  }, [scorecardData]);
+
+  const isLoading = tournamentsLoading || picksLoading || leaderboardLoading || scorecardLoading;
 
   if (!activeTournament && !tournamentsLoading) {
     return null;
@@ -102,9 +111,6 @@ export function ActivePickScorecardCard({ leagueId }: ActivePickScorecardCardPro
 
   const frontNine = [1, 2, 3, 4, 5, 6, 7, 8, 9];
   const backNine = [10, 11, 12, 13, 14, 15, 16, 17, 18];
-  const sortedRounds = golferData?.rounds
-    ? [...golferData.rounds].sort((a, b) => a.round_number - b.round_number)
-    : [];
 
   const cellClass = "px-1.5 py-0.5 text-center font-mono text-xs";
   const headerClass = cn(cellClass, "bg-muted font-semibold");

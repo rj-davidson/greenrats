@@ -27,6 +27,8 @@ const (
 	FieldParRelativeScore = "par_relative_score"
 	// FieldTeeTime holds the string denoting the tee_time field in the database.
 	FieldTeeTime = "tee_time"
+	// FieldThru holds the string denoting the thru field in the database.
+	FieldThru = "thru"
 	// EdgeTournament holds the string denoting the tournament edge name in mutations.
 	EdgeTournament = "tournament"
 	// EdgeGolfer holds the string denoting the golfer edge name in mutations.
@@ -76,6 +78,7 @@ var Columns = []string{
 	FieldScore,
 	FieldParRelativeScore,
 	FieldTeeTime,
+	FieldThru,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the "rounds"
@@ -150,6 +153,11 @@ func ByParRelativeScore(opts ...sql.OrderTermOption) OrderOption {
 // ByTeeTime orders the results by the tee_time field.
 func ByTeeTime(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldTeeTime, opts...).ToFunc()
+}
+
+// ByThru orders the results by the thru field.
+func ByThru(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldThru, opts...).ToFunc()
 }
 
 // ByTournamentField orders the results by tournament field.

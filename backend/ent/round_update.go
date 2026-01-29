@@ -134,6 +134,33 @@ func (_u *RoundUpdate) ClearTeeTime() *RoundUpdate {
 	return _u
 }
 
+// SetThru sets the "thru" field.
+func (_u *RoundUpdate) SetThru(v int) *RoundUpdate {
+	_u.mutation.ResetThru()
+	_u.mutation.SetThru(v)
+	return _u
+}
+
+// SetNillableThru sets the "thru" field if the given value is not nil.
+func (_u *RoundUpdate) SetNillableThru(v *int) *RoundUpdate {
+	if v != nil {
+		_u.SetThru(*v)
+	}
+	return _u
+}
+
+// AddThru adds value to the "thru" field.
+func (_u *RoundUpdate) AddThru(v int) *RoundUpdate {
+	_u.mutation.AddThru(v)
+	return _u
+}
+
+// ClearThru clears the value of the "thru" field.
+func (_u *RoundUpdate) ClearThru() *RoundUpdate {
+	_u.mutation.ClearThru()
+	return _u
+}
+
 // SetTournamentID sets the "tournament" edge to the Tournament entity by ID.
 func (_u *RoundUpdate) SetTournamentID(id uuid.UUID) *RoundUpdate {
 	_u.mutation.SetTournamentID(id)
@@ -330,6 +357,15 @@ func (_u *RoundUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 	}
 	if _u.mutation.TeeTimeCleared() {
 		_spec.ClearField(round.FieldTeeTime, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Thru(); ok {
+		_spec.SetField(round.FieldThru, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedThru(); ok {
+		_spec.AddField(round.FieldThru, field.TypeInt, value)
+	}
+	if _u.mutation.ThruCleared() {
+		_spec.ClearField(round.FieldThru, field.TypeInt)
 	}
 	if _u.mutation.TournamentCleared() {
 		edge := &sqlgraph.EdgeSpec{
@@ -584,6 +620,33 @@ func (_u *RoundUpdateOne) ClearTeeTime() *RoundUpdateOne {
 	return _u
 }
 
+// SetThru sets the "thru" field.
+func (_u *RoundUpdateOne) SetThru(v int) *RoundUpdateOne {
+	_u.mutation.ResetThru()
+	_u.mutation.SetThru(v)
+	return _u
+}
+
+// SetNillableThru sets the "thru" field if the given value is not nil.
+func (_u *RoundUpdateOne) SetNillableThru(v *int) *RoundUpdateOne {
+	if v != nil {
+		_u.SetThru(*v)
+	}
+	return _u
+}
+
+// AddThru adds value to the "thru" field.
+func (_u *RoundUpdateOne) AddThru(v int) *RoundUpdateOne {
+	_u.mutation.AddThru(v)
+	return _u
+}
+
+// ClearThru clears the value of the "thru" field.
+func (_u *RoundUpdateOne) ClearThru() *RoundUpdateOne {
+	_u.mutation.ClearThru()
+	return _u
+}
+
 // SetTournamentID sets the "tournament" edge to the Tournament entity by ID.
 func (_u *RoundUpdateOne) SetTournamentID(id uuid.UUID) *RoundUpdateOne {
 	_u.mutation.SetTournamentID(id)
@@ -810,6 +873,15 @@ func (_u *RoundUpdateOne) sqlSave(ctx context.Context) (_node *Round, err error)
 	}
 	if _u.mutation.TeeTimeCleared() {
 		_spec.ClearField(round.FieldTeeTime, field.TypeTime)
+	}
+	if value, ok := _u.mutation.Thru(); ok {
+		_spec.SetField(round.FieldThru, field.TypeInt, value)
+	}
+	if value, ok := _u.mutation.AddedThru(); ok {
+		_spec.AddField(round.FieldThru, field.TypeInt, value)
+	}
+	if _u.mutation.ThruCleared() {
+		_spec.ClearField(round.FieldThru, field.TypeInt)
 	}
 	if _u.mutation.TournamentCleared() {
 		edge := &sqlgraph.EdgeSpec{

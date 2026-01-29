@@ -33,6 +33,8 @@ type Round struct {
 	ParRelativeScore *int `json:"par_relative_score,omitempty"`
 	// TeeTime holds the value of the "tee_time" field.
 	TeeTime *time.Time `json:"tee_time,omitempty"`
+	// Number of holes completed (0-18)
+	Thru *int `json:"thru,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the RoundQuery when eager-loading is set.
 	Edges             RoundEdges `json:"edges"`
@@ -104,7 +106,7 @@ func (*Round) scanValues(columns []string) ([]any, error) {
 	values := make([]any, len(columns))
 	for i := range columns {
 		switch columns[i] {
-		case round.FieldRoundNumber, round.FieldScore, round.FieldParRelativeScore:
+		case round.FieldRoundNumber, round.FieldScore, round.FieldParRelativeScore, round.FieldThru:
 			values[i] = new(sql.NullInt64)
 		case round.FieldCreatedAt, round.FieldUpdatedAt, round.FieldTeeTime:
 			values[i] = new(sql.NullTime)
@@ -175,6 +177,13 @@ func (_m *Round) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				_m.TeeTime = new(time.Time)
 				*_m.TeeTime = value.Time
+			}
+		case round.FieldThru:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field thru", values[i])
+			} else if value.Valid {
+				_m.Thru = new(int)
+				*_m.Thru = int(value.Int64)
 			}
 		case round.ForeignKeys[0]:
 			if value, ok := values[i].(*sql.NullScanner); !ok {
@@ -275,6 +284,11 @@ func (_m *Round) String() string {
 	if v := _m.TeeTime; v != nil {
 		builder.WriteString("tee_time=")
 		builder.WriteString(v.Format(time.ANSIC))
+	}
+	builder.WriteString(", ")
+	if v := _m.Thru; v != nil {
+		builder.WriteString("thru=")
+		builder.WriteString(fmt.Sprintf("%v", *v))
 	}
 	builder.WriteByte(')')
 	return builder.String()

@@ -33,6 +33,10 @@ func (Round) Fields() []ent.Field {
 		field.Time("tee_time").
 			Optional().
 			Nillable(),
+		field.Int("thru").
+			Optional().
+			Nillable().
+			Comment("Number of holes completed (0-18)"),
 	}
 }
 
