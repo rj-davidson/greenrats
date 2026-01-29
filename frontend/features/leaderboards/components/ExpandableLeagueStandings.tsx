@@ -16,7 +16,7 @@ import type { StandingsEntry } from "@/features/leaderboards/types";
 import { usePrefetchUserPublicPicks, useUserPublicPicks } from "@/features/picks/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, GoalIcon } from "lucide-react";
+import { CalendarCheck2Icon, ChevronDownIcon, ChevronRightIcon, ChevronUpIcon } from "lucide-react";
 import { Fragment, useCallback, useState } from "react";
 
 interface ExpandableLeagueStandingsProps {
@@ -166,10 +166,10 @@ function StandingsRow({
         <TableCell className="text-center">
           <Tooltip>
             <TooltipTrigger asChild>
-              <GoalIcon
+              <CalendarCheck2Icon
                 className={cn(
                   "inline-block size-4",
-                  entry.has_current_pick ? "text-secondary" : "text-muted-foreground/40",
+                  entry.has_current_pick ? "text-secondary-foreground" : "text-muted-foreground/30",
                 )}
               />
             </TooltipTrigger>
