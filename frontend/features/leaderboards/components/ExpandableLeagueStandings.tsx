@@ -10,12 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/shadcn/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/shadcn/tooltip";
 import { useLeagueStandings } from "@/features/leaderboards/queries";
 import type { StandingsEntry } from "@/features/leaderboards/types";
 import { usePrefetchUserPublicPicks, useUserPublicPicks } from "@/features/picks/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { cn } from "@/lib/utils";
-import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon, GoalIcon } from "lucide-react";
 import { Fragment, useCallback, useState } from "react";
 
 interface ExpandableLeagueStandingsProps {
@@ -127,6 +128,7 @@ interface StandingsRowProps {
   isExpanded: boolean;
   isCurrentUser: boolean;
   showCurrentPick: boolean;
+  showPickIndicator: boolean;
   onToggle: () => void;
   onHover: () => void;
 }
@@ -136,6 +138,7 @@ function StandingsRow({
   isExpanded,
   isCurrentUser,
   showCurrentPick,
+  showPickIndicator,
   onToggle,
   onHover,
 }: StandingsRowProps) {
@@ -159,6 +162,21 @@ function StandingsRow({
         <span className={cn(isCurrentUser && "font-bold")}>{entry.user_display_name}</span>
         {isCurrentUser && <span className="ml-2 text-sm text-muted-foreground">(you)</span>}
       </TableCell>
+      {showPickIndicator && (
+        <TableCell className="text-center">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <GoalIcon
+                className={cn(
+                  "inline-block size-4",
+                  entry.has_current_pick ? "text-secondary" : "text-muted-foreground/40",
+                )}
+              />
+            </TooltipTrigger>
+            <TooltipContent>{entry.has_current_pick ? "Locked in" : "No pick yet"}</TooltipContent>
+          </Tooltip>
+        </TableCell>
+      )}
       {showCurrentPick && <TableCell>{entry.current_pick?.golfer_name ?? "--"}</TableCell>}
       <TableCell className="text-right">{formatEarnings(entry.total_earnings)}</TableCell>
     </TableRow>
@@ -200,6 +218,7 @@ export function ExpandableLeagueStandings({ leagueId }: ExpandableLeagueStanding
   }
 
   const showCurrentPick = data.active_tournament?.is_pick_window_closed ?? false;
+  const showPickIndicator = data.active_tournament && !showCurrentPick;
 
   return (
     <Table>
@@ -208,6 +227,14 @@ export function ExpandableLeagueStandings({ leagueId }: ExpandableLeagueStanding
           <TableHead className="w-8"></TableHead>
           <TableHead className="w-16">Rank</TableHead>
           <TableHead>Player</TableHead>
+          {showPickIndicator && (
+            <TableHead className="w-20 text-center">
+              Locked In
+              <span className="ml-1 text-xs font-normal text-muted-foreground">
+                ({data.active_tournament?.name})
+              </span>
+            </TableHead>
+          )}
           {showCurrentPick && (
             <TableHead>
               Current Pick
@@ -231,12 +258,16 @@ export function ExpandableLeagueStandings({ leagueId }: ExpandableLeagueStanding
                 isExpanded={isExpanded}
                 isCurrentUser={isCurrentUser}
                 showCurrentPick={showCurrentPick}
+                showPickIndicator={!!showPickIndicator}
                 onToggle={() => toggleExpand(entry.user_id)}
                 onHover={() => handleHover(entry.user_id)}
               />
               {isExpanded && (
                 <TableRow className="hover:bg-transparent">
-                  <TableCell colSpan={showCurrentPick ? 5 : 4} className="px-2 py-0">
+                  <TableCell
+                    colSpan={showCurrentPick || showPickIndicator ? 5 : 4}
+                    className="px-2 py-0"
+                  >
                     <ExpandedPickHistory
                       leagueId={leagueId}
                       userId={entry.user_id}

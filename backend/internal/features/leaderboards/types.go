@@ -48,6 +48,7 @@ type StandingsEntry struct {
 	UserDisplayName string        `json:"user_display_name"`
 	TotalEarnings   int           `json:"total_earnings"`
 	PickCount       int           `json:"pick_count"`
+	HasCurrentPick  bool          `json:"has_current_pick"`
 	CurrentPick     *CurrentPick  `json:"current_pick,omitempty"`
 	Picks           []PickHistory `json:"picks,omitempty"`
 }

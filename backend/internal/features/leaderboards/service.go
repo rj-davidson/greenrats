@@ -142,10 +142,11 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 	}
 
 	type userPickData struct {
-		DisplayName string
-		Earnings    int
-		Picks       []PickHistory
-		CurrentPick *CurrentPick
+		DisplayName    string
+		Earnings       int
+		Picks          []PickHistory
+		HasCurrentPick bool
+		CurrentPick    *CurrentPick
 	}
 
 	userData := make(map[uuid.UUID]*userPickData)
@@ -186,6 +187,7 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 			}
 
 			if activeTournament != nil && p.Edges.Tournament.ID.String() == activeTournament.ID {
+				data.HasCurrentPick = true
 				data.CurrentPick = &CurrentPick{
 					TournamentID:   p.Edges.Tournament.ID,
 					TournamentName: p.Edges.Tournament.Name,
@@ -222,6 +224,7 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 			UserDisplayName: data.DisplayName,
 			TotalEarnings:   data.Earnings,
 			PickCount:       pickCountByUser[userID],
+			HasCurrentPick:  data.HasCurrentPick,
 			CurrentPick:     data.CurrentPick,
 		}
 		if includePicks {

@@ -93,6 +93,7 @@ function transformStandingsResponse(data: LeagueStandingsResponseRaw): LeagueSta
       user_display_name: rawEntry.user_display_name,
       total_earnings: rawEntry.total_earnings,
       pick_count: rawEntry.pick_count,
+      has_current_pick: rawEntry.has_current_pick,
       current_pick: rawEntry.current_pick,
       rank: entry.rank,
       rank_display: formatRankDisplay(entry.rank, rankCounts),
