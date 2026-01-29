@@ -65,11 +65,11 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		seasonYear = entLeague.SeasonYear
 	}
 
-	var activeTournament *tournaments.Tournament
+	var currentTournament *tournaments.Tournament
 	if s.tournamentService != nil {
-		activeTournament, err = s.tournamentService.GetActive(ctx)
+		currentTournament, err = s.tournamentService.GetCurrentOrUpcoming(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get active tournament: %w", err)
+			return nil, fmt.Errorf("failed to get current tournament: %w", err)
 		}
 	}
 
@@ -186,13 +186,15 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 				}
 			}
 
-			if activeTournament != nil && p.Edges.Tournament.ID.String() == activeTournament.ID {
+			if currentTournament != nil && p.Edges.Tournament.ID.String() == currentTournament.ID {
 				data.HasCurrentPick = true
-				data.CurrentPick = &CurrentPick{
-					TournamentID:   p.Edges.Tournament.ID,
-					TournamentName: p.Edges.Tournament.Name,
-					GolferID:       p.Edges.Golfer.ID,
-					GolferName:     p.Edges.Golfer.Name,
+				if currentTournament.PickWindowClosesAt != nil && time.Now().UTC().After(*currentTournament.PickWindowClosesAt) {
+					data.CurrentPick = &CurrentPick{
+						TournamentID:   p.Edges.Tournament.ID,
+						TournamentName: p.Edges.Tournament.Name,
+						GolferID:       p.Edges.Golfer.ID,
+						GolferName:     p.Edges.Golfer.Name,
+					}
 				}
 			}
 
@@ -241,15 +243,15 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 	})
 
 	var activeTournamentResponse *ActiveTournament
-	if activeTournament != nil {
+	if currentTournament != nil {
 		now := time.Now().UTC()
-		isWindowClosed := activeTournament.PickWindowClosesAt != nil && now.After(*activeTournament.PickWindowClosesAt)
-		tournamentID, _ := uuid.FromString(activeTournament.ID)
+		isWindowClosed := currentTournament.PickWindowClosesAt != nil && now.After(*currentTournament.PickWindowClosesAt)
+		tournamentID, _ := uuid.FromString(currentTournament.ID)
 		activeTournamentResponse = &ActiveTournament{
 			ID:                 tournamentID,
-			Name:               activeTournament.Name,
+			Name:               currentTournament.Name,
 			IsPickWindowClosed: isWindowClosed,
-			StartDate:          activeTournament.StartDate,
+			StartDate:          currentTournament.StartDate,
 		}
 	}
 

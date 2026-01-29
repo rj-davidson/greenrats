@@ -140,6 +140,26 @@ func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 	return &result, nil
 }
 
+func (s *Service) GetCurrentOrUpcoming(ctx context.Context) (*Tournament, error) {
+	t, err := s.db.Tournament.Query().
+		Where(tournament.Not(tournament.HasChampion())).
+		Order(ent.Asc(tournament.FieldStartDate)).
+		WithChampion().
+		WithTournamentCourses(func(q *ent.TournamentCourseQuery) {
+			q.WithCourse()
+		}).
+		First(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("failed to get current tournament: %w", err)
+	}
+
+	result := toTournament(t)
+	return &result, nil
+}
+
 func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bool, leagueID string) (*GetLeaderboardResponse, error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {

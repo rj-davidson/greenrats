@@ -217,7 +217,7 @@ func TestService_GetLeagueLeaderboard(t *testing.T) {
 }
 
 func TestService_GetLeagueStandings_HasCurrentPick(t *testing.T) {
-	t.Run("HasCurrentPick is true when user has pick for active tournament", func(t *testing.T) {
+	t.Run("HasCurrentPick is true and CurrentPick populated when pick window closed", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
 		tournamentService := tournaments.NewService(db)
@@ -243,7 +243,82 @@ func TestService_GetLeagueStandings_HasCurrentPick(t *testing.T) {
 		assert.Equal(t, "Tiger Woods", resp.Entries[0].CurrentPick.GolferName)
 	})
 
-	t.Run("HasCurrentPick is false when user has no pick for active tournament", func(t *testing.T) {
+	t.Run("HasCurrentPick is true but CurrentPick nil when pick window open for privacy", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		tournamentService := tournaments.NewService(db)
+		service := NewService(db, tournamentService)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser(testutil.WithDisplayName("Test User"))
+		factory.AddUserToLeague(user, league)
+
+		upcomingTournament := factory.CreateUpcomingTournament(7, testutil.WithSeasonYear(time.Now().Year()))
+		golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
+		factory.CreatePlacement(upcomingTournament, golfer, testutil.WithEarnings(0))
+		factory.CreatePick(user, upcomingTournament, golfer, league)
+
+		resp, err := service.GetLeagueStandings(ctx, league.ID, 0, false)
+
+		require.NoError(t, err)
+		require.Len(t, resp.Entries, 1)
+		assert.True(t, resp.Entries[0].HasCurrentPick, "HasCurrentPick should be true even when pick window open")
+		assert.Nil(t, resp.Entries[0].CurrentPick, "CurrentPick should be nil for privacy when pick window open")
+	})
+
+	t.Run("active_tournament returned even when pick window open", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		tournamentService := tournaments.NewService(db)
+		service := NewService(db, tournamentService)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		upcomingTournament := factory.CreateUpcomingTournament(7, testutil.WithSeasonYear(time.Now().Year()), testutil.WithTournamentName("Upcoming Open"))
+		golfer := factory.CreateGolfer()
+		factory.CreatePlacement(upcomingTournament, golfer, testutil.WithEarnings(0))
+		factory.CreatePick(user, upcomingTournament, golfer, league)
+
+		resp, err := service.GetLeagueStandings(ctx, league.ID, 0, false)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp.ActiveTournament, "ActiveTournament should be returned even when pick window open")
+		assert.Equal(t, "Upcoming Open", resp.ActiveTournament.Name)
+		assert.False(t, resp.ActiveTournament.IsPickWindowClosed)
+	})
+
+	t.Run("active_tournament shows IsPickWindowClosed true when window closed", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		tournamentService := tournaments.NewService(db)
+		service := NewService(db, tournamentService)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser()
+		factory.AddUserToLeague(user, league)
+
+		activeTournament := factory.CreateActiveTournament(testutil.WithSeasonYear(time.Now().Year()), testutil.WithTournamentName("Active Tournament"))
+		golfer := factory.CreateGolfer()
+		factory.CreatePlacement(activeTournament, golfer, testutil.WithEarnings(0))
+		factory.CreatePick(user, activeTournament, golfer, league)
+
+		resp, err := service.GetLeagueStandings(ctx, league.ID, 0, false)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp.ActiveTournament)
+		assert.Equal(t, "Active Tournament", resp.ActiveTournament.Name)
+		assert.True(t, resp.ActiveTournament.IsPickWindowClosed)
+	})
+
+	t.Run("HasCurrentPick is false when user has no pick for current tournament", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
 		tournamentService := tournaments.NewService(db)
@@ -270,7 +345,7 @@ func TestService_GetLeagueStandings_HasCurrentPick(t *testing.T) {
 		assert.Nil(t, resp.Entries[0].CurrentPick)
 	})
 
-	t.Run("HasCurrentPick is false when no active tournament", func(t *testing.T) {
+	t.Run("HasCurrentPick is false when no current tournament", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
 		tournamentService := tournaments.NewService(db)
@@ -294,7 +369,7 @@ func TestService_GetLeagueStandings_HasCurrentPick(t *testing.T) {
 		assert.False(t, resp.Entries[0].HasCurrentPick)
 	})
 
-	t.Run("mixed users with and without current picks", func(t *testing.T) {
+	t.Run("mixed users with and without current picks when window closed", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
 		tournamentService := tournaments.NewService(db)
@@ -338,6 +413,54 @@ func TestService_GetLeagueStandings_HasCurrentPick(t *testing.T) {
 
 		assert.True(t, entryWithPick.HasCurrentPick)
 		assert.NotNil(t, entryWithPick.CurrentPick)
+		assert.False(t, entryWithoutPick.HasCurrentPick)
+		assert.Nil(t, entryWithoutPick.CurrentPick)
+	})
+
+	t.Run("mixed users with pick window open hides golfer details", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		tournamentService := tournaments.NewService(db)
+		service := NewService(db, tournamentService)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		userWithPick := factory.CreateUser(testutil.WithDisplayName("Has Pick"))
+		userWithoutPick := factory.CreateUser(testutil.WithDisplayName("No Pick"))
+		factory.AddUserToLeague(userWithPick, league)
+		factory.AddUserToLeague(userWithoutPick, league)
+
+		completedTournament := factory.CreateCompletedTournament(testutil.WithSeasonYear(time.Now().Year()))
+		upcomingTournament := factory.CreateUpcomingTournament(7, testutil.WithSeasonYear(time.Now().Year()))
+
+		golfer1 := factory.CreateGolfer()
+		golfer2 := factory.CreateGolfer()
+		golfer3 := factory.CreateGolfer(testutil.WithGolferName("Secret Pick"))
+		factory.CreatePlacement(completedTournament, golfer1, testutil.WithEarnings(100000))
+		factory.CreatePlacement(completedTournament, golfer2, testutil.WithEarnings(50000))
+		factory.CreatePlacement(upcomingTournament, golfer3, testutil.WithEarnings(0))
+
+		factory.CreatePick(userWithPick, completedTournament, golfer1, league)
+		factory.CreatePick(userWithPick, upcomingTournament, golfer3, league)
+		factory.CreatePick(userWithoutPick, completedTournament, golfer2, league)
+
+		resp, err := service.GetLeagueStandings(ctx, league.ID, 0, false)
+
+		require.NoError(t, err)
+		require.Len(t, resp.Entries, 2)
+
+		var entryWithPick, entryWithoutPick StandingsEntry
+		for _, entry := range resp.Entries {
+			if entry.UserDisplayName == "Has Pick" {
+				entryWithPick = entry
+			} else {
+				entryWithoutPick = entry
+			}
+		}
+
+		assert.True(t, entryWithPick.HasCurrentPick, "Should show user has a pick")
+		assert.Nil(t, entryWithPick.CurrentPick, "Should NOT reveal golfer details while pick window open")
 		assert.False(t, entryWithoutPick.HasCurrentPick)
 		assert.Nil(t, entryWithoutPick.CurrentPick)
 	})

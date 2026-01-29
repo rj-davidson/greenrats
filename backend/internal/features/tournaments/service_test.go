@@ -186,6 +186,84 @@ func TestService_GetActive(t *testing.T) {
 	})
 }
 
+func TestService_GetCurrentOrUpcoming(t *testing.T) {
+	t.Run("returns upcoming tournament when pick window is open", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		upcoming := factory.CreateUpcomingTournament(7, testutil.WithTournamentName("Upcoming Tournament"))
+		factory.CreateCompletedTournament()
+
+		found, err := service.GetCurrentOrUpcoming(ctx)
+
+		require.NoError(t, err)
+		require.NotNil(t, found)
+		assert.Equal(t, upcoming.ID.String(), found.ID)
+		assert.Equal(t, "Upcoming Tournament", found.Name)
+	})
+
+	t.Run("returns active tournament when pick window is closed", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		active := factory.CreateActiveTournament(testutil.WithTournamentName("Active Tournament"))
+		factory.CreateCompletedTournament()
+
+		found, err := service.GetCurrentOrUpcoming(ctx)
+
+		require.NoError(t, err)
+		require.NotNil(t, found)
+		assert.Equal(t, active.ID.String(), found.ID)
+	})
+
+	t.Run("returns earliest tournament without champion", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		factory.CreateUpcomingTournament(14, testutil.WithTournamentName("Later Tournament"))
+		earlier := factory.CreateUpcomingTournament(7, testutil.WithTournamentName("Earlier Tournament"))
+		factory.CreateCompletedTournament()
+
+		found, err := service.GetCurrentOrUpcoming(ctx)
+
+		require.NoError(t, err)
+		require.NotNil(t, found)
+		assert.Equal(t, earlier.ID.String(), found.ID)
+	})
+
+	t.Run("returns nil when all tournaments completed", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		factory.CreateCompletedTournament()
+		factory.CreateCompletedTournament(testutil.WithTournamentName("Another Completed"))
+
+		found, err := service.GetCurrentOrUpcoming(ctx)
+
+		require.NoError(t, err)
+		assert.Nil(t, found)
+	})
+
+	t.Run("returns nil when no tournaments exist", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		service := NewService(db)
+		ctx := context.Background()
+
+		found, err := service.GetCurrentOrUpcoming(ctx)
+
+		require.NoError(t, err)
+		assert.Nil(t, found)
+	})
+}
+
 func TestService_GetLeaderboard(t *testing.T) {
 	t.Run("returns leaderboard entries sorted by position", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
