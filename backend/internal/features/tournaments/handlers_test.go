@@ -232,3 +232,97 @@ func TestHandler_GetLeaderboard(t *testing.T) {
 		assert.Equal(t, fiber.StatusNotFound, resp.StatusCode)
 	})
 }
+
+func TestHandler_GetScorecard(t *testing.T) {
+	t.Run("returns 200 with scorecard data", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		handler := NewHandler(service)
+
+		tourn := factory.CreateActiveTournament()
+		golfer := factory.CreateGolfer()
+		round := factory.CreateRound(tourn, golfer, 1)
+		factory.CreateHoleScore(round, 1, 4, intPtr(4))
+
+		app := testutil.NewTestApp(t)
+		app.App.Get("/tournaments/:id/scorecard/:golferId", handler.GetScorecard)
+
+		resp := app.Get("/tournaments/" + tourn.ID.String() + "/scorecard/" + golfer.ID.String())
+
+		assert.Equal(t, fiber.StatusOK, resp.StatusCode)
+
+		var result GetScorecardResponse
+		require.NoError(t, resp.JSON(&result))
+		assert.Equal(t, tourn.ID.String(), result.TournamentID)
+		assert.Equal(t, golfer.ID.String(), result.GolferID)
+	})
+
+	t.Run("returns 400 for invalid tournament ID", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		handler := NewHandler(service)
+
+		golfer := factory.CreateGolfer()
+
+		app := testutil.NewTestApp(t)
+		app.App.Get("/tournaments/:id/scorecard/:golferId", handler.GetScorecard)
+
+		resp := app.Get("/tournaments/invalid/scorecard/" + golfer.ID.String())
+
+		assert.Equal(t, fiber.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("returns 400 for invalid golfer ID", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		handler := NewHandler(service)
+
+		tourn := factory.CreateActiveTournament()
+
+		app := testutil.NewTestApp(t)
+		app.App.Get("/tournaments/:id/scorecard/:golferId", handler.GetScorecard)
+
+		resp := app.Get("/tournaments/" + tourn.ID.String() + "/scorecard/invalid")
+
+		assert.Equal(t, fiber.StatusBadRequest, resp.StatusCode)
+	})
+
+	t.Run("returns 404 for missing tournament", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		handler := NewHandler(service)
+
+		golfer := factory.CreateGolfer()
+
+		app := testutil.NewTestApp(t)
+		app.App.Get("/tournaments/:id/scorecard/:golferId", handler.GetScorecard)
+
+		resp := app.Get("/tournaments/" + factory.RandomUUID().String() + "/scorecard/" + golfer.ID.String())
+
+		assert.Equal(t, fiber.StatusNotFound, resp.StatusCode)
+	})
+
+	t.Run("returns 404 for missing golfer", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		handler := NewHandler(service)
+
+		tourn := factory.CreateActiveTournament()
+
+		app := testutil.NewTestApp(t)
+		app.App.Get("/tournaments/:id/scorecard/:golferId", handler.GetScorecard)
+
+		resp := app.Get("/tournaments/" + tourn.ID.String() + "/scorecard/" + factory.RandomUUID().String())
+
+		assert.Equal(t, fiber.StatusNotFound, resp.StatusCode)
+	})
+}
+
+func intPtr(i int) *int {
+	return &i
+}

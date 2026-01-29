@@ -187,3 +187,95 @@ func TestUpsertRound_UniqueConstraint(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 1, count, "should only create one round for same tournament/golfer/round_number")
 }
+
+func TestUpsertHoleScore_UpdatesThru(t *testing.T) {
+	t.Run("updates thru after adding hole score", func(t *testing.T) {
+		ctx := context.Background()
+		svc := newTestService(t)
+
+		tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+		golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
+
+		bdlRound := &balldontlie.PlayerRoundResult{RoundNumber: 1}
+		roundRecord, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 1, Par: 4, Score: intPtr(4),
+		})
+		require.NoError(t, err)
+
+		roundEntity, err := svc.db.Round.Get(ctx, roundRecord.ID)
+		require.NoError(t, err)
+		require.NotNil(t, roundEntity.Thru)
+		assert.Equal(t, 1, *roundEntity.Thru)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 2, Par: 5, Score: intPtr(5),
+		})
+		require.NoError(t, err)
+
+		roundEntity, err = svc.db.Round.Get(ctx, roundRecord.ID)
+		require.NoError(t, err)
+		assert.Equal(t, 2, *roundEntity.Thru)
+	})
+
+	t.Run("thru only counts holes with scores", func(t *testing.T) {
+		ctx := context.Background()
+		svc := newTestService(t)
+
+		tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+		golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
+
+		bdlRound := &balldontlie.PlayerRoundResult{RoundNumber: 1}
+		roundRecord, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 1, Par: 4, Score: intPtr(4),
+		})
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 2, Par: 5, Score: nil,
+		})
+		require.NoError(t, err)
+
+		roundEntity, err := svc.db.Round.Get(ctx, roundRecord.ID)
+		require.NoError(t, err)
+		require.NotNil(t, roundEntity.Thru)
+		assert.Equal(t, 1, *roundEntity.Thru, "thru should only count holes with non-nil scores")
+	})
+
+	t.Run("thru counts all scored holes regardless of order", func(t *testing.T) {
+		ctx := context.Background()
+		svc := newTestService(t)
+
+		tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+		golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
+
+		bdlRound := &balldontlie.PlayerRoundResult{RoundNumber: 1}
+		roundRecord, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 5, Par: 4, Score: intPtr(4),
+		})
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 1, Par: 4, Score: intPtr(3),
+		})
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 3, Par: 3, Score: intPtr(2),
+		})
+		require.NoError(t, err)
+
+		roundEntity, err := svc.db.Round.Get(ctx, roundRecord.ID)
+		require.NoError(t, err)
+		require.NotNil(t, roundEntity.Thru)
+		assert.Equal(t, 3, *roundEntity.Thru, "thru should count all holes with scores")
+	})
+}

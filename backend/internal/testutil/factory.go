@@ -672,3 +672,61 @@ func CreateSeason(t *testing.T, db *ent.Client, year int) *ent.Season {
 	}
 	return created
 }
+
+type RoundOption func(*ent.RoundCreate)
+
+func WithRoundScore(score int) RoundOption {
+	return func(rc *ent.RoundCreate) {
+		rc.SetScore(score)
+	}
+}
+
+func WithRoundParRelativeScore(score int) RoundOption {
+	return func(rc *ent.RoundCreate) {
+		rc.SetParRelativeScore(score)
+	}
+}
+
+func WithThru(thru int) RoundOption {
+	return func(rc *ent.RoundCreate) {
+		rc.SetThru(thru)
+	}
+}
+
+func (f *Factory) CreateRound(t *ent.Tournament, g *ent.Golfer, roundNumber int, opts ...RoundOption) *ent.Round {
+	f.t.Helper()
+
+	builder := f.db.Round.Create().
+		SetTournamentID(t.ID).
+		SetGolferID(g.ID).
+		SetRoundNumber(roundNumber)
+
+	for _, opt := range opts {
+		opt(builder)
+	}
+
+	r, err := builder.Save(f.ctx)
+	if err != nil {
+		f.t.Fatalf("failed to create round: %v", err)
+	}
+	return r
+}
+
+func (f *Factory) CreateHoleScore(r *ent.Round, holeNumber, par int, score *int) *ent.HoleScore {
+	f.t.Helper()
+
+	builder := f.db.HoleScore.Create().
+		SetRoundID(r.ID).
+		SetHoleNumber(holeNumber).
+		SetPar(par)
+
+	if score != nil {
+		builder.SetScore(*score)
+	}
+
+	hs, err := builder.Save(f.ctx)
+	if err != nil {
+		f.t.Fatalf("failed to create hole score: %v", err)
+	}
+	return hs
+}

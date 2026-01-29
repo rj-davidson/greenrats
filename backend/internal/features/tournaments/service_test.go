@@ -345,6 +345,137 @@ func TestService_GetLeaderboard(t *testing.T) {
 	})
 }
 
+func TestService_GetScorecard(t *testing.T) {
+	t.Run("returns scorecard with rounds and hole scores", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateActiveTournament()
+		golfer := factory.CreateGolfer()
+		round := factory.CreateRound(tourn, golfer, 1, testutil.WithRoundScore(68))
+		factory.CreateHoleScore(round, 1, 4, intPtr(4))
+		factory.CreateHoleScore(round, 2, 4, intPtr(3))
+
+		resp, err := service.GetScorecard(ctx, tourn.ID.String(), golfer.ID.String())
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, tourn.ID.String(), resp.TournamentID)
+		assert.Equal(t, golfer.ID.String(), resp.GolferID)
+		require.Len(t, resp.Rounds, 1)
+		assert.Len(t, resp.Rounds[0].Holes, 2)
+	})
+
+	t.Run("returns empty rounds when golfer has no rounds", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateActiveTournament()
+		golfer := factory.CreateGolfer()
+
+		resp, err := service.GetScorecard(ctx, tourn.ID.String(), golfer.ID.String())
+
+		require.NoError(t, err)
+		require.NotNil(t, resp)
+		assert.Empty(t, resp.Rounds)
+	})
+
+	t.Run("returns ErrInvalidTournamentID for bad UUID", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		golfer := factory.CreateGolfer()
+		_, err := service.GetScorecard(ctx, "invalid", golfer.ID.String())
+
+		assert.True(t, errors.Is(err, ErrInvalidTournamentID))
+	})
+
+	t.Run("returns ErrInvalidGolferID for bad UUID", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateActiveTournament()
+		_, err := service.GetScorecard(ctx, tourn.ID.String(), "invalid")
+
+		assert.True(t, errors.Is(err, ErrInvalidGolferID))
+	})
+
+	t.Run("returns ErrTournamentNotFound for missing tournament", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		golfer := factory.CreateGolfer()
+		_, err := service.GetScorecard(ctx, factory.RandomUUID().String(), golfer.ID.String())
+
+		assert.True(t, errors.Is(err, ErrTournamentNotFound))
+	})
+
+	t.Run("returns ErrGolferNotFound for missing golfer", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateActiveTournament()
+		_, err := service.GetScorecard(ctx, tourn.ID.String(), factory.RandomUUID().String())
+
+		assert.True(t, errors.Is(err, ErrGolferNotFound))
+	})
+
+	t.Run("holes are sorted by hole_number", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateActiveTournament()
+		golfer := factory.CreateGolfer()
+		round := factory.CreateRound(tourn, golfer, 1)
+		factory.CreateHoleScore(round, 5, 4, intPtr(4))
+		factory.CreateHoleScore(round, 1, 4, intPtr(3))
+		factory.CreateHoleScore(round, 3, 3, intPtr(2))
+
+		resp, err := service.GetScorecard(ctx, tourn.ID.String(), golfer.ID.String())
+
+		require.NoError(t, err)
+		require.Len(t, resp.Rounds[0].Holes, 3)
+		assert.Equal(t, 1, resp.Rounds[0].Holes[0].HoleNumber)
+		assert.Equal(t, 3, resp.Rounds[0].Holes[1].HoleNumber)
+		assert.Equal(t, 5, resp.Rounds[0].Holes[2].HoleNumber)
+	})
+
+	t.Run("rounds are sorted by round_number", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		tourn := factory.CreateActiveTournament()
+		golfer := factory.CreateGolfer()
+		factory.CreateRound(tourn, golfer, 3, testutil.WithRoundScore(70))
+		factory.CreateRound(tourn, golfer, 1, testutil.WithRoundScore(68))
+		factory.CreateRound(tourn, golfer, 2, testutil.WithRoundScore(72))
+
+		resp, err := service.GetScorecard(ctx, tourn.ID.String(), golfer.ID.String())
+
+		require.NoError(t, err)
+		require.Len(t, resp.Rounds, 3)
+		assert.Equal(t, 1, resp.Rounds[0].RoundNumber)
+		assert.Equal(t, 2, resp.Rounds[1].RoundNumber)
+		assert.Equal(t, 3, resp.Rounds[2].RoundNumber)
+	})
+}
+
 func TestTournamentToDTO(t *testing.T) {
 	t.Run("converts ent tournament to DTO", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
