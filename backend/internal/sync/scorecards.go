@@ -10,6 +10,7 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
@@ -89,15 +90,35 @@ func (i *Ingester) syncTournamentScorecards(ctx context.Context, t *ent.Tourname
 		return fmt.Errorf("failed to query field entries: %w", err)
 	}
 
+	excludedGolfers := make(map[uuid.UUID]bool)
+	placements, err := i.db.Placement.Query().
+		Where(
+			placement.HasTournamentWith(tournament.IDEQ(t.ID)),
+			placement.StatusIn(placement.StatusCut, placement.StatusWithdrawn),
+		).
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		i.logger.Warn("failed to query placements, proceeding without exclusions", "error", err)
+	} else {
+		for _, p := range placements {
+			if p.Edges.Golfer != nil {
+				excludedGolfers[p.Edges.Golfer.ID] = true
+			}
+		}
+	}
+
 	playerIDs := make(map[int]bool)
 	for _, entry := range fieldEntries {
 		if entry.Edges.Golfer != nil && entry.Edges.Golfer.BdlID != nil {
-			playerIDs[*entry.Edges.Golfer.BdlID] = true
+			if !excludedGolfers[entry.Edges.Golfer.ID] {
+				playerIDs[*entry.Edges.Golfer.BdlID] = true
+			}
 		}
 	}
 
 	if len(playerIDs) == 0 {
-		i.logger.Debug("no players in field", "tournament", t.Name)
+		i.logger.Debug("no active players in field", "tournament", t.Name)
 		return nil
 	}
 
