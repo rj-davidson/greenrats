@@ -867,6 +867,12 @@ func (s *Service) UpsertCourseFromRef(ctx context.Context, ref *balldontlie.Cour
 	}
 }
 
+func (s *Service) SetRoundCourse(ctx context.Context, roundID, courseID uuid.UUID) error {
+	return s.db.Round.UpdateOneID(roundID).
+		SetCourseID(courseID).
+		Exec(ctx)
+}
+
 func (s *Service) UpsertTournamentCourse(ctx context.Context, tournamentID, courseID uuid.UUID, rounds []int) error {
 	existing, err := s.db.TournamentCourse.Query().
 		Where(

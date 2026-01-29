@@ -174,7 +174,6 @@ export function useScorecard(tournamentId: string, golferId: string | null) {
   });
 }
 
-
 export function useCurrentTournament() {
   const { data: activeData, isLoading: activeLoading } = useActiveTournament();
   const { data: completedData, isLoading: completedLoading } = useTournaments({

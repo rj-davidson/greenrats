@@ -782,6 +782,7 @@ func (s *Service) GetScorecard(ctx context.Context, tournamentID, golferID strin
 		WithHoleScores(func(q *ent.HoleScoreQuery) {
 			q.Order(ent.Asc("hole_number"))
 		}).
+		WithCourse().
 		Order(ent.Asc("round_number")).
 		All(ctx)
 	if err != nil {
@@ -807,6 +808,9 @@ func (s *Service) GetScorecard(ctx context.Context, tournamentID, golferID strin
 		if r.TeeTime != nil {
 			roundScore.TeeTime = r.TeeTime
 		}
+		if r.Edges.Course != nil {
+			roundScore.Course = toCourseInfo(r.Edges.Course)
+		}
 		roundScore.Holes = make([]HoleScore, 0, len(r.Edges.HoleScores))
 		for _, h := range r.Edges.HoleScores {
 			roundScore.Holes = append(roundScore.Holes, HoleScore{
@@ -819,6 +823,29 @@ func (s *Service) GetScorecard(ctx context.Context, tournamentID, golferID strin
 	}
 
 	return result, nil
+}
+
+func toCourseInfo(c *ent.Course) *CourseInfo {
+	info := &CourseInfo{
+		ID:   c.ID.String(),
+		Name: c.Name,
+	}
+	if c.Par != nil {
+		info.Par = *c.Par
+	}
+	if c.Yardage != nil {
+		info.Yardage = *c.Yardage
+	}
+	if c.City != nil {
+		info.City = *c.City
+	}
+	if c.State != nil {
+		info.State = *c.State
+	}
+	if c.Country != nil {
+		info.Country = *c.Country
+	}
+	return info
 }
 
 func toTournament(t *ent.Tournament) Tournament {
