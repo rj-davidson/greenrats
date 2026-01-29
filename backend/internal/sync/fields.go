@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent"
-	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
@@ -20,7 +19,7 @@ func (i *Ingester) syncFields(ctx context.Context) error {
 	tournaments, err := i.db.Tournament.Query().
 		Where(
 			tournament.Not(tournament.HasChampion()),
-			tournament.PickWindowClosesAtGTE(now),
+			tournament.EndDateGTE(now),
 			tournament.StartDateLTE(windowEnd),
 			tournament.BdlIDNotNil(),
 		).
@@ -40,20 +39,6 @@ func (i *Ingester) syncFields(ctx context.Context) error {
 
 	synced := 0
 	for _, t := range tournaments {
-		hasField, err := i.tournamentHasField(ctx, t)
-		if err != nil {
-			if isContextError(err) {
-				return fmt.Errorf("check field for %s: %w", t.Name, err)
-			}
-			SyncErrors.WithLabelValues("fields").Inc()
-			continue
-		}
-
-		if hasField {
-			i.logger.Debug("tournament already has field data, skipping", "tournament", t.Name)
-			continue
-		}
-
 		i.logger.Debug("syncing field", "tournament", t.Name)
 		if err := i.syncTournamentField(ctx, t); err != nil {
 			if isContextError(err) {
@@ -96,14 +81,4 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 
 	SyncRecordsProcessed.WithLabelValues("fields", "entries").Add(float64(processed))
 	return nil
-}
-
-func (i *Ingester) tournamentHasField(ctx context.Context, t *ent.Tournament) (bool, error) {
-	count, err := i.db.FieldEntry.Query().
-		Where(fieldentry.HasTournamentWith(tournament.IDEQ(t.ID))).
-		Count(ctx)
-	if err != nil {
-		return false, err
-	}
-	return count >= 50, nil
 }

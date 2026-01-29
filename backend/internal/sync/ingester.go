@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/fieldentry"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/email"
@@ -23,8 +24,8 @@ const (
 	ReminderCheckInterval       = 1 * time.Hour
 	EarningsCheckInterval       = 6 * time.Hour
 	GolferStatsSyncInterval     = 7 * 24 * time.Hour
+	FieldSyncInterval           = 3 * time.Hour
 	SchedulerTickInterval       = 1 * time.Minute
-	FieldSyncHour               = 9
 	PlayerSyncHour              = 21
 	CourseSyncHour              = 3
 	CourseSyncDay               = time.Sunday
@@ -107,8 +108,10 @@ func (i *Ingester) Run(ctx context.Context) {
 	} else {
 		lastEarningsSync = time.Now()
 	}
-	if i.shouldSyncFieldsNow() {
+	if i.shouldSync(ctx, "fields", FieldSyncInterval) {
 		i.runSync(ctx, "sync_fields", i.syncFields)
+		lastFieldSync = time.Now()
+	} else {
 		lastFieldSync = time.Now()
 	}
 	i.sendPickReminders(ctx)
@@ -148,7 +151,7 @@ func (i *Ingester) Run(ctx context.Context) {
 				lastCompletionCheck = now
 			}
 
-			if i.shouldSyncFieldsNow() && now.Sub(lastFieldSync) >= 23*time.Hour {
+			if now.Sub(lastFieldSync) >= FieldSyncInterval {
 				i.runSync(ctx, "sync_fields", i.syncFields)
 				lastFieldSync = now
 			}
@@ -226,16 +229,6 @@ func (i *Ingester) isTournamentInPlayHours(t *ent.Tournament) bool {
 	isPlayHour := hour >= PlayHoursStart && hour < PlayHoursEnd
 
 	return isPlayDay && isPlayHour
-}
-
-func (i *Ingester) shouldSyncFieldsNow() bool {
-	loc, err := time.LoadLocation("America/New_York")
-	if err != nil {
-		i.logger.Error("failed to load timezone", "error", err)
-		return false
-	}
-	now := time.Now().In(loc)
-	return now.Hour() == FieldSyncHour && now.Minute() < 5
 }
 
 func (i *Ingester) shouldSyncPlayersNow() bool {
@@ -478,4 +471,14 @@ func (i *Ingester) syncAllEarnings(ctx context.Context) error {
 
 	i.logger.Info("sync completed", "type", "earnings_init", "duration", time.Since(start), "tournaments_synced", synced)
 	return nil
+}
+
+func (i *Ingester) tournamentHasField(ctx context.Context, t *ent.Tournament) (bool, error) {
+	count, err := i.db.FieldEntry.Query().
+		Where(fieldentry.HasTournamentWith(tournament.IDEQ(t.ID))).
+		Count(ctx)
+	if err != nil {
+		return false, err
+	}
+	return count >= 50, nil
 }
