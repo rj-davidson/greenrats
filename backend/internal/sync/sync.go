@@ -1029,6 +1029,10 @@ func (s *Service) UpsertHoleScore(ctx context.Context, roundID uuid.UUID, h *bal
 		s.logger.Warn("failed to update round thru", "round_id", roundID, "error", err)
 	}
 
+	if err := s.updateRoundScores(ctx, roundID); err != nil {
+		s.logger.Warn("failed to update round scores", "round_id", roundID, "error", err)
+	}
+
 	return nil
 }
 
@@ -1050,6 +1054,41 @@ func (s *Service) updateRoundThru(ctx context.Context, roundID uuid.UUID) error 
 	_, err = s.db.Round.UpdateOneID(roundID).SetThru(thru).Save(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to update round thru: %w", err)
+	}
+
+	return nil
+}
+
+func (s *Service) updateRoundScores(ctx context.Context, roundID uuid.UUID) error {
+	holeScores, err := s.db.HoleScore.Query().
+		Where(holescore.HasRoundWith(round.IDEQ(roundID))).
+		All(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to query hole scores: %w", err)
+	}
+
+	var totalScore int
+	var parRelativeScore int
+	scoredHoles := 0
+
+	for _, h := range holeScores {
+		if h.Score != nil {
+			totalScore += *h.Score
+			parRelativeScore += *h.Score - h.Par
+			scoredHoles++
+		}
+	}
+
+	if scoredHoles == 0 {
+		return nil
+	}
+
+	_, err = s.db.Round.UpdateOneID(roundID).
+		SetScore(totalScore).
+		SetParRelativeScore(parRelativeScore).
+		Save(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to update round scores: %w", err)
 	}
 
 	return nil

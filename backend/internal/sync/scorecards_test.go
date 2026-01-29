@@ -60,8 +60,10 @@ func TestProcessPlayerScorecards_CreatesRoundForInProgressRound(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, rounds, 1)
 	assert.Equal(t, 3, rounds[0].RoundNumber)
-	assert.Nil(t, rounds[0].Score)
-	assert.Nil(t, rounds[0].ParRelativeScore)
+	require.NotNil(t, rounds[0].Score)
+	assert.Equal(t, 4, *rounds[0].Score)
+	require.NotNil(t, rounds[0].ParRelativeScore)
+	assert.Equal(t, 0, *rounds[0].ParRelativeScore)
 
 	holeScores, err := ing.db.HoleScore.Query().
 		Where(holescore.HasRoundWith(round.IDEQ(rounds[0].ID))).
@@ -152,7 +154,8 @@ func TestProcessPlayerScorecards_UsesExistingRound(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, rounds, 1, "should not create a new round")
 	assert.Equal(t, existingRound.ID, rounds[0].ID)
-	assert.Equal(t, 68, *rounds[0].Score)
+	assert.Equal(t, 3, *rounds[0].Score)
+	assert.Equal(t, -1, *rounds[0].ParRelativeScore)
 
 	holeScores, err := ing.db.HoleScore.Query().
 		Where(holescore.HasRoundWith(round.IDEQ(existingRound.ID))).

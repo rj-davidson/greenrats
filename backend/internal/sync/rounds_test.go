@@ -279,3 +279,67 @@ func TestUpsertHoleScore_UpdatesThru(t *testing.T) {
 		assert.Equal(t, 3, *roundEntity.Thru, "thru should count all holes with scores")
 	})
 }
+
+func TestUpsertHoleScore_UpdatesRoundScores(t *testing.T) {
+	t.Run("computes score and par_relative_score from holes", func(t *testing.T) {
+		ctx := context.Background()
+		svc := newTestService(t)
+
+		tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+		golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
+
+		bdlRound := &balldontlie.PlayerRoundResult{RoundNumber: 1}
+		roundRecord, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 1, Par: 4, Score: intPtr(3),
+		})
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 2, Par: 5, Score: intPtr(6),
+		})
+		require.NoError(t, err)
+
+		roundEntity, err := svc.db.Round.Get(ctx, roundRecord.ID)
+		require.NoError(t, err)
+
+		require.NotNil(t, roundEntity.Score)
+		assert.Equal(t, 9, *roundEntity.Score)
+
+		require.NotNil(t, roundEntity.ParRelativeScore)
+		assert.Equal(t, 0, *roundEntity.ParRelativeScore)
+	})
+
+	t.Run("ignores holes without scores in calculation", func(t *testing.T) {
+		ctx := context.Background()
+		svc := newTestService(t)
+
+		tournamentEntity := testutil.CreateTournament(t, svc.db, "Masters", 2026)
+		golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 1)
+
+		bdlRound := &balldontlie.PlayerRoundResult{RoundNumber: 1}
+		roundRecord, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 1, Par: 4, Score: intPtr(4),
+		})
+		require.NoError(t, err)
+
+		err = svc.UpsertHoleScore(ctx, roundRecord.ID, &balldontlie.PlayerScorecard{
+			HoleNumber: 2, Par: 5, Score: nil,
+		})
+		require.NoError(t, err)
+
+		roundEntity, err := svc.db.Round.Get(ctx, roundRecord.ID)
+		require.NoError(t, err)
+
+		require.NotNil(t, roundEntity.Score)
+		assert.Equal(t, 4, *roundEntity.Score)
+
+		require.NotNil(t, roundEntity.ParRelativeScore)
+		assert.Equal(t, 0, *roundEntity.ParRelativeScore)
+	})
+}
