@@ -5,8 +5,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofrs/uuid/v5"
-
-	"github.com/rj-davidson/greenrats/internal/auth"
 )
 
 type Handler struct {
@@ -76,9 +74,8 @@ func (h *Handler) GetLeagueStandings(c *fiber.Ctx) error {
 	}
 
 	includePicks := c.Query("include") == "picks"
-	requestingUserID := auth.GetDBUserID(c)
 
-	resp, err := h.service.GetLeagueStandings(c.UserContext(), leagueID, seasonYear, includePicks, requestingUserID)
+	resp, err := h.service.GetLeagueStandings(c.UserContext(), leagueID, seasonYear, includePicks)
 	if err != nil {
 		if err.Error() == "league not found" {
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{

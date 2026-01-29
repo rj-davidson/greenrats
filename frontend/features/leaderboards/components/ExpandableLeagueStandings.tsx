@@ -15,13 +15,7 @@ import type { StandingsEntry } from "@/features/leaderboards/types";
 import { usePrefetchUserPublicPicks, useUserPublicPicks } from "@/features/picks/queries";
 import { useCurrentUser } from "@/features/users/queries";
 import { cn } from "@/lib/utils";
-import {
-  CheckCircle2Icon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  ChevronUpIcon,
-  CircleIcon,
-} from "lucide-react";
+import { ChevronDownIcon, ChevronRightIcon, ChevronUpIcon } from "lucide-react";
 import { Fragment, useCallback, useState } from "react";
 
 interface ExpandableLeagueStandingsProps {
@@ -133,7 +127,6 @@ interface StandingsRowProps {
   isExpanded: boolean;
   isCurrentUser: boolean;
   showCurrentPick: boolean;
-  hasActiveTournament: boolean;
   onToggle: () => void;
   onHover: () => void;
 }
@@ -143,7 +136,6 @@ function StandingsRow({
   isExpanded,
   isCurrentUser,
   showCurrentPick,
-  hasActiveTournament,
   onToggle,
   onHover,
 }: StandingsRowProps) {
@@ -164,17 +156,8 @@ function StandingsRow({
         {entry.rank_display}
       </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <span className={cn(isCurrentUser && "font-bold")}>{entry.user_display_name}</span>
-          {isCurrentUser && <span className="text-sm text-muted-foreground">(you)</span>}
-          {hasActiveTournament &&
-            !showCurrentPick &&
-            (entry.has_current_pick ? (
-              <CheckCircle2Icon className="size-4 text-primary" />
-            ) : (
-              <CircleIcon className="size-4 text-muted-foreground" />
-            ))}
-        </div>
+        <span className={cn(isCurrentUser && "font-bold")}>{entry.user_display_name}</span>
+        {isCurrentUser && <span className="ml-2 text-sm text-muted-foreground">(you)</span>}
       </TableCell>
       {showCurrentPick && <TableCell>{entry.current_pick?.golfer_name ?? "--"}</TableCell>}
       <TableCell className="text-right">{formatEarnings(entry.total_earnings)}</TableCell>
@@ -217,7 +200,6 @@ export function ExpandableLeagueStandings({ leagueId }: ExpandableLeagueStanding
   }
 
   const showCurrentPick = data.active_tournament?.is_pick_window_closed ?? false;
-  const hasActiveTournament = data.active_tournament != null;
 
   return (
     <Table>
@@ -249,7 +231,6 @@ export function ExpandableLeagueStandings({ leagueId }: ExpandableLeagueStanding
                 isExpanded={isExpanded}
                 isCurrentUser={isCurrentUser}
                 showCurrentPick={showCurrentPick}
-                hasActiveTournament={hasActiveTournament}
                 onToggle={() => toggleExpand(entry.user_id)}
                 onHover={() => handleHover(entry.user_id)}
               />

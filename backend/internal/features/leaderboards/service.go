@@ -27,7 +27,7 @@ func NewService(db *ent.Client, tournamentService *tournaments.Service) *Service
 }
 
 func (s *Service) GetLeagueLeaderboard(ctx context.Context, leagueID uuid.UUID, seasonYear int) (*LeagueLeaderboardResponse, error) {
-	resp, err := s.GetLeagueStandings(ctx, leagueID, seasonYear, false, uuid.Nil)
+	resp, err := s.GetLeagueStandings(ctx, leagueID, seasonYear, false)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +49,7 @@ func (s *Service) GetLeagueLeaderboard(ctx context.Context, leagueID uuid.UUID, 
 	}, nil
 }
 
-func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, seasonYear int, includePicks bool, requestingUserID uuid.UUID) (*LeagueStandingsResponse, error) {
+func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, seasonYear int, includePicks bool) (*LeagueStandingsResponse, error) {
 	entLeague, err := s.db.League.
 		Query().
 		Where(league.IDEQ(leagueID)).
@@ -70,29 +70,6 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		activeTournament, err = s.tournamentService.GetActive(ctx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get active tournament: %w", err)
-		}
-	}
-
-	var isPickWindowClosed bool
-	if activeTournament != nil && activeTournament.PickWindowClosesAt != nil {
-		isPickWindowClosed = time.Now().UTC().After(*activeTournament.PickWindowClosesAt)
-	}
-
-	// If no active tournament, check for an upcoming tournament with open pick window
-	var upcomingTournament *ent.Tournament
-	if activeTournament == nil {
-		now := time.Now().UTC()
-		upcomingTournament, err = s.db.Tournament.Query().
-			Where(
-				tournament.Not(tournament.HasChampion()),
-				tournament.PickWindowOpensAtLTE(now),
-				tournament.PickWindowClosesAtGT(now),
-				tournament.SeasonYearEQ(seasonYear),
-			).
-			Order(ent.Asc(tournament.FieldStartDate)).
-			First(ctx)
-		if err != nil && !ent.IsNotFound(err) {
-			return nil, fmt.Errorf("failed to get upcoming tournament: %w", err)
 		}
 	}
 
@@ -208,9 +185,7 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 				}
 			}
 
-			isActiveMatch := activeTournament != nil && p.Edges.Tournament.ID.String() == activeTournament.ID
-			isUpcomingMatch := upcomingTournament != nil && p.Edges.Tournament.ID == upcomingTournament.ID
-			if isActiveMatch || isUpcomingMatch {
+			if activeTournament != nil && p.Edges.Tournament.ID.String() == activeTournament.ID {
 				data.CurrentPick = &CurrentPick{
 					TournamentID:   p.Edges.Tournament.ID,
 					TournamentName: p.Edges.Tournament.Name,
@@ -247,10 +222,7 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 			UserDisplayName: data.DisplayName,
 			TotalEarnings:   data.Earnings,
 			PickCount:       pickCountByUser[userID],
-			HasCurrentPick:  data.CurrentPick != nil,
-		}
-		if data.CurrentPick != nil && (isPickWindowClosed || userID == requestingUserID) {
-			entry.CurrentPick = data.CurrentPick
+			CurrentPick:     data.CurrentPick,
 		}
 		if includePicks {
 			entry.Picks = data.Picks
@@ -275,13 +247,6 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 			Name:               activeTournament.Name,
 			IsPickWindowClosed: isWindowClosed,
 			StartDate:          activeTournament.StartDate,
-		}
-	} else if upcomingTournament != nil {
-		activeTournamentResponse = &ActiveTournament{
-			ID:                 upcomingTournament.ID,
-			Name:               upcomingTournament.Name,
-			IsPickWindowClosed: false,
-			StartDate:          upcomingTournament.StartDate,
 		}
 	}
 
