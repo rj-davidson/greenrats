@@ -82,17 +82,33 @@ func (i *Ingester) syncScorecards(ctx context.Context) error {
 func (i *Ingester) syncTournamentScorecards(ctx context.Context, t *ent.Tournament) error {
 	i.logger.Debug("syncing scorecards", "tournament", t.Name)
 
-	roundResults, err := i.ballDontLie.GetPlayerRoundResults(ctx, *t.BdlID)
+	fieldEntries, err := t.QueryFieldEntries().
+		WithGolfer().
+		All(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to fetch round results: %w", err)
+		return fmt.Errorf("failed to query field entries: %w", err)
 	}
 
 	playerIDs := make(map[int]bool)
-	roundsProcessed := 0
+	for _, entry := range fieldEntries {
+		if entry.Edges.Golfer != nil && entry.Edges.Golfer.BdlID != nil {
+			playerIDs[*entry.Edges.Golfer.BdlID] = true
+		}
+	}
 
+	if len(playerIDs) == 0 {
+		i.logger.Debug("no players in field", "tournament", t.Name)
+		return nil
+	}
+
+	roundResults, err := i.ballDontLie.GetPlayerRoundResults(ctx, *t.BdlID)
+	if err != nil {
+		i.logger.Warn("failed to fetch round results, proceeding with scorecards only", "error", err)
+	}
+
+	roundsProcessed := 0
 	for idx := range roundResults {
 		result := &roundResults[idx]
-		playerIDs[result.Player.ID] = true
 
 		g, err := i.db.Golfer.Query().
 			Where(golfer.BdlID(result.Player.ID)).
