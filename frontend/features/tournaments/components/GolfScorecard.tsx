@@ -485,13 +485,7 @@ function StackedGroupRows({
         </tr>
       )}
 
-      {/* ===== OUT SECTION ===== */}
-      <tr className="border-b bg-muted/50">
-        <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted/50 text-left")}>OUT</td>
-        <td colSpan={9} className={headerCellClass}></td>
-        <td className={cn(headerCellClass, "bg-muted/60")}></td>
-        <td className={cn(headerCellClass, "bg-muted/60")}></td>
-      </tr>
+      {/* ===== FRONT NINE ===== */}
       <tr className="border-b">
         <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted text-left")}>Hole</td>
         {frontNine.map((hole) => (
@@ -499,7 +493,7 @@ function StackedGroupRows({
             {hole}
           </td>
         ))}
-        <td className={cn(headerCellClass, "bg-muted/80")}></td>
+        <td className={cn(headerCellClass, "bg-muted/80")}>OUT</td>
         <td className={cn(headerCellClass, "bg-muted/80")}></td>
       </tr>
       <tr className="border-b bg-muted/30">
@@ -545,22 +539,16 @@ function StackedGroupRows({
         );
       })}
 
-      {/* ===== IN SECTION ===== */}
-      <tr className="border-t-2 border-b border-muted-foreground/10 bg-muted/50">
-        <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted/50 text-left")}>IN</td>
-        <td colSpan={9} className={headerCellClass}></td>
-        <td className={cn(headerCellClass, "bg-muted/60")}></td>
-        <td className={cn(headerCellClass, "bg-muted/60")}>TOT</td>
-      </tr>
-      <tr className="border-b">
+      {/* ===== BACK NINE ===== */}
+      <tr className="border-t-2 border-b border-muted-foreground/10">
         <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted text-left")}>Hole</td>
         {backNine.map((hole) => (
           <td key={hole} className={headerCellClass}>
             {hole}
           </td>
         ))}
-        <td className={cn(headerCellClass, "bg-muted/80")}></td>
-        <td className={cn(headerCellClass, "bg-muted/80")}></td>
+        <td className={cn(headerCellClass, "bg-muted/80")}>IN</td>
+        <td className={cn(headerCellClass, "bg-muted/80")}>TOT</td>
       </tr>
       <tr className="border-b bg-muted/30">
         <td className={cn(cellClass, "sticky left-0 z-10 bg-muted/30 text-left font-medium")}>
