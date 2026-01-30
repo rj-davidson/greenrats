@@ -14,7 +14,7 @@ import { ChevronUpIcon } from "lucide-react";
 
 type GolfScorecardProps = {
   rounds: RoundScore[];
-  onClose: () => void;
+  onClose?: () => void;
 };
 
 interface RoundGroup {
@@ -145,7 +145,7 @@ export function GolfScorecard({ rounds, onClose }: GolfScorecardProps) {
   }));
 
   return (
-    <div className="py-2">
+    <div className={onClose ? "py-2" : ""}>
       {isMobile ? (
         <StackedScorecard
           groups={groups}
@@ -159,11 +159,13 @@ export function GolfScorecard({ rounds, onClose }: GolfScorecardProps) {
           courseAbbreviations={courseAbbreviations}
         />
       )}
-      <div className="mt-2 flex justify-center">
-        <Button variant="ghost" size="sm" onClick={onClose} className="w-full gap-1">
-          <ChevronUpIcon className="h-4 w-4" />
-        </Button>
-      </div>
+      {onClose && (
+        <div className="mt-2 flex justify-center">
+          <Button variant="ghost" size="sm" onClick={onClose} className="w-full gap-1">
+            <ChevronUpIcon className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
