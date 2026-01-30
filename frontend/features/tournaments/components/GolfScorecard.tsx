@@ -426,28 +426,6 @@ function StackedScorecard({ groups, isMultiCourse, courseAbbreviations }: Stacke
               </td>
             </tr>
           ) : null}
-          {/* Front 9 header */}
-          <tr className="border-b">
-            <th className={cn(headerCellClass, "sticky left-0 z-10 bg-muted text-left")}>Hole</th>
-            {frontNine.map((hole) => (
-              <th key={hole} className={headerCellClass}>
-                {hole}
-              </th>
-            ))}
-            <th className={cn(headerCellClass, "bg-muted/80")}>OUT</th>
-            <th className={cn(headerCellClass, "bg-muted/80")}></th>
-          </tr>
-          {/* Back 9 header */}
-          <tr className="border-b">
-            <th className={cn(headerCellClass, "sticky left-0 z-10 bg-muted text-left")}>Hole</th>
-            {backNine.map((hole) => (
-              <th key={hole} className={headerCellClass}>
-                {hole}
-              </th>
-            ))}
-            <th className={cn(headerCellClass, "bg-muted/80")}>IN</th>
-            <th className={cn(headerCellClass, "bg-muted/80")}>TOT</th>
-          </tr>
         </thead>
         <tbody>
           {groups.map((group, groupIndex) => (
@@ -459,6 +437,7 @@ function StackedScorecard({ groups, isMultiCourse, courseAbbreviations }: Stacke
               isMultiCourse={isMultiCourse}
               showSeparator={groupIndex > 0}
               cellClass={cellClass}
+              headerCellClass={headerCellClass}
               columnCount={columnCount}
             />
           ))}
@@ -475,6 +454,7 @@ interface StackedGroupRowsProps {
   isMultiCourse: boolean;
   showSeparator: boolean;
   cellClass: string;
+  headerCellClass: string;
   columnCount: number;
 }
 
@@ -485,9 +465,14 @@ function StackedGroupRows({
   isMultiCourse,
   showSeparator,
   cellClass,
+  headerCellClass,
   columnCount,
 }: StackedGroupRowsProps) {
   const abbrevSuffix = isMultiCourse && group.abbreviation ? ` ${group.abbreviation}` : "";
+
+  const getHoleScore = (round: RoundScore, holeNumber: number): HoleScore | undefined => {
+    return round.holes?.find((h) => h.hole_number === holeNumber);
+  };
 
   return (
     <>
@@ -496,7 +481,24 @@ function StackedGroupRows({
           <td colSpan={columnCount} className="h-1" />
         </tr>
       )}
-      {/* Par row - front 9 */}
+
+      {/* ===== OUT SECTION ===== */}
+      <tr className="border-b bg-muted/50">
+        <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted/50 text-left")}>OUT</td>
+        <td colSpan={9} className={headerCellClass}></td>
+        <td className={cn(headerCellClass, "bg-muted/60")}></td>
+        <td className={cn(headerCellClass, "bg-muted/60")}></td>
+      </tr>
+      <tr className="border-b">
+        <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted text-left")}>Hole</td>
+        {frontNine.map((hole) => (
+          <td key={hole} className={headerCellClass}>
+            {hole}
+          </td>
+        ))}
+        <td className={cn(headerCellClass, "bg-muted/80")}></td>
+        <td className={cn(headerCellClass, "bg-muted/80")}></td>
+      </tr>
       <tr className="border-b bg-muted/30">
         <td className={cn(cellClass, "sticky left-0 z-10 bg-muted/30 text-left font-medium")}>
           Par{abbrevSuffix}
@@ -511,9 +513,56 @@ function StackedGroupRows({
         </td>
         <td className={cn(cellClass, "bg-muted/50")}></td>
       </tr>
-      {/* Par row - back 9 */}
+      {group.rounds.map((round) => {
+        const frontNineCalc = round.holes ? calculateFrontNine(round.holes) : null;
+        const label = abbrevSuffix
+          ? `${getRoundLabel(round.round_number)}${abbrevSuffix}`
+          : getRoundLabel(round.round_number);
+        return (
+          <tr key={`front-${round.round_number}`} className="border-b">
+            <td className={cn(cellClass, "sticky left-0 z-10 bg-background text-left font-medium")}>
+              {label}
+            </td>
+            {frontNine.map((holeNum) => {
+              const hole = getHoleScore(round, holeNum);
+              return (
+                <td
+                  key={holeNum}
+                  className={cn(cellClass, hole && getHoleScoreClass(hole.score, hole.par))}
+                >
+                  {hole?.score ?? "-"}
+                </td>
+              );
+            })}
+            <td className={cn(cellClass, "bg-muted/30 font-medium")}>
+              {frontNineCalc?.strokes ?? "-"}
+            </td>
+            <td className={cn(cellClass, "bg-muted/30")}></td>
+          </tr>
+        );
+      })}
+
+      {/* ===== IN SECTION ===== */}
+      <tr className="border-t-2 border-b border-muted-foreground/10 bg-muted/50">
+        <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted/50 text-left")}>IN</td>
+        <td colSpan={9} className={headerCellClass}></td>
+        <td className={cn(headerCellClass, "bg-muted/60")}></td>
+        <td className={cn(headerCellClass, "bg-muted/60")}>TOT</td>
+      </tr>
+      <tr className="border-b">
+        <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted text-left")}>Hole</td>
+        {backNine.map((hole) => (
+          <td key={hole} className={headerCellClass}>
+            {hole}
+          </td>
+        ))}
+        <td className={cn(headerCellClass, "bg-muted/80")}></td>
+        <td className={cn(headerCellClass, "bg-muted/80")}></td>
+      </tr>
       <tr className="border-b bg-muted/30">
-        <td className={cn(cellClass, "sticky left-0 z-10 bg-muted/30 text-left font-medium")}></td>
+        <td className={cn(cellClass, "sticky left-0 z-10 bg-muted/30 text-left font-medium")}>
+          Par{abbrevSuffix}
+        </td>
         {backNine.map((hole) => (
           <td key={hole} className={cellClass}>
             {getParForHoleInGroup(group.rounds, hole)}
@@ -526,91 +575,37 @@ function StackedGroupRows({
           {getTotalParForGroup(group.rounds)}
         </td>
       </tr>
-      {/* Round rows */}
-      {group.rounds.map((round) => (
-        <StackedRoundRows
-          key={round.round_number}
-          round={round}
-          frontNine={frontNine}
-          backNine={backNine}
-          abbreviation={isMultiCourse ? group.abbreviation : ""}
-          cellClass={cellClass}
-        />
-      ))}
-    </>
-  );
-}
-
-interface StackedRoundRowsProps {
-  round: RoundScore;
-  frontNine: number[];
-  backNine: number[];
-  abbreviation: string;
-  cellClass: string;
-}
-
-function StackedRoundRows({
-  round,
-  frontNine,
-  backNine,
-  abbreviation,
-  cellClass,
-}: StackedRoundRowsProps) {
-  const getHoleScore = (holeNumber: number): HoleScore | undefined => {
-    return round.holes?.find((h) => h.hole_number === holeNumber);
-  };
-
-  const frontNineCalc = round.holes ? calculateFrontNine(round.holes) : null;
-  const backNineCalc = round.holes ? calculateBackNine(round.holes) : null;
-  const totalStrokes =
-    frontNineCalc && backNineCalc ? frontNineCalc.strokes + backNineCalc.strokes : null;
-
-  const label = abbreviation
-    ? `${getRoundLabel(round.round_number)} ${abbreviation}`
-    : getRoundLabel(round.round_number);
-
-  return (
-    <>
-      {/* Front 9 */}
-      <tr className="border-b">
-        <td className={cn(cellClass, "sticky left-0 z-10 bg-background text-left font-medium")}>
-          {label}
-        </td>
-        {frontNine.map((holeNum) => {
-          const hole = getHoleScore(holeNum);
-          return (
-            <td
-              key={holeNum}
-              className={cn(cellClass, hole && getHoleScoreClass(hole.score, hole.par))}
-            >
-              {hole?.score ?? "-"}
+      {group.rounds.map((round) => {
+        const frontNineCalc = round.holes ? calculateFrontNine(round.holes) : null;
+        const backNineCalc = round.holes ? calculateBackNine(round.holes) : null;
+        const totalStrokes =
+          frontNineCalc && backNineCalc ? frontNineCalc.strokes + backNineCalc.strokes : null;
+        const label = abbrevSuffix
+          ? `${getRoundLabel(round.round_number)}${abbrevSuffix}`
+          : getRoundLabel(round.round_number);
+        return (
+          <tr key={`back-${round.round_number}`} className="border-b last:border-b-0">
+            <td className={cn(cellClass, "sticky left-0 z-10 bg-background text-left font-medium")}>
+              {label}
             </td>
-          );
-        })}
-        <td className={cn(cellClass, "bg-muted/30 font-medium")}>
-          {frontNineCalc?.strokes ?? "-"}
-        </td>
-        <td className={cn(cellClass, "bg-muted/30")}></td>
-      </tr>
-      {/* Back 9 */}
-      <tr className="border-b last:border-b-0">
-        <td
-          className={cn(cellClass, "sticky left-0 z-10 bg-background text-left font-medium")}
-        ></td>
-        {backNine.map((holeNum) => {
-          const hole = getHoleScore(holeNum);
-          return (
-            <td
-              key={holeNum}
-              className={cn(cellClass, hole && getHoleScoreClass(hole.score, hole.par))}
-            >
-              {hole?.score ?? "-"}
+            {backNine.map((holeNum) => {
+              const hole = getHoleScore(round, holeNum);
+              return (
+                <td
+                  key={holeNum}
+                  className={cn(cellClass, hole && getHoleScoreClass(hole.score, hole.par))}
+                >
+                  {hole?.score ?? "-"}
+                </td>
+              );
+            })}
+            <td className={cn(cellClass, "bg-muted/30 font-medium")}>
+              {backNineCalc?.strokes ?? "-"}
             </td>
-          );
-        })}
-        <td className={cn(cellClass, "bg-muted/30 font-medium")}>{backNineCalc?.strokes ?? "-"}</td>
-        <td className={cn(cellClass, "bg-muted/30 font-medium")}>{totalStrokes ?? "-"}</td>
-      </tr>
+            <td className={cn(cellClass, "bg-muted/30 font-medium")}>{totalStrokes ?? "-"}</td>
+          </tr>
+        );
+      })}
     </>
   );
 }
