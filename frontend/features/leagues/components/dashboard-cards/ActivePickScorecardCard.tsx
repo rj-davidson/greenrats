@@ -92,7 +92,7 @@ export function ActivePickScorecardCard({ leagueId }: ActivePickScorecardCardPro
           </div>
 
           {hasRoundData && scorecardData ? (
-            <GolfScorecard rounds={scorecardData.rounds} />
+            <GolfScorecard rounds={scorecardData.rounds} forceStacked />
           ) : (
             <Empty className="border-none py-4">
               <EmptyHeader>

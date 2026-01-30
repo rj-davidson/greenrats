@@ -15,6 +15,7 @@ import { ChevronUpIcon } from "lucide-react";
 type GolfScorecardProps = {
   rounds: RoundScore[];
   onClose?: () => void;
+  forceStacked?: boolean;
 };
 
 interface RoundGroup {
@@ -132,7 +133,7 @@ function getBackNineParForGroup(rounds: RoundScore[]): number {
   return roundWithHoles.holes.filter((h) => h.hole_number > 9).reduce((sum, h) => sum + h.par, 0);
 }
 
-export function GolfScorecard({ rounds, onClose }: GolfScorecardProps) {
+export function GolfScorecard({ rounds, onClose, forceStacked }: GolfScorecardProps) {
   const isMobile = useIsMobile();
   const courses = getUniqueCourses(rounds);
   const abbreviations = generateCourseAbbreviations(courses);
@@ -144,9 +145,11 @@ export function GolfScorecard({ rounds, onClose }: GolfScorecardProps) {
     abbreviation: abbreviations.get(c.id) ?? "",
   }));
 
+  const useStackedLayout = forceStacked || isMobile;
+
   return (
     <div className={onClose ? "py-2" : ""}>
-      {isMobile ? (
+      {useStackedLayout ? (
         <StackedScorecard
           groups={groups}
           isMultiCourse={isMultiCourse}
