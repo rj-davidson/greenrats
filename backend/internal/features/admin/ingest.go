@@ -121,6 +121,36 @@ func (s *IngestService) SyncLeaderboard(ctx context.Context, tournamentID uuid.U
 	return nil
 }
 
+func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID) error {
+	t, err := s.db.Tournament.Get(ctx, tournamentID)
+	if err != nil {
+		return fmt.Errorf("failed to find tournament: %w", err)
+	}
+
+	if t.BdlID == nil {
+		return fmt.Errorf("tournament has no BallDontLie ID")
+	}
+
+	s.logger.Info("starting earnings sync", "tournament", t.Name)
+
+	results, err := s.ballDontLie.GetTournamentResults(ctx, *t.BdlID)
+	if err != nil {
+		return fmt.Errorf("failed to fetch tournament results: %w", err)
+	}
+
+	s.logger.Info("fetched results for earnings", "tournament", t.Name, "count", len(results))
+
+	for idx := range results {
+		if err := s.syncService.UpsertPlacement(ctx, t, &results[idx]); err != nil {
+			s.logger.Warn("failed to upsert earnings", "player", results[idx].Player.DisplayName, "error", err)
+			continue
+		}
+	}
+
+	s.logger.Info("earnings sync completed", "tournament", t.Name)
+	return nil
+}
+
 func (s *IngestService) SyncField(ctx context.Context, tournamentID uuid.UUID) error {
 	t, err := s.db.Tournament.Get(ctx, tournamentID)
 	if err != nil {
