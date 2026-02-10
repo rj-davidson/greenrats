@@ -157,9 +157,14 @@ func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID
 	return nil
 }
 
-func (s *IngestService) upsertAndPrunePlacements(ctx context.Context, t *ent.Tournament, results []balldontlie.TournamentResult, pruneStale bool) (int, int, error) {
+func (s *IngestService) upsertAndPrunePlacements(
+	ctx context.Context,
+	t *ent.Tournament,
+	results []balldontlie.TournamentResult,
+	pruneStale bool,
+) (processed, removed int, err error) {
 	seenPlayerIDs := make(map[int]struct{}, len(results))
-	processed := 0
+	processed = 0
 
 	for idx := range results {
 		seenPlayerIDs[results[idx].Player.ID] = struct{}{}
@@ -174,7 +179,7 @@ func (s *IngestService) upsertAndPrunePlacements(ctx context.Context, t *ent.Tou
 		return processed, 0, nil
 	}
 
-	removed, err := s.pruneStalePlacements(ctx, t.ID, seenPlayerIDs)
+	removed, err = s.pruneStalePlacements(ctx, t.ID, seenPlayerIDs)
 	if err != nil {
 		return processed, 0, err
 	}
