@@ -9,7 +9,9 @@ import (
 
 	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/ent/golfer"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/season"
+	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/internal/config"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
@@ -110,11 +112,13 @@ func (s *IngestService) SyncLeaderboard(ctx context.Context, tournamentID uuid.U
 
 	s.logger.Info("fetched results", "tournament", t.Name, "count", len(results))
 
-	for idx := range results {
-		if err := s.syncService.UpsertPlacement(ctx, t, &results[idx]); err != nil {
-			s.logger.Warn("failed to upsert placement", "player", results[idx].Player.DisplayName, "error", err)
-			continue
-		}
+	completed, err := s.tournamentIsCompleted(ctx, t.ID)
+	if err != nil {
+		return fmt.Errorf("failed to check tournament completion: %w", err)
+	}
+
+	if _, _, err := s.upsertAndPrunePlacements(ctx, t, results, completed); err != nil {
+		return fmt.Errorf("failed to sync leaderboard placements: %w", err)
 	}
 
 	s.logger.Info("leaderboard sync completed", "tournament", t.Name)
@@ -140,15 +144,94 @@ func (s *IngestService) SyncEarnings(ctx context.Context, tournamentID uuid.UUID
 
 	s.logger.Info("fetched results for earnings", "tournament", t.Name, "count", len(results))
 
-	for idx := range results {
-		if err := s.syncService.UpsertPlacement(ctx, t, &results[idx]); err != nil {
-			s.logger.Warn("failed to upsert earnings", "player", results[idx].Player.DisplayName, "error", err)
-			continue
-		}
+	completed, err := s.tournamentIsCompleted(ctx, t.ID)
+	if err != nil {
+		return fmt.Errorf("failed to check tournament completion: %w", err)
+	}
+
+	if _, _, err := s.upsertAndPrunePlacements(ctx, t, results, completed); err != nil {
+		return fmt.Errorf("failed to sync earnings placements: %w", err)
 	}
 
 	s.logger.Info("earnings sync completed", "tournament", t.Name)
 	return nil
+}
+
+func (s *IngestService) upsertAndPrunePlacements(ctx context.Context, t *ent.Tournament, results []balldontlie.TournamentResult, pruneStale bool) (int, int, error) {
+	seenPlayerIDs := make(map[int]struct{}, len(results))
+	processed := 0
+
+	for idx := range results {
+		seenPlayerIDs[results[idx].Player.ID] = struct{}{}
+		if err := s.syncService.UpsertPlacement(ctx, t, &results[idx]); err != nil {
+			s.logger.Warn("failed to upsert placement", "player", results[idx].Player.DisplayName, "error", err)
+			continue
+		}
+		processed++
+	}
+
+	if !pruneStale {
+		return processed, 0, nil
+	}
+
+	removed, err := s.pruneStalePlacements(ctx, t.ID, seenPlayerIDs)
+	if err != nil {
+		return processed, 0, err
+	}
+	if removed > 0 {
+		s.logger.Info("removed stale placements", "tournament", t.Name, "removed", removed)
+	}
+
+	return processed, removed, nil
+}
+
+func (s *IngestService) tournamentIsCompleted(ctx context.Context, tournamentID uuid.UUID) (bool, error) {
+	return s.db.Tournament.Query().
+		Where(
+			tournament.IDEQ(tournamentID),
+			tournament.HasChampion(),
+		).
+		Exist(ctx)
+}
+
+func (s *IngestService) pruneStalePlacements(ctx context.Context, tournamentID uuid.UUID, seenPlayerIDs map[int]struct{}) (int, error) {
+	if len(seenPlayerIDs) == 0 {
+		return 0, nil
+	}
+
+	existing, err := s.db.Placement.Query().
+		Where(placement.HasTournamentWith(tournament.IDEQ(tournamentID))).
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	stalePlacementIDs := make([]uuid.UUID, 0)
+	for _, p := range existing {
+		if p.Edges.Golfer == nil || p.Edges.Golfer.BdlID == nil {
+			continue
+		}
+
+		if _, ok := seenPlayerIDs[*p.Edges.Golfer.BdlID]; ok {
+			continue
+		}
+
+		stalePlacementIDs = append(stalePlacementIDs, p.ID)
+	}
+
+	if len(stalePlacementIDs) == 0 {
+		return 0, nil
+	}
+
+	deleted, err := s.db.Placement.Delete().
+		Where(placement.IDIn(stalePlacementIDs...)).
+		Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return deleted, nil
 }
 
 func (s *IngestService) SyncField(ctx context.Context, tournamentID uuid.UUID) error {

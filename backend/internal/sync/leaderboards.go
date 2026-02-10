@@ -9,6 +9,7 @@ import (
 	"github.com/gofrs/uuid/v5"
 
 	"github.com/rj-davidson/greenrats/ent"
+	"github.com/rj-davidson/greenrats/ent/placement"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 )
 
@@ -164,7 +165,9 @@ func (i *Ingester) syncTournamentPlacements(ctx context.Context, t *ent.Tourname
 	i.logger.Debug("fetched results", "tournament", t.Name, "count", len(results))
 
 	processed := 0
+	seenPlayerIDs := make(map[int]struct{}, len(results))
 	for idx := range results {
+		seenPlayerIDs[results[idx].Player.ID] = struct{}{}
 		if err := i.syncService.UpsertPlacement(ctx, t, &results[idx]); err != nil {
 			if isContextError(err) {
 				return fmt.Errorf("upsert placement for %s: %w", results[idx].Player.DisplayName, err)
@@ -174,6 +177,74 @@ func (i *Ingester) syncTournamentPlacements(ctx context.Context, t *ent.Tourname
 		processed++
 	}
 
+	completed, err := i.tournamentIsCompleted(ctx, t)
+	if err != nil {
+		return fmt.Errorf("check tournament completion for %s: %w", t.Name, err)
+	}
+
+	if completed {
+		removed, err := i.pruneStalePlacements(ctx, t, seenPlayerIDs)
+		if err != nil {
+			return fmt.Errorf("prune stale placements for %s: %w", t.Name, err)
+		}
+		if removed > 0 {
+			i.logger.Info("removed stale placements", "tournament", t.Name, "removed", removed)
+		}
+	}
+
 	SyncRecordsProcessed.WithLabelValues("placements", "entries").Add(float64(processed))
 	return nil
+}
+
+func (i *Ingester) tournamentIsCompleted(ctx context.Context, t *ent.Tournament) (bool, error) {
+	if t.Edges.Champion != nil {
+		return true, nil
+	}
+
+	return i.db.Tournament.Query().
+		Where(
+			tournament.IDEQ(t.ID),
+			tournament.HasChampion(),
+		).
+		Exist(ctx)
+}
+
+func (i *Ingester) pruneStalePlacements(ctx context.Context, t *ent.Tournament, seenPlayerIDs map[int]struct{}) (int, error) {
+	if len(seenPlayerIDs) == 0 {
+		return 0, nil
+	}
+
+	existing, err := i.db.Placement.Query().
+		Where(placement.HasTournamentWith(tournament.IDEQ(t.ID))).
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	stalePlacementIDs := make([]uuid.UUID, 0)
+	for _, p := range existing {
+		if p.Edges.Golfer == nil || p.Edges.Golfer.BdlID == nil {
+			continue
+		}
+
+		if _, ok := seenPlayerIDs[*p.Edges.Golfer.BdlID]; ok {
+			continue
+		}
+
+		stalePlacementIDs = append(stalePlacementIDs, p.ID)
+	}
+
+	if len(stalePlacementIDs) == 0 {
+		return 0, nil
+	}
+
+	deleted, err := i.db.Placement.Delete().
+		Where(placement.IDIn(stalePlacementIDs...)).
+		Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return deleted, nil
 }
