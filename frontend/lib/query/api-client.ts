@@ -7,6 +7,7 @@ export interface RequestConfig {
   token?: string;
   baseUrl?: string;
   params?: Record<string, string>;
+  timeoutMs?: number;
   /** User info to pass as headers (WorkOS access tokens don't include email/name) */
   userInfo?: { email: string; name: string };
 }
@@ -28,6 +29,51 @@ export class APIError extends Error {
   }
 }
 
+const DEFAULT_SERVER_API_TIMEOUT_MS = 8000;
+
+function withTimeoutSignal(signal: AbortSignal | null | undefined, timeoutMs?: number): {
+  signal: AbortSignal | null | undefined;
+  didTimeout: () => boolean;
+  cleanup: () => void;
+} {
+  if (!timeoutMs || timeoutMs <= 0) {
+    return {
+      signal,
+      didTimeout: () => false,
+      cleanup: () => {},
+    };
+  }
+
+  const controller = new AbortController();
+  let timedOut = false;
+
+  const onAbort = () => {
+    controller.abort(signal?.reason);
+  };
+
+  if (signal) {
+    if (signal.aborted) {
+      onAbort();
+    } else {
+      signal.addEventListener("abort", onAbort, { once: true });
+    }
+  }
+
+  const timeoutId = setTimeout(() => {
+    timedOut = true;
+    controller.abort();
+  }, timeoutMs);
+
+  return {
+    signal: controller.signal,
+    didTimeout: () => timedOut,
+    cleanup: () => {
+      clearTimeout(timeoutId);
+      signal?.removeEventListener("abort", onAbort);
+    },
+  };
+}
+
 /**
  * Core API client with Bearer token authentication support.
  * Used by both client-side and server-side requestors.
@@ -36,7 +82,7 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestInit & RequestConfig = {},
 ): Promise<T> {
-  const { token, baseUrl = PUBLIC_BACKEND_URL, params, userInfo, ...init } = options;
+  const { token, baseUrl = PUBLIC_BACKEND_URL, params, timeoutMs, userInfo, ...init } = options;
 
   let url = `${baseUrl}${endpoint}`;
   if (params) {
@@ -66,10 +112,29 @@ export async function apiClient<T>(
     headers["X-User-Name"] = userInfo.name;
   }
 
-  const response = await fetch(url, {
-    ...init,
-    headers,
-  });
+  const { signal, didTimeout, cleanup } = withTimeoutSignal(init.signal, timeoutMs);
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...init,
+      headers,
+      signal: signal ?? undefined,
+    });
+  } catch (error) {
+    if (didTimeout()) {
+      throw new APIError(
+        504,
+        `request timed out after ${timeoutMs}ms`,
+        undefined,
+        url,
+        init.method || "GET",
+      );
+    }
+    throw error;
+  } finally {
+    cleanup();
+  }
 
   if (!response.ok) {
     const data = await response.json().catch(() => null);
@@ -100,5 +165,6 @@ export async function serverApiClient<T>(
   return apiClient<T>(endpoint, {
     ...options,
     baseUrl: options.baseUrl || PRIVATE_BACKEND_URL,
+    timeoutMs: options.timeoutMs ?? DEFAULT_SERVER_API_TIMEOUT_MS,
   });
 }

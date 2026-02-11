@@ -1,7 +1,9 @@
 package auth
 
 import (
+	"context"
 	"log/slog"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 
@@ -12,6 +14,8 @@ type EnsureUserConfig struct {
 	UserService *users.Service
 	Logger      *slog.Logger
 }
+
+const ensureUserTimeout = 8 * time.Second
 
 func EnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
@@ -29,8 +33,11 @@ func EnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 			})
 		}
 
+		ctx, cancel := context.WithTimeout(c.UserContext(), ensureUserTimeout)
+		defer cancel()
+
 		// TEMP BACKLOAD FEATURE - Remove this block after Prothero League users have signed up.
-		claimedUser, claimed, err := cfg.UserService.ClaimTempUser(c.Context(), workosID, email)
+		claimedUser, claimed, err := cfg.UserService.ClaimTempUser(ctx, workosID, email)
 		if err != nil {
 			cfg.Logger.Error("failed to claim temp user", "workos_id", workosID, "error", err)
 		}
@@ -41,7 +48,7 @@ func EnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 		}
 		// END TEMP BACKLOAD FEATURE
 
-		result, err := cfg.UserService.GetOrCreate(c.Context(), users.GetOrCreateParams{
+		result, err := cfg.UserService.GetOrCreate(ctx, users.GetOrCreateParams{
 			WorkOSID: workosID,
 			Email:    email,
 		})
@@ -72,8 +79,11 @@ func OptionalEnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 
 		email := GetUserEmail(c)
 
+		ctx, cancel := context.WithTimeout(c.UserContext(), ensureUserTimeout)
+		defer cancel()
+
 		// Get or create the database user
-		result, err := cfg.UserService.GetOrCreate(c.Context(), users.GetOrCreateParams{
+		result, err := cfg.UserService.GetOrCreate(ctx, users.GetOrCreateParams{
 			WorkOSID: workosID,
 			Email:    email,
 		})

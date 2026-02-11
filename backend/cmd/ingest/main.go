@@ -13,8 +13,8 @@ import (
 	"github.com/getsentry/sentry-go"
 	_ "github.com/lib/pq"
 
-	"github.com/rj-davidson/greenrats/ent"
 	"github.com/rj-davidson/greenrats/internal/config"
+	"github.com/rj-davidson/greenrats/internal/database"
 	"github.com/rj-davidson/greenrats/internal/email"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
@@ -55,7 +55,7 @@ func run() error {
 		}
 	}
 
-	db, err := ent.Open("postgres", cfg.DatabaseURL)
+	db, err := database.OpenClient(cfg.DatabaseURL, logger)
 	if err != nil {
 		return fmt.Errorf("failed to connect to database: %w", err)
 	}

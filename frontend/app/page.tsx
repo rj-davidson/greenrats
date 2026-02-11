@@ -210,7 +210,9 @@ export default async function Home() {
   }
 
   const queryClient = new QueryClient();
-  await queryClient.prefetchQuery(buildGetUserLeaguesQueryOptions(makeServerRequest));
+  try {
+    await queryClient.prefetchQuery(buildGetUserLeaguesQueryOptions(makeServerRequest));
+  } catch {}
 
   return (
     <LeaguePicker
