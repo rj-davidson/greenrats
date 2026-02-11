@@ -6,14 +6,13 @@ import {
 } from "@/app/landing";
 import { LeaguePickerContent } from "@/app/league-picker";
 import { TopBar } from "@/components/core/top-bar";
-import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/alert";
 import { Button } from "@/components/shadcn/button";
 import { buildGetUserLeaguesQueryOptions } from "@/features/leagues/queries";
 import type { User } from "@/features/users/types";
 import { makeServerRequest } from "@/lib/query/server-requestor";
 import { HydrationBoundary, QueryClient, dehydrate } from "@tanstack/react-query";
 import { withAuth } from "@workos-inc/authkit-nextjs";
-import { AlertTriangleIcon, CalendarCheckIcon, Rat, TrophyIcon, UsersIcon } from "lucide-react";
+import { CalendarCheckIcon, Rat, TrophyIcon, UsersIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -157,21 +156,6 @@ function CtaSection() {
   );
 }
 
-function ServiceOutageAlert() {
-  return (
-    <section className="w-full max-w-5xl">
-      <Alert className="border-amber-300 bg-amber-50 text-amber-900">
-        <AlertTriangleIcon className="size-4" />
-        <AlertTitle>Temporary sign-in outage</AlertTitle>
-        <AlertDescription className="text-amber-900/90">
-          One of our service providers is currently experiencing an outage that is preventing sign
-          in to the app. Sorry about this, and please try again later today.
-        </AlertDescription>
-      </Alert>
-    </section>
-  );
-}
-
 function LandingPage() {
   return (
     <>
@@ -180,7 +164,6 @@ function LandingPage() {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
       <main className="flex min-h-screen flex-col items-center px-4 py-8 sm:px-8">
-        <ServiceOutageAlert />
         <HeroSection />
         <ShowcaseSection />
         <HowItWorksSection />
