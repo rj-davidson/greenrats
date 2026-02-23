@@ -6,7 +6,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "How to Play",
   description:
-    "Learn how greenrats fantasy golf leagues work: pick one golfer per tournament, no repeats all season, compete on your league leaderboard.",
+    "Simple greenrats rules: pick one golfer per tournament, no repeats in your league, and finish with the highest season total in tournament earnings.",
 };
 
 const faqJsonLd = {
@@ -18,7 +18,7 @@ const faqJsonLd = {
       name: "How do greenrats fantasy golf leagues work?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Create a league and invite friends. Each member picks one golfer per tournament - once picked, that golfer can't be used again all season. Track standings on your league leaderboard.",
+        text: "Create a league and invite friends. Pick one golfer for each tournament. You can only use each golfer once per season in your league. Your score is the total tournament earnings from your picks.",
       },
     },
     {
@@ -26,7 +26,15 @@ const faqJsonLd = {
       name: "Can I pick the same golfer twice?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "No, each golfer can only be picked once per season within a league.",
+        text: "No. In each league, you can only use a golfer once per season.",
+      },
+    },
+    {
+      "@type": "Question",
+      name: "What time zone are pick deadlines based on?",
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: "Pick deadlines use the tournament's local time zone, not your local time zone.",
       },
     },
   ],
@@ -35,27 +43,27 @@ const faqJsonLd = {
 function TheBasics() {
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">The Basics</h2>
+      <h2 className="text-2xl font-semibold">Quick Rules</h2>
       <ul className="space-y-3 text-muted-foreground">
         <li className="flex gap-3">
           <span className="font-semibold text-foreground">1.</span>
           <span>
-            <strong className="text-foreground">Pick one golfer per tournament</strong> - before
-            each event, you select one golfer to represent you.
+            <strong className="text-foreground">Pick one golfer per tournament</strong> before the
+            deadline.
           </span>
         </li>
         <li className="flex gap-3">
           <span className="font-semibold text-foreground">2.</span>
           <span>
-            <strong className="text-foreground">No repeats</strong> - once you pick a golfer, you
-            can&apos;t use them again for the rest of the season. Choose wisely.
+            <strong className="text-foreground">No repeats in your league</strong> - once you use a
+            golfer, you can&apos;t use them again that season.
           </span>
         </li>
         <li className="flex gap-3">
           <span className="font-semibold text-foreground">3.</span>
           <span>
-            <strong className="text-foreground">Highest total earnings wins</strong> - your score is
-            the sum of prize money from all your picks throughout the season.
+            <strong className="text-foreground">Highest total earnings wins</strong> - your season
+            score is the total prize money earned by your picks.
           </span>
         </li>
       </ul>
@@ -66,25 +74,31 @@ function TheBasics() {
 function MakingYourPick() {
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Making Your Pick</h2>
+      <h2 className="text-2xl font-semibold">Pick Deadlines</h2>
       <div className="space-y-3 text-muted-foreground">
         <p>
           The pick window <strong className="text-foreground">opens 4 days</strong> before each
-          tournament and <strong className="text-foreground">closes at 5 AM local time</strong> the
-          morning the tournament begins.
+          tournament and{" "}
+          <strong className="text-foreground">
+            closes at 5 AM in the tournament&apos;s local time zone
+          </strong>{" "}
+          on the morning the tournament begins.
         </p>
         <p>
-          While the window is open, you can{" "}
-          <strong className="text-foreground">change your mind</strong> as many times as you want.
-          Once the window closes, your pick is locked in.
+          <strong className="text-foreground">Important:</strong> the deadline uses the
+          tournament&apos;s local time zone (where the event is played), not your local time.
         </p>
         <p>
-          <strong className="text-foreground">Forgot to pick?</strong> If you miss the window, you
-          simply don&apos;t earn anything for that tournament. It happens - just get the next one.
+          You can <strong className="text-foreground">change your pick</strong> as often as you
+          want until the deadline. After that, your pick is locked.
         </p>
         <p>
-          When deciding, consider who&apos;s playing well lately, who fits the course, and whether
-          you want to save a top golfer for a major later in the season.
+          <strong className="text-foreground">Miss the deadline?</strong> You get $0 for that
+          tournament and can make a new pick for the next one.
+        </p>
+        <p>
+          Simple strategy: balance recent form, course fit, and whether you want to save top
+          golfers for later events.
         </p>
       </div>
     </section>
@@ -94,15 +108,15 @@ function MakingYourPick() {
 function Scoring() {
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Scoring</h2>
+      <h2 className="text-2xl font-semibold">How Scoring Works</h2>
       <div className="space-y-4 text-muted-foreground">
         <p>
-          Your pick earns whatever prize money they win that week. First place takes home the
-          biggest check, but even making the cut adds to your total.
+          Your score for each tournament is the prize money your pick earns, and that amount is
+          added to your season total.
         </p>
 
         <div className="rounded-lg border bg-muted/30 p-4">
-          <p className="mb-3 text-sm font-medium text-foreground">Example Season</p>
+          <p className="mb-3 text-sm font-medium text-foreground">Simple Example</p>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
               <span>The Masters - Scottie Scheffler (Win)</span>
@@ -129,8 +143,8 @@ function Scoring() {
         </div>
 
         <p>
-          <strong className="text-foreground">Missed cut?</strong> If your golfer doesn&apos;t make
-          the weekend, they earn $0 for that tournament. That&apos;s golf - it happens to everyone.
+          <strong className="text-foreground">Missed cut?</strong> That pick scores $0 for the
+          tournament.
         </p>
       </div>
     </section>
@@ -140,25 +154,23 @@ function Scoring() {
 function WinningYourLeague() {
   return (
     <section className="space-y-4">
-      <h2 className="text-2xl font-semibold">Winning Your League</h2>
+      <h2 className="text-2xl font-semibold">How You Win</h2>
       <div className="space-y-3 text-muted-foreground">
         <p>
-          This is a <strong className="text-foreground">season-long competition</strong>. Every
-          tournament matters, from the first event in January through the Tour Championship in
-          August.
+          This is a <strong className="text-foreground">season-long game</strong>. Every
+          tournament adds to your total.
         </p>
         <p>
-          Your league leaderboard tracks everyone&apos;s cumulative earnings. You can see who&apos;s
-          leading, who&apos;s behind, and how your picks compare to your friends.
+          Your league leaderboard shows everyone&apos;s cumulative earnings, so you can see where
+          you stand after each event.
         </p>
         <p>
-          The no-repeat rule is what makes this interesting. Do you use Scottie Scheffler at Augusta
-          where he dominates? Or save him for a different major where fewer people will pick him?
+          The no-repeat rule is the main strategy decision: use top golfers now, or save them for
+          better spots later.
         </p>
         <p>
-          At season&apos;s end, the player with the{" "}
-          <strong className="text-foreground">highest total earnings</strong> wins bragging rights
-          for the year.
+          At the end of the season, the member with the{" "}
+          <strong className="text-foreground">highest total earnings</strong> finishes first.
         </p>
       </div>
     </section>
@@ -177,7 +189,7 @@ export default function RulesPage() {
           <div className="mb-12 text-center">
             <h1 className="mb-2 text-4xl font-bold">How to Play</h1>
             <p className="text-lg text-muted-foreground">
-              Everything you need to know to get started
+              Simple rules for picks, deadlines, and season scoring
             </p>
           </div>
 
