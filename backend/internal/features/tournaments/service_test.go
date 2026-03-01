@@ -612,7 +612,7 @@ func TestTournamentToDTO(t *testing.T) {
 		tourn := factory.CreateActiveTournament(
 			testutil.WithTournamentName("Test Open"),
 			testutil.WithCourse("Augusta National"),
-			testutil.WithPurse(20000000),
+			testutil.WithPurse("$20,000,000"),
 		)
 
 		entTourn, _ := db.Tournament.Get(ctx, tourn.ID)
@@ -620,7 +620,7 @@ func TestTournamentToDTO(t *testing.T) {
 
 		assert.Equal(t, "Test Open", dto.Name)
 		assert.Equal(t, "Augusta National", dto.Course)
-		assert.Equal(t, float64(20000000), dto.Purse)
+		assert.Equal(t, "$20,000,000", dto.Purse)
 		assert.Equal(t, "active", dto.Status)
 	})
 

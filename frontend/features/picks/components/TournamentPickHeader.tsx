@@ -16,19 +16,11 @@ interface TournamentPickHeaderProps {
   city?: string | null;
   state?: string | null;
   country?: string | null;
-  purse?: number | null;
+  purse?: string | null;
   pickWindowState?: PickWindowState;
   pickWindowOpensAt?: string | null;
   pickWindowClosesAt?: string | null;
   currentPickGolferName?: string;
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
 }
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -128,7 +120,7 @@ export function TournamentPickHeader({
           {purse && (
             <div className="flex items-center gap-1.5">
               <TrophyIcon className="size-4" />
-              <span>{formatCurrency(purse)} Purse</span>
+              <span>{purse} Purse</span>
             </div>
           )}
         </div>

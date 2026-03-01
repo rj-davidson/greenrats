@@ -759,6 +759,9 @@ func (s *Service) GetLeagueTournaments(ctx context.Context, leagueID, userID uui
 		if t.Country != nil {
 			lt.Country = *t.Country
 		}
+		if t.Purse != nil {
+			lt.Purse = *t.Purse
+		}
 
 		pickCount, _ := s.db.Pick.
 			Query().

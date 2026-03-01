@@ -26,14 +26,6 @@ function formatDateRange(startDate: Date, endDate: Date): string {
   return `${startMonth} ${startDay} - ${endMonth} ${endDay}, ${year}`;
 }
 
-function formatPurse(purse: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(purse);
-}
-
 function StatusBadge({ status }: { status: Tournament["status"] }) {
   switch (status) {
     case "active":
@@ -127,7 +119,7 @@ function TournamentDetails({ tournament }: { tournament: Tournament }) {
 
       {tournament.purse && (
         <DetailItem icon={TrophyIcon} label="Purse">
-          {formatPurse(tournament.purse)}
+          {tournament.purse}
         </DetailItem>
       )}
 

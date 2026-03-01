@@ -198,7 +198,7 @@ export const getPickFieldResponseSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
-  purse: z.number().nullable().optional(),
+  purse: z.string().nullable().optional(),
   start_date: z.string(),
   end_date: z.string(),
   pick_window_state: pickWindowStateSchema,

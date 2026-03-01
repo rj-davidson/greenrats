@@ -58,10 +58,10 @@ func (Tournament) Fields() []ent.Field {
 			Optional().
 			Nillable().
 			Comment("UTC timestamp when pick window closes"),
-		field.Int("purse").
+		field.String("purse").
 			Optional().
 			Nillable().
-			Comment("Total prize money in dollars"),
+			Comment("Total prize money as formatted string from API"),
 	}
 }
 

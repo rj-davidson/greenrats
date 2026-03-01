@@ -25,7 +25,7 @@ export const tournamentSchema = z.object({
   status: tournamentStatusSchema,
   course: z.string().optional(),
   courses: z.array(tournamentCourseInfoSchema).optional(),
-  purse: z.number().optional(),
+  purse: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),

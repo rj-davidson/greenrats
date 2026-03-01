@@ -920,7 +920,7 @@ func toTournament(t *ent.Tournament) Tournament {
 		result.Course = *t.Course
 	}
 	if t.Purse != nil {
-		result.Purse = float64(*t.Purse)
+		result.Purse = *t.Purse
 	}
 	if t.City != nil {
 		result.City = *t.City

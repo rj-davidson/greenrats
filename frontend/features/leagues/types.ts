@@ -131,6 +131,7 @@ export const leagueTournamentSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
+  purse: z.string().optional(),
   has_user_pick: z.boolean(),
   user_pick_id: z.string().optional(),
   golfer_name: z.string().optional(),

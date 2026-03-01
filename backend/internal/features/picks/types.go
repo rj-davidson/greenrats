@@ -195,7 +195,7 @@ type GetPickFieldResponse struct {
 	City                string           `json:"city,omitempty"`
 	State               string           `json:"state,omitempty"`
 	Country             string           `json:"country,omitempty"`
-	Purse               *int             `json:"purse,omitempty"`
+	Purse               *string          `json:"purse,omitempty"`
 	StartDate           time.Time        `json:"start_date"`
 	EndDate             time.Time        `json:"end_date"`
 	PickWindowState     string           `json:"pick_window_state"`

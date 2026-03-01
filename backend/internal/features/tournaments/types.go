@@ -38,7 +38,7 @@ type Tournament struct {
 	Status             string                 `json:"status"` // upcoming, active, completed
 	Course             string                 `json:"course,omitempty"`
 	Courses            []TournamentCourseInfo `json:"courses,omitempty"`
-	Purse              float64                `json:"purse,omitempty"`
+	Purse              string                 `json:"purse,omitempty"`
 	City               string                 `json:"city,omitempty"`
 	State              string                 `json:"state,omitempty"`
 	Country            string                 `json:"country,omitempty"`

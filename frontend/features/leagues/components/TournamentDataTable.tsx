@@ -95,6 +95,7 @@ export function TournamentDataTable({ tournaments, leagueId }: TournamentDataTab
               <TableHead className="hidden sm:table-cell">Dates</TableHead>
               <TableHead className="hidden lg:table-cell">Picks Open</TableHead>
               <TableHead className="hidden lg:table-cell">Picks Close</TableHead>
+              <TableHead className="hidden md:table-cell">Purse</TableHead>
               <TableHead>Your Pick</TableHead>
               <TableHead className="text-right">Earnings</TableHead>
             </TableRow>
@@ -102,7 +103,7 @@ export function TournamentDataTable({ tournaments, leagueId }: TournamentDataTab
           <TableBody>
             {filteredTournaments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
                   No tournaments found
                 </TableCell>
               </TableRow>
@@ -141,6 +142,9 @@ export function TournamentDataTable({ tournaments, leagueId }: TournamentDataTab
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
                       {formatPickWindowDateTime(tournament.pick_window_closes_at)}
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      {tournament.purse ?? "--"}
                     </TableCell>
                     <TableCell>
                       {tournament.has_user_pick ? (

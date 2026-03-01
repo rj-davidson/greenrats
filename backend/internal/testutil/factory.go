@@ -158,7 +158,7 @@ func WithCourse(course string) TournamentOption {
 	}
 }
 
-func WithPurse(purse int) TournamentOption {
+func WithPurse(purse string) TournamentOption {
 	return func(tc *ent.TournamentCreate) {
 		tc.SetPurse(purse)
 	}

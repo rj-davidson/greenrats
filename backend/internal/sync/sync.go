@@ -127,10 +127,8 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 		if t.CourseName != "" {
 			builder.SetCourse(t.CourseName)
 		}
-		if t.Purse != nil && *t.Purse != "" {
-			if purse, err := strconv.Atoi(*t.Purse); err == nil && purse > 0 {
-				builder.SetPurse(purse)
-			}
+		if t.Purse != nil && *t.Purse != "" && *t.Purse != "$0" {
+			builder.SetPurse(*t.Purse)
 		}
 		if city != "" {
 			builder.SetCity(city)
@@ -184,10 +182,8 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 		if t.CourseName != "" {
 			updater.SetCourse(t.CourseName)
 		}
-		if t.Purse != nil && *t.Purse != "" {
-			if purse, err := strconv.Atoi(*t.Purse); err == nil && purse > 0 {
-				updater.SetPurse(purse)
-			}
+		if t.Purse != nil && *t.Purse != "" && *t.Purse != "$0" {
+			updater.SetPurse(*t.Purse)
 		}
 
 		if existing.PgaTourID == nil || *existing.PgaTourID == "" {

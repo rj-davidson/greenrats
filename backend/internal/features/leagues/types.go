@@ -77,6 +77,7 @@ type LeagueTournament struct {
 	City               string     `json:"city,omitempty"`
 	State              string     `json:"state,omitempty"`
 	Country            string     `json:"country,omitempty"`
+	Purse              string     `json:"purse,omitempty"`
 	HasUserPick        bool       `json:"has_user_pick"`
 	UserPickID         uuid.UUID  `json:"user_pick_id,omitempty"`
 	GolferName         string     `json:"golfer_name,omitempty"`

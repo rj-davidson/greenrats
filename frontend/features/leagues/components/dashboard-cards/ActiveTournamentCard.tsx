@@ -4,7 +4,7 @@ import { DashboardCard } from "./DashboardCard";
 import { Badge } from "@/components/shadcn/badge";
 import { Button } from "@/components/shadcn/button";
 import { useLeaderboard, useTournament } from "@/features/tournaments/queries";
-import { CalendarIcon, DollarSignIcon, FlagIcon, MapPinIcon, TrophyIcon } from "lucide-react";
+import { CalendarIcon, FlagIcon, MapPinIcon, TrophyIcon } from "lucide-react";
 import Link from "next/link";
 
 interface ActiveTournamentCardProps {
@@ -22,16 +22,6 @@ function formatDateRange(startDate: string, endDate: string): string {
     return `${start.toLocaleDateString("en-US", options)} - ${end.getDate()}`;
   }
   return `${start.toLocaleDateString("en-US", options)} - ${end.toLocaleDateString("en-US", options)}`;
-}
-
-function formatPurse(purse: number): string {
-  if (purse >= 1_000_000) {
-    return `$${(purse / 1_000_000).toFixed(0)}M`;
-  }
-  if (purse >= 1_000) {
-    return `$${(purse / 1_000).toFixed(0)}K`;
-  }
-  return `$${purse.toLocaleString()}`;
 }
 
 function formatLocation(city?: string, state?: string, country?: string): string | null {
@@ -116,8 +106,8 @@ export function ActiveTournamentCard({
 
           {tournament.purse && (
             <div className="flex items-center gap-2">
-              <DollarSignIcon className="size-4 shrink-0" />
-              <span>{formatPurse(tournament.purse)} purse</span>
+              <TrophyIcon className="size-4 shrink-0" />
+              <span>{tournament.purse} purse</span>
             </div>
           )}
         </div>
