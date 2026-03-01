@@ -4,11 +4,11 @@ const DateFormat = "2006-01-02T15:04:05.000Z"
 
 type Player struct {
 	ID                int     `json:"id"`
-	FirstName         *string `json:"first_name"`
-	LastName          *string `json:"last_name"`
+	FirstName         string  `json:"first_name"`
+	LastName          string  `json:"last_name"`
 	DisplayName       string  `json:"display_name"`
-	Country           *string `json:"country"`
-	CountryCode       *string `json:"country_code"`
+	Country           string  `json:"country"`
+	CountryCode       string  `json:"country_code"`
 	Height            *string `json:"height"`
 	Weight            *string `json:"weight"`
 	BirthDate         *string `json:"birth_date"`
@@ -34,24 +34,24 @@ type Tournament struct {
 	Season     int                `json:"season"`
 	Name       string             `json:"name"`
 	StartDate  string             `json:"start_date"`
-	EndDate    *string            `json:"end_date"`
-	City       *string            `json:"city"`
+	EndDate    string             `json:"end_date"`
+	City       string             `json:"city"`
 	State      *string            `json:"state"`
-	Country    *string            `json:"country"`
-	CourseName *string            `json:"course_name"`
+	Country    string             `json:"country"`
+	CourseName string             `json:"course_name"`
 	Courses    []TournamentCourse `json:"courses"`
 	Purse      *string            `json:"purse"`
-	Status     *string            `json:"status"`
+	Status     string             `json:"status"`
 	Champion   *Player            `json:"champion"`
 }
 
 type Course struct {
 	ID           int     `json:"id"`
 	Name         string  `json:"name"`
-	City         *string `json:"city"`
+	City         string  `json:"city"`
 	State        *string `json:"state"`
-	Country      *string `json:"country"`
-	Par          *int    `json:"par"`
+	Country      string  `json:"country"`
+	Par          int     `json:"par"`
 	Yardage      *string `json:"yardage"`
 	Established  *string `json:"established"`
 	Architect    *string `json:"architect"`
@@ -63,11 +63,11 @@ type Course struct {
 type TournamentResult struct {
 	Tournament       TournamentRef `json:"tournament"`
 	Player           Player        `json:"player"`
-	Position         *string       `json:"position"`
-	PositionNumeric  *int          `json:"position_numeric"`
-	TotalScore       *int          `json:"total_score"`
-	ParRelativeScore *int          `json:"par_relative_score"`
-	Earnings         *float64      `json:"earnings"`
+	Position         string        `json:"position"`
+	PositionNumeric  int           `json:"position_numeric"`
+	TotalScore       int           `json:"total_score"`
+	ParRelativeScore int           `json:"par_relative_score"`
+	Earnings         *int          `json:"earnings"`
 }
 
 type TournamentCourseStats struct {
@@ -89,15 +89,15 @@ type CourseHole struct {
 	Course     CourseRef `json:"course"`
 	HoleNumber int       `json:"hole_number"`
 	Par        int       `json:"par"`
-	Yardage    *int      `json:"yardage"`
+	Yardage    int       `json:"yardage"`
 }
 
 type PlayerRoundResult struct {
 	Tournament       TournamentRef `json:"tournament"`
 	Player           Player        `json:"player"`
 	RoundNumber      int           `json:"round_number"`
-	Score            *int          `json:"score"`
-	ParRelativeScore *int          `json:"par_relative_score"`
+	Score            int           `json:"score"`
+	ParRelativeScore int           `json:"par_relative_score"`
 }
 
 type PlayerRoundStats struct {
@@ -152,7 +152,7 @@ type PlayerSeasonStat struct {
 
 type PlayerScorecard struct {
 	Tournament  TournamentRef `json:"tournament"`
-	Course      *CourseRef    `json:"course"`
+	Course      CourseRef     `json:"course"`
 	Player      Player        `json:"player"`
 	RoundNumber int           `json:"round_number"`
 	HoleNumber  int           `json:"hole_number"`
@@ -165,7 +165,7 @@ type TournamentField struct {
 	Tournament  Tournament `json:"tournament"`
 	Player      Player     `json:"player"`
 	EntryStatus string     `json:"entry_status"`
-	Qualifier   string     `json:"qualifier"`
+	Qualifier   *string    `json:"qualifier"`
 	OWGR        *int       `json:"owgr"`
 	IsAmateur   bool       `json:"is_amateur"`
 }
@@ -175,23 +175,23 @@ type TournamentRef struct {
 	Season     int                `json:"season"`
 	Name       string             `json:"name"`
 	StartDate  string             `json:"start_date"`
-	EndDate    *string            `json:"end_date"`
-	City       *string            `json:"city"`
+	EndDate    string             `json:"end_date"`
+	City       string             `json:"city"`
 	State      *string            `json:"state"`
-	Country    *string            `json:"country"`
-	CourseName *string            `json:"course_name"`
+	Country    string             `json:"country"`
+	CourseName string             `json:"course_name"`
 	Courses    []TournamentCourse `json:"courses"`
 	Purse      *string            `json:"purse"`
-	Status     *string            `json:"status"`
+	Status     string             `json:"status"`
 }
 
 type CourseRef struct {
 	ID      int     `json:"id"`
 	Name    string  `json:"name"`
-	City    *string `json:"city"`
+	City    string  `json:"city"`
 	State   *string `json:"state"`
-	Country *string `json:"country"`
-	Par     *int    `json:"par"`
+	Country string  `json:"country"`
+	Par     int     `json:"par"`
 	Yardage *string `json:"yardage"`
 }
 

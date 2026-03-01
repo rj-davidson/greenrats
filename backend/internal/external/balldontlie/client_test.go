@@ -84,16 +84,16 @@ func TestGetCourses_Success(t *testing.T) {
 				{
 					ID:      1,
 					Name:    "Augusta National",
-					City:    strPtr("Augusta"),
+					City:    "Augusta",
 					State:   strPtr("GA"),
-					Country: strPtr("USA"),
-					Par:     intPtr(72),
+					Country: "USA",
+					Par:     72,
 					Yardage: strPtr("7475"),
 				},
 				{
 					ID:   2,
 					Name: "Pebble Beach",
-					Par:  intPtr(72),
+					Par:  72,
 				},
 			},
 			Meta: Meta{NextCursor: 0, PerPage: 100},
@@ -110,7 +110,7 @@ func TestGetCourses_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, courses, 2)
 	assert.Equal(t, "Augusta National", courses[0].Name)
-	assert.Equal(t, 72, *courses[0].Par)
+	assert.Equal(t, 72, courses[0].Par)
 	assert.Equal(t, "Pebble Beach", courses[1].Name)
 }
 
@@ -166,9 +166,9 @@ func TestGetCourseHoles_Success(t *testing.T) {
 
 		response := CourseHolesResponse{
 			Data: []CourseHole{
-				{Course: CourseRef{ID: 123}, HoleNumber: 1, Par: 4, Yardage: intPtr(445)},
-				{Course: CourseRef{ID: 123}, HoleNumber: 2, Par: 5, Yardage: intPtr(575)},
-				{Course: CourseRef{ID: 123}, HoleNumber: 3, Par: 3, Yardage: intPtr(170)},
+				{Course: CourseRef{ID: 123}, HoleNumber: 1, Par: 4, Yardage: 445},
+				{Course: CourseRef{ID: 123}, HoleNumber: 2, Par: 5, Yardage: 575},
+				{Course: CourseRef{ID: 123}, HoleNumber: 3, Par: 3, Yardage: 170},
 			},
 			Meta: Meta{NextCursor: 0, PerPage: 100},
 		}
@@ -185,7 +185,7 @@ func TestGetCourseHoles_Success(t *testing.T) {
 	require.Len(t, holes, 3)
 	assert.Equal(t, 1, holes[0].HoleNumber)
 	assert.Equal(t, 4, holes[0].Par)
-	assert.Equal(t, 445, *holes[0].Yardage)
+	assert.Equal(t, 445, holes[0].Yardage)
 }
 
 func TestGetPlayerRoundResults_Success(t *testing.T) {
@@ -199,15 +199,15 @@ func TestGetPlayerRoundResults_Success(t *testing.T) {
 					Tournament:       TournamentRef{ID: 456, Name: "Masters"},
 					Player:           Player{ID: 1, DisplayName: "Scottie Scheffler"},
 					RoundNumber:      1,
-					Score:            intPtr(68),
-					ParRelativeScore: intPtr(-4),
+					Score:            68,
+					ParRelativeScore: -4,
 				},
 				{
 					Tournament:       TournamentRef{ID: 456, Name: "Masters"},
 					Player:           Player{ID: 1, DisplayName: "Scottie Scheffler"},
 					RoundNumber:      2,
-					Score:            intPtr(70),
-					ParRelativeScore: intPtr(-2),
+					Score:            70,
+					ParRelativeScore: -2,
 				},
 			},
 			Meta: Meta{NextCursor: 0, PerPage: 100},
@@ -224,8 +224,8 @@ func TestGetPlayerRoundResults_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, results, 2)
 	assert.Equal(t, 1, results[0].RoundNumber)
-	assert.Equal(t, 68, *results[0].Score)
-	assert.Equal(t, -4, *results[0].ParRelativeScore)
+	assert.Equal(t, 68, results[0].Score)
+	assert.Equal(t, -4, results[0].ParRelativeScore)
 }
 
 func TestGetPlayerScorecards_Success(t *testing.T) {
@@ -371,7 +371,7 @@ func TestGetTournamentField_Success(t *testing.T) {
 					Tournament:  Tournament{ID: 456, Name: "Masters", Season: 2025},
 					Player:      Player{ID: 1, DisplayName: "Scottie Scheffler"},
 					EntryStatus: "Committed",
-					Qualifier:   "Exempt",
+					Qualifier:   strPtr("Exempt"),
 					OWGR:        intPtr(1),
 					IsAmateur:   false,
 				},
@@ -380,7 +380,7 @@ func TestGetTournamentField_Success(t *testing.T) {
 					Tournament:  Tournament{ID: 456, Name: "Masters", Season: 2025},
 					Player:      Player{ID: 2, DisplayName: "Rory McIlroy"},
 					EntryStatus: "Committed",
-					Qualifier:   "Exempt",
+					Qualifier:   strPtr("Exempt"),
 					OWGR:        intPtr(3),
 					IsAmateur:   false,
 				},

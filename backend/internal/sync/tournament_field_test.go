@@ -26,7 +26,7 @@ func TestUpsertTournamentFieldEntry_Create(t *testing.T) {
 		Tournament:  balldontlie.Tournament{ID: 1, Name: "Masters"},
 		Player:      balldontlie.Player{ID: 1, DisplayName: "Scottie Scheffler"},
 		EntryStatus: "Committed",
-		Qualifier:   "Winner",
+		Qualifier:   strPtr("Winner"),
 		OWGR:        intPtr(1),
 		IsAmateur:   false,
 	}
@@ -59,7 +59,7 @@ func TestUpsertTournamentFieldEntry_Update(t *testing.T) {
 	bdlField := &balldontlie.TournamentField{
 		Player:      balldontlie.Player{ID: 1, DisplayName: "Scottie Scheffler"},
 		EntryStatus: "Committed",
-		Qualifier:   "Exemption",
+		Qualifier:   strPtr("Exemption"),
 		OWGR:        intPtr(2),
 		IsAmateur:   false,
 	}
@@ -96,7 +96,7 @@ func TestUpsertTournamentFieldEntry_Amateur(t *testing.T) {
 	bdlField := &balldontlie.TournamentField{
 		Player:      balldontlie.Player{ID: 999, DisplayName: "Neal Shipley"},
 		EntryStatus: "Confirmed",
-		Qualifier:   "US Amateur Champion",
+		Qualifier:   strPtr("US Amateur Champion"),
 		OWGR:        intPtr(250),
 		IsAmateur:   true,
 	}

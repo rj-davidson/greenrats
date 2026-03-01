@@ -22,26 +22,21 @@ func TestUpsertPlacement_SetsChampionPosition(t *testing.T) {
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 100)
 	tournamentEntity := testutil.CreateTournament(t, svc.db, "The Masters", 2026)
 
-	completedStatus := "COMPLETED"
-	position := "1"
-	positionNumeric := 1
-	totalScore := 268
-	parRelative := -20
-	earnings := 3600000.0
+	earnings := 3600000
 
 	result := &balldontlie.TournamentResult{
 		Tournament: balldontlie.TournamentRef{
 			ID:     1,
-			Status: &completedStatus,
+			Status: "COMPLETED",
 		},
 		Player: balldontlie.Player{
 			ID:          100,
 			DisplayName: "Scottie Scheffler",
 		},
-		Position:         &position,
-		PositionNumeric:  &positionNumeric,
-		TotalScore:       &totalScore,
-		ParRelativeScore: &parRelative,
+		Position:         "1",
+		PositionNumeric:  1,
+		TotalScore:       268,
+		ParRelativeScore: -20,
 		Earnings:         &earnings,
 	}
 
@@ -71,12 +66,10 @@ func TestUpsertPlacement_SetsMultiplePositions(t *testing.T) {
 	third := testutil.CreateGolfer(t, svc.db, "Rory McIlroy", 102)
 	tournamentEntity := testutil.CreateTournament(t, svc.db, "The Masters", 2026)
 
-	completedStatus := "COMPLETED"
-
 	results := []struct {
 		golfer   *balldontlie.Player
 		position int
-		earnings float64
+		earnings int
 	}{
 		{&balldontlie.Player{ID: 100, DisplayName: "Scottie Scheffler"}, 1, 3600000},
 		{&balldontlie.Player{ID: 101, DisplayName: "Collin Morikawa"}, 2, 2160000},
@@ -84,17 +77,15 @@ func TestUpsertPlacement_SetsMultiplePositions(t *testing.T) {
 	}
 
 	for _, r := range results {
-		pos := r.position
-		posStr := strconv.Itoa(pos)
 		earn := r.earnings
 		result := &balldontlie.TournamentResult{
 			Tournament: balldontlie.TournamentRef{
 				ID:     1,
-				Status: &completedStatus,
+				Status: "COMPLETED",
 			},
 			Player:          *r.golfer,
-			Position:        &posStr,
-			PositionNumeric: &pos,
+			Position:        strconv.Itoa(r.position),
+			PositionNumeric: r.position,
 			Earnings:        &earn,
 		}
 		err := svc.UpsertPlacement(ctx, tournamentEntity, result)
@@ -139,19 +130,16 @@ func TestUpsertPlacement_SetsCutStatus(t *testing.T) {
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Tiger Woods", 200)
 	tournamentEntity := testutil.CreateTournament(t, svc.db, "The Open", 2026)
 
-	completedStatus := "COMPLETED"
-	cutPosition := "CUT"
-
 	result := &balldontlie.TournamentResult{
 		Tournament: balldontlie.TournamentRef{
 			ID:     2,
-			Status: &completedStatus,
+			Status: "COMPLETED",
 		},
 		Player: balldontlie.Player{
 			ID:          200,
 			DisplayName: "Tiger Woods",
 		},
-		Position: &cutPosition,
+		Position: "CUT",
 	}
 
 	err := svc.UpsertPlacement(ctx, tournamentEntity, result)
@@ -177,21 +165,17 @@ func TestUpsertPlacement_UpdatesExistingEntry(t *testing.T) {
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Jon Rahm", 300)
 	tournamentEntity := testutil.CreateTournament(t, svc.db, "US Open", 2026)
 
-	completedStatus := "COMPLETED"
-	initialPos := 5
-	initialPosStr := "5"
-
 	initialResult := &balldontlie.TournamentResult{
 		Tournament: balldontlie.TournamentRef{
 			ID:     3,
-			Status: &completedStatus,
+			Status: "COMPLETED",
 		},
 		Player: balldontlie.Player{
 			ID:          300,
 			DisplayName: "Jon Rahm",
 		},
-		Position:        &initialPosStr,
-		PositionNumeric: &initialPos,
+		Position:        "5",
+		PositionNumeric: 5,
 	}
 
 	err := svc.UpsertPlacement(ctx, tournamentEntity, initialResult)
@@ -207,21 +191,19 @@ func TestUpsertPlacement_UpdatesExistingEntry(t *testing.T) {
 	assert.Equal(t, 5, *entry.PositionNumeric)
 	assert.Equal(t, placement.StatusFinished, entry.Status)
 
-	finalPos := 1
-	finalPosStr := "1"
-	earnings := 4300000.0
+	earnings := 4300000
 
 	finalResult := &balldontlie.TournamentResult{
 		Tournament: balldontlie.TournamentRef{
 			ID:     3,
-			Status: &completedStatus,
+			Status: "COMPLETED",
 		},
 		Player: balldontlie.Player{
 			ID:          300,
 			DisplayName: "Jon Rahm",
 		},
-		Position:        &finalPosStr,
-		PositionNumeric: &finalPos,
+		Position:        "1",
+		PositionNumeric: 1,
 		Earnings:        &earnings,
 	}
 
@@ -247,21 +229,17 @@ func TestUpsertPlacement_SkipsUnknownGolfer(t *testing.T) {
 
 	tournamentEntity := testutil.CreateTournament(t, svc.db, "PGA Championship", 2026)
 
-	completedStatus := "COMPLETED"
-	pos := 1
-	posStr := "1"
-
 	result := &balldontlie.TournamentResult{
 		Tournament: balldontlie.TournamentRef{
 			ID:     4,
-			Status: &completedStatus,
+			Status: "COMPLETED",
 		},
 		Player: balldontlie.Player{
 			ID:          99999,
 			DisplayName: "Unknown Player",
 		},
-		Position:        &posStr,
-		PositionNumeric: &pos,
+		Position:        "1",
+		PositionNumeric: 1,
 	}
 
 	err := svc.UpsertPlacement(ctx, tournamentEntity, result)

@@ -86,9 +86,9 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 
 	endDate := ParseEndDate(t.EndDate, startDate)
 
-	city := StringPtrValue(t.City)
+	city := t.City
 	state := StringPtrValue(t.State)
-	country := StringPtrValue(t.Country)
+	country := t.Country
 
 	tz := s.lookupTimezone(ctx, city, state, country, startDate)
 	pickWindow, _ := timezone.CalculatePickWindow(startDate, tz)
@@ -124,8 +124,8 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 		if pgaTourID := pgatour.GetPGATourID(t.ID); pgaTourID != "" {
 			builder.SetPgaTourID(pgaTourID)
 		}
-		if t.CourseName != nil && *t.CourseName != "" {
-			builder.SetCourse(*t.CourseName)
+		if t.CourseName != "" {
+			builder.SetCourse(t.CourseName)
 		}
 		if t.Purse != nil && *t.Purse != "" {
 			if purse, err := strconv.Atoi(*t.Purse); err == nil && purse > 0 {
@@ -181,8 +181,8 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 			SetEndDate(endDate).
 			SetSeason(seasonEnt)
 
-		if t.CourseName != nil && *t.CourseName != "" {
-			updater.SetCourse(*t.CourseName)
+		if t.CourseName != "" {
+			updater.SetCourse(t.CourseName)
 		}
 		if t.Purse != nil && *t.Purse != "" {
 			if purse, err := strconv.Atoi(*t.Purse); err == nil && purse > 0 {
@@ -264,13 +264,13 @@ func (s *Service) UpsertTournament(ctx context.Context, t *balldontlie.Tournamen
 
 func (s *Service) UpsertPlayer(ctx context.Context, p *balldontlie.Player) error {
 	name := p.DisplayName
-	if name == "" && p.FirstName != nil && p.LastName != nil {
-		name = fmt.Sprintf("%s %s", *p.FirstName, *p.LastName)
+	if name == "" && p.FirstName != "" && p.LastName != "" {
+		name = fmt.Sprintf("%s %s", p.FirstName, p.LastName)
 	}
 
 	countryCode := "UNK"
-	if p.CountryCode != nil && *p.CountryCode != "" {
-		countryCode = *p.CountryCode
+	if p.CountryCode != "" {
+		countryCode = p.CountryCode
 	}
 
 	existing, err := s.db.Golfer.Query().
@@ -321,14 +321,14 @@ func (s *Service) UpsertPlayer(ctx context.Context, p *balldontlie.Player) error
 }
 
 func applyPlayerFieldsToCreate(builder *ent.GolferCreate, p *balldontlie.Player) {
-	if p.FirstName != nil {
-		builder.SetFirstName(*p.FirstName)
+	if p.FirstName != "" {
+		builder.SetFirstName(p.FirstName)
 	}
-	if p.LastName != nil {
-		builder.SetLastName(*p.LastName)
+	if p.LastName != "" {
+		builder.SetLastName(p.LastName)
 	}
-	if p.Country != nil && *p.Country != "" {
-		builder.SetCountry(*p.Country)
+	if p.Country != "" {
+		builder.SetCountry(p.Country)
 	}
 	if p.OWGR != nil && *p.OWGR > 0 {
 		builder.SetOwgr(*p.OWGR)
@@ -373,14 +373,14 @@ func applyPlayerFieldsToCreate(builder *ent.GolferCreate, p *balldontlie.Player)
 }
 
 func applyPlayerFieldsToUpdate(updater *ent.GolferUpdateOne, p *balldontlie.Player) {
-	if p.FirstName != nil {
-		updater.SetFirstName(*p.FirstName)
+	if p.FirstName != "" {
+		updater.SetFirstName(p.FirstName)
 	}
-	if p.LastName != nil {
-		updater.SetLastName(*p.LastName)
+	if p.LastName != "" {
+		updater.SetLastName(p.LastName)
 	}
-	if p.Country != nil && *p.Country != "" {
-		updater.SetCountry(*p.Country)
+	if p.Country != "" {
+		updater.SetCountry(p.Country)
 	}
 	if p.OWGR != nil && *p.OWGR > 0 {
 		updater.SetOwgr(*p.OWGR)
@@ -452,8 +452,8 @@ func (s *Service) UpsertFieldEntry(ctx context.Context, t *ent.Tournament, f *ba
 			SetEntryStatus(entryStatus).
 			SetIsAmateur(f.IsAmateur)
 
-		if f.Qualifier != "" {
-			builder.SetQualifier(f.Qualifier)
+		if f.Qualifier != nil && *f.Qualifier != "" {
+			builder.SetQualifier(*f.Qualifier)
 		}
 		if f.OWGR != nil {
 			builder.SetOwgrAtEntry(*f.OWGR)
@@ -472,8 +472,8 @@ func (s *Service) UpsertFieldEntry(ctx context.Context, t *ent.Tournament, f *ba
 			SetEntryStatus(entryStatus).
 			SetIsAmateur(f.IsAmateur)
 
-		if f.Qualifier != "" {
-			updater.SetQualifier(f.Qualifier)
+		if f.Qualifier != nil && *f.Qualifier != "" {
+			updater.SetQualifier(*f.Qualifier)
 		}
 		if f.OWGR != nil {
 			updater.SetOwgrAtEntry(*f.OWGR)
@@ -513,36 +513,25 @@ func (s *Service) UpsertPlacement(ctx context.Context, t *ent.Tournament, r *bal
 	}
 
 	status := placement.StatusFinished
-	position := ""
+	position := r.Position
+	switch position {
+	case "CUT":
+		status = placement.StatusCut
+	case "WD":
+		status = placement.StatusWithdrawn
+	}
+
 	var positionNumeric *int
-
-	if r.Position != nil {
-		position = *r.Position
-		switch position {
-		case "CUT":
-			status = placement.StatusCut
-		case "WD":
-			status = placement.StatusWithdrawn
-		}
+	if r.PositionNumeric > 0 {
+		positionNumeric = &r.PositionNumeric
 	}
 
-	if r.PositionNumeric != nil && *r.PositionNumeric > 0 {
-		positionNumeric = r.PositionNumeric
-	}
-
-	var totalScore *int
-	if r.TotalScore != nil {
-		totalScore = r.TotalScore
-	}
-
-	var parRelativeScore *int
-	if r.ParRelativeScore != nil {
-		parRelativeScore = r.ParRelativeScore
-	}
+	totalScore := r.TotalScore
+	parRelativeScore := r.ParRelativeScore
 
 	earnings := 0
 	if r.Earnings != nil {
-		earnings = int(*r.Earnings)
+		earnings = *r.Earnings
 	}
 
 	existing, err := s.db.Placement.Query().
@@ -564,12 +553,8 @@ func (s *Service) UpsertPlacement(ctx context.Context, t *ent.Tournament, r *bal
 		if positionNumeric != nil {
 			builder.SetPositionNumeric(*positionNumeric)
 		}
-		if totalScore != nil {
-			builder.SetTotalScore(*totalScore)
-		}
-		if parRelativeScore != nil {
-			builder.SetParRelativeScore(*parRelativeScore)
-		}
+		builder.SetTotalScore(totalScore)
+		builder.SetParRelativeScore(parRelativeScore)
 
 		_, err = builder.Save(ctx)
 		if err != nil {
@@ -590,12 +575,8 @@ func (s *Service) UpsertPlacement(ctx context.Context, t *ent.Tournament, r *bal
 		} else {
 			updater.ClearPositionNumeric()
 		}
-		if totalScore != nil {
-			updater.SetTotalScore(*totalScore)
-		}
-		if parRelativeScore != nil {
-			updater.SetParRelativeScore(*parRelativeScore)
-		}
+		updater.SetTotalScore(totalScore)
+		updater.SetParRelativeScore(parRelativeScore)
 
 		_, err = updater.Save(ctx)
 		if err != nil {
@@ -633,16 +614,16 @@ func StringPtrValue(s *string) string {
 	return *s
 }
 
-func ParseEndDate(endDateStr *string, startDate time.Time) time.Time {
-	if endDateStr == nil || *endDateStr == "" {
+func ParseEndDate(endDateStr string, startDate time.Time) time.Time {
+	if endDateStr == "" {
 		return startDate.AddDate(0, 0, 4).Add(6 * time.Hour)
 	}
 
-	if endDate, err := time.Parse(balldontlie.DateFormat, *endDateStr); err == nil {
+	if endDate, err := time.Parse(balldontlie.DateFormat, endDateStr); err == nil {
 		return endDate.AddDate(0, 0, 1).Add(6 * time.Hour)
 	}
 
-	str := strings.TrimSpace(*endDateStr)
+	str := strings.TrimSpace(endDateStr)
 	if idx := strings.LastIndex(str, " - "); idx != -1 {
 		endPart := strings.TrimSpace(str[idx+3:])
 
@@ -707,23 +688,17 @@ func (s *Service) UpsertCourse(ctx context.Context, c *balldontlie.Course) (*ent
 }
 
 func applyCourseFieldsToCreate(builder *ent.CourseCreate, c *balldontlie.Course) {
-	if c.Par != nil {
-		builder.SetPar(*c.Par)
-	}
+	builder.SetPar(c.Par)
 	if c.Yardage != nil && *c.Yardage != "" {
 		if yardage, err := strconv.Atoi(*c.Yardage); err == nil {
 			builder.SetYardage(yardage)
 		}
 	}
-	if c.City != nil {
-		builder.SetCity(*c.City)
-	}
+	builder.SetCity(c.City)
 	if c.State != nil {
 		builder.SetState(*c.State)
 	}
-	if c.Country != nil {
-		builder.SetCountry(*c.Country)
-	}
+	builder.SetCountry(c.Country)
 	if c.Established != nil && *c.Established != "" {
 		if year, err := strconv.Atoi(*c.Established); err == nil {
 			builder.SetEstablished(year)
@@ -744,23 +719,17 @@ func applyCourseFieldsToCreate(builder *ent.CourseCreate, c *balldontlie.Course)
 }
 
 func applyCourseFieldsToUpdate(updater *ent.CourseUpdateOne, c *balldontlie.Course) {
-	if c.Par != nil {
-		updater.SetPar(*c.Par)
-	}
+	updater.SetPar(c.Par)
 	if c.Yardage != nil && *c.Yardage != "" {
 		if yardage, err := strconv.Atoi(*c.Yardage); err == nil {
 			updater.SetYardage(yardage)
 		}
 	}
-	if c.City != nil {
-		updater.SetCity(*c.City)
-	}
+	updater.SetCity(c.City)
 	if c.State != nil {
 		updater.SetState(*c.State)
 	}
-	if c.Country != nil {
-		updater.SetCountry(*c.Country)
-	}
+	updater.SetCountry(c.Country)
 	if c.Established != nil && *c.Established != "" {
 		if year, err := strconv.Atoi(*c.Established); err == nil {
 			updater.SetEstablished(year)
@@ -793,11 +762,8 @@ func (s *Service) UpsertCourseHole(ctx context.Context, courseID uuid.UUID, h *b
 		builder := s.db.CourseHole.Create().
 			SetCourseID(courseID).
 			SetHoleNumber(h.HoleNumber).
-			SetPar(h.Par)
-
-		if h.Yardage != nil {
-			builder.SetYardage(*h.Yardage)
-		}
+			SetPar(h.Par).
+			SetYardage(h.Yardage)
 
 		_, err := builder.Save(ctx)
 		if err != nil {
@@ -809,11 +775,8 @@ func (s *Service) UpsertCourseHole(ctx context.Context, courseID uuid.UUID, h *b
 
 	default:
 		updater := existing.Update().
-			SetPar(h.Par)
-
-		if h.Yardage != nil {
-			updater.SetYardage(*h.Yardage)
-		}
+			SetPar(h.Par).
+			SetYardage(h.Yardage)
 
 		_, err := updater.Save(ctx)
 		if err != nil {
@@ -835,18 +798,12 @@ func (s *Service) UpsertCourseFromRef(ctx context.Context, ref *balldontlie.Cour
 			SetBdlID(ref.ID).
 			SetName(ref.Name)
 
-		if ref.Par != nil {
-			builder.SetPar(*ref.Par)
-		}
-		if ref.City != nil {
-			builder.SetCity(*ref.City)
-		}
+		builder.SetPar(ref.Par)
+		builder.SetCity(ref.City)
 		if ref.State != nil {
 			builder.SetState(*ref.State)
 		}
-		if ref.Country != nil {
-			builder.SetCountry(*ref.Country)
-		}
+		builder.SetCountry(ref.Country)
 		if ref.Yardage != nil && *ref.Yardage != "" {
 			if yardage, err := strconv.Atoi(*ref.Yardage); err == nil {
 				builder.SetYardage(yardage)
@@ -954,11 +911,11 @@ func (s *Service) UpsertRound(ctx context.Context, tournamentID, golferID uuid.U
 			builder.SetCourseID(*courseID)
 		}
 
-		if r.Score != nil {
-			builder.SetScore(*r.Score)
+		if r.Score != 0 {
+			builder.SetScore(r.Score)
 		}
-		if r.ParRelativeScore != nil {
-			builder.SetParRelativeScore(*r.ParRelativeScore)
+		if r.ParRelativeScore != 0 {
+			builder.SetParRelativeScore(r.ParRelativeScore)
 		}
 
 		created, err := builder.Save(ctx)
@@ -976,11 +933,11 @@ func (s *Service) UpsertRound(ctx context.Context, tournamentID, golferID uuid.U
 		if courseID != nil {
 			updater.SetCourseID(*courseID)
 		}
-		if r.Score != nil {
-			updater.SetScore(*r.Score)
+		if r.Score != 0 {
+			updater.SetScore(r.Score)
 		}
-		if r.ParRelativeScore != nil {
-			updater.SetParRelativeScore(*r.ParRelativeScore)
+		if r.ParRelativeScore != 0 {
+			updater.SetParRelativeScore(r.ParRelativeScore)
 		}
 
 		updated, err := updater.Save(ctx)

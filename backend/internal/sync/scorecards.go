@@ -234,8 +234,8 @@ func (i *Ingester) processPlayerScorecards(ctx context.Context, t *ent.Tournamen
 			continue
 		}
 
-		if sc.HoleNumber == 1 && sc.Course != nil {
-			courseEntity, err := i.syncService.UpsertCourseFromRef(ctx, sc.Course)
+		if sc.HoleNumber == 1 && sc.Course.ID != 0 {
+			courseEntity, err := i.syncService.UpsertCourseFromRef(ctx, &sc.Course)
 			if err != nil {
 				i.logger.Warn("failed to upsert course from scorecard", "course", sc.Course.Name, "error", err)
 			} else if err := i.syncService.SetRoundCourse(ctx, roundID, courseEntity.ID); err != nil {

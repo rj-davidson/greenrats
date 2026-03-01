@@ -25,8 +25,8 @@ func TestUpsertTournament_SetsChampion(t *testing.T) {
 		Season:    2026,
 		Name:      "Sony Open in Hawaii",
 		StartDate: "2026-01-15T00:00:00.000Z",
-		EndDate:   strPtr("2026-01-18T00:00:00.000Z"),
-		Status:    strPtr("COMPLETED"),
+		EndDate:   "2026-01-18T00:00:00.000Z",
+		Status:    "COMPLETED",
 		Champion: &balldontlie.Player{
 			ID:          63,
 			DisplayName: "Chris Gotterup",
@@ -58,8 +58,8 @@ func TestUpsertTournament_UpdatesChampion(t *testing.T) {
 		Season:    2026,
 		Name:      "Sony Open in Hawaii",
 		StartDate: "2026-01-15T00:00:00.000Z",
-		EndDate:   strPtr("2026-01-18T00:00:00.000Z"),
-		Status:    strPtr("IN_PROGRESS"),
+		EndDate:   "2026-01-18T00:00:00.000Z",
+		Status:    "IN_PROGRESS",
 		Champion:  nil,
 	}
 
@@ -74,7 +74,7 @@ func TestUpsertTournament_UpdatesChampion(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, tournamentNoChampion.Edges.Champion, "Champion should be nil initially")
 
-	bdlTournament.Status = strPtr("COMPLETED")
+	bdlTournament.Status = "COMPLETED"
 	bdlTournament.Champion = &balldontlie.Player{
 		ID:          63,
 		DisplayName: "Chris Gotterup",
@@ -105,8 +105,8 @@ func TestUpsertTournament_ChampionGolferNotFound(t *testing.T) {
 		Season:    2026,
 		Name:      "Sony Open in Hawaii",
 		StartDate: "2026-01-15T00:00:00.000Z",
-		EndDate:   strPtr("2026-01-18T00:00:00.000Z"),
-		Status:    strPtr("COMPLETED"),
+		EndDate:   "2026-01-18T00:00:00.000Z",
+		Status:    "COMPLETED",
 		Champion: &balldontlie.Player{
 			ID:          9999, // Golfer doesn't exist
 			DisplayName: "Unknown Player",
@@ -157,8 +157,8 @@ func TestUpsertTournament_UpdatesExistingTournamentWithChampion(t *testing.T) {
 		Season:    2026,
 		Name:      "Sony Open in Hawaii",
 		StartDate: "2026-01-15T00:00:00.000Z",
-		EndDate:   strPtr("2026-01-18T00:00:00.000Z"),
-		Status:    strPtr("COMPLETED"),
+		EndDate:   "2026-01-18T00:00:00.000Z",
+		Status:    "COMPLETED",
 		Champion: &balldontlie.Player{
 			ID:          63,
 			DisplayName: "Chris Gotterup",
@@ -191,8 +191,8 @@ func TestUpsertTournament_PreservesExistingChampion(t *testing.T) {
 		Season:    2026,
 		Name:      "Sony Open in Hawaii",
 		StartDate: "2026-01-15T00:00:00.000Z",
-		EndDate:   strPtr("2026-01-18T00:00:00.000Z"),
-		Status:    strPtr("COMPLETED"),
+		EndDate:   "2026-01-18T00:00:00.000Z",
+		Status:    "COMPLETED",
 		Champion: &balldontlie.Player{
 			ID:          63,
 			DisplayName: "Chris Gotterup",

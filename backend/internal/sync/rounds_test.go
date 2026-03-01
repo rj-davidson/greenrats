@@ -26,8 +26,8 @@ func TestUpsertRound_Create(t *testing.T) {
 		Tournament:       balldontlie.TournamentRef{ID: 1},
 		Player:           balldontlie.Player{ID: 1, DisplayName: "Scottie Scheffler"},
 		RoundNumber:      1,
-		Score:            intPtr(68),
-		ParRelativeScore: intPtr(-4),
+		Score:            68,
+		ParRelativeScore: -4,
 	}
 
 	created, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
@@ -48,15 +48,15 @@ func TestUpsertRound_Update(t *testing.T) {
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		RoundNumber:      1,
-		Score:            intPtr(68),
-		ParRelativeScore: intPtr(-4),
+		Score:            68,
+		ParRelativeScore: -4,
 	}
 
 	_, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
 	require.NoError(t, err)
 
-	bdlRound.Score = intPtr(70)
-	bdlRound.ParRelativeScore = intPtr(-2)
+	bdlRound.Score = 70
+	bdlRound.ParRelativeScore = -2
 
 	updated, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
 
@@ -140,8 +140,8 @@ func TestUpsertRound_VerifiesDirectEdges(t *testing.T) {
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		RoundNumber:      1,
-		Score:            intPtr(68),
-		ParRelativeScore: intPtr(-4),
+		Score:            68,
+		ParRelativeScore: -4,
 	}
 
 	created, err := svc.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)

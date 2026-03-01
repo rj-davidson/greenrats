@@ -19,10 +19,10 @@ func TestUpsertCourse_Create(t *testing.T) {
 	bdlCourse := &balldontlie.Course{
 		ID:      123,
 		Name:    "Augusta National Golf Club",
-		City:    strPtr("Augusta"),
+		City:    "Augusta",
 		State:   strPtr("GA"),
-		Country: strPtr("USA"),
-		Par:     intPtr(72),
+		Country: "USA",
+		Par:     72,
 		Yardage: strPtr("7475"),
 	}
 
@@ -46,7 +46,7 @@ func TestUpsertCourse_Update(t *testing.T) {
 	bdlCourse := &balldontlie.Course{
 		ID:   123,
 		Name: "Augusta National",
-		Par:  intPtr(72),
+		Par:  72,
 	}
 
 	_, err := svc.UpsertCourse(ctx, bdlCourse)
@@ -74,7 +74,7 @@ func TestUpsertCourseHole_Create(t *testing.T) {
 		Course:     balldontlie.CourseRef{ID: 1},
 		HoleNumber: 12,
 		Par:        3,
-		Yardage:    intPtr(155),
+		Yardage:    155,
 	}
 
 	err = svc.UpsertCourseHole(ctx, courseEntity.ID, bdlHole)
@@ -103,14 +103,14 @@ func TestUpsertCourseHole_Update(t *testing.T) {
 		Course:     balldontlie.CourseRef{ID: 1},
 		HoleNumber: 1,
 		Par:        4,
-		Yardage:    intPtr(445),
+		Yardage:    445,
 	}
 
 	err = svc.UpsertCourseHole(ctx, courseEntity.ID, bdlHole)
 	require.NoError(t, err)
 
 	bdlHole.Par = 5
-	bdlHole.Yardage = intPtr(520)
+	bdlHole.Yardage = 520
 
 	err = svc.UpsertCourseHole(ctx, courseEntity.ID, bdlHole)
 	require.NoError(t, err)

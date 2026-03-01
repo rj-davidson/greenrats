@@ -130,8 +130,8 @@ func TestProcessPlayerScorecards_UsesExistingRound(t *testing.T) {
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		RoundNumber:      2,
-		Score:            intPtr(68),
-		ParRelativeScore: intPtr(-4),
+		Score:            68,
+		ParRelativeScore: -4,
 	}
 	existingRound, err := ing.syncService.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
 	require.NoError(t, err)
@@ -173,8 +173,8 @@ func TestProcessPlayerScorecards_HandlesMultipleRounds(t *testing.T) {
 
 	bdlRound := &balldontlie.PlayerRoundResult{
 		RoundNumber:      1,
-		Score:            intPtr(70),
-		ParRelativeScore: intPtr(-2),
+		Score:            70,
+		ParRelativeScore: -2,
 	}
 	_, err := ing.syncService.UpsertRound(ctx, tournamentEntity.ID, golferEntity.ID, bdlRound)
 	require.NoError(t, err)
