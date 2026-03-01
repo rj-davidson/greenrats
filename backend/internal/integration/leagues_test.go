@@ -195,9 +195,10 @@ func TestLeaguesIntegration(t *testing.T) {
 
 		var completedTourn, upcomingTourn *leagues.LeagueTournament
 		for i := range result.Tournaments {
-			if result.Tournaments[i].Name == "Completed" {
+			switch result.Tournaments[i].Name {
+			case "Completed":
 				completedTourn = &result.Tournaments[i]
-			} else if result.Tournaments[i].Name == "Upcoming" {
+			case "Upcoming":
 				upcomingTourn = &result.Tournaments[i]
 			}
 		}

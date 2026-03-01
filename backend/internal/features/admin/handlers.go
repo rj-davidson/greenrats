@@ -226,8 +226,8 @@ func (h *Handler) AddFieldEntry(c *fiber.Ctx) error {
 }
 
 func (h *Handler) UpdateFieldEntry(c *fiber.Ctx) error {
-	entryIdParam := c.Params("entryId")
-	entryId, err := uuid.FromString(entryIdParam)
+	entryIDParam := c.Params("entryId")
+	entryID, err := uuid.FromString(entryIDParam)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid entry id",
@@ -241,14 +241,14 @@ func (h *Handler) UpdateFieldEntry(c *fiber.Ctx) error {
 		})
 	}
 
-	resp, err := h.service.UpdateFieldEntry(c.UserContext(), entryId, &req)
+	resp, err := h.service.UpdateFieldEntry(c.UserContext(), entryID, &req)
 	if errors.Is(err, ErrEntryNotFound) {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "entry not found",
 		})
 	}
 	if err != nil {
-		h.logger.Error("failed to update field entry", "error", err, "entry_id", entryId)
+		h.logger.Error("failed to update field entry", "error", err, "entry_id", entryID)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to update field entry",
 		})
@@ -257,22 +257,22 @@ func (h *Handler) UpdateFieldEntry(c *fiber.Ctx) error {
 }
 
 func (h *Handler) DeleteFieldEntry(c *fiber.Ctx) error {
-	entryIdParam := c.Params("entryId")
-	entryId, err := uuid.FromString(entryIdParam)
+	entryIDParam := c.Params("entryId")
+	entryID, err := uuid.FromString(entryIDParam)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid entry id",
 		})
 	}
 
-	err = h.service.DeleteFieldEntry(c.UserContext(), entryId)
+	err = h.service.DeleteFieldEntry(c.UserContext(), entryID)
 	if errors.Is(err, ErrEntryNotFound) {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error": "entry not found",
 		})
 	}
 	if err != nil {
-		h.logger.Error("failed to delete field entry", "error", err, "entry_id", entryId)
+		h.logger.Error("failed to delete field entry", "error", err, "entry_id", entryID)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to delete field entry",
 		})

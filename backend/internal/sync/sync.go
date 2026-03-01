@@ -34,10 +34,10 @@ type Service struct {
 	logger     *slog.Logger
 }
 
-func NewService(db *ent.Client, googlemaps *googlemaps.Client, logger *slog.Logger) *Service {
+func NewService(db *ent.Client, gmaps *googlemaps.Client, logger *slog.Logger) *Service {
 	return &Service{
 		db:         db,
-		googlemaps: googlemaps,
+		googlemaps: gmaps,
 		logger:     logger,
 	}
 }
@@ -518,9 +518,10 @@ func (s *Service) UpsertPlacement(ctx context.Context, t *ent.Tournament, r *bal
 
 	if r.Position != nil {
 		position = *r.Position
-		if position == "CUT" {
+		switch position {
+		case "CUT":
 			status = placement.StatusCut
-		} else if position == "WD" {
+		case "WD":
 			status = placement.StatusWithdrawn
 		}
 	}

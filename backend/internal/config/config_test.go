@@ -22,15 +22,9 @@ func TestLoad_Defaults(t *testing.T) {
 }
 
 func TestLoad_FromEnv(t *testing.T) {
-	// Set environment variables
-	os.Setenv("PORT", "9000")
-	os.Setenv("ENV", "production")
-	os.Setenv("DATABASE_URL", "postgres://test:test@localhost:5432/test")
-	defer func() {
-		os.Unsetenv("PORT")
-		os.Unsetenv("ENV")
-		os.Unsetenv("DATABASE_URL")
-	}()
+	t.Setenv("PORT", "9000")
+	t.Setenv("ENV", "production")
+	t.Setenv("DATABASE_URL", "postgres://test:test@localhost:5432/test")
 
 	cfg, err := Load()
 	require.NoError(t, err)

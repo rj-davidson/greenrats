@@ -91,7 +91,7 @@ func (ta *TestApp) doRequest(method, path string, body any) *TestResponse {
 	if err != nil {
 		ta.t.Fatalf("failed to execute test request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -134,7 +134,7 @@ func (ta *TestApp) DoRequest(method, path string, body any, headers map[string]s
 	if err != nil {
 		ta.t.Fatalf("failed to execute test request: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {

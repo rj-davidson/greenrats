@@ -44,11 +44,9 @@ func (h *Handler) HandleSSE(c *fiber.Ctx) error {
 
 	// Stream events
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		// Send initial connection event
-		fmt.Fprintf(w, "event: connected\ndata: {\"clientId\":\"%s\"}\n\n", clientID)
-		w.Flush()
+		_, _ = fmt.Fprintf(w, "event: connected\ndata: {\"clientId\":\"%s\"}\n\n", clientID)
+		_ = w.Flush()
 
-		// Heartbeat ticker to keep connection alive
 		heartbeat := time.NewTicker(30 * time.Second)
 		defer heartbeat.Stop()
 
@@ -58,12 +56,12 @@ func (h *Handler) HandleSSE(c *fiber.Ctx) error {
 				if !ok {
 					return
 				}
-				fmt.Fprintf(w, "event: message\ndata: %s\n\n", data)
-				w.Flush()
+				_, _ = fmt.Fprintf(w, "event: message\ndata: %s\n\n", data)
+				_ = w.Flush()
 
 			case <-heartbeat.C:
-				fmt.Fprintf(w, "event: heartbeat\ndata: {\"time\":\"%s\"}\n\n", time.Now().UTC().Format(time.RFC3339))
-				w.Flush()
+				_, _ = fmt.Fprintf(w, "event: heartbeat\ndata: {\"time\":\"%s\"}\n\n", time.Now().UTC().Format(time.RFC3339))
+				_ = w.Flush()
 			}
 		}
 	})
@@ -71,7 +69,6 @@ func (h *Handler) HandleSSE(c *fiber.Ctx) error {
 	return nil
 }
 
-// HandleTournamentSSE handles SSE connections for tournament updates.
 func (h *Handler) HandleTournamentSSE(c *fiber.Ctx) error {
 	tournamentID := c.Params("id")
 	if tournamentID == "" {
@@ -82,27 +79,21 @@ func (h *Handler) HandleTournamentSSE(c *fiber.Ctx) error {
 
 	topic := fmt.Sprintf("tournament:%s", tournamentID)
 
-	// Set SSE headers
 	c.Set("Content-Type", "text/event-stream")
 	c.Set("Cache-Control", "no-cache")
 	c.Set("Connection", "keep-alive")
 	c.Set("Transfer-Encoding", "chunked")
 	c.Set("Access-Control-Allow-Origin", "*")
 
-	// Generate client ID
 	clientID := uuid.New().String()
 
-	// Subscribe to tournament topic
 	client := h.broker.Subscribe(clientID, []string{topic})
 	defer h.broker.Unsubscribe(client)
 
-	// Stream events
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
-		// Send initial connection event
-		fmt.Fprintf(w, "event: connected\ndata: {\"clientId\":\"%s\",\"tournamentId\":\"%s\"}\n\n", clientID, tournamentID)
-		w.Flush()
+		_, _ = fmt.Fprintf(w, "event: connected\ndata: {\"clientId\":\"%s\",\"tournamentId\":\"%s\"}\n\n", clientID, tournamentID)
+		_ = w.Flush()
 
-		// Heartbeat ticker
 		heartbeat := time.NewTicker(30 * time.Second)
 		defer heartbeat.Stop()
 
@@ -112,12 +103,12 @@ func (h *Handler) HandleTournamentSSE(c *fiber.Ctx) error {
 				if !ok {
 					return
 				}
-				fmt.Fprintf(w, "event: leaderboard\ndata: %s\n\n", data)
-				w.Flush()
+				_, _ = fmt.Fprintf(w, "event: leaderboard\ndata: %s\n\n", data)
+				_ = w.Flush()
 
 			case <-heartbeat.C:
-				fmt.Fprintf(w, "event: heartbeat\ndata: {\"time\":\"%s\"}\n\n", time.Now().UTC().Format(time.RFC3339))
-				w.Flush()
+				_, _ = fmt.Fprintf(w, "event: heartbeat\ndata: {\"time\":\"%s\"}\n\n", time.Now().UTC().Format(time.RFC3339))
+				_ = w.Flush()
 			}
 		}
 	})

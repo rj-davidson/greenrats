@@ -74,8 +74,8 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 	}
 
 	currentTournamentIDs := make(map[string]tournaments.Tournament)
-	for _, ct := range currentTournaments {
-		currentTournamentIDs[ct.ID] = ct
+	for i := range currentTournaments {
+		currentTournamentIDs[currentTournaments[i].ID] = currentTournaments[i]
 	}
 
 	picks, err := s.db.Pick.
@@ -249,7 +249,8 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 	entries := make([]StandingsEntry, 0, len(userData))
 	for userID, data := range userData {
 		activePicks := make([]ActivePickEntry, 0, len(currentTournaments))
-		for _, ct := range currentTournaments {
+		for i := range currentTournaments {
+			ct := &currentTournaments[i]
 			if ap, ok := data.ActivePicks[ct.ID]; ok {
 				activePicks = append(activePicks, *ap)
 			} else {
@@ -289,7 +290,8 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 	now := time.Now().UTC()
 	activeTournamentsResponse := make([]ActiveTournament, 0, len(currentTournaments))
 	var activeTournamentResponse *ActiveTournament
-	for i, ct := range currentTournaments {
+	for i := range currentTournaments {
+		ct := &currentTournaments[i]
 		tournamentID, _ := uuid.FromString(ct.ID)
 		isWindowClosed := ct.PickWindowClosesAt != nil && now.After(*ct.PickWindowClosesAt)
 		at := ActiveTournament{

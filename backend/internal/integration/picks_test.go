@@ -165,9 +165,10 @@ func TestPicksIntegration(t *testing.T) {
 
 		var usedGolfer, availableGolfer *picks.AvailableGolfer
 		for i := range result.Golfers {
-			if result.Golfers[i].Name == "Used Golfer" {
+			switch result.Golfers[i].Name {
+			case "Used Golfer":
 				usedGolfer = &result.Golfers[i]
-			} else if result.Golfers[i].Name == "Available Golfer" {
+			case "Available Golfer":
 				availableGolfer = &result.Golfers[i]
 			}
 		}

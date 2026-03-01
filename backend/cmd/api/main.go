@@ -55,7 +55,7 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	if cfg.IsDevelopment() {
 		if err := db.Schema.Create(context.Background()); err != nil {

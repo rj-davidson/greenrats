@@ -53,14 +53,14 @@ type ActivePickEntry struct {
 }
 
 type StandingsEntry struct {
-	UserID          uuid.UUID        `json:"user_id"`
-	UserDisplayName string           `json:"user_display_name"`
-	TotalEarnings   int              `json:"total_earnings"`
-	PickCount       int              `json:"pick_count"`
-	HasCurrentPick  bool             `json:"has_current_pick"`
-	CurrentPick     *CurrentPick     `json:"current_pick,omitempty"`
+	UserID          uuid.UUID         `json:"user_id"`
+	UserDisplayName string            `json:"user_display_name"`
+	TotalEarnings   int               `json:"total_earnings"`
+	PickCount       int               `json:"pick_count"`
+	HasCurrentPick  bool              `json:"has_current_pick"`
+	CurrentPick     *CurrentPick      `json:"current_pick,omitempty"`
 	ActivePicks     []ActivePickEntry `json:"active_picks,omitempty"`
-	Picks           []PickHistory    `json:"picks,omitempty"`
+	Picks           []PickHistory     `json:"picks,omitempty"`
 }
 
 type GetStandingsRequest struct {
@@ -68,9 +68,9 @@ type GetStandingsRequest struct {
 }
 
 type LeagueStandingsResponse struct {
-	Entries            []StandingsEntry   `json:"entries"`
-	Total              int                `json:"total"`
-	SeasonYear         int                `json:"season_year"`
-	ActiveTournament   *ActiveTournament  `json:"active_tournament,omitempty"`
-	ActiveTournaments  []ActiveTournament `json:"active_tournaments,omitempty"`
+	Entries           []StandingsEntry   `json:"entries"`
+	Total             int                `json:"total"`
+	SeasonYear        int                `json:"season_year"`
+	ActiveTournament  *ActiveTournament  `json:"active_tournament,omitempty"`
+	ActiveTournaments []ActiveTournament `json:"active_tournaments,omitempty"`
 }

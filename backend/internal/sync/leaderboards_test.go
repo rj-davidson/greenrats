@@ -2,6 +2,7 @@ package sync
 
 import (
 	"context"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -84,7 +85,7 @@ func TestUpsertPlacement_SetsMultiplePositions(t *testing.T) {
 
 	for _, r := range results {
 		pos := r.position
-		posStr := string(rune('0' + pos))
+		posStr := strconv.Itoa(pos)
 		earn := r.earnings
 		result := &balldontlie.TournamentResult{
 			Tournament: balldontlie.TournamentRef{
