@@ -2,7 +2,7 @@
 
 import { useBreadcrumbs } from "@/components/core/breadcrumbs";
 import { Skeleton } from "@/components/shadcn/skeleton";
-import { TournamentDataTable, TournamentSpotlightCards } from "@/features/leagues/components";
+import { ActionCard, TournamentDataTable } from "@/features/leagues/components";
 import { useLeague, useLeagueTournaments } from "@/features/leagues/queries";
 import { useParams } from "next/navigation";
 import { useEffect } from "react";
@@ -36,11 +36,7 @@ export default function TournamentsPage() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Skeleton className="h-40" />
-            <Skeleton className="h-40" />
-            <Skeleton className="h-40" />
-          </div>
+          <Skeleton className="h-40" />
           <Skeleton className="h-64" />
         </div>
       ) : error ? (
@@ -49,7 +45,7 @@ export default function TournamentsPage() {
         <div className="py-8 text-center text-muted-foreground">No tournaments found</div>
       ) : (
         <>
-          <TournamentSpotlightCards tournaments={tournaments} leagueId={leagueId} />
+          <ActionCard leagueId={leagueId} />
           <TournamentDataTable tournaments={tournaments} leagueId={leagueId} />
         </>
       )}

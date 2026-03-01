@@ -6,8 +6,6 @@ export { CreateLeagueDialog } from "@/features/leagues/components/CreateLeagueDi
 export { CreateLeagueForm } from "@/features/leagues/components/CreateLeagueForm";
 export { LeagueMonogram } from "@/features/leagues/components/LeagueMonogram";
 export { TournamentDataTable } from "@/features/leagues/components/TournamentDataTable";
-export { TournamentSpotlightCards } from "@/features/leagues/components/TournamentSpotlightCards";
-
 export {
   ActionCard,
   ActivePickScorecardCard,
