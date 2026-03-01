@@ -31,7 +31,10 @@ export class APIError extends Error {
 
 const DEFAULT_SERVER_API_TIMEOUT_MS = 8000;
 
-function withTimeoutSignal(signal: AbortSignal | null | undefined, timeoutMs?: number): {
+function withTimeoutSignal(
+  signal: AbortSignal | null | undefined,
+  timeoutMs?: number,
+): {
   signal: AbortSignal | null | undefined;
   didTimeout: () => boolean;
   cleanup: () => void;

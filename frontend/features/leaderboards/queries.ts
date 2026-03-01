@@ -95,6 +95,7 @@ function transformStandingsResponse(data: LeagueStandingsResponseRaw): LeagueSta
       pick_count: rawEntry.pick_count,
       has_current_pick: rawEntry.has_current_pick,
       current_pick: rawEntry.current_pick,
+      active_picks: rawEntry.active_picks,
       rank: entry.rank,
       rank_display: formatRankDisplay(entry.rank, rankCounts),
       picks: enrichedPicks,
@@ -106,6 +107,7 @@ function transformStandingsResponse(data: LeagueStandingsResponseRaw): LeagueSta
     total: data.total,
     season_year: data.season_year,
     active_tournament: data.active_tournament,
+    active_tournaments: data.active_tournaments,
   };
 }
 

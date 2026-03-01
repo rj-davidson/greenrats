@@ -255,10 +255,15 @@ func TestService_GetLeagueStandings_HasCurrentPick(t *testing.T) {
 		user := factory.CreateUser(testutil.WithDisplayName("Test User"))
 		factory.AddUserToLeague(user, league)
 
-		upcomingTournament := factory.CreateUpcomingTournament(7, testutil.WithSeasonYear(time.Now().Year()))
+		pickWindowOpenTournament := factory.CreateTournament(
+			testutil.WithSeasonYear(time.Now().Year()),
+			testutil.WithStartDate(time.Now().AddDate(0, 0, 2)),
+			testutil.WithEndDate(time.Now().AddDate(0, 0, 6)),
+			testutil.WithPickWindow(time.Now().AddDate(0, 0, -1), time.Now().AddDate(0, 0, 1)),
+		)
 		golfer := factory.CreateGolfer(testutil.WithGolferName("Tiger Woods"))
-		factory.CreatePlacement(upcomingTournament, golfer, testutil.WithEarnings(0))
-		factory.CreatePick(user, upcomingTournament, golfer, league)
+		factory.CreatePlacement(pickWindowOpenTournament, golfer, testutil.WithEarnings(0))
+		factory.CreatePick(user, pickWindowOpenTournament, golfer, league)
 
 		resp, err := service.GetLeagueStandings(ctx, league.ID, 0, false)
 
@@ -280,10 +285,16 @@ func TestService_GetLeagueStandings_HasCurrentPick(t *testing.T) {
 		user := factory.CreateUser()
 		factory.AddUserToLeague(user, league)
 
-		upcomingTournament := factory.CreateUpcomingTournament(7, testutil.WithSeasonYear(time.Now().Year()), testutil.WithTournamentName("Upcoming Open"))
+		pickWindowOpenTournament := factory.CreateTournament(
+			testutil.WithSeasonYear(time.Now().Year()),
+			testutil.WithTournamentName("Upcoming Open"),
+			testutil.WithStartDate(time.Now().AddDate(0, 0, 2)),
+			testutil.WithEndDate(time.Now().AddDate(0, 0, 6)),
+			testutil.WithPickWindow(time.Now().AddDate(0, 0, -1), time.Now().AddDate(0, 0, 1)),
+		)
 		golfer := factory.CreateGolfer()
-		factory.CreatePlacement(upcomingTournament, golfer, testutil.WithEarnings(0))
-		factory.CreatePick(user, upcomingTournament, golfer, league)
+		factory.CreatePlacement(pickWindowOpenTournament, golfer, testutil.WithEarnings(0))
+		factory.CreatePick(user, pickWindowOpenTournament, golfer, league)
 
 		resp, err := service.GetLeagueStandings(ctx, league.ID, 0, false)
 
@@ -417,6 +428,83 @@ func TestService_GetLeagueStandings_HasCurrentPick(t *testing.T) {
 		assert.Nil(t, entryWithoutPick.CurrentPick)
 	})
 
+	t.Run("active_tournaments returns multiple overlapping tournaments", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		tournamentService := tournaments.NewService(db)
+		service := NewService(db, tournamentService)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser(testutil.WithDisplayName("Test User"))
+		factory.AddUserToLeague(user, league)
+
+		active1 := factory.CreateActiveTournament(testutil.WithSeasonYear(time.Now().Year()), testutil.WithTournamentName("Tournament A"))
+		active2 := factory.CreateActiveTournament(testutil.WithSeasonYear(time.Now().Year()), testutil.WithTournamentName("Tournament B"))
+
+		golfer1 := factory.CreateGolfer(testutil.WithGolferName("Golfer One"))
+		golfer2 := factory.CreateGolfer(testutil.WithGolferName("Golfer Two"))
+		factory.CreatePlacement(active1, golfer1, testutil.WithEarnings(0))
+		factory.CreatePlacement(active2, golfer2, testutil.WithEarnings(0))
+		factory.CreatePick(user, active1, golfer1, league)
+		factory.CreatePick(user, active2, golfer2, league)
+
+		resp, err := service.GetLeagueStandings(ctx, league.ID, 0, false)
+
+		require.NoError(t, err)
+		require.NotNil(t, resp.ActiveTournaments)
+		assert.Len(t, resp.ActiveTournaments, 2)
+
+		require.Len(t, resp.Entries, 1)
+		assert.Len(t, resp.Entries[0].ActivePicks, 2)
+
+		for _, ap := range resp.Entries[0].ActivePicks {
+			assert.True(t, ap.HasPick)
+			assert.True(t, ap.IsPickWindowClosed)
+			assert.NotNil(t, ap.GolferName)
+		}
+
+		require.NotNil(t, resp.ActiveTournament, "backward-compat singular field should still be set")
+	})
+
+	t.Run("active_picks shows no pick for tournament user skipped", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		tournamentService := tournaments.NewService(db)
+		service := NewService(db, tournamentService)
+		ctx := context.Background()
+
+		owner := factory.CreateUser()
+		league := factory.CreateLeague(owner, time.Now().Year())
+		user := factory.CreateUser(testutil.WithDisplayName("Test User"))
+		factory.AddUserToLeague(user, league)
+
+		active1 := factory.CreateActiveTournament(testutil.WithSeasonYear(time.Now().Year()), testutil.WithTournamentName("Tournament A"))
+		_ = factory.CreateActiveTournament(testutil.WithSeasonYear(time.Now().Year()), testutil.WithTournamentName("Tournament B"))
+
+		golfer := factory.CreateGolfer()
+		factory.CreatePlacement(active1, golfer, testutil.WithEarnings(0))
+		factory.CreatePick(user, active1, golfer, league)
+
+		resp, err := service.GetLeagueStandings(ctx, league.ID, 0, false)
+
+		require.NoError(t, err)
+		require.Len(t, resp.Entries, 1)
+		require.Len(t, resp.Entries[0].ActivePicks, 2)
+
+		var pickedCount, notPickedCount int
+		for _, ap := range resp.Entries[0].ActivePicks {
+			if ap.HasPick {
+				pickedCount++
+			} else {
+				notPickedCount++
+			}
+		}
+		assert.Equal(t, 1, pickedCount)
+		assert.Equal(t, 1, notPickedCount)
+	})
+
 	t.Run("mixed users with pick window open hides golfer details", func(t *testing.T) {
 		db := testutil.NewTestDB(t)
 		factory := testutil.NewFactory(t, db)
@@ -432,17 +520,22 @@ func TestService_GetLeagueStandings_HasCurrentPick(t *testing.T) {
 		factory.AddUserToLeague(userWithoutPick, league)
 
 		completedTournament := factory.CreateCompletedTournament(testutil.WithSeasonYear(time.Now().Year()))
-		upcomingTournament := factory.CreateUpcomingTournament(7, testutil.WithSeasonYear(time.Now().Year()))
+		pickWindowOpenTournament := factory.CreateTournament(
+			testutil.WithSeasonYear(time.Now().Year()),
+			testutil.WithStartDate(time.Now().AddDate(0, 0, 2)),
+			testutil.WithEndDate(time.Now().AddDate(0, 0, 6)),
+			testutil.WithPickWindow(time.Now().AddDate(0, 0, -1), time.Now().AddDate(0, 0, 1)),
+		)
 
 		golfer1 := factory.CreateGolfer()
 		golfer2 := factory.CreateGolfer()
 		golfer3 := factory.CreateGolfer(testutil.WithGolferName("Secret Pick"))
 		factory.CreatePlacement(completedTournament, golfer1, testutil.WithEarnings(100000))
 		factory.CreatePlacement(completedTournament, golfer2, testutil.WithEarnings(50000))
-		factory.CreatePlacement(upcomingTournament, golfer3, testutil.WithEarnings(0))
+		factory.CreatePlacement(pickWindowOpenTournament, golfer3, testutil.WithEarnings(0))
 
 		factory.CreatePick(userWithPick, completedTournament, golfer1, league)
-		factory.CreatePick(userWithPick, upcomingTournament, golfer3, league)
+		factory.CreatePick(userWithPick, pickWindowOpenTournament, golfer3, league)
 		factory.CreatePick(userWithoutPick, completedTournament, golfer2, league)
 
 		resp, err := service.GetLeagueStandings(ctx, league.ID, 0, false)

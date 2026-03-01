@@ -4,7 +4,6 @@ import { DashboardCard } from "./DashboardCard";
 import { Badge } from "@/components/shadcn/badge";
 import { Button } from "@/components/shadcn/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
-import { useLeagueTournaments } from "@/features/leagues/queries";
 import { useLeaguePicks } from "@/features/picks/queries";
 import { GolfScorecard } from "@/features/tournaments/components/GolfScorecard";
 import { formatScoreToPar } from "@/features/tournaments/components/leaderboard-utils";
@@ -16,33 +15,28 @@ import { useMemo } from "react";
 
 interface ActivePickScorecardCardProps {
   leagueId: string;
+  tournamentId: string;
+  tournamentName: string;
 }
 
-export function ActivePickScorecardCard({ leagueId }: ActivePickScorecardCardProps) {
-  const { data: tournamentsData, isLoading: tournamentsLoading } = useLeagueTournaments(leagueId);
+export function ActivePickScorecardCard({
+  leagueId,
+  tournamentId,
+  tournamentName,
+}: ActivePickScorecardCardProps) {
   const { data: currentUser } = useCurrentUser();
 
-  const activeTournament = useMemo(() => {
-    if (!tournamentsData?.tournaments) return null;
-    return tournamentsData.tournaments.find((t) => t.status === "active") ?? null;
-  }, [tournamentsData]);
-
-  const { data: picksData, isLoading: picksLoading } = useLeaguePicks(
-    leagueId,
-    activeTournament?.id ?? "",
-  );
+  const { data: picksData, isLoading: picksLoading } = useLeaguePicks(leagueId, tournamentId);
 
   const userPick = useMemo(() => {
     if (!currentUser || !picksData?.entries) return null;
     return picksData.entries.find((p) => p.user_id === currentUser.id) ?? null;
   }, [currentUser, picksData]);
 
-  const { data: leaderboardData, isLoading: leaderboardLoading } = useLeaderboard(
-    activeTournament?.id ?? "",
-  );
+  const { data: leaderboardData, isLoading: leaderboardLoading } = useLeaderboard(tournamentId);
 
   const { data: scorecardData, isLoading: scorecardLoading } = useScorecard(
-    activeTournament?.id ?? "",
+    tournamentId,
     userPick?.golfer_id ?? null,
   );
 
@@ -56,25 +50,22 @@ export function ActivePickScorecardCard({ leagueId }: ActivePickScorecardCardPro
     return scorecardData.rounds.some((r) => r.holes && r.holes.length > 0);
   }, [scorecardData]);
 
-  const isLoading = tournamentsLoading || picksLoading || leaderboardLoading || scorecardLoading;
-
-  if (!activeTournament && !tournamentsLoading) {
-    return null;
-  }
+  const isLoading = picksLoading || leaderboardLoading || scorecardLoading;
 
   if (!userPick && !isLoading) {
     return null;
   }
 
-  const action = activeTournament && (
+  const action = (
     <Button asChild variant="ghost" size="sm">
-      <Link href={`/${leagueId}/tournaments/${activeTournament.id}`}>View</Link>
+      <Link href={`/${leagueId}/tournaments/${tournamentId}`}>View</Link>
     </Button>
   );
 
   return (
     <DashboardCard
       title="Your Pick Scorecard"
+      description={tournamentName}
       icon={<FileTextIcon className="size-4" />}
       action={action}
       isLoading={isLoading}

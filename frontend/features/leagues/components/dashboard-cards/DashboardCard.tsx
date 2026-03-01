@@ -1,12 +1,21 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/card";
+import { Card, CardContent, CardHeader } from "@/components/shadcn/card";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/shadcn/item";
 import { Skeleton } from "@/components/shadcn/skeleton";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
 interface DashboardCardProps {
   title: string;
+  description?: string;
   icon?: ReactNode;
   action?: ReactNode;
   isLoading?: boolean;
@@ -16,6 +25,7 @@ interface DashboardCardProps {
 
 export function DashboardCard({
   title,
+  description,
   icon,
   action,
   isLoading,
@@ -24,12 +34,15 @@ export function DashboardCard({
 }: DashboardCardProps) {
   return (
     <Card className={cn("flex flex-col gap-3 py-4", className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 px-4 pb-0">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-          {icon}
-          {title}
-        </CardTitle>
-        {action}
+      <CardHeader className="px-4 pb-0">
+        <Item size="sm" className="p-0">
+          {icon && <ItemMedia>{icon}</ItemMedia>}
+          <ItemContent className="gap-0.5">
+            <ItemTitle>{title}</ItemTitle>
+            {description && <ItemDescription>{description}</ItemDescription>}
+          </ItemContent>
+          {action && <ItemActions>{action}</ItemActions>}
+        </Item>
       </CardHeader>
       <CardContent className="flex-1 px-4">
         {isLoading ? (

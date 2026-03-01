@@ -12,7 +12,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/shadcn/table";
-import { useLeagueTournaments } from "@/features/leagues/queries";
 import { useLeaguePicks } from "@/features/picks/queries";
 import {
   formatScoreToPar,
@@ -30,22 +29,20 @@ import { useMemo } from "react";
 
 interface TournamentLeaderboardCardProps {
   leagueId: string;
+  tournamentId: string;
+  tournamentName: string;
 }
 
-export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCardProps) {
-  const { data: tournamentsData, isLoading: tournamentsLoading } = useLeagueTournaments(leagueId);
+export function TournamentLeaderboardCard({
+  leagueId,
+  tournamentId,
+  tournamentName,
+}: TournamentLeaderboardCardProps) {
   const { data: currentUser } = useCurrentUser();
 
-  const activeTournament = useMemo(() => {
-    if (!tournamentsData?.tournaments) return null;
-    return tournamentsData.tournaments.find((t) => t.status === "active") ?? null;
-  }, [tournamentsData]);
+  const { data: leaderboardData, isLoading: leaderboardLoading } = useLeaderboard(tournamentId);
 
-  const { data: leaderboardData, isLoading: leaderboardLoading } = useLeaderboard(
-    activeTournament?.id ?? "",
-  );
-
-  const { data: picksData } = useLeaguePicks(leagueId, activeTournament?.id ?? "");
+  const { data: picksData } = useLeaguePicks(leagueId, tournamentId);
 
   const userPickGolferId = useMemo(() => {
     if (!currentUser || !picksData?.entries) return null;
@@ -53,11 +50,7 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
     return pick?.golfer_id ?? null;
   }, [currentUser, picksData]);
 
-  const isLoading = tournamentsLoading || leaderboardLoading;
-
-  if (!activeTournament && !tournamentsLoading) {
-    return null;
-  }
+  const isLoading = leaderboardLoading;
 
   const allEntries = leaderboardData?.entries ?? [];
   const top5 = allEntries.slice(0, 5);
@@ -69,19 +62,19 @@ export function TournamentLeaderboardCard({ leagueId }: TournamentLeaderboardCar
   const displayEntries = userPickInTop5 || !userPickEntry ? top5 : allEntries.slice(0, 4);
   const showUserBubble = userPickEntry && !userPickInTop5;
 
-  const action = activeTournament && (
+  const action = (
     <Button asChild variant="ghost" size="sm">
-      <Link href={`/${leagueId}/tournaments/${activeTournament.id}`}>View all</Link>
+      <Link href={`/${leagueId}/tournaments/${tournamentId}`}>View all</Link>
     </Button>
   );
 
-  const title = activeTournament ? activeTournament.name : "Leaderboard";
   const currentRound = leaderboardData?.current_round ?? 1;
   const showPositionChange = currentRound >= 2;
 
   return (
     <DashboardCard
-      title={title}
+      title="Tournament Leaderboard"
+      description={tournamentName}
       icon={<ListOrderedIcon className="size-4" />}
       action={action}
       isLoading={isLoading}

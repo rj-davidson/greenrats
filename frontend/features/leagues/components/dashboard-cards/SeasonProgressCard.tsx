@@ -16,7 +16,8 @@ interface SeasonStats {
   completedCount: number;
   total: number;
   progress: number;
-  currentOrNext: LeagueTournament | undefined;
+  activeTournaments: LeagueTournament[];
+  nextUpcoming: LeagueTournament | undefined;
 }
 
 export function SeasonProgressCard({ leagueId }: SeasonProgressCardProps) {
@@ -27,7 +28,7 @@ export function SeasonProgressCard({ leagueId }: SeasonProgressCardProps) {
 
     const now = new Date();
     const started = data.tournaments.filter((t) => new Date(t.start_date) < now);
-    const active = data.tournaments.find((t) => t.status === "active");
+    const activeTournaments = data.tournaments.filter((t) => t.status === "active");
     const upcoming = data.tournaments
       .filter((t) => t.status === "upcoming")
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
@@ -40,7 +41,8 @@ export function SeasonProgressCard({ leagueId }: SeasonProgressCardProps) {
       completedCount,
       total,
       progress,
-      currentOrNext: active ?? upcoming[0],
+      activeTournaments,
+      nextUpcoming: upcoming[0],
     };
   }, [data]);
 
@@ -59,12 +61,16 @@ export function SeasonProgressCard({ leagueId }: SeasonProgressCardProps) {
             </div>
             <Progress value={stats.progress} />
           </div>
-          {stats.currentOrNext && (
+          {stats.activeTournaments.map((t) => (
+            <div key={t.id} className="rounded-lg bg-muted/50 p-3">
+              <p className="text-xs text-muted-foreground">Current</p>
+              <p className="font-medium">{t.name}</p>
+            </div>
+          ))}
+          {stats.activeTournaments.length === 0 && stats.nextUpcoming && (
             <div className="rounded-lg bg-muted/50 p-3">
-              <p className="text-xs text-muted-foreground">
-                {stats.currentOrNext.status === "active" ? "Current" : "Next"}
-              </p>
-              <p className="font-medium">{stats.currentOrNext.name}</p>
+              <p className="text-xs text-muted-foreground">Next</p>
+              <p className="font-medium">{stats.nextUpcoming.name}</p>
             </div>
           )}
         </div>

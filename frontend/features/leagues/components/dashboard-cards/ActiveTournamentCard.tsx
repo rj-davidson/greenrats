@@ -3,14 +3,14 @@
 import { DashboardCard } from "./DashboardCard";
 import { Badge } from "@/components/shadcn/badge";
 import { Button } from "@/components/shadcn/button";
-import { useLeagueTournaments } from "@/features/leagues/queries";
 import { useLeaderboard, useTournament } from "@/features/tournaments/queries";
 import { CalendarIcon, DollarSignIcon, FlagIcon, MapPinIcon, TrophyIcon } from "lucide-react";
 import Link from "next/link";
-import { useMemo } from "react";
 
 interface ActiveTournamentCardProps {
   leagueId: string;
+  tournamentId: string;
+  tournamentName: string;
 }
 
 function formatDateRange(startDate: string, endDate: string): string {
@@ -51,30 +51,24 @@ function getRoundLabel(roundNumber: number): string {
   return `Round ${roundNumber}`;
 }
 
-export function ActiveTournamentCard({ leagueId }: ActiveTournamentCardProps) {
-  const { data, isLoading } = useLeagueTournaments(leagueId);
-
-  const activeTournamentId = useMemo(() => {
-    if (!data?.tournaments) return null;
-    const active = data.tournaments.find((t) => t.status === "active");
-    return active?.id ?? null;
-  }, [data]);
-
-  const { data: tournamentData, isLoading: tournamentLoading } = useTournament(
-    activeTournamentId ?? "",
-  );
-  const { data: leaderboardData } = useLeaderboard(activeTournamentId ?? "");
+export function ActiveTournamentCard({
+  leagueId,
+  tournamentId,
+  tournamentName,
+}: ActiveTournamentCardProps) {
+  const { data: tournamentData, isLoading: tournamentLoading } = useTournament(tournamentId);
+  const { data: leaderboardData } = useLeaderboard(tournamentId);
 
   const tournament = tournamentData?.tournament;
   const currentRound = leaderboardData?.current_round;
 
-  if (isLoading || tournamentLoading) {
+  if (tournamentLoading) {
     return (
       <DashboardCard title="Live Tournament" icon={<TrophyIcon className="size-4" />} isLoading />
     );
   }
 
-  if (!activeTournamentId || !tournament) {
+  if (!tournament) {
     return null;
   }
 
@@ -87,15 +81,17 @@ export function ActiveTournamentCard({ leagueId }: ActiveTournamentCardProps) {
   );
 
   return (
-    <DashboardCard title="Live Tournament" icon={<TrophyIcon className="size-4" />} action={action}>
+    <DashboardCard
+      title="Live Tournament"
+      description={tournamentName}
+      icon={<TrophyIcon className="size-4" />}
+      action={action}
+    >
       <div className="space-y-4">
-        <div>
-          <div className="mb-1 flex items-center gap-2">
-            <Badge variant="default" className="text-xs">
-              {currentRound ? getRoundLabel(currentRound) : "Live"}
-            </Badge>
-          </div>
-          <h3 className="text-lg font-semibold">{tournament.name}</h3>
+        <div className="flex items-center gap-2">
+          <Badge variant="default" className="text-xs">
+            {currentRound ? getRoundLabel(currentRound) : "Live"}
+          </Badge>
         </div>
 
         <div className="space-y-2 text-sm text-muted-foreground">

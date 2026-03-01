@@ -65,12 +65,17 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		seasonYear = entLeague.SeasonYear
 	}
 
-	var currentTournament *tournaments.Tournament
+	var currentTournaments []tournaments.Tournament
 	if s.tournamentService != nil {
-		currentTournament, err = s.tournamentService.GetCurrentOrUpcoming(ctx)
+		currentTournaments, err = s.tournamentService.GetAllCurrentOrUpcoming(ctx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get current tournament: %w", err)
+			return nil, fmt.Errorf("failed to get current tournaments: %w", err)
 		}
+	}
+
+	currentTournamentIDs := make(map[string]tournaments.Tournament)
+	for _, ct := range currentTournaments {
+		currentTournamentIDs[ct.ID] = ct
 	}
 
 	picks, err := s.db.Pick.
@@ -147,6 +152,7 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		Picks          []PickHistory
 		HasCurrentPick bool
 		CurrentPick    *CurrentPick
+		ActivePicks    map[string]*ActivePickEntry
 	}
 
 	userData := make(map[uuid.UUID]*userPickData)
@@ -167,6 +173,7 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 				DisplayName: displayName,
 				Earnings:    0,
 				Picks:       make([]PickHistory, 0),
+				ActivePicks: make(map[string]*ActivePickEntry),
 			}
 			userData[userID] = data
 		}
@@ -186,9 +193,29 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 				}
 			}
 
-			if currentTournament != nil && p.Edges.Tournament.ID.String() == currentTournament.ID {
-				data.HasCurrentPick = true
-				if currentTournament.PickWindowClosesAt != nil && time.Now().UTC().After(*currentTournament.PickWindowClosesAt) {
+			tournamentIDStr := p.Edges.Tournament.ID.String()
+			if ct, isCurrent := currentTournamentIDs[tournamentIDStr]; isCurrent {
+				now := time.Now().UTC()
+				isWindowClosed := ct.PickWindowClosesAt != nil && now.After(*ct.PickWindowClosesAt)
+
+				entry := &ActivePickEntry{
+					TournamentID:       p.Edges.Tournament.ID,
+					TournamentName:     p.Edges.Tournament.Name,
+					HasPick:            true,
+					IsPickWindowClosed: isWindowClosed,
+				}
+				if isWindowClosed {
+					golferID := p.Edges.Golfer.ID.String()
+					golferName := p.Edges.Golfer.Name
+					entry.GolferID = &golferID
+					entry.GolferName = &golferName
+				}
+				data.ActivePicks[tournamentIDStr] = entry
+
+				if !data.HasCurrentPick {
+					data.HasCurrentPick = true
+				}
+				if data.CurrentPick == nil && isWindowClosed {
 					data.CurrentPick = &CurrentPick{
 						TournamentID:   p.Edges.Tournament.ID,
 						TournamentName: p.Edges.Tournament.Name,
@@ -221,6 +248,22 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 
 	entries := make([]StandingsEntry, 0, len(userData))
 	for userID, data := range userData {
+		activePicks := make([]ActivePickEntry, 0, len(currentTournaments))
+		for _, ct := range currentTournaments {
+			if ap, ok := data.ActivePicks[ct.ID]; ok {
+				activePicks = append(activePicks, *ap)
+			} else {
+				tournamentID, _ := uuid.FromString(ct.ID)
+				isWindowClosed := ct.PickWindowClosesAt != nil && time.Now().UTC().After(*ct.PickWindowClosesAt)
+				activePicks = append(activePicks, ActivePickEntry{
+					TournamentID:       tournamentID,
+					TournamentName:     ct.Name,
+					HasPick:            false,
+					IsPickWindowClosed: isWindowClosed,
+				})
+			}
+		}
+
 		entry := StandingsEntry{
 			UserID:          userID,
 			UserDisplayName: data.DisplayName,
@@ -228,6 +271,7 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 			PickCount:       pickCountByUser[userID],
 			HasCurrentPick:  data.HasCurrentPick,
 			CurrentPick:     data.CurrentPick,
+			ActivePicks:     activePicks,
 		}
 		if includePicks {
 			entry.Picks = data.Picks
@@ -242,23 +286,29 @@ func (s *Service) GetLeagueStandings(ctx context.Context, leagueID uuid.UUID, se
 		return entries[i].UserDisplayName < entries[j].UserDisplayName
 	})
 
+	now := time.Now().UTC()
+	activeTournamentsResponse := make([]ActiveTournament, 0, len(currentTournaments))
 	var activeTournamentResponse *ActiveTournament
-	if currentTournament != nil {
-		now := time.Now().UTC()
-		isWindowClosed := currentTournament.PickWindowClosesAt != nil && now.After(*currentTournament.PickWindowClosesAt)
-		tournamentID, _ := uuid.FromString(currentTournament.ID)
-		activeTournamentResponse = &ActiveTournament{
+	for i, ct := range currentTournaments {
+		tournamentID, _ := uuid.FromString(ct.ID)
+		isWindowClosed := ct.PickWindowClosesAt != nil && now.After(*ct.PickWindowClosesAt)
+		at := ActiveTournament{
 			ID:                 tournamentID,
-			Name:               currentTournament.Name,
+			Name:               ct.Name,
 			IsPickWindowClosed: isWindowClosed,
-			StartDate:          currentTournament.StartDate,
+			StartDate:          ct.StartDate,
+		}
+		activeTournamentsResponse = append(activeTournamentsResponse, at)
+		if i == 0 {
+			activeTournamentResponse = &at
 		}
 	}
 
 	return &LeagueStandingsResponse{
-		Entries:          entries,
-		Total:            len(entries),
-		SeasonYear:       seasonYear,
-		ActiveTournament: activeTournamentResponse,
+		Entries:           entries,
+		Total:             len(entries),
+		SeasonYear:        seasonYear,
+		ActiveTournament:  activeTournamentResponse,
+		ActiveTournaments: activeTournamentsResponse,
 	}, nil
 }

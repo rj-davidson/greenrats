@@ -140,6 +140,30 @@ func (s *Service) GetActive(ctx context.Context) (*Tournament, error) {
 	return &result, nil
 }
 
+func (s *Service) GetAllActive(ctx context.Context) ([]Tournament, error) {
+	now := time.Now().UTC()
+	results, err := s.db.Tournament.Query().
+		Where(
+			tournament.Not(tournament.HasChampion()),
+			tournament.PickWindowClosesAtLT(now),
+		).
+		Order(ent.Asc(tournament.FieldStartDate)).
+		WithChampion().
+		WithTournamentCourses(func(q *ent.TournamentCourseQuery) {
+			q.WithCourse()
+		}).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get active tournaments: %w", err)
+	}
+
+	tournaments := make([]Tournament, len(results))
+	for i, t := range results {
+		tournaments[i] = toTournament(t)
+	}
+	return tournaments, nil
+}
+
 func (s *Service) GetCurrentOrUpcoming(ctx context.Context) (*Tournament, error) {
 	t, err := s.db.Tournament.Query().
 		Where(tournament.Not(tournament.HasChampion())).
@@ -158,6 +182,36 @@ func (s *Service) GetCurrentOrUpcoming(ctx context.Context) (*Tournament, error)
 
 	result := toTournament(t)
 	return &result, nil
+}
+
+func (s *Service) GetAllCurrentOrUpcoming(ctx context.Context) ([]Tournament, error) {
+	now := time.Now().UTC()
+	results, err := s.db.Tournament.Query().
+		Where(
+			tournament.Not(tournament.HasChampion()),
+			tournament.Or(
+				tournament.PickWindowClosesAtLT(now),
+				tournament.And(
+					tournament.PickWindowOpensAtLTE(now),
+					tournament.PickWindowClosesAtGTE(now),
+				),
+			),
+		).
+		Order(ent.Asc(tournament.FieldStartDate)).
+		WithChampion().
+		WithTournamentCourses(func(q *ent.TournamentCourseQuery) {
+			q.WithCourse()
+		}).
+		All(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get current/upcoming tournaments: %w", err)
+	}
+
+	tournaments := make([]Tournament, len(results))
+	for i, t := range results {
+		tournaments[i] = toTournament(t)
+	}
+	return tournaments, nil
 }
 
 func (s *Service) GetLeaderboard(ctx context.Context, id string, includeHoles bool, leagueID string) (*GetLeaderboardResponse, error) {

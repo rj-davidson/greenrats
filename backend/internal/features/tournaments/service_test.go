@@ -476,6 +476,133 @@ func TestService_GetScorecard(t *testing.T) {
 	})
 }
 
+func TestService_GetAllActive(t *testing.T) {
+	t.Run("returns multiple active tournaments", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		factory.CreateUpcomingTournament(7)
+		active1 := factory.CreateActiveTournament(testutil.WithTournamentName("Active One"))
+		active2 := factory.CreateActiveTournament(testutil.WithTournamentName("Active Two"))
+		factory.CreateCompletedTournament()
+
+		found, err := service.GetAllActive(ctx)
+
+		require.NoError(t, err)
+		assert.Len(t, found, 2)
+		ids := map[string]bool{found[0].ID: true, found[1].ID: true}
+		assert.True(t, ids[active1.ID.String()])
+		assert.True(t, ids[active2.ID.String()])
+	})
+
+	t.Run("returns empty slice when no active tournaments", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		factory.CreateUpcomingTournament(7)
+		factory.CreateCompletedTournament()
+
+		found, err := service.GetAllActive(ctx)
+
+		require.NoError(t, err)
+		assert.Empty(t, found)
+	})
+}
+
+func TestService_GetAllCurrentOrUpcoming(t *testing.T) {
+	t.Run("returns active tournament and tournament with open pick window", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		active := factory.CreateActiveTournament(testutil.WithTournamentName("Active"))
+
+		pickWindowOpen := factory.CreateTournament(
+			testutil.WithTournamentName("Pick Window Open"),
+			testutil.WithStartDate(time.Now().AddDate(0, 0, 2)),
+			testutil.WithEndDate(time.Now().AddDate(0, 0, 6)),
+			testutil.WithPickWindow(time.Now().AddDate(0, 0, -1), time.Now().AddDate(0, 0, 1)),
+		)
+
+		factory.CreateUpcomingTournament(14, testutil.WithTournamentName("Far Future"))
+		factory.CreateCompletedTournament()
+
+		found, err := service.GetAllCurrentOrUpcoming(ctx)
+
+		require.NoError(t, err)
+		assert.Len(t, found, 2)
+		ids := map[string]bool{found[0].ID: true, found[1].ID: true}
+		assert.True(t, ids[active.ID.String()])
+		assert.True(t, ids[pickWindowOpen.ID.String()])
+	})
+
+	t.Run("excludes far-future tournaments with closed pick windows", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		active := factory.CreateActiveTournament(testutil.WithTournamentName("Active"))
+		factory.CreateUpcomingTournament(14, testutil.WithTournamentName("Far Future"))
+
+		found, err := service.GetAllCurrentOrUpcoming(ctx)
+
+		require.NoError(t, err)
+		assert.Len(t, found, 1)
+		assert.Equal(t, active.ID.String(), found[0].ID)
+	})
+
+	t.Run("returns empty slice when all completed", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		factory.CreateCompletedTournament()
+
+		found, err := service.GetAllCurrentOrUpcoming(ctx)
+
+		require.NoError(t, err)
+		assert.Empty(t, found)
+	})
+
+	t.Run("returns overlapping active tournaments sorted by start date", func(t *testing.T) {
+		db := testutil.NewTestDB(t)
+		factory := testutil.NewFactory(t, db)
+		service := NewService(db)
+		ctx := context.Background()
+
+		startDate1 := time.Now().AddDate(0, 0, -1)
+		startDate2 := time.Now().AddDate(0, 0, -2)
+		pickWindowCloses := time.Now().AddDate(0, 0, -3)
+
+		factory.CreateTournament(
+			testutil.WithTournamentName("Later Active"),
+			testutil.WithStartDate(startDate1),
+			testutil.WithEndDate(startDate1.AddDate(0, 0, 4)),
+			testutil.WithPickWindow(startDate1.AddDate(0, 0, -5), pickWindowCloses),
+		)
+		factory.CreateTournament(
+			testutil.WithTournamentName("Earlier Active"),
+			testutil.WithStartDate(startDate2),
+			testutil.WithEndDate(startDate2.AddDate(0, 0, 4)),
+			testutil.WithPickWindow(startDate2.AddDate(0, 0, -5), pickWindowCloses),
+		)
+
+		found, err := service.GetAllCurrentOrUpcoming(ctx)
+
+		require.NoError(t, err)
+		assert.Len(t, found, 2)
+		assert.Equal(t, "Earlier Active", found[0].Name)
+		assert.Equal(t, "Later Active", found[1].Name)
+	})
+}
+
 func TestTournamentToDTO(t *testing.T) {
 	t.Run("converts ent tournament to DTO", func(t *testing.T) {
 		db := testutil.NewTestDB(t)

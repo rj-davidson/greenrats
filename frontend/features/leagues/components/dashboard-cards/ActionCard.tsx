@@ -22,18 +22,32 @@ interface ActionCardProps {
   leagueId: string;
 }
 
-function findRelevantTournament(tournaments: LeagueTournament[]): LeagueTournament | null {
+function findRelevantTournaments(tournaments: LeagueTournament[]): LeagueTournament[] {
   const now = Date.now();
 
-  return (
-    [...tournaments]
-      .filter((t) => t.pick_window_closes_at && new Date(t.pick_window_closes_at).getTime() > now)
-      .sort(
-        (a, b) =>
-          new Date(a.pick_window_closes_at!).getTime() -
-          new Date(b.pick_window_closes_at!).getTime(),
-      )[0] ?? null
-  );
+  const withOpenWindow = [...tournaments]
+    .filter(
+      (t) =>
+        t.pick_window_opens_at &&
+        t.pick_window_closes_at &&
+        new Date(t.pick_window_opens_at).getTime() <= now &&
+        new Date(t.pick_window_closes_at).getTime() > now,
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.pick_window_closes_at!).getTime() - new Date(b.pick_window_closes_at!).getTime(),
+    );
+
+  if (withOpenWindow.length > 0) return withOpenWindow;
+
+  const nextUpcoming = [...tournaments]
+    .filter((t) => t.pick_window_closes_at && new Date(t.pick_window_closes_at).getTime() > now)
+    .sort(
+      (a, b) =>
+        new Date(a.pick_window_closes_at!).getTime() - new Date(b.pick_window_closes_at!).getTime(),
+    )[0];
+
+  return nextUpcoming ? [nextUpcoming] : [];
 }
 
 function formatLocalDateTime(isoString: string): string {
@@ -93,49 +107,13 @@ function TournamentDetails({ tournament }: { tournament: LeagueTournament }) {
   );
 }
 
-export function ActionCard({ leagueId }: ActionCardProps) {
-  const { data, isLoading } = useLeagueTournaments(leagueId);
-  const [, setTick] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => setTick((t) => t + 1), 60000);
-    return () => clearInterval(interval);
-  }, []);
-
-  if (isLoading) {
-    return <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />} isLoading />;
-  }
-
-  if (!data?.tournaments.length) {
-    return (
-      <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
-        <Empty className="border-none py-4">
-          <EmptyHeader>
-            <EmptyTitle>No tournaments scheduled</EmptyTitle>
-            <EmptyDescription>Check back soon for upcoming events.</EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      </DashboardCard>
-    );
-  }
-
-  const tournament = findRelevantTournament(data.tournaments);
-
-  if (!tournament) {
-    return (
-      <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
-        <Empty className="border-none py-4">
-          <EmptyHeader>
-            <EmptyTitle>No upcoming picks</EmptyTitle>
-            <EmptyDescription>
-              All pick windows are currently closed. Check back soon.
-            </EmptyDescription>
-          </EmptyHeader>
-        </Empty>
-      </DashboardCard>
-    );
-  }
-
+function ActionCardContent({
+  leagueId,
+  tournament,
+}: {
+  leagueId: string;
+  tournament: LeagueTournament;
+}) {
   const state = getPickWindowState(tournament);
 
   if (state === "open") {
@@ -258,5 +236,57 @@ export function ActionCard({ leagueId }: ActionCardProps) {
         </div>
       </div>
     </DashboardCard>
+  );
+}
+
+export function ActionCard({ leagueId }: ActionCardProps) {
+  const { data, isLoading } = useLeagueTournaments(leagueId);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => setTick((t) => t + 1), 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (isLoading) {
+    return <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />} isLoading />;
+  }
+
+  if (!data?.tournaments.length) {
+    return (
+      <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>No tournaments scheduled</EmptyTitle>
+            <EmptyDescription>Check back soon for upcoming events.</EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </DashboardCard>
+    );
+  }
+
+  const tournaments = findRelevantTournaments(data.tournaments);
+
+  if (tournaments.length === 0) {
+    return (
+      <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
+        <Empty className="border-none py-4">
+          <EmptyHeader>
+            <EmptyTitle>No upcoming picks</EmptyTitle>
+            <EmptyDescription>
+              All pick windows are currently closed. Check back soon.
+            </EmptyDescription>
+          </EmptyHeader>
+        </Empty>
+      </DashboardCard>
+    );
+  }
+
+  return (
+    <>
+      {tournaments.map((tournament) => (
+        <ActionCardContent key={tournament.id} leagueId={leagueId} tournament={tournament} />
+      ))}
+    </>
   );
 }

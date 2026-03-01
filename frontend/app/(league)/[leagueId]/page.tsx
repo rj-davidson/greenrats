@@ -29,8 +29,8 @@ export default function LeagueDashboardPage() {
 
   const league = leagueData?.league;
 
-  const hasActiveTournament = useMemo(() => {
-    return tournamentsData?.tournaments.some((t) => t.status === "active") ?? false;
+  const activeTournaments = useMemo(() => {
+    return tournamentsData?.tournaments.filter((t) => t.status === "active") ?? [];
   }, [tournamentsData]);
 
   if (leagueLoading) {
@@ -90,13 +90,30 @@ export default function LeagueDashboardPage() {
       <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(400px,1fr))]">
         <ActionCard leagueId={leagueId} />
 
-        {hasActiveTournament && (
-          <>
-            <ActiveTournamentCard leagueId={leagueId} />
-            <TournamentLeaderboardCard leagueId={leagueId} />
-            <ActivePickScorecardCard leagueId={leagueId} />
-          </>
-        )}
+        {activeTournaments.map((t) => (
+          <ActiveTournamentCard
+            key={t.id}
+            leagueId={leagueId}
+            tournamentId={t.id}
+            tournamentName={t.name}
+          />
+        ))}
+        {activeTournaments.map((t) => (
+          <TournamentLeaderboardCard
+            key={t.id}
+            leagueId={leagueId}
+            tournamentId={t.id}
+            tournamentName={t.name}
+          />
+        ))}
+        {activeTournaments.map((t) => (
+          <ActivePickScorecardCard
+            key={t.id}
+            leagueId={leagueId}
+            tournamentId={t.id}
+            tournamentName={t.name}
+          />
+        ))}
 
         <RecentTournamentResultsCard leagueId={leagueId} />
         <YourStatsCard leagueId={leagueId} />

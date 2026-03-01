@@ -89,16 +89,16 @@ function MakingYourPick() {
           tournament&apos;s local time zone (where the event is played), not your local time.
         </p>
         <p>
-          You can <strong className="text-foreground">change your pick</strong> as often as you
-          want until the deadline. After that, your pick is locked.
+          You can <strong className="text-foreground">change your pick</strong> as often as you want
+          until the deadline. After that, your pick is locked.
         </p>
         <p>
           <strong className="text-foreground">Miss the deadline?</strong> You get $0 for that
           tournament and can make a new pick for the next one.
         </p>
         <p>
-          Simple strategy: balance recent form, course fit, and whether you want to save top
-          golfers for later events.
+          Simple strategy: balance recent form, course fit, and whether you want to save top golfers
+          for later events.
         </p>
       </div>
     </section>
@@ -157,8 +157,8 @@ function WinningYourLeague() {
       <h2 className="text-2xl font-semibold">How You Win</h2>
       <div className="space-y-3 text-muted-foreground">
         <p>
-          This is a <strong className="text-foreground">season-long game</strong>. Every
-          tournament adds to your total.
+          This is a <strong className="text-foreground">season-long game</strong>. Every tournament
+          adds to your total.
         </p>
         <p>
           Your league leaderboard shows everyone&apos;s cumulative earnings, so you can see where
