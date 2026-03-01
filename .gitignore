@@ -64,5 +64,10 @@ coverage/
 docker-compose.override.yml
 /backend/cmd/ingest/pricing_plans/*
 
+# Ent generated code (regenerated via go generate ./ent)
+backend/ent/*
+!backend/ent/generate.go
+!backend/ent/schema/
+
 # Local task tracking
 human-tasks.md

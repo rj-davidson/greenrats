@@ -13,6 +13,9 @@ RUN go mod download
 # Copy source code
 COPY . .
 
+# Generate Ent code from schemas
+RUN go generate ./ent
+
 # Build the ingest binary
 RUN CGO_ENABLED=0 GOOS=linux go build -o /bin/ingest ./cmd/ingest
 
