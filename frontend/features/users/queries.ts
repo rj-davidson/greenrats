@@ -15,16 +15,16 @@ export const userKeys = {
   pendingActions: () => [...userKeys.all, "pending-actions"] as const,
 };
 
-/**
- * Hook to fetch the current authenticated user from the database.
- * This returns the DB user (with display_name, etc.) rather than the WorkOS user.
- */
-export function useCurrentUser() {
-  return useQuery({
+export function buildGetCurrentUserQueryOptions(requestor: Requestor = makeClientRequest) {
+  return queryOptions<User>({
     queryKey: userKeys.me(),
-    queryFn: () => makeClientRequest.get<User>("/api/v1/users/me"),
+    queryFn: () => requestor.get<User>("/api/v1/users/me"),
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
+}
+
+export function useCurrentUser() {
+  return useQuery(buildGetCurrentUserQueryOptions());
 }
 
 /**
