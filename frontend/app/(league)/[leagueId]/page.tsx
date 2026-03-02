@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader } from "@/components/shadcn/card";
 import { Skeleton } from "@/components/shadcn/skeleton";
+import { MultiPickWindowAlert } from "@/features/dashboard/components";
 import {
   ActionCard,
   ActivePickScorecardCard,
@@ -72,9 +73,11 @@ export default function LeagueDashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <LeagueMonogram league={league} size={48} />
+    <>
+      <MultiPickWindowAlert />
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <LeagueMonogram league={league} size={48} />
         <div>
           <h1 className="text-3xl font-bold">{league.name}</h1>
           <div className="flex items-center gap-3 text-muted-foreground">
@@ -122,6 +125,7 @@ export default function LeagueDashboardPage() {
         <PickHistoryCard leagueId={leagueId} />
         <AuditCard leagueId={leagueId} />
       </div>
-    </div>
+      </div>
+    </>
   );
 }
