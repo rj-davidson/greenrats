@@ -103,9 +103,9 @@ export function AuditCard({ leagueId }: AuditCardProps) {
           <Fragment key={action.id}>
             <Item size="sm" className="py-2">
               <ItemMedia variant="icon">{getActionIcon(action.action_type)}</ItemMedia>
-              <ItemContent>
+              <ItemContent className="min-w-0">
                 <ItemHeader>
-                  <ItemTitle className="truncate">{getActionDescription(action)}</ItemTitle>
+                  <ItemTitle className="line-clamp-3 w-auto">{getActionDescription(action)}</ItemTitle>
                   <span className="text-xs text-muted-foreground">
                     {formatDate(action.created_at)}
                   </span>
