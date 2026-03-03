@@ -68,8 +68,10 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 
 	i.logger.Debug("fetched field", "tournament", t.Name, "count", len(fields))
 
+	seenPlayerBdlIDs := make(map[int]struct{}, len(fields))
 	processed := 0
 	for idx := range fields {
+		seenPlayerBdlIDs[fields[idx].Player.ID] = struct{}{}
 		if err := i.syncService.UpsertFieldEntry(ctx, t, &fields[idx]); err != nil {
 			if isContextError(err) {
 				return fmt.Errorf("upsert field entry for %s: %w", fields[idx].Player.DisplayName, err)
@@ -80,6 +82,13 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 	}
 
 	SyncRecordsProcessed.WithLabelValues("fields", "entries").Add(float64(processed))
+
+	removed, err := i.syncService.PruneStaleFieldEntries(ctx, t.ID, seenPlayerBdlIDs)
+	if err != nil {
+		i.logger.Warn("failed to prune stale field entries", "tournament", t.Name, "error", err)
+	} else if removed > 0 {
+		i.logger.Info("removed stale field entries", "tournament", t.Name, "removed", removed)
+	}
 
 	if err := i.syncTournamentFutures(ctx, t); err != nil {
 		if isContextError(err) {

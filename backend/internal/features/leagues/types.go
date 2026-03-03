@@ -81,6 +81,7 @@ type LeagueTournament struct {
 	HasUserPick        bool       `json:"has_user_pick"`
 	UserPickID         uuid.UUID  `json:"user_pick_id,omitempty"`
 	GolferName         string     `json:"golfer_name,omitempty"`
+	GolferInField      *bool      `json:"golfer_in_field,omitempty"`
 	GolferEarnings     int        `json:"golfer_earnings,omitempty"`
 	PickCount          int        `json:"pick_count"`
 	PickWindowOpensAt  *time.Time `json:"pick_window_opens_at,omitempty"`

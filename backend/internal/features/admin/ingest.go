@@ -258,13 +258,22 @@ func (s *IngestService) SyncField(ctx context.Context, tournamentID uuid.UUID) e
 
 	s.logger.Info("fetched field", "tournament", t.Name, "count", len(fields))
 
+	seenPlayerBdlIDs := make(map[int]struct{}, len(fields))
 	processed := 0
 	for idx := range fields {
+		seenPlayerBdlIDs[fields[idx].Player.ID] = struct{}{}
 		if err := s.syncService.UpsertFieldEntry(ctx, t, &fields[idx]); err != nil {
 			s.logger.Warn("failed to upsert field entry", "player", fields[idx].Player.DisplayName, "error", err)
 			continue
 		}
 		processed++
+	}
+
+	removed, pruneErr := s.syncService.PruneStaleFieldEntries(ctx, t.ID, seenPlayerBdlIDs)
+	if pruneErr != nil {
+		s.logger.Warn("failed to prune stale field entries", "tournament", t.Name, "error", pruneErr)
+	} else if removed > 0 {
+		s.logger.Info("removed stale field entries", "tournament", t.Name, "removed", removed)
 	}
 
 	s.logger.Info("field sync completed", "tournament", t.Name, "processed", processed)

@@ -1,7 +1,6 @@
 "use client";
 
 import { DashboardCard } from "./DashboardCard";
-import { Badge } from "@/components/shadcn/badge";
 import { Button } from "@/components/shadcn/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "@/components/shadcn/empty";
 import { useLeagueTournaments } from "@/features/leagues/queries";
@@ -115,125 +114,105 @@ function ActionCardContent({
   tournament: LeagueTournament;
 }) {
   const state = getPickWindowState(tournament);
+  const isOpen = state === "open";
+  const isNotOpen = state === "not_open";
+  const notInField = tournament.has_user_pick && tournament.golfer_in_field === false;
 
-  if (state === "open") {
-    const countdown = formatCountdown(tournament.pick_window_closes_at!);
+  const pickSlotBg = notInField
+    ? "rounded-lg border border-destructive/20 bg-destructive/10 p-3"
+    : isOpen && tournament.has_user_pick
+      ? "bg-shimmer rounded-lg p-3"
+      : "rounded-lg bg-muted/50 p-3";
 
+  const pickSlot = (() => {
     if (tournament.has_user_pick) {
       return (
-        <DashboardCard
-          title="Up Next"
-          icon={<ZapIcon className="size-4" />}
-          className="animate-border-pulse border-2 border-primary"
+        <Link
+          href={`/${leagueId}/tournaments/${tournament.id}`}
+          className={`block transition-opacity hover:opacity-80 ${pickSlotBg}`}
         >
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <CheckCircle2Icon className="size-5 text-primary" />
-              <span className="font-medium">{tournament.name}</span>
-            </div>
-            <TournamentDetails tournament={tournament} />
-            <Link
-              href={`/${leagueId}/tournaments/${tournament.id}`}
-              className="bg-shimmer block rounded-lg p-3 transition-opacity hover:opacity-80"
-            >
-              <p className="text-sm text-muted-foreground">Your pick</p>
-              <p className="font-semibold">{tournament.golfer_name}</p>
-            </Link>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <ClockIcon className="size-4" />
-              <span>
-                Window closes in <span className="font-medium">{countdown}</span>
-              </span>
-            </div>
-            <Button asChild variant="outline" className="w-full">
-              <Link href={`/${leagueId}/tournaments/${tournament.id}`}>View</Link>
-            </Button>
-          </div>
-        </DashboardCard>
+          <p className="text-sm text-muted-foreground">Your pick</p>
+          <p className="font-semibold">
+            {tournament.golfer_name}
+            {notInField && <span className="text-destructive"> (Not in field)</span>}
+          </p>
+        </Link>
       );
     }
 
-    return (
-      <DashboardCard
-        title="Up Next"
-        icon={<ZapIcon className="size-4" />}
-        className="animate-border-pulse border-2 border-primary"
-      >
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="font-medium">{tournament.name}</span>
-            <Badge variant="default" className="text-xs">
-              Open
-            </Badge>
-          </div>
-          <TournamentDetails tournament={tournament} />
-          <div className="flex items-center gap-2 text-sm">
-            <ClockIcon className="size-4 text-muted-foreground" />
-            <span>
-              Closes in <span className="font-semibold">{countdown}</span>
-            </span>
-          </div>
-          <Button asChild className="w-full">
-            <Link href={`/${leagueId}/tournaments/${tournament.id}`}>Make Your Pick</Link>
-          </Button>
+    if (isNotOpen) {
+      return (
+        <div className={pickSlotBg}>
+          <p className="text-sm text-muted-foreground">Pick window opens</p>
+          <p className="font-semibold">{formatCountdown(tournament.pick_window_opens_at!)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {formatLocalDateTime(tournament.pick_window_opens_at!)}
+          </p>
         </div>
-      </DashboardCard>
-    );
-  }
+      );
+    }
 
-  if (state === "not_open") {
-    const countdown = formatCountdown(tournament.pick_window_opens_at!);
-    const localDateTime = formatLocalDateTime(tournament.pick_window_opens_at!);
-
-    return (
-      <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
-        <div className="space-y-3">
-          <span className="font-medium">{tournament.name}</span>
-          <TournamentDetails tournament={tournament} />
-          <div className="rounded-lg bg-muted/50 p-3">
-            <p className="text-sm text-muted-foreground">Pick window opens</p>
-            <p className="font-semibold">{countdown}</p>
-            <p className="mt-1 text-xs text-muted-foreground">{localDateTime}</p>
-          </div>
+    if (!isOpen) {
+      return (
+        <div className={pickSlotBg}>
+          <p className="text-sm text-muted-foreground">No selection made</p>
         </div>
-      </DashboardCard>
-    );
-  }
+      );
+    }
 
-  if (tournament.has_user_pick) {
-    return (
-      <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <CheckCircle2Icon className="size-5 text-primary" />
-            <span className="font-medium">{tournament.name}</span>
-          </div>
-          <TournamentDetails tournament={tournament} />
-          <Link
-            href={`/${leagueId}/tournaments/${tournament.id}`}
-            className="block rounded-lg bg-muted/50 p-3 transition-opacity hover:opacity-80"
-          >
-            <p className="text-sm text-muted-foreground">Your pick</p>
-            <p className="font-semibold">{tournament.golfer_name}</p>
-          </Link>
-          <p className="text-sm text-muted-foreground">Pick window closed</p>
-          <Button asChild variant="outline" className="w-full">
-            <Link href={`/${leagueId}/tournaments/${tournament.id}`}>View</Link>
-          </Button>
-        </div>
-      </DashboardCard>
-    );
-  }
+    return null;
+  })();
+
+  const timerRow = isOpen ? (
+    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <ClockIcon className="size-4" />
+      <span>
+        Closes in{" "}
+        <span className="font-medium">{formatCountdown(tournament.pick_window_closes_at!)}</span>
+      </span>
+    </div>
+  ) : null;
+
+  const actionButton = (() => {
+    if (isOpen && !tournament.has_user_pick) {
+      return (
+        <Button asChild className="w-full">
+          <Link href={`/${leagueId}/tournaments/${tournament.id}`}>Make Your Pick</Link>
+        </Button>
+      );
+    }
+    if (isOpen && tournament.has_user_pick) {
+      return (
+        <Button asChild variant="outline" className="w-full">
+          <Link href={`/${leagueId}/tournaments/${tournament.id}`}>Change Pick</Link>
+        </Button>
+      );
+    }
+    if (!isOpen && !isNotOpen && tournament.has_user_pick) {
+      return (
+        <Button asChild variant="outline" className="w-full">
+          <Link href={`/${leagueId}/tournaments/${tournament.id}`}>View</Link>
+        </Button>
+      );
+    }
+    return null;
+  })();
 
   return (
-    <DashboardCard title="Up Next" icon={<ZapIcon className="size-4" />}>
+    <DashboardCard
+      title="Up Next"
+      icon={<ZapIcon className="size-4" />}
+      className={isOpen ? "animate-border-pulse border-2 border-primary" : undefined}
+    >
       <div className="space-y-3">
-        <span className="font-medium">{tournament.name}</span>
-        <TournamentDetails tournament={tournament} />
-        <div className="rounded-lg bg-muted/50 p-3">
-          <p className="text-sm text-muted-foreground">Pick window closed</p>
-          <p className="font-medium">No selection made</p>
+        <div className="flex items-center gap-2">
+          {tournament.has_user_pick && <CheckCircle2Icon className="size-5 text-primary" />}
+          <span className="font-medium">{tournament.name}</span>
         </div>
+        <TournamentDetails tournament={tournament} />
+        {pickSlot}
+        {timerRow}
+        {actionButton}
       </div>
     </DashboardCard>
   );

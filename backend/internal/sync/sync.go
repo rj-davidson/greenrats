@@ -543,6 +543,46 @@ func (s *Service) UpsertTournamentOdds(ctx context.Context, t *ent.Tournament, f
 	return nil
 }
 
+func (s *Service) PruneStaleFieldEntries(ctx context.Context, tournamentID uuid.UUID, seenPlayerBdlIDs map[int]struct{}) (int, error) {
+	if len(seenPlayerBdlIDs) == 0 {
+		return 0, nil
+	}
+
+	existing, err := s.db.FieldEntry.Query().
+		Where(fieldentry.HasTournamentWith(tournament.IDEQ(tournamentID))).
+		WithGolfer().
+		All(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to query field entries: %w", err)
+	}
+
+	staleIDs := make([]uuid.UUID, 0)
+	for _, entry := range existing {
+		if entry.Edges.Golfer == nil || entry.Edges.Golfer.BdlID == nil {
+			continue
+		}
+
+		if _, ok := seenPlayerBdlIDs[*entry.Edges.Golfer.BdlID]; ok {
+			continue
+		}
+
+		staleIDs = append(staleIDs, entry.ID)
+	}
+
+	if len(staleIDs) == 0 {
+		return 0, nil
+	}
+
+	deleted, err := s.db.FieldEntry.Delete().
+		Where(fieldentry.IDIn(staleIDs...)).
+		Exec(ctx)
+	if err != nil {
+		return 0, fmt.Errorf("failed to delete stale field entries: %w", err)
+	}
+
+	return deleted, nil
+}
+
 func mapFieldEntryStatus(status string) fieldentry.EntryStatus {
 	switch strings.ToLower(status) {
 	case "committed", "confirmed":
