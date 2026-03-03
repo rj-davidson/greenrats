@@ -661,6 +661,64 @@ func (c *Client) GetTournamentField(ctx context.Context, tournamentID int) ([]To
 	return allEntries, nil
 }
 
+func (c *Client) GetFutures(ctx context.Context, tournamentID int) ([]Future, error) {
+	c.logger.Info("fetching futures", "tournament_id", tournamentID)
+	start := time.Now()
+
+	var allFutures []Future
+	cursor := 0
+
+	for {
+		if err := c.wait(ctx); err != nil {
+			return nil, fmt.Errorf("rate limiter: %w", err)
+		}
+
+		var response FuturesResponse
+
+		result, err := c.breaker.Execute(func() (interface{}, error) {
+			req := c.client.R().
+				SetContext(ctx).
+				SetResult(&response).
+				SetQueryParam("tournament_ids[]", fmt.Sprintf("%d", tournamentID)).
+				SetQueryParam("per_page", "100")
+
+			if cursor > 0 {
+				req.SetQueryParam("cursor", fmt.Sprintf("%d", cursor))
+			}
+
+			resp, err := req.Get("/pga/v1/futures")
+			if err != nil {
+				return nil, err
+			}
+
+			if resp.IsError() {
+				return nil, fmt.Errorf("API error: %s", resp.Status())
+			}
+
+			return &response, nil
+		})
+		if err != nil {
+			c.recordRequest("futures", start, err)
+			if errors.Is(err, gobreaker.ErrOpenState) {
+				return nil, fmt.Errorf("failed to fetch futures: %w", ErrCircuitOpen)
+			}
+			return nil, fmt.Errorf("failed to fetch futures: %w", err)
+		}
+
+		_ = result
+		allFutures = append(allFutures, response.Data...)
+
+		if response.Meta.NextCursor == 0 {
+			break
+		}
+		cursor = response.Meta.NextCursor
+	}
+
+	c.recordRequest("futures", start, nil)
+	c.logger.Info("futures fetch complete", "total", len(allFutures), "duration", time.Since(start))
+	return allFutures, nil
+}
+
 func (c *Client) GetPlayerRoundStats(ctx context.Context, tournamentID int) ([]PlayerRoundStats, error) {
 	c.logger.Info("fetching player round stats", "tournament_id", tournamentID)
 	start := time.Now()

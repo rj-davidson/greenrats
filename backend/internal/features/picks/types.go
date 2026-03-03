@@ -184,6 +184,7 @@ type PickFieldEntry struct {
 	IsUsed                bool               `json:"is_used"`
 	UsedForTournamentID   *uuid.UUID         `json:"used_for_tournament_id,omitempty"`
 	UsedForTournamentName string             `json:"used_for_tournament_name,omitempty"`
+	Signal                *int               `json:"signal,omitempty"`
 	SeasonStats           *GolferSeasonStats `json:"season_stats,omitempty"`
 	Bio                   *GolferBio         `json:"bio,omitempty"`
 }

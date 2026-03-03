@@ -11,6 +11,7 @@ type ClientInterface interface {
 	GetTournamentCourseStats(ctx context.Context, tournamentID int) ([]TournamentCourseStats, error)
 
 	// GOAT tier endpoints
+	GetFutures(ctx context.Context, tournamentID int) ([]Future, error)
 	GetCourses(ctx context.Context) ([]Course, error)
 	GetCourseHoles(ctx context.Context, courseID int) ([]CourseHole, error)
 	GetPlayerRoundResults(ctx context.Context, tournamentID int) ([]PlayerRoundResult, error)

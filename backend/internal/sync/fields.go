@@ -80,5 +80,36 @@ func (i *Ingester) syncTournamentField(ctx context.Context, t *ent.Tournament) e
 	}
 
 	SyncRecordsProcessed.WithLabelValues("fields", "entries").Add(float64(processed))
+
+	if err := i.syncTournamentFutures(ctx, t); err != nil {
+		if isContextError(err) {
+			return fmt.Errorf("sync futures for %s: %w", t.Name, err)
+		}
+		i.logger.Warn("failed to sync futures", "tournament", t.Name, "error", err)
+	}
+
+	return nil
+}
+
+func (i *Ingester) syncTournamentFutures(ctx context.Context, t *ent.Tournament) error {
+	futures, err := i.ballDontLie.GetFutures(ctx, *t.BdlID)
+	if err != nil {
+		return fmt.Errorf("fetch futures: %w", err)
+	}
+
+	i.logger.Debug("fetched futures", "tournament", t.Name, "count", len(futures))
+
+	processed := 0
+	for idx := range futures {
+		if err := i.syncService.UpsertTournamentOdds(ctx, t, &futures[idx]); err != nil {
+			if isContextError(err) {
+				return fmt.Errorf("upsert tournament odds for %s: %w", futures[idx].Player.DisplayName, err)
+			}
+			continue
+		}
+		processed++
+	}
+
+	SyncRecordsProcessed.WithLabelValues("fields", "odds").Add(float64(processed))
 	return nil
 }

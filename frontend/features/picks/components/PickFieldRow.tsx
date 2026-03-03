@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/shadcn/button";
+import { Progress } from "@/components/shadcn/progress";
 import { TableCell, TableRow } from "@/components/shadcn/table";
 import { GolferDetailPanel } from "@/features/picks/components/GolferDetailPanel";
 import type { PickFieldEntry, PickWindowState } from "@/features/picks/types";
@@ -62,8 +63,15 @@ export function PickFieldRow({
           )}
         </TableCell>
         <TableCell>{entry.golfer_name}</TableCell>
-        <TableCell className="text-right tabular-nums">
-          {entry.owgr && entry.owgr > 0 ? `#${entry.owgr}` : "-"}
+        <TableCell className="w-24 text-right">
+          {entry.signal != null ? (
+            <div className="flex items-center justify-end gap-2">
+              <Progress value={entry.signal} className="h-1.5 w-12" />
+              <span className="w-6 text-xs text-muted-foreground tabular-nums">{entry.signal}</span>
+            </div>
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
         </TableCell>
         <TableCell className="hidden text-right tabular-nums sm:table-cell">
           {entry.season_earnings ? formatCurrency(entry.season_earnings) : "-"}
@@ -73,7 +81,7 @@ export function PickFieldRow({
         <TableRow className="hover:bg-transparent">
           <TableCell colSpan={4} className="p-0">
             <div className="border-t bg-muted/30">
-              <GolferDetailPanel stats={entry.season_stats} bio={entry.bio} />
+              <GolferDetailPanel stats={entry.season_stats} bio={entry.bio} owgr={entry.owgr} />
               <div className="flex justify-center border-t py-2">
                 <Button variant="ghost" size="sm" onClick={onToggle} className="gap-1">
                   <ChevronUpIcon className="size-4" />

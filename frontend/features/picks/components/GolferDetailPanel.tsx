@@ -6,6 +6,7 @@ import { CalendarIcon, GraduationCapIcon, MapPinIcon, TrophyIcon } from "lucide-
 interface GolferDetailPanelProps {
   stats?: GolferSeasonStats | null;
   bio?: GolferBio | null;
+  owgr?: number | null;
 }
 
 function formatCurrency(amount: number): string {
@@ -38,11 +39,13 @@ function formatLocation(city?: string, state?: string, country?: string): string
   return parts.join(", ");
 }
 
-export function GolferDetailPanel({ stats, bio }: GolferDetailPanelProps) {
+export function GolferDetailPanel({ stats, bio, owgr }: GolferDetailPanelProps) {
   const hasAnyStats = stats != null && Object.values(stats).some((v) => v != null);
   const hasAnyBio = bio != null && Object.values(bio).some((v) => v != null && v !== "");
 
-  if (!hasAnyStats && !hasAnyBio) {
+  const hasOwgr = owgr != null && owgr > 0;
+
+  if (!hasAnyStats && !hasAnyBio && !hasOwgr) {
     return (
       <div className="px-4 py-6 text-center text-sm text-muted-foreground">
         No additional information available for this golfer.
@@ -60,50 +63,56 @@ export function GolferDetailPanel({ stats, bio }: GolferDetailPanelProps) {
 
   return (
     <div className="grid gap-4 p-4 md:grid-cols-2">
-      {stats != null && hasAnyStats && (
+      {(hasAnyStats || hasOwgr) && (
         <div className="space-y-3">
           <h4 className="flex items-center gap-2 text-sm font-medium">
             <TrophyIcon className="size-4" />
             Season Stats
           </h4>
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            {stats.events_played != null && (
+            {hasOwgr && (
+              <>
+                <span className="text-muted-foreground">OWGR</span>
+                <span className="text-right tabular-nums">#{owgr}</span>
+              </>
+            )}
+            {stats?.events_played != null && (
               <>
                 <span className="text-muted-foreground">Events</span>
                 <span className="text-right tabular-nums">{stats.events_played}</span>
               </>
             )}
-            {stats.cuts_made != null && (
+            {stats?.cuts_made != null && (
               <>
                 <span className="text-muted-foreground">Cuts Made</span>
                 <span className="text-right tabular-nums">{stats.cuts_made}</span>
               </>
             )}
-            {stats.wins != null && (
+            {stats?.wins != null && (
               <>
                 <span className="text-muted-foreground">Wins</span>
                 <span className="text-right tabular-nums">{stats.wins}</span>
               </>
             )}
-            {stats.top_10s != null && (
+            {stats?.top_10s != null && (
               <>
                 <span className="text-muted-foreground">Top 10s</span>
                 <span className="text-right tabular-nums">{stats.top_10s}</span>
               </>
             )}
-            {stats.earnings != null && (
+            {stats?.earnings != null && (
               <>
                 <span className="text-muted-foreground">Earnings</span>
                 <span className="text-right tabular-nums">{formatCurrency(stats.earnings)}</span>
               </>
             )}
-            {stats.scoring_avg != null && (
+            {stats?.scoring_avg != null && (
               <>
                 <span className="text-muted-foreground">Scoring Avg</span>
                 <span className="text-right tabular-nums">{formatStat(stats.scoring_avg, 2)}</span>
               </>
             )}
-            {stats.driving_distance != null && (
+            {stats?.driving_distance != null && (
               <>
                 <span className="text-muted-foreground">Driving Dist</span>
                 <span className="text-right tabular-nums">
@@ -111,7 +120,7 @@ export function GolferDetailPanel({ stats, bio }: GolferDetailPanelProps) {
                 </span>
               </>
             )}
-            {stats.driving_accuracy != null && (
+            {stats?.driving_accuracy != null && (
               <>
                 <span className="text-muted-foreground">Driving Acc</span>
                 <span className="text-right tabular-nums">
@@ -119,19 +128,19 @@ export function GolferDetailPanel({ stats, bio }: GolferDetailPanelProps) {
                 </span>
               </>
             )}
-            {stats.gir_pct != null && (
+            {stats?.gir_pct != null && (
               <>
                 <span className="text-muted-foreground">GIR</span>
                 <span className="text-right tabular-nums">{formatStat(stats.gir_pct, 1)}%</span>
               </>
             )}
-            {stats.putting_avg != null && (
+            {stats?.putting_avg != null && (
               <>
                 <span className="text-muted-foreground">Putting Avg</span>
                 <span className="text-right tabular-nums">{formatStat(stats.putting_avg, 2)}</span>
               </>
             )}
-            {stats.scrambling_pct != null && (
+            {stats?.scrambling_pct != null && (
               <>
                 <span className="text-muted-foreground">Scrambling</span>
                 <span className="text-right tabular-nums">

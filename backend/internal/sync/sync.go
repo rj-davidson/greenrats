@@ -22,6 +22,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
 	"github.com/rj-davidson/greenrats/ent/tournamentcourse"
+	"github.com/rj-davidson/greenrats/ent/tournamentodds"
 	"github.com/rj-davidson/greenrats/internal/external/balldontlie"
 	"github.com/rj-davidson/greenrats/internal/external/googlemaps"
 	"github.com/rj-davidson/greenrats/internal/external/pgatour"
@@ -472,6 +473,70 @@ func (s *Service) UpsertFieldEntry(ctx context.Context, t *ent.Tournament, f *ba
 		_, err = updater.Save(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to update field entry: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) UpsertTournamentOdds(ctx context.Context, t *ent.Tournament, f *balldontlie.Future) error {
+	g, err := s.db.Golfer.Query().
+		Where(golfer.BdlID(f.Player.ID)).
+		Only(ctx)
+
+	if ent.IsNotFound(err) {
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("failed to query golfer: %w", err)
+	}
+
+	odds := f.AmericanOdds
+	var impliedProb float64
+	if odds > 0 {
+		impliedProb = 100.0 / float64(odds+100)
+	} else {
+		absOdds := float64(-odds)
+		impliedProb = absOdds / (absOdds + 100.0)
+	}
+
+	oddsUpdatedAt := time.Now()
+	if parsed, parseErr := time.Parse(balldontlie.DateFormat, f.UpdatedAt); parseErr == nil {
+		oddsUpdatedAt = parsed
+	}
+
+	existing, err := s.db.TournamentOdds.Query().
+		Where(
+			tournamentodds.HasTournamentWith(tournament.ID(t.ID)),
+			tournamentodds.HasGolferWith(golfer.ID(g.ID)),
+			tournamentodds.VendorEQ(f.Vendor),
+		).
+		Only(ctx)
+
+	switch {
+	case ent.IsNotFound(err):
+		_, err = s.db.TournamentOdds.Create().
+			SetTournament(t).
+			SetGolfer(g).
+			SetVendor(f.Vendor).
+			SetAmericanOdds(odds).
+			SetImpliedProbability(impliedProb).
+			SetOddsUpdatedAt(oddsUpdatedAt).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to create tournament odds: %w", err)
+		}
+
+	case err != nil:
+		return fmt.Errorf("failed to query tournament odds: %w", err)
+
+	default:
+		_, err = existing.Update().
+			SetAmericanOdds(odds).
+			SetImpliedProbability(impliedProb).
+			SetOddsUpdatedAt(oddsUpdatedAt).
+			Save(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to update tournament odds: %w", err)
 		}
 	}
 

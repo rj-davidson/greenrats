@@ -52,9 +52,9 @@ export function PickFieldTable({ data, leagueId }: PickFieldTableProps) {
 
   const sortedEntries = useMemo(() => {
     return [...filteredEntries].sort((a, b) => {
-      const aOwgr = a.owgr ?? Infinity;
-      const bOwgr = b.owgr ?? Infinity;
-      if (aOwgr !== bOwgr) return aOwgr - bOwgr;
+      const aSignal = a.signal ?? -1;
+      const bSignal = b.signal ?? -1;
+      if (aSignal !== bSignal) return bSignal - aSignal;
       return a.golfer_name.localeCompare(b.golfer_name);
     });
   }, [filteredEntries]);
@@ -126,7 +126,7 @@ export function PickFieldTable({ data, leagueId }: PickFieldTableProps) {
                 <TableRow>
                   <TableHead className="w-0"></TableHead>
                   <TableHead>Golfer</TableHead>
-                  <TableHead className="text-right">OWGR</TableHead>
+                  <TableHead className="text-right">Signal</TableHead>
                   <TableHead className="hidden text-right sm:table-cell">Season $</TableHead>
                 </TableRow>
               </TableHeader>

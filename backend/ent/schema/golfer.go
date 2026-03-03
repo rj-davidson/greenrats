@@ -97,5 +97,6 @@ func (Golfer) Edges() []ent.Edge {
 		edge.To("placements", Placement.Type),
 		edge.To("rounds", Round.Type),
 		edge.To("seasons", GolferSeason.Type),
+		edge.To("tournament_odds", TournamentOdds.Type),
 	}
 }

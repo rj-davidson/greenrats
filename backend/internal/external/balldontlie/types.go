@@ -170,6 +170,17 @@ type TournamentField struct {
 	IsAmateur   bool       `json:"is_amateur"`
 }
 
+type Future struct {
+	ID           int        `json:"id"`
+	MarketType   string     `json:"market_type"`
+	MarketName   string     `json:"market_name"`
+	Player       Player     `json:"player"`
+	Tournament   Tournament `json:"tournament"`
+	Vendor       string     `json:"vendor"`
+	AmericanOdds int        `json:"american_odds"`
+	UpdatedAt    string     `json:"updated_at"`
+}
+
 type TournamentRef struct {
 	ID         int                `json:"id"`
 	Season     int                `json:"season"`
@@ -253,4 +264,9 @@ type PlayerScorecardsResponse struct {
 type TournamentFieldResponse struct {
 	Data []TournamentField `json:"data"`
 	Meta Meta              `json:"meta"`
+}
+
+type FuturesResponse struct {
+	Data []Future `json:"data"`
+	Meta Meta     `json:"meta"`
 }

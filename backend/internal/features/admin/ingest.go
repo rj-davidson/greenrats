@@ -268,6 +268,25 @@ func (s *IngestService) SyncField(ctx context.Context, tournamentID uuid.UUID) e
 	}
 
 	s.logger.Info("field sync completed", "tournament", t.Name, "processed", processed)
+
+	futures, err := s.ballDontLie.GetFutures(ctx, *t.BdlID)
+	if err != nil {
+		s.logger.Warn("failed to fetch futures", "tournament", t.Name, "error", err)
+		return nil
+	}
+
+	s.logger.Info("fetched futures", "tournament", t.Name, "count", len(futures))
+
+	oddsProcessed := 0
+	for idx := range futures {
+		if err := s.syncService.UpsertTournamentOdds(ctx, t, &futures[idx]); err != nil {
+			s.logger.Warn("failed to upsert tournament odds", "player", futures[idx].Player.DisplayName, "error", err)
+			continue
+		}
+		oddsProcessed++
+	}
+
+	s.logger.Info("futures sync completed", "tournament", t.Name, "processed", oddsProcessed)
 	return nil
 }
 

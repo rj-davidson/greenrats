@@ -181,6 +181,7 @@ export const pickFieldEntrySchema = z.object({
   owgr: z.number().nullable().optional(),
   owgr_at_entry: z.number().nullable().optional(),
   season_earnings: z.number().nullable().optional(),
+  signal: z.number().nullable().optional(),
   is_amateur: z.boolean(),
   is_used: z.boolean(),
   used_for_tournament_id: z.string().optional(),

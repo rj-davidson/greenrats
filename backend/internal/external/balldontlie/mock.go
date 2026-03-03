@@ -106,6 +106,15 @@ func (m *MockClient) GetTournamentField(ctx context.Context, tournamentID int) (
 	return result, args.Error(1)
 }
 
+func (m *MockClient) GetFutures(ctx context.Context, tournamentID int) ([]Future, error) {
+	args := m.Called(ctx, tournamentID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	result, _ := args.Get(0).([]Future)
+	return result, args.Error(1)
+}
+
 func (m *MockClient) GetPlayerRoundStats(ctx context.Context, tournamentID int) ([]PlayerRoundStats, error) {
 	args := m.Called(ctx, tournamentID)
 	if args.Get(0) == nil {

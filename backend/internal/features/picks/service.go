@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"sort"
 	"time"
 
@@ -21,6 +22,7 @@ import (
 	"github.com/rj-davidson/greenrats/ent/round"
 	"github.com/rj-davidson/greenrats/ent/season"
 	"github.com/rj-davidson/greenrats/ent/tournament"
+	"github.com/rj-davidson/greenrats/ent/tournamentodds"
 	"github.com/rj-davidson/greenrats/ent/user"
 	"github.com/rj-davidson/greenrats/internal/features/tournaments"
 )
@@ -1172,6 +1174,51 @@ func (s *Service) GetPickField(ctx context.Context, params GetPickFieldParams) (
 		pickWindowState = "not_open"
 	}
 
+	signalMap := make(map[uuid.UUID]int)
+	allOdds, oddsErr := s.db.TournamentOdds.Query().
+		Where(tournamentodds.HasTournamentWith(tournament.IDEQ(params.TournamentID))).
+		WithGolfer().
+		All(ctx)
+	if oddsErr == nil && len(allOdds) > 0 {
+		type probAcc struct {
+			sum   float64
+			count int
+		}
+		golferProbs := make(map[uuid.UUID]*probAcc)
+		for _, o := range allOdds {
+			if o.Edges.Golfer == nil {
+				continue
+			}
+			gid := o.Edges.Golfer.ID
+			acc, ok := golferProbs[gid]
+			if !ok {
+				acc = &probAcc{}
+				golferProbs[gid] = acc
+			}
+			acc.sum += o.ImpliedProbability
+			acc.count++
+		}
+
+		var maxAvg float64
+		for _, acc := range golferProbs {
+			avg := acc.sum / float64(acc.count)
+			if avg > maxAvg {
+				maxAvg = avg
+			}
+		}
+
+		if maxAvg > 0 {
+			for gid, acc := range golferProbs {
+				avg := acc.sum / float64(acc.count)
+				signal := int(math.Round((avg / maxAvg) * 100))
+				if signal < 1 {
+					signal = 1
+				}
+				signalMap[gid] = signal
+			}
+		}
+	}
+
 	resultEntries := make([]PickFieldEntry, 0, len(entries))
 	availableCount := 0
 
@@ -1203,6 +1250,9 @@ func (s *Service) GetPickField(ctx context.Context, params GetPickFieldParams) (
 		}
 		if entry.Qualifier != nil {
 			pfe.Qualifier = *entry.Qualifier
+		}
+		if sig, ok := signalMap[g.ID]; ok {
+			pfe.Signal = &sig
 		}
 
 		if info, used := usedGolfers[g.ID]; used {
