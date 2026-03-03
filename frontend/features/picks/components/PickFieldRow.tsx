@@ -18,14 +18,6 @@ interface PickFieldRowProps {
   onSelect: () => void;
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
 export function PickFieldRow({
   entry,
   isExpanded,
@@ -63,25 +55,19 @@ export function PickFieldRow({
           )}
         </TableCell>
         <TableCell>{entry.golfer_name}</TableCell>
-        <TableCell className="w-24 text-right">
+        <TableCell className="w-16 text-center">
           {entry.signal != null ? (
-            <div className="flex items-center justify-end gap-2">
-              <Progress value={entry.signal} className="h-1.5 w-12" />
-              <span className="w-6 text-xs text-muted-foreground tabular-nums">{entry.signal}</span>
-            </div>
+            <Progress value={entry.signal} className="h-1.5 w-16" />
           ) : (
-            <span className="text-muted-foreground">-</span>
+            <span className="text-xs text-muted-foreground">No data</span>
           )}
-        </TableCell>
-        <TableCell className="hidden text-right tabular-nums sm:table-cell">
-          {entry.season_earnings ? formatCurrency(entry.season_earnings) : "-"}
         </TableCell>
       </TableRow>
       {isExpanded && (
         <TableRow className="hover:bg-transparent">
-          <TableCell colSpan={4} className="p-0">
+          <TableCell colSpan={3} className="p-0">
             <div className="border-t bg-muted/30">
-              <GolferDetailPanel stats={entry.season_stats} bio={entry.bio} owgr={entry.owgr} />
+              <GolferDetailPanel bio={entry.bio} owgr={entry.owgr} />
               <div className="flex justify-center border-t py-2">
                 <Button variant="ghost" size="sm" onClick={onToggle} className="gap-1">
                   <ChevronUpIcon className="size-4" />

@@ -1,25 +1,20 @@
 "use client";
 
-import type { GolferBio, GolferSeasonStats } from "@/features/picks/types";
-import { CalendarIcon, GraduationCapIcon, MapPinIcon, TrophyIcon } from "lucide-react";
+import type { GolferBio } from "@/features/picks/types";
+import {
+  CalendarIcon,
+  GlobeIcon,
+  GraduationCapIcon,
+  MapPinIcon,
+  RulerIcon,
+  TrophyIcon,
+  WeightIcon,
+} from "lucide-react";
+import type { ReactNode } from "react";
 
 interface GolferDetailPanelProps {
-  stats?: GolferSeasonStats | null;
   bio?: GolferBio | null;
   owgr?: number | null;
-}
-
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
-}
-
-function formatStat(value: number | null | undefined, decimals = 1, suffix = ""): string {
-  if (value === null || value === undefined) return "-";
-  return `${value.toFixed(decimals)}${suffix}`;
 }
 
 function formatBirthDate(dateStr: string | null | undefined): string | null {
@@ -39,13 +34,21 @@ function formatLocation(city?: string, state?: string, country?: string): string
   return parts.join(", ");
 }
 
-export function GolferDetailPanel({ stats, bio, owgr }: GolferDetailPanelProps) {
-  const hasAnyStats = stats != null && Object.values(stats).some((v) => v != null);
-  const hasAnyBio = bio != null && Object.values(bio).some((v) => v != null && v !== "");
+function InfoItem({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className="text-muted-foreground">{icon}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="ml-auto tabular-nums sm:ml-0">{value}</span>
+    </div>
+  );
+}
 
+export function GolferDetailPanel({ bio, owgr }: GolferDetailPanelProps) {
+  const hasAnyBio = bio != null && Object.values(bio).some((v) => v != null && v !== "");
   const hasOwgr = owgr != null && owgr > 0;
 
-  if (!hasAnyStats && !hasAnyBio && !hasOwgr) {
+  if (!hasAnyBio && !hasOwgr) {
     return (
       <div className="px-4 py-6 text-center text-sm text-muted-foreground">
         No additional information available for this golfer.
@@ -62,134 +65,38 @@ export function GolferDetailPanel({ stats, bio, owgr }: GolferDetailPanelProps) 
   const birthDate = bio?.birth_date ? formatBirthDate(bio.birth_date) : null;
 
   return (
-    <div className="grid gap-4 p-4 md:grid-cols-2">
-      {(hasAnyStats || hasOwgr) && (
-        <div className="space-y-3">
-          <h4 className="flex items-center gap-2 text-sm font-medium">
-            <TrophyIcon className="size-4" />
-            Season Stats
-          </h4>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-            {hasOwgr && (
-              <>
-                <span className="text-muted-foreground">OWGR</span>
-                <span className="text-right tabular-nums">#{owgr}</span>
-              </>
-            )}
-            {stats?.events_played != null && (
-              <>
-                <span className="text-muted-foreground">Events</span>
-                <span className="text-right tabular-nums">{stats.events_played}</span>
-              </>
-            )}
-            {stats?.cuts_made != null && (
-              <>
-                <span className="text-muted-foreground">Cuts Made</span>
-                <span className="text-right tabular-nums">{stats.cuts_made}</span>
-              </>
-            )}
-            {stats?.wins != null && (
-              <>
-                <span className="text-muted-foreground">Wins</span>
-                <span className="text-right tabular-nums">{stats.wins}</span>
-              </>
-            )}
-            {stats?.top_10s != null && (
-              <>
-                <span className="text-muted-foreground">Top 10s</span>
-                <span className="text-right tabular-nums">{stats.top_10s}</span>
-              </>
-            )}
-            {stats?.earnings != null && (
-              <>
-                <span className="text-muted-foreground">Earnings</span>
-                <span className="text-right tabular-nums">{formatCurrency(stats.earnings)}</span>
-              </>
-            )}
-            {stats?.scoring_avg != null && (
-              <>
-                <span className="text-muted-foreground">Scoring Avg</span>
-                <span className="text-right tabular-nums">{formatStat(stats.scoring_avg, 2)}</span>
-              </>
-            )}
-            {stats?.driving_distance != null && (
-              <>
-                <span className="text-muted-foreground">Driving Dist</span>
-                <span className="text-right tabular-nums">
-                  {formatStat(stats.driving_distance, 1)} yds
-                </span>
-              </>
-            )}
-            {stats?.driving_accuracy != null && (
-              <>
-                <span className="text-muted-foreground">Driving Acc</span>
-                <span className="text-right tabular-nums">
-                  {formatStat(stats.driving_accuracy, 1)}%
-                </span>
-              </>
-            )}
-            {stats?.gir_pct != null && (
-              <>
-                <span className="text-muted-foreground">GIR</span>
-                <span className="text-right tabular-nums">{formatStat(stats.gir_pct, 1)}%</span>
-              </>
-            )}
-            {stats?.putting_avg != null && (
-              <>
-                <span className="text-muted-foreground">Putting Avg</span>
-                <span className="text-right tabular-nums">{formatStat(stats.putting_avg, 2)}</span>
-              </>
-            )}
-            {stats?.scrambling_pct != null && (
-              <>
-                <span className="text-muted-foreground">Scrambling</span>
-                <span className="text-right tabular-nums">
-                  {formatStat(stats.scrambling_pct, 1)}%
-                </span>
-              </>
-            )}
-          </div>
-        </div>
+    <div className="grid grid-cols-1 gap-x-6 gap-y-2 p-4 sm:grid-cols-2 lg:grid-cols-3">
+      {hasOwgr && (
+        <InfoItem icon={<GlobeIcon className="size-4" />} label="OWGR" value={`#${owgr}`} />
       )}
-
-      {bio != null && hasAnyBio && (
-        <div className="space-y-3">
-          <h4 className="text-sm font-medium">Bio</h4>
-          <div className="space-y-2 text-sm">
-            {birthDate && (
-              <div className="flex items-center gap-2">
-                <CalendarIcon className="size-4 text-muted-foreground" />
-                <span>{birthDate}</span>
-              </div>
-            )}
-            {birthplace && (
-              <div className="flex items-center gap-2">
-                <MapPinIcon className="size-4 text-muted-foreground" />
-                <span>From {birthplace}</span>
-              </div>
-            )}
-            {residence && (
-              <div className="flex items-center gap-2">
-                <MapPinIcon className="size-4 text-muted-foreground" />
-                <span>Lives in {residence}</span>
-              </div>
-            )}
-            {bio.school && (
-              <div className="flex items-center gap-2">
-                <GraduationCapIcon className="size-4 text-muted-foreground" />
-                <span>{bio.school}</span>
-              </div>
-            )}
-            {bio.turned_pro && (
-              <div className="flex items-center gap-2">
-                <TrophyIcon className="size-4 text-muted-foreground" />
-                <span>Turned Pro: {bio.turned_pro}</span>
-              </div>
-            )}
-            {bio.height && <div className="text-muted-foreground">Height: {bio.height}</div>}
-            {bio.weight && <div className="text-muted-foreground">Weight: {bio.weight}</div>}
-          </div>
-        </div>
+      {birthDate && (
+        <InfoItem icon={<CalendarIcon className="size-4" />} label="Born" value={birthDate} />
+      )}
+      {birthplace && (
+        <InfoItem icon={<MapPinIcon className="size-4" />} label="From" value={birthplace} />
+      )}
+      {residence && (
+        <InfoItem icon={<MapPinIcon className="size-4" />} label="Lives in" value={residence} />
+      )}
+      {bio?.school && (
+        <InfoItem
+          icon={<GraduationCapIcon className="size-4" />}
+          label="School"
+          value={bio.school}
+        />
+      )}
+      {bio?.turned_pro && (
+        <InfoItem
+          icon={<TrophyIcon className="size-4" />}
+          label="Turned Pro"
+          value={String(bio.turned_pro)}
+        />
+      )}
+      {bio?.height && (
+        <InfoItem icon={<RulerIcon className="size-4" />} label="Height" value={bio.height} />
+      )}
+      {bio?.weight && (
+        <InfoItem icon={<WeightIcon className="size-4" />} label="Weight" value={bio.weight} />
       )}
     </div>
   );

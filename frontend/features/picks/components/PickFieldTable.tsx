@@ -126,8 +126,7 @@ export function PickFieldTable({ data, leagueId }: PickFieldTableProps) {
                 <TableRow>
                   <TableHead className="w-0"></TableHead>
                   <TableHead>Golfer</TableHead>
-                  <TableHead className="text-right">Signal</TableHead>
-                  <TableHead className="hidden text-right sm:table-cell">Season $</TableHead>
+                  <TableHead className="w-16">Signal</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
