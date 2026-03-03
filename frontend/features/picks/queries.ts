@@ -9,6 +9,7 @@ import type {
   OverridePickResponse,
   UserPublicPicksResponse,
 } from "@/features/picks/types";
+import { buildLeagueTournamentsKey } from "@/features/leagues/queries";
 import { makeClientRequest } from "@/lib/query/client-requestor";
 import { QueryKey } from "@/lib/query/query-keys";
 import type { Requestor } from "@/lib/query/requestor";
@@ -177,6 +178,9 @@ export function useCreatePick() {
       void queryClient.invalidateQueries({
         queryKey: buildPickFieldKey(variables.league_id, variables.tournament_id),
       });
+      void queryClient.invalidateQueries({
+        queryKey: buildLeagueTournamentsKey(variables.league_id),
+      });
     },
   });
 }
@@ -204,6 +208,9 @@ export function useOverridePick() {
       void queryClient.invalidateQueries({ queryKey: [QueryKey.PICKS, "league", leagueId] });
       void queryClient.invalidateQueries({
         queryKey: [QueryKey.LEAGUES, "commissioner-actions", leagueId],
+      });
+      void queryClient.invalidateQueries({
+        queryKey: buildLeagueTournamentsKey(leagueId),
       });
       if (tournamentId) {
         void queryClient.invalidateQueries({
@@ -240,6 +247,9 @@ export function useCreatePickForUser() {
         queryKey: [QueryKey.LEAGUES, "commissioner-actions", leagueId],
       });
       void queryClient.invalidateQueries({
+        queryKey: buildLeagueTournamentsKey(leagueId),
+      });
+      void queryClient.invalidateQueries({
         queryKey: [QueryKey.LEAGUES, "members", leagueId, tournamentId],
       });
     },
@@ -273,6 +283,9 @@ export function useUpdatePick() {
       });
       void queryClient.invalidateQueries({
         queryKey: buildPickFieldKey(leagueId, tournamentId),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: buildLeagueTournamentsKey(leagueId),
       });
     },
   });
