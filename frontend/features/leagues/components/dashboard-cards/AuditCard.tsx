@@ -105,7 +105,9 @@ export function AuditCard({ leagueId }: AuditCardProps) {
               <ItemMedia variant="icon">{getActionIcon(action.action_type)}</ItemMedia>
               <ItemContent className="min-w-0">
                 <ItemHeader>
-                  <ItemTitle className="line-clamp-3 w-auto">{getActionDescription(action)}</ItemTitle>
+                  <ItemTitle className="line-clamp-3 w-auto">
+                    {getActionDescription(action)}
+                  </ItemTitle>
                   <span className="text-xs text-muted-foreground">
                     {formatDate(action.created_at)}
                   </span>

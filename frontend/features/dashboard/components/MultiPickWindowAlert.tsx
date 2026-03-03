@@ -8,9 +8,7 @@ import { RatIcon } from "lucide-react";
 export function MultiPickWindowAlert() {
   const { data } = useTournaments({ status: "upcoming" });
 
-  const openCount =
-    data?.tournaments.filter((t) => getPickWindowState(t) === "open").length ??
-    0;
+  const openCount = data?.tournaments.filter((t) => getPickWindowState(t) === "open").length ?? 0;
 
   if (openCount < 2) return null;
 

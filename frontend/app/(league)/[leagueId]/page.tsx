@@ -78,53 +78,53 @@ export default function LeagueDashboardPage() {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <LeagueMonogram league={league} size={48} />
-        <div>
-          <h1 className="text-3xl font-bold">{league.name}</h1>
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <span>Season {league.season_year}</span>
-            <span className="flex items-center gap-1">
-              <UsersIcon className="size-4" />
-              {league.member_count ?? 0} {(league.member_count ?? 0) === 1 ? "member" : "members"}
-            </span>
+          <div>
+            <h1 className="text-3xl font-bold">{league.name}</h1>
+            <div className="flex items-center gap-3 text-muted-foreground">
+              <span>Season {league.season_year}</span>
+              <span className="flex items-center gap-1">
+                <UsersIcon className="size-4" />
+                {league.member_count ?? 0} {(league.member_count ?? 0) === 1 ? "member" : "members"}
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(400px,1fr))]">
-        <ActionCard leagueId={leagueId} />
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(320px,1fr))] gap-6 md:grid-cols-[repeat(auto-fit,minmax(400px,1fr))]">
+          <ActionCard leagueId={leagueId} />
 
-        {activeTournaments.map((t) => (
-          <ActiveTournamentCard
-            key={t.id}
-            leagueId={leagueId}
-            tournamentId={t.id}
-            tournamentName={t.name}
-          />
-        ))}
-        {activeTournaments.map((t) => (
-          <TournamentLeaderboardCard
-            key={t.id}
-            leagueId={leagueId}
-            tournamentId={t.id}
-            tournamentName={t.name}
-          />
-        ))}
-        {activeTournaments.map((t) => (
-          <ActivePickScorecardCard
-            key={t.id}
-            leagueId={leagueId}
-            tournamentId={t.id}
-            tournamentName={t.name}
-          />
-        ))}
+          {activeTournaments.map((t) => (
+            <ActiveTournamentCard
+              key={t.id}
+              leagueId={leagueId}
+              tournamentId={t.id}
+              tournamentName={t.name}
+            />
+          ))}
+          {activeTournaments.map((t) => (
+            <TournamentLeaderboardCard
+              key={t.id}
+              leagueId={leagueId}
+              tournamentId={t.id}
+              tournamentName={t.name}
+            />
+          ))}
+          {activeTournaments.map((t) => (
+            <ActivePickScorecardCard
+              key={t.id}
+              leagueId={leagueId}
+              tournamentId={t.id}
+              tournamentName={t.name}
+            />
+          ))}
 
-        <RecentTournamentResultsCard leagueId={leagueId} />
-        <YourStatsCard leagueId={leagueId} />
-        <StandingsCard leagueId={leagueId} />
-        <SeasonProgressCard leagueId={leagueId} />
-        <PickHistoryCard leagueId={leagueId} />
-        <AuditCard leagueId={leagueId} />
-      </div>
+          <RecentTournamentResultsCard leagueId={leagueId} />
+          <YourStatsCard leagueId={leagueId} />
+          <StandingsCard leagueId={leagueId} />
+          <SeasonProgressCard leagueId={leagueId} />
+          <PickHistoryCard leagueId={leagueId} />
+          <AuditCard leagueId={leagueId} />
+        </div>
       </div>
     </>
   );
