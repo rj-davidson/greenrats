@@ -1,14 +1,11 @@
 import type { League } from "@/features/leagues/types";
 
 const MONOGRAM_COLORS = [
-  "bg-[oklch(0.65_0.18_330)]",
-  "bg-[oklch(0.60_0.16_270)]",
-  "bg-[oklch(0.62_0.15_200)]",
-  "bg-[oklch(0.68_0.17_150)]",
-  "bg-[oklch(0.70_0.15_85)]",
-  "bg-[oklch(0.65_0.18_30)]",
-  "bg-[oklch(0.58_0.14_290)]",
-  "bg-[oklch(0.63_0.16_180)]",
+  "bg-chart-1",
+  "bg-chart-2",
+  "bg-chart-3",
+  "bg-chart-4",
+  "bg-chart-5",
 ] as const;
 
 function getColorFromUUID(uuid: string): string {
