@@ -273,12 +273,6 @@ func (s *Service) UpsertPlayer(ctx context.Context, p *balldontlie.Player) error
 		Where(golfer.BdlID(p.ID)).
 		Only(ctx)
 
-	if ent.IsNotFound(err) {
-		existing, err = s.db.Golfer.Query().
-			Where(golfer.Name(name)).
-			Only(ctx)
-	}
-
 	switch {
 	case ent.IsNotFound(err):
 		builder := s.db.Golfer.Create().
