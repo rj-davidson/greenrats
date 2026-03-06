@@ -126,7 +126,6 @@ export function PickManagement({ leagueId }: PickManagementProps) {
           <CardDescription>Change a member&apos;s pick for any tournament</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-
           <div className="space-y-2">
             <label className="text-sm font-medium">1. Select Tournament</label>
             {tournamentsLoading ? (
