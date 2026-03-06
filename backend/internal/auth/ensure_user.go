@@ -66,14 +66,10 @@ func EnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 	}
 }
 
-// OptionalEnsureUserMiddleware provisions a database user if authenticated.
-// If no auth is present, continues without setting db_user context.
 func OptionalEnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Check if auth middleware has set user info
 		workosID := GetUserID(c)
 		if workosID == "" {
-			// No auth, continue without provisioning
 			return c.Next()
 		}
 
@@ -82,7 +78,6 @@ func OptionalEnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 		ctx, cancel := context.WithTimeout(c.UserContext(), ensureUserTimeout)
 		defer cancel()
 
-		// Get or create the database user
 		result, err := cfg.UserService.GetOrCreate(ctx, users.GetOrCreateParams{
 			WorkOSID: workosID,
 			Email:    email,
@@ -93,7 +88,6 @@ func OptionalEnsureUserMiddleware(cfg EnsureUserConfig) fiber.Handler {
 			return c.Next()
 		}
 
-		// Store database user in context
 		c.Locals(DBUserKey, result.User)
 		c.Locals(DBUserIDKey, result.User.ID)
 

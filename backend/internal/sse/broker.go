@@ -5,13 +5,11 @@ import (
 	"sync"
 )
 
-// Event represents an SSE event to broadcast.
 type Event struct {
 	Type string      `json:"type"`
 	Data interface{} `json:"data"`
 }
 
-// Client represents a connected SSE client.
 type Client struct {
 	ID      string
 	Channel chan []byte
@@ -19,7 +17,6 @@ type Client struct {
 	mu      sync.RWMutex
 }
 
-// Broker manages SSE client connections and message broadcasting.
 type Broker struct {
 	clients    map[string]*Client
 	register   chan *Client
@@ -33,7 +30,6 @@ type topicMessage struct {
 	data  []byte
 }
 
-// NewBroker creates a new SSE broker.
 func NewBroker() *Broker {
 	b := &Broker{
 		clients:    make(map[string]*Client),
@@ -46,7 +42,6 @@ func NewBroker() *Broker {
 	return b
 }
 
-// run processes broker events in a goroutine.
 func (b *Broker) run() {
 	for {
 		select {
@@ -83,7 +78,6 @@ func (b *Broker) run() {
 	}
 }
 
-// Subscribe adds a client to the broker.
 func (b *Broker) Subscribe(clientID string, topics []string) *Client {
 	topicMap := make(map[string]bool)
 	for _, t := range topics {
@@ -100,26 +94,22 @@ func (b *Broker) Subscribe(clientID string, topics []string) *Client {
 	return client
 }
 
-// Unsubscribe removes a client from the broker.
 func (b *Broker) Unsubscribe(client *Client) {
 	b.unregister <- client
 }
 
-// AddTopic subscribes a client to an additional topic.
 func (b *Broker) AddTopic(client *Client, topic string) {
 	client.mu.Lock()
 	client.Topics[topic] = true
 	client.mu.Unlock()
 }
 
-// RemoveTopic unsubscribes a client from a topic.
 func (b *Broker) RemoveTopic(client *Client, topic string) {
 	client.mu.Lock()
 	delete(client.Topics, topic)
 	client.mu.Unlock()
 }
 
-// Broadcast sends an event to all clients subscribed to a topic.
 func (b *Broker) Broadcast(topic string, event Event) error {
 	data, err := json.Marshal(event)
 	if err != nil {
@@ -133,7 +123,6 @@ func (b *Broker) Broadcast(topic string, event Event) error {
 	return nil
 }
 
-// ClientCount returns the number of connected clients.
 func (b *Broker) ClientCount() int {
 	b.mu.RLock()
 	defer b.mu.RUnlock()

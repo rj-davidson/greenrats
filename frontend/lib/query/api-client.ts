@@ -1,8 +1,5 @@
 import { PUBLIC_BACKEND_URL, PRIVATE_BACKEND_URL } from "@/lib/env";
 
-/**
- * Configuration for API requests with token-based authentication.
- */
 export interface RequestConfig {
   token?: string;
   baseUrl?: string;
@@ -12,10 +9,6 @@ export interface RequestConfig {
   userInfo?: { email: string; name: string };
 }
 
-/**
- * Error class for API request failures.
- * Includes status code, response data, and request details for debugging.
- */
 export class APIError extends Error {
   constructor(
     public status: number,
@@ -77,10 +70,6 @@ function withTimeoutSignal(
   };
 }
 
-/**
- * Core API client with Bearer token authentication support.
- * Used by both client-side and server-side requestors.
- */
 export async function apiClient<T>(
   endpoint: string,
   options: RequestInit & RequestConfig = {},
@@ -157,10 +146,6 @@ export async function apiClient<T>(
   return response.json();
 }
 
-/**
- * Server-side API client that uses the private backend URL.
- * Useful for server components that can reach internal services.
- */
 export async function serverApiClient<T>(
   endpoint: string,
   options: RequestInit & RequestConfig = {},

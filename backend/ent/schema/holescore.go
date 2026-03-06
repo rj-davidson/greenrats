@@ -7,19 +7,16 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// HoleScore holds the schema definition for the HoleScore entity.
 type HoleScore struct {
 	ent.Schema
 }
 
-// Mixin of the HoleScore.
 func (HoleScore) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
 	}
 }
 
-// Fields of the HoleScore.
 func (HoleScore) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("hole_number").
@@ -33,7 +30,6 @@ func (HoleScore) Fields() []ent.Field {
 	}
 }
 
-// Edges of the HoleScore.
 func (HoleScore) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("round", Round.Type).
@@ -43,7 +39,6 @@ func (HoleScore) Edges() []ent.Edge {
 	}
 }
 
-// Indexes of the HoleScore.
 func (HoleScore) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Edges("round").

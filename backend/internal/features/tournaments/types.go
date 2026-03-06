@@ -12,7 +12,6 @@ var (
 	ErrGolferNotFound      = errors.New("golfer not found")
 )
 
-// CourseInfo represents course information in API responses.
 type CourseInfo struct {
 	ID      string `json:"id"`
 	Name    string `json:"name"`
@@ -23,13 +22,11 @@ type CourseInfo struct {
 	Country string `json:"country,omitempty"`
 }
 
-// TournamentCourseInfo represents a course used in a tournament.
 type TournamentCourseInfo struct {
 	Course CourseInfo `json:"course"`
 	Rounds []int      `json:"rounds"`
 }
 
-// Tournament represents a golf tournament.
 type Tournament struct {
 	ID                 string                 `json:"id"`
 	Name               string                 `json:"name"`
@@ -49,7 +46,6 @@ type Tournament struct {
 	ChampionName       string                 `json:"champion_name,omitempty"`
 }
 
-// ListTournamentsRequest represents the request parameters for listing tournaments.
 type ListTournamentsRequest struct {
 	Season int    `query:"season"`
 	Status string `query:"status"`
@@ -57,18 +53,15 @@ type ListTournamentsRequest struct {
 	Offset int    `query:"offset"`
 }
 
-// ListTournamentsResponse represents the response for listing tournaments.
 type ListTournamentsResponse struct {
 	Tournaments []Tournament `json:"tournaments"`
 	Total       int          `json:"total"`
 }
 
-// GetTournamentResponse represents the response for getting a single tournament.
 type GetTournamentResponse struct {
 	Tournament Tournament `json:"tournament"`
 }
 
-// RoundScore represents a golfer's score for a single round.
 type RoundScore struct {
 	RoundNumber      int         `json:"round_number"`
 	Score            *int        `json:"score"`
@@ -78,14 +71,12 @@ type RoundScore struct {
 	Course           *CourseInfo `json:"course,omitempty"`
 }
 
-// HoleScore represents a golfer's score on a single hole.
 type HoleScore struct {
 	HoleNumber int  `json:"hole_number"`
 	Par        int  `json:"par"`
 	Score      *int `json:"score"`
 }
 
-// LeaderboardEntry represents a golfer's position on the tournament leaderboard.
 type LeaderboardEntry struct {
 	Position         int          `json:"position"`
 	PreviousPosition *int         `json:"previous_position,omitempty"`
@@ -105,13 +96,11 @@ type LeaderboardEntry struct {
 	PickedBy         []string     `json:"picked_by,omitempty"`
 }
 
-// GetLeaderboardRequest represents optional query parameters for leaderboard.
 type GetLeaderboardRequest struct {
 	Include  string `query:"include"`   // "holes" for hole-by-hole data
 	LeagueID string `query:"league_id"` // optional league context for picks
 }
 
-// GetLeaderboardResponse represents the response for getting a tournament leaderboard.
 type GetLeaderboardResponse struct {
 	TournamentID   string             `json:"tournament_id"`
 	TournamentName string             `json:"tournament_name"`
@@ -120,7 +109,6 @@ type GetLeaderboardResponse struct {
 	Total          int                `json:"total"`
 }
 
-// FieldEntry represents a golfer in the tournament field.
 type FieldEntry struct {
 	GolferID    string `json:"golfer_id"`
 	GolferName  string `json:"golfer_name"`
@@ -134,7 +122,6 @@ type FieldEntry struct {
 	ImageURL    string `json:"image_url,omitempty"`
 }
 
-// GetFieldResponse represents the response for getting a tournament field.
 type GetFieldResponse struct {
 	TournamentID   string       `json:"tournament_id"`
 	TournamentName string       `json:"tournament_name"`
@@ -142,7 +129,6 @@ type GetFieldResponse struct {
 	Total          int          `json:"total"`
 }
 
-// GetScorecardResponse represents the response for getting a golfer's scorecard.
 type GetScorecardResponse struct {
 	TournamentID   string       `json:"tournament_id"`
 	TournamentName string       `json:"tournament_name"`

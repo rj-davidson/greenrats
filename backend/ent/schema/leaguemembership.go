@@ -9,12 +9,10 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// LeagueMembership holds the schema definition for the LeagueMembership entity.
 type LeagueMembership struct {
 	ent.Schema
 }
 
-// Mixin of the LeagueMembership.
 func (LeagueMembership) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
@@ -22,7 +20,6 @@ func (LeagueMembership) Mixin() []ent.Mixin {
 	}
 }
 
-// Fields of the LeagueMembership.
 func (LeagueMembership) Fields() []ent.Field {
 	return []ent.Field{
 		field.Enum("role").
@@ -34,7 +31,6 @@ func (LeagueMembership) Fields() []ent.Field {
 	}
 }
 
-// Edges of the LeagueMembership.
 func (LeagueMembership) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("user", User.Type).
@@ -48,7 +44,6 @@ func (LeagueMembership) Edges() []ent.Edge {
 	}
 }
 
-// Indexes of the LeagueMembership.
 func (LeagueMembership) Indexes() []ent.Index {
 	return []ent.Index{
 		// One membership per user per league

@@ -9,17 +9,14 @@ import (
 	"github.com/google/uuid"
 )
 
-// Handler handles SSE connections.
 type Handler struct {
 	broker *Broker
 }
 
-// NewHandler creates a new SSE handler.
 func NewHandler(broker *Broker) *Handler {
 	return &Handler{broker: broker}
 }
 
-// HandleSSE handles SSE connections for a given topic.
 func (h *Handler) HandleSSE(c *fiber.Ctx) error {
 	topic := c.Params("topic")
 	if topic == "" {
@@ -28,21 +25,16 @@ func (h *Handler) HandleSSE(c *fiber.Ctx) error {
 		})
 	}
 
-	// Set SSE headers
 	c.Set("Content-Type", "text/event-stream")
 	c.Set("Cache-Control", "no-cache")
 	c.Set("Connection", "keep-alive")
 	c.Set("Transfer-Encoding", "chunked")
 	c.Set("Access-Control-Allow-Origin", "*")
 
-	// Generate client ID
 	clientID := uuid.New().String()
-
-	// Subscribe to topic
 	client := h.broker.Subscribe(clientID, []string{topic})
 	defer h.broker.Unsubscribe(client)
 
-	// Stream events
 	c.Context().SetBodyStreamWriter(func(w *bufio.Writer) {
 		_, _ = fmt.Fprintf(w, "event: connected\ndata: {\"clientId\":\"%s\"}\n\n", clientID)
 		_ = w.Flush()
@@ -116,7 +108,6 @@ func (h *Handler) HandleTournamentSSE(c *fiber.Ctx) error {
 	return nil
 }
 
-// Broker returns the underlying broker for external broadcasting.
 func (h *Handler) Broker() *Broker {
 	return h.broker
 }

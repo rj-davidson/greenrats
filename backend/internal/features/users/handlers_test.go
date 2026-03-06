@@ -25,7 +25,6 @@ func TestHandler_GetMe(t *testing.T) {
 		app := fiber.New()
 		handler := NewHandler(nil, nil, discardLogger()) // service not needed for this test
 
-		// Create a mock user
 		userID := uuid.Must(uuid.NewV4())
 		displayName := "Test User"
 		mockUser := &ent.User{
@@ -36,7 +35,6 @@ func TestHandler_GetMe(t *testing.T) {
 			UpdatedAt:   time.Now(),
 		}
 
-		// Set up route with middleware that injects user into context
 		app.Get("/users/me", func(c *fiber.Ctx) error {
 			c.Locals(DBUserKey, mockUser)
 			return c.Next()
@@ -91,7 +89,6 @@ func TestHandler_RegisterRoutesWithGroup(t *testing.T) {
 	group := app.Group("/users")
 	handler.RegisterRoutesWithGroup(group)
 
-	// Verify route is registered by checking the stack
 	routes := app.GetRoutes()
 	var found bool
 	for _, route := range routes {

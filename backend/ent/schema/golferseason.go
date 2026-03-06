@@ -7,12 +7,10 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// GolferSeason holds the schema definition for the GolferSeason entity.
 type GolferSeason struct {
 	ent.Schema
 }
 
-// Mixin of the GolferSeason.
 func (GolferSeason) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
@@ -20,7 +18,6 @@ func (GolferSeason) Mixin() []ent.Mixin {
 	}
 }
 
-// Fields of the GolferSeason.
 func (GolferSeason) Fields() []ent.Field {
 	return []ent.Field{
 		field.Float("scoring_avg").
@@ -66,7 +63,6 @@ func (GolferSeason) Fields() []ent.Field {
 	}
 }
 
-// Edges of the GolferSeason.
 func (GolferSeason) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("golfer", Golfer.Type).
@@ -80,7 +76,6 @@ func (GolferSeason) Edges() []ent.Edge {
 	}
 }
 
-// Indexes of the GolferSeason.
 func (GolferSeason) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Edges("golfer", "season").

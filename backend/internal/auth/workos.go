@@ -8,19 +8,14 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-const (
-	// WorkOS issuer base URL for JWT validation
-	workOSIssuerBase = "https://api.workos.com/user_management/"
-)
+const workOSIssuerBase = "https://api.workos.com/user_management/"
 
-// Config holds WorkOS authentication configuration.
 type Config struct {
 	ClientID     string
 	JWKSProvider *JWKSProvider
 	SkipVerify   bool // Development only - skips signature verification
 }
 
-// Claims represents the JWT claims from WorkOS.
 type Claims struct {
 	jwt.RegisteredClaims
 	Email         string `json:"email"`
@@ -30,8 +25,6 @@ type Claims struct {
 	Role          string `json:"role,omitempty"`
 }
 
-// Middleware creates a Fiber middleware for WorkOS JWT verification.
-// Returns 401 if authentication is missing or invalid.
 func Middleware(cfg Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
@@ -75,8 +68,6 @@ func Middleware(cfg Config) fiber.Handler {
 	}
 }
 
-// OptionalMiddleware extracts user info if present but doesn't require auth.
-// Allows requests to proceed without authentication.
 func OptionalMiddleware(cfg Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		authHeader := c.Get("Authorization")
@@ -91,7 +82,6 @@ func OptionalMiddleware(cfg Config) fiber.Handler {
 
 		claims, err := verifyToken(parts[1], cfg)
 		if err != nil {
-			// For optional auth, silently continue on verification failure
 			return c.Next()
 		}
 
@@ -104,7 +94,6 @@ func OptionalMiddleware(cfg Config) fiber.Handler {
 	}
 }
 
-// verifyToken validates the JWT and returns claims.
 func verifyToken(tokenString string, cfg Config) (*Claims, error) {
 	claims := &Claims{}
 
@@ -120,15 +109,12 @@ func verifyToken(tokenString string, cfg Config) (*Claims, error) {
 		return claims, nil
 	}
 
-	// Production mode: verify with JWKS
 	if cfg.JWKSProvider == nil {
 		return nil, fmt.Errorf("JWKS provider not configured")
 	}
 
-	// Build expected issuer: https://api.workos.com/user_management/{client_id}
 	expectedIssuer := workOSIssuerBase + cfg.ClientID
 
-	// Parse and verify token signature using JWKS
 	token, err := jwt.ParseWithClaims(tokenString, claims, cfg.JWKSProvider.Keyfunc,
 		jwt.WithValidMethods([]string{"RS256"}),
 		jwt.WithIssuer(expectedIssuer),

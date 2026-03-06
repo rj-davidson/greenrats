@@ -45,12 +45,10 @@ export default async function OnboardingPage() {
     );
   }
 
-  // Fetch the current user
   let user: User | null = null;
   try {
     user = await makeServerRequest.get<User>("/api/v1/users/me");
   } catch {
-    // User not authenticated, redirect to login
     redirect("/login");
   }
 

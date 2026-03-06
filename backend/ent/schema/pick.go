@@ -9,19 +9,16 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// Pick holds the schema definition for the Pick entity.
 type Pick struct {
 	ent.Schema
 }
 
-// Mixin of the Pick.
 func (Pick) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
 	}
 }
 
-// Fields of the Pick.
 func (Pick) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("season_year"),
@@ -31,7 +28,6 @@ func (Pick) Fields() []ent.Field {
 	}
 }
 
-// Edges of the Pick.
 func (Pick) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("user", User.Type).
@@ -57,7 +53,6 @@ func (Pick) Edges() []ent.Edge {
 	}
 }
 
-// Indexes of the Pick.
 func (Pick) Indexes() []ent.Index {
 	return []ent.Index{
 		// One pick per user per tournament per league

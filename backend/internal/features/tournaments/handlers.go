@@ -6,23 +6,19 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Handler handles HTTP requests for tournaments.
 type Handler struct {
 	service *Service
 }
 
-// NewHandler creates a new tournament handler.
 func NewHandler(service *Service) *Handler {
 	return &Handler{service: service}
 }
 
-// RegisterRoutes registers tournament routes on the given router.
 func (h *Handler) RegisterRoutes(router fiber.Router) {
 	tournaments := router.Group("/tournaments")
 	h.RegisterRoutesWithGroup(tournaments)
 }
 
-// RegisterRoutesWithGroup registers tournament routes on an existing group.
 func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Get("/", h.List)
 	group.Get("/active", h.GetActive)
@@ -32,7 +28,6 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Get("/:id/scorecard/:golferId", h.GetScorecard)
 }
 
-// List handles GET /tournaments
 func (h *Handler) List(c *fiber.Ctx) error {
 	var req ListTournamentsRequest
 	if err := c.QueryParser(&req); err != nil {
@@ -51,7 +46,6 @@ func (h *Handler) List(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-// GetByID handles GET /tournaments/:id
 func (h *Handler) GetByID(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -81,7 +75,6 @@ func (h *Handler) GetByID(c *fiber.Ctx) error {
 	return c.JSON(GetTournamentResponse{Tournament: *tournament})
 }
 
-// GetActive handles GET /tournaments/active
 func (h *Handler) GetActive(c *fiber.Ctx) error {
 	tournament, err := h.service.GetActive(c.UserContext())
 	if err != nil {
@@ -99,7 +92,6 @@ func (h *Handler) GetActive(c *fiber.Ctx) error {
 	return c.JSON(GetTournamentResponse{Tournament: *tournament})
 }
 
-// GetLeaderboard handles GET /tournaments/:id/leaderboard
 func (h *Handler) GetLeaderboard(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -132,7 +124,6 @@ func (h *Handler) GetLeaderboard(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-// GetField handles GET /tournaments/:id/field
 func (h *Handler) GetField(c *fiber.Ctx) error {
 	id := c.Params("id")
 	if id == "" {
@@ -162,7 +153,6 @@ func (h *Handler) GetField(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-// GetScorecard handles GET /tournaments/:id/scorecard/:golferId
 func (h *Handler) GetScorecard(c *fiber.Ctx) error {
 	tournamentID := c.Params("id")
 	golferID := c.Params("golferId")

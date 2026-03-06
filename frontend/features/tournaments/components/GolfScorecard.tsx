@@ -173,10 +173,6 @@ export function GolfScorecard({ rounds, onClose, forceStacked }: GolfScorecardPr
   );
 }
 
-// ============================================================================
-// Wide Layout (Desktop)
-// ============================================================================
-
 interface WideScorecardProps {
   groups: RoundGroup[];
   isMultiCourse: boolean;
@@ -377,10 +373,6 @@ function WideRoundRow({ round, frontNine, backNine, abbreviation, cellClass }: W
   );
 }
 
-// ============================================================================
-// Stacked Layout (Mobile)
-// ============================================================================
-
 interface StackedScorecardProps {
   groups: RoundGroup[];
   isMultiCourse: boolean;
@@ -485,7 +477,6 @@ function StackedGroupRows({
         </tr>
       )}
 
-      {/* ===== FRONT NINE ===== */}
       <tr className="border-b">
         <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted text-left")}>Hole</td>
         {frontNine.map((hole) => (
@@ -539,7 +530,6 @@ function StackedGroupRows({
         );
       })}
 
-      {/* ===== BACK NINE ===== */}
       <tr className="border-t-2 border-b border-muted-foreground/10">
         <td className={cn(headerCellClass, "sticky left-0 z-10 bg-muted text-left")}>Hole</td>
         {backNine.map((hole) => (

@@ -9,7 +9,6 @@ import (
 )
 
 func TestLoad_Defaults(t *testing.T) {
-	// Clear any existing env vars that might interfere
 	os.Unsetenv("PORT")
 	os.Unsetenv("ENV")
 

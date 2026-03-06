@@ -28,22 +28,18 @@ func New(db *ent.Client, cfg *config.Config, logger *slog.Logger) *Service {
 	return &Service{db: db, config: cfg, logger: logger}
 }
 
-// GetOrCreateParams contains the parameters for GetOrCreate.
 type GetOrCreateParams struct {
 	WorkOSID string
 	Email    string
 }
 
-// GetOrCreateResult contains the result of GetOrCreate.
 type GetOrCreateResult struct {
 	User    *ent.User
 	Created bool
 }
 
-// GetOrCreate finds an existing user by WorkOS ID or creates a new one.
 // Handles race conditions by retrying fetch on constraint error.
 func (s *Service) GetOrCreate(ctx context.Context, params GetOrCreateParams) (*GetOrCreateResult, error) {
-	// First, try to find existing user by WorkOS ID
 	existingUser, err := s.db.User.
 		Query().
 		Where(user.WorkosID(params.WorkOSID)).
@@ -53,12 +49,10 @@ func (s *Service) GetOrCreate(ctx context.Context, params GetOrCreateParams) (*G
 		return &GetOrCreateResult{User: existingUser, Created: false}, nil
 	}
 
-	// If error is not "not found", return it
 	if !ent.IsNotFound(err) {
 		return nil, fmt.Errorf("failed to query user: %w", err)
 	}
 
-	// User not found, create a new one (display_name will be null until set during onboarding)
 	isAdmin := s.config.IsAdminEmail(params.Email)
 	newUser, err := s.db.User.
 		Create().
@@ -74,7 +68,6 @@ func (s *Service) GetOrCreate(ctx context.Context, params GetOrCreateParams) (*G
 
 	// Check if this is a constraint error (race condition - user was created by another request)
 	if ent.IsConstraintError(err) {
-		// Retry fetch
 		existingUser, retryErr := s.db.User.
 			Query().
 			Where(user.WorkosID(params.WorkOSID)).
@@ -90,7 +83,6 @@ func (s *Service) GetOrCreate(ctx context.Context, params GetOrCreateParams) (*G
 	return nil, fmt.Errorf("failed to create user: %w", err)
 }
 
-// GetByID returns a user by their database ID.
 func (s *Service) GetByID(ctx context.Context, id string) (*ent.User, error) {
 	uid, err := uuid.FromString(id)
 	if err != nil {
@@ -103,7 +95,6 @@ func (s *Service) GetByID(ctx context.Context, id string) (*ent.User, error) {
 	return u, nil
 }
 
-// GetByWorkOSID returns a user by their WorkOS ID.
 func (s *Service) GetByWorkOSID(ctx context.Context, workosID string) (*ent.User, error) {
 	return s.db.User.
 		Query().
@@ -111,27 +102,21 @@ func (s *Service) GetByWorkOSID(ctx context.Context, workosID string) (*ent.User
 		Only(ctx)
 }
 
-// SetDisplayName sets the display name for a user.
-// Returns an error if the user already has a display name set.
 func (s *Service) SetDisplayName(ctx context.Context, userID, displayName string) (*ent.User, error) {
-	// Parse the user ID
 	id, err := uuid.FromString(userID)
 	if err != nil {
 		return nil, fmt.Errorf("invalid user ID: %w", err)
 	}
 
-	// Get the user first to check if display_name is already set
 	u, err := s.db.User.Get(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user: %w", err)
 	}
 
-	// Check if display name is already set
 	if u.DisplayName != nil {
 		return nil, fmt.Errorf("display name is already set and cannot be changed")
 	}
 
-	// Update the display name
 	updated, err := u.Update().
 		SetDisplayName(displayName).
 		Save(ctx)

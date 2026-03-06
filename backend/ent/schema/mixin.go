@@ -16,12 +16,10 @@ func GenerateUUID7() uuid.UUID {
 	return id
 }
 
-// IDMixin provides a UUID7 primary key.
 type IDMixin struct {
 	mixin.Schema
 }
 
-// Fields of the IDMixin.
 func (IDMixin) Fields() []ent.Field {
 	return []ent.Field{
 		field.UUID("id", uuid.UUID{}).
@@ -30,12 +28,10 @@ func (IDMixin) Fields() []ent.Field {
 	}
 }
 
-// BaseMixin provides created_at and updated_at fields.
 type BaseMixin struct {
 	mixin.Schema
 }
 
-// Fields of the BaseMixin.
 func (BaseMixin) Fields() []ent.Field {
 	return []ent.Field{
 		field.Time("created_at").
@@ -47,12 +43,10 @@ func (BaseMixin) Fields() []ent.Field {
 	}
 }
 
-// OwnershipMixin provides created_at, updated_at, and created_by edge.
 type OwnershipMixin struct {
 	mixin.Schema
 }
 
-// Fields of the OwnershipMixin.
 func (OwnershipMixin) Fields() []ent.Field {
 	return []ent.Field{
 		field.Time("created_at").
@@ -64,7 +58,6 @@ func (OwnershipMixin) Fields() []ent.Field {
 	}
 }
 
-// Edges of the OwnershipMixin.
 func (OwnershipMixin) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("created_by", User.Type).

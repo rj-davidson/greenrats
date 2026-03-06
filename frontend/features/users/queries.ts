@@ -43,9 +43,6 @@ export function useSetDisplayName() {
   });
 }
 
-/**
- * Hook to check if a display name is available.
- */
 export function useCheckDisplayName(name: string) {
   return useQuery({
     queryKey: userKeys.checkDisplayName(name),

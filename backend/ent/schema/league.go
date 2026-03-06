@@ -6,12 +6,10 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// League holds the schema definition for the League entity.
 type League struct {
 	ent.Schema
 }
 
-// Mixin of the League.
 func (League) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
@@ -19,7 +17,6 @@ func (League) Mixin() []ent.Mixin {
 	}
 }
 
-// Fields of the League.
 func (League) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("name").
@@ -35,7 +32,6 @@ func (League) Fields() []ent.Field {
 	}
 }
 
-// Edges of the League.
 func (League) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("memberships", LeagueMembership.Type),

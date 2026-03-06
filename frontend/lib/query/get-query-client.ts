@@ -20,17 +20,10 @@ function makeQueryClient() {
 
 let browserQueryClient: QueryClient | undefined = undefined;
 
-/**
- * Get the query client for the current environment.
- * - Server: Creates a new client for each request
- * - Browser: Reuses a singleton client
- */
 export function getQueryClient() {
   if (isServer) {
-    // Server: always make a new query client
     return makeQueryClient();
   }
-  // Browser: make a new query client if we don't already have one
   if (!browserQueryClient) {
     browserQueryClient = makeQueryClient();
   }

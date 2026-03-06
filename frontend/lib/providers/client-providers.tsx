@@ -12,10 +12,6 @@ import { useAuth, useAccessToken } from "@workos-inc/authkit-nextjs/components";
 import { ThemeProvider } from "next-themes";
 import { useEffect } from "react";
 
-/**
- * Captures the WorkOS access token and user info and makes them available globally
- * for the client-side requestor.
- */
 function AuthProvider({ children }: { children: React.ReactNode }) {
   const { accessToken, loading } = useAccessToken();
   const { user } = useAuth();
@@ -42,9 +38,6 @@ function AuthProvider({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-/**
- * Provides the TanStack Query client to the application.
- */
 function QueryProvider({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient();
 

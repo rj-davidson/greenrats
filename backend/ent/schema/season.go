@@ -6,12 +6,10 @@ import (
 	"entgo.io/ent/schema/field"
 )
 
-// Season holds the schema definition for the Season entity.
 type Season struct {
 	ent.Schema
 }
 
-// Mixin of the Season.
 func (Season) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
@@ -19,7 +17,6 @@ func (Season) Mixin() []ent.Mixin {
 	}
 }
 
-// Fields of the Season.
 func (Season) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("year").
@@ -32,7 +29,6 @@ func (Season) Fields() []ent.Field {
 	}
 }
 
-// Edges of the Season.
 func (Season) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("tournaments", Tournament.Type),

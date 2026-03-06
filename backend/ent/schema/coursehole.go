@@ -7,19 +7,16 @@ import (
 	"entgo.io/ent/schema/index"
 )
 
-// CourseHole holds the schema definition for the CourseHole entity.
 type CourseHole struct {
 	ent.Schema
 }
 
-// Mixin of the CourseHole.
 func (CourseHole) Mixin() []ent.Mixin {
 	return []ent.Mixin{
 		IDMixin{},
 	}
 }
 
-// Fields of the CourseHole.
 func (CourseHole) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int("hole_number").
@@ -32,7 +29,6 @@ func (CourseHole) Fields() []ent.Field {
 	}
 }
 
-// Edges of the CourseHole.
 func (CourseHole) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("course", Course.Type).
@@ -42,7 +38,6 @@ func (CourseHole) Edges() []ent.Edge {
 	}
 }
 
-// Indexes of the CourseHole.
 func (CourseHole) Indexes() []ent.Index {
 	return []ent.Index{
 		index.Edges("course").

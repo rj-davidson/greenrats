@@ -23,13 +23,11 @@ func NewHandler(service *Service, emailClient *email.Client, logger *slog.Logger
 	return &Handler{service: service, email: emailClient, logger: logger}
 }
 
-// RegisterRoutes registers user routes on the given router.
 func (h *Handler) RegisterRoutes(router fiber.Router) {
 	users := router.Group("/users")
 	h.RegisterRoutesWithGroup(users)
 }
 
-// RegisterRoutesWithGroup registers user routes on an existing group.
 func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Get("/me", h.GetMe)
 	group.Get("/me/pending-actions", h.GetPendingActions)
@@ -37,12 +35,9 @@ func (h *Handler) RegisterRoutesWithGroup(group fiber.Router) {
 	group.Get("/check-display-name", h.CheckDisplayName)
 }
 
-// DBUserKey is the context key for the database user (set by auth middleware).
 const DBUserKey = "db_user"
 
-// GetMe handles GET /users/me - returns the current authenticated user.
 func (h *Handler) GetMe(c *fiber.Ctx) error {
-	// Get the authenticated user from context (already provisioned by middleware)
 	user, ok := c.Locals(DBUserKey).(*ent.User)
 	if !ok || user == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

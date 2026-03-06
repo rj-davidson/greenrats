@@ -126,7 +126,7 @@ export function PickManagement({ leagueId }: PickManagementProps) {
           <CardDescription>Change a member&apos;s pick for any tournament</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Step 1: Select Tournament */}
+
           <div className="space-y-2">
             <label className="text-sm font-medium">1. Select Tournament</label>
             {tournamentsLoading ? (
@@ -152,7 +152,6 @@ export function PickManagement({ leagueId }: PickManagementProps) {
             )}
           </div>
 
-          {/* Step 2: Select Member */}
           {selectedTournamentId && (
             <div className="space-y-2">
               <label className="text-sm font-medium">2. Select Member</label>
@@ -192,7 +191,6 @@ export function PickManagement({ leagueId }: PickManagementProps) {
             </div>
           )}
 
-          {/* Step 3: Select Golfer */}
           {selectedMember && (
             <div className="space-y-2">
               <label className="text-sm font-medium">
@@ -240,7 +238,6 @@ export function PickManagement({ leagueId }: PickManagementProps) {
             </div>
           )}
 
-          {/* Confirm Button */}
           {canProceedToConfirm && (
             <Button className="w-full" onClick={() => setConfirmDialogOpen(true)}>
               {isAddingPick ? "Add Pick" : "Change Pick"}
@@ -249,7 +246,6 @@ export function PickManagement({ leagueId }: PickManagementProps) {
         </CardContent>
       </Card>
 
-      {/* Confirmation Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
         <DialogContent>
           <DialogHeader>

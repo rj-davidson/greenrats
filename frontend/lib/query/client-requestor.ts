@@ -1,40 +1,21 @@
 import { apiClient } from "@/lib/query/api-client";
 import type { Requestor, RequestorConfig } from "@/lib/query/requestor";
 
-/**
- * Global state for client-side authentication.
- * These are set by the AuthProvider when it mounts.
- */
 let accessToken: string | undefined;
 let authLoaded = false;
 let authLoadPromise: Promise<void> | null = null;
 let authLoadResolve: (() => void) | null = null;
 
-/**
- * User info from WorkOS (email, name) - passed as headers to backend.
- */
 let userInfo: { email: string; name: string } | undefined;
 
-/**
- * Set the access token for client-side requests.
- * Called by AuthProvider when the token changes.
- */
 export function setAccessToken(token: string | undefined): void {
   accessToken = token;
 }
 
-/**
- * Set user info for client-side requests.
- * Called by AuthProvider when user data is available.
- */
 export function setUserInfo(info: { email: string; name: string }): void {
   userInfo = info;
 }
 
-/**
- * Signal that auth has finished loading (whether authenticated or not).
- * Called by AuthProvider after initial auth check completes.
- */
 export function setAuthLoaded(): void {
   authLoaded = true;
   if (authLoadResolve) {
@@ -44,9 +25,6 @@ export function setAuthLoaded(): void {
   }
 }
 
-/**
- * Reset auth state. Used for sign-out.
- */
 export function resetAuth(): void {
   accessToken = undefined;
   authLoaded = false;
@@ -54,16 +32,11 @@ export function resetAuth(): void {
   authLoadResolve = null;
 }
 
-/**
- * Get the access token, waiting for auth to load if necessary.
- * Returns undefined if user is not authenticated.
- */
 export async function getToken(): Promise<string | undefined> {
   if (authLoaded) {
     return accessToken;
   }
 
-  // Create a promise that resolves when auth loads
   if (!authLoadPromise) {
     authLoadPromise = new Promise<void>((resolve) => {
       authLoadResolve = resolve;
@@ -74,25 +47,14 @@ export async function getToken(): Promise<string | undefined> {
   return accessToken;
 }
 
-/**
- * Get the access token synchronously.
- * Returns undefined if auth hasn't loaded or user is not authenticated.
- */
 export function getTokenSync(): string | undefined {
   return accessToken;
 }
 
-/**
- * Check if auth has loaded.
- */
 export function isAuthLoaded(): boolean {
   return authLoaded;
 }
 
-/**
- * Client-side requestor that injects Bearer token authentication.
- * Throws an error if called during SSR.
- */
 export const makeClientRequest: Requestor = {
   async get<T>(endpoint: string, config?: RequestorConfig): Promise<T> {
     if (typeof window === "undefined") {
