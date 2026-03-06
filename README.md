@@ -306,4 +306,4 @@ Potential APIs for future integration:
 
 ## License
 
-Private - All rights reserved.
+This project is licensed under the [PolyForm Noncommercial License 1.0.0](./LICENSE) with additional restrictions prohibiting gambling and resale use. You are free to use, modify, and share this software for non-commercial purposes only.
