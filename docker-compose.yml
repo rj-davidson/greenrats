@@ -1,3 +1,4 @@
+# Local development only. Production is deployed on Railway.
 services:
   postgres:
     image: postgres:16-alpine
