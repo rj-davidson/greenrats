@@ -6,10 +6,10 @@ require (
 	entgo.io/ent v0.14.5
 	github.com/MicahParks/keyfunc/v3 v3.7.0
 	github.com/brianvoe/gofakeit/v7 v7.14.0
-	github.com/getsentry/sentry-go v0.41.0
-	github.com/getsentry/sentry-go/fiber v0.41.0
+	github.com/getsentry/sentry-go v0.43.0
+	github.com/getsentry/sentry-go/fiber v0.43.0
 	github.com/go-resty/resty/v2 v2.17.1
-	github.com/gofiber/fiber/v2 v2.52.10
+	github.com/gofiber/fiber/v2 v2.52.11
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/google/uuid v1.6.0
