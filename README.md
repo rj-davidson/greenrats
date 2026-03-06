@@ -2,93 +2,6 @@
 
 A golf pick'em website where users pick one golfer per PGA Tour/major tournament throughout the season.
 
-## Overview
-
-GreenRats is a monorepo containing:
-- **Backend** (`/backend`): Go services with Fiber (HTTP) and Ent (ORM)
-- **Frontend** (`/frontend`): Next.js 16 App Router with React 19
-
-## Quick Start
-
-```bash
-# Start the full stack with Docker
-docker compose up --build
-
-# View the application
-# Frontend: http://localhost:3000
-# Backend:  http://localhost:8000
-# Health:   http://localhost:8000/health
-```
-
-## Local Development
-
-### Prerequisites
-
-- Go 1.25+
-- Bun 1.x
-- Docker & Docker Compose
-- PostgreSQL 16 (via Docker or local)
-
-### Backend
-
-```bash
-cd backend
-
-# Install dependencies
-go mod download
-
-# Start with hot reload
-air                           # API server
-air -c .air.ingest.toml       # Ingest service
-
-# Run tests
-go test ./...
-
-# Lint
-golangci-lint run
-```
-
-### Frontend
-
-```bash
-cd frontend
-
-# Install dependencies
-bun install
-
-# Start dev server
-bun dev
-
-# Build
-bun run build
-
-# Lint & format
-bun run lint
-bun run format
-
-# Type check
-bun run tsc
-
-# Storybook
-bun run storybook
-```
-
-### Database
-
-```bash
-# Start PostgreSQL
-docker compose up postgres -d
-
-# Generate Ent code (after schema changes)
-cd backend && go generate ./ent
-
-# Create migration
-atlas migrate diff <name> --env local
-
-# Apply migrations
-atlas migrate apply --env local
-```
-
 ## Core Mechanics
 
 - Users pick one golfer per tournament
@@ -96,35 +9,78 @@ atlas migrate apply --env local
 - Leaderboards track cumulative earnings across all tournaments
 - Users compete within leagues
 
-## Product Safety Checklist (No Wagering + Brand Safety)
+## Quick Start
 
-- No entry fees, prize pools, payouts, escrow, or pot tracking anywhere in the product
-- Avoid gambling language (bet, wager, odds, parlay, payout) in UI/UX and copy
-- Subscription fees are strictly for software access and league organization
-- League rules and Terms must explicitly prohibit wagering or cash prizes on-platform
-- Do not use PGA TOUR logos or marks; use descriptive references and avoid any implied endorsement
-- If a feature might touch prizes or payments between users, require legal review before build
+```bash
+# Start the full stack with Docker
+docker compose up --build
 
-## Architecture
+# Frontend: http://localhost:3000
+# Backend:  http://localhost:8000
+```
 
-### Backend Services
+## Prerequisites
 
-- **API** (`cmd/api`): HTTP server handling user requests, authentication, SSE
-- **Ingest** (`cmd/ingest`): Background service fetching external golf data
+- Go 1.25+
+- Bun 1.x
+- Docker & Docker Compose
+- PostgreSQL 16 (via Docker or local)
 
-### Tech Stack
+## Local Development
+
+### Backend
+
+```bash
+cd backend
+go mod download
+air                           # API server with hot reload
+air -c .air.ingest.toml       # Ingest service with hot reload
+go test ./...                 # Run tests
+golangci-lint run             # Lint
+```
+
+### Frontend
+
+```bash
+cd frontend
+bun install
+bun dev                       # Dev server
+bun run build                 # Production build
+bun run lint                  # Lint
+bun run format                # Format
+bun run tsc                   # Type check
+bun run storybook             # Storybook
+```
+
+### Database
+
+```bash
+cd backend
+go generate ./ent                       # Regenerate Ent code after schema changes
+atlas migrate diff <name> --env local   # Create migration
+atlas migrate apply --env local         # Apply migrations
+```
+
+### Environment Variables
+
+Copy the example files and fill in your values:
+
+- Backend: `backend/.env` (see `backend/.env.example`)
+- Frontend: `frontend/.env.local` (see `frontend/.env.local.example`)
+
+## Tech Stack
+
+### Backend
 
 | Layer | Technology |
 |-------|------------|
 | HTTP | Fiber v2 |
 | ORM | Ent |
 | Migrations | Atlas |
-| Config | Viper |
-| Logging | slog (stdlib) |
 | Auth | WorkOS JWT |
 | Real-time | SSE |
 
-### Frontend Stack
+### Frontend
 
 | Layer | Technology |
 |-------|------------|
@@ -163,146 +119,6 @@ greenrats/
 │
 └── docker-compose.yml    # Full stack orchestration
 ```
-
-## Environment Variables
-
-### Backend (`backend/.env`)
-
-```env
-PORT=8000
-ENV=development
-DATABASE_URL=postgres://greenrats:greenrats@localhost:5432/greenrats?sslmode=disable
-WORKOS_API_KEY=
-WORKOS_CLIENT_ID=
-BALLDONTLIE_API_KEY=
-```
-
-### Frontend (`frontend/.env.local`)
-
-```env
-WORKOS_CLIENT_ID=
-WORKOS_API_KEY=
-WORKOS_REDIRECT_URI=http://localhost:3000/callback
-WORKOS_COOKIE_PASSWORD=  # 32+ characters
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
-
-## Deployment (Railway)
-
-GreenRats is deployed on [Railway](https://railway.app) with two environments:
-
-### Environments
-
-| Environment | Purpose | Email Sending |
-|-------------|---------|---------------|
-| Development | Staging/testing | Disabled |
-| Production | Live application | Enabled |
-
-### Services
-
-Each environment runs three services:
-
-1. **API** - Fiber HTTP server (`backend/cmd/api`)
-2. **Ingest** - Background data sync service (`backend/cmd/ingest`)
-3. **Frontend** - Next.js application
-
-Plus a **PostgreSQL** database addon.
-
-### Railway Config Paths
-
-Configure each Railway service to use the matching config file:
-
-**API**
-```
-backend/railway/api.json
-```
-
-**Ingest**
-```
-backend/railway/ingest.json
-```
-
-**Frontend**
-```
-frontend/railway/web.json
-```
-
-### Deployment Workflow
-
-1. **Push to main** triggers automatic deployment to Development
-2. **Create release** or manual promote deploys to Production
-
-### Environment Variables
-
-Configure these in Railway for each environment:
-
-**Backend (API & Ingest)**
-```
-ENV=production|development
-DATABASE_URL=<railway-provided>
-WORKOS_API_KEY=
-WORKOS_CLIENT_ID=
-BALL_DONT_LIE_API_KEY=
-SENTRY_DSN=
-RESEND_API_KEY=
-FROM_EMAIL=noreply@greenrats.com
-SEND_EMAILS=true|false
-```
-
-**Frontend**
-```
-WORKOS_CLIENT_ID=
-WORKOS_API_KEY=
-WORKOS_REDIRECT_URI=https://greenrats.com/api/auth/callback
-WORKOS_COOKIE_PASSWORD=
-NEXT_PUBLIC_API_URL=https://api.greenrats.com
-NEXT_PUBLIC_SENTRY_DSN=
-```
-
-### Manual Deployment
-
-```bash
-# Install Railway CLI
-npm install -g @railway/cli
-
-# Login
-railway login
-
-# Link to project
-railway link
-
-# Deploy specific service
-railway up --service api
-railway up --service frontend
-```
-
-## Development Guidelines
-
-See [CLAUDE.md](./CLAUDE.md) for detailed development instructions, coding conventions, and workflow guidance.
-
-### Logging
-
-Backend uses Go's `log/slog` for structured logging:
-
-- **Info**: Business operations (service start, sync completion)
-- **Debug**: Development details (hidden in production)
-- **Warn**: Degraded but functional states
-- **Error**: Failures requiring attention
-
-Guidelines:
-- Don't log expected failures (auth rejections, validation errors)
-- Don't log per-iteration progress (log totals at end instead)
-- Don't log when nothing happens (skipped operations)
-
-See [CLAUDE.md](./CLAUDE.md) for detailed logging patterns.
-
-## Future Data Sources
-
-Potential APIs for future integration:
-
-| API | URL | Notes |
-|-----|-----|-------|
-| PGA Tour GraphQL | `https://orchestrator.pgatour.com/graphql` | Official PGA Tour data, requires reverse engineering |
 
 ## License
 

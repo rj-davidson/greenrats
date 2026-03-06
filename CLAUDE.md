@@ -40,8 +40,6 @@ go test -cover ./...                       # Run with coverage
 # Linting & Formatting
 golangci-lint run                          # Run all linters
 golangci-lint run --fix                    # Autofix where possible
-go fmt ./...                               # Format code (also run by linter)
-goimports -w .                             # Organize imports
 
 # Ent (ORM)
 go generate ./ent                          # Regenerate Ent code after schema changes
@@ -89,12 +87,10 @@ bun remove <package-name>                  # Remove dependency
 - If code requires a comment to be understood, refactor it to be clearer instead
 - The only acceptable comments are for truly unavoidable non-idiomatic code (e.g., workarounds for external bugs, performance optimizations that sacrifice clarity)
 
-## Product Safety Checklist (No Wagering + Brand Safety)
+## Product Safety (No Wagering + Brand Safety)
 
 - No entry fees, prize pools, payouts, escrow, or pot tracking anywhere in the product
 - Avoid gambling language (bet, wager, odds, parlay, payout) in UI/UX and copy
-- Subscription fees are strictly for software access and league organization
-- League rules and Terms must explicitly prohibit wagering or cash prizes on-platform
 - Do not use PGA TOUR logos or marks; use descriptive references and avoid any implied endorsement
 - If a feature might touch prizes or payments between users, require legal review before build
 
@@ -116,96 +112,37 @@ bun remove <package-name>                  # Remove dependency
 - **HTTP Client**: Resty (for external API calls)
 - **Authentication**: WorkOS JWT validation
 
-**External Data Sources**:
-- **BallDontLie.io**: Golf statistics and tournament data
-
-**Directory Layout**:
-```
-backend/
-  cmd/
-    api/
-      main.go                  # API server entrypoint
-    ingest/
-      main.go                  # Data ingestion service entrypoint
-  internal/
-    config/                    # Viper configuration loading
-    server/                    # Fiber app setup, middleware, routes
-    auth/                      # WorkOS JWT authentication middleware
-    sse/                       # Server-Sent Events for live updates
-    features/
-      tournaments/             # Tournament schedules, data
-        handlers.go            # Fiber route handlers
-        service.go             # Business logic
-        types.go               # Request/response types
-      golfers/                 # Golfer profiles, stats
-      picks/                   # User pick logic (one per tournament, no repeats)
-      leagues/                 # League management
-      leaderboards/            # Earnings calculations, rankings
-      users/                   # User profiles
-    external/                  # External API clients
-      balldontlie/             # BallDontLie.io client
-  ent/
-    schema/                    # Ent schema definitions
-    ...                        # Generated Ent code (do not edit)
-  migrations/                  # Atlas versioned migration files
-  atlas.hcl                    # Atlas configuration
-  .air.toml                    # Air config for API hot reload
-  .air.ingest.toml             # Air config for ingest hot reload
-```
-
 **Two Executables**:
 - **`cmd/api`**: HTTP API server (Fiber), handles user requests, authentication, SSE streams
 - **`cmd/ingest`**: Data collection service, runs scheduled goroutines during tournaments to fetch external data
 
-**Feature Module Pattern**:
+**Feature Module Pattern** (`internal/features/<name>/`):
 Each feature is self-contained:
 - `handlers.go` - Fiber route handlers (keep thin, delegate to services)
 - `service.go` - Business logic
 - `types.go` - Request/response structs, validation
 - `*_test.go` - Feature tests
 
+Features: admin, fields, golfers, leagues, leaderboards, picks, tournaments, users
+
+**External API Clients** (`internal/external/`):
+- `balldontlie/` - Golf statistics and tournament data (BallDontLie.io)
+- `googlemaps/` - Google Maps integration
+- `pgatour/` - PGA Tour data
+
 **Key Conventions**:
 - Handlers are thin wrappers—push logic to services
 - Ent models are shared across both executables
-- External API clients live in `internal/external/`
 - Use dependency injection (pass services to handlers)
 - Errors should be wrapped with context: `fmt.Errorf("failed to get pick: %w", err)`
 
 **Logging**:
 - Use Go's built-in `log/slog` package exclusively (no standard `log` package)
 - All services and clients receive a `*slog.Logger` via constructor injection
-- Log levels:
-  - **Info**: Service startup, sync start/completion, significant business operations
-  - **Debug**: Detailed progress (use sparingly - avoid per-iteration logs)
-  - **Warn**: Degraded operations, fallback behavior, missing optional data
-  - **Error**: Leave to callers—they have more context
+- Log levels: Info (business operations), Debug (dev details, sparingly), Warn (degraded states), Error (leave to callers)
 - Development mode uses `slog.LevelDebug`, production uses `slog.LevelInfo`
 - For tests, use a discard logger: `slog.New(slog.NewTextHandler(io.Discard, nil))`
-
-**What NOT to log**:
-- Expected client failures (missing auth headers, invalid tokens, validation errors)
-- Per-iteration progress in loops (log start/end with totals instead)
-- Skipped operations (silence is fine when nothing happens)
-- Redundant context already in the response to client
-
-```go
-// Service/client pattern with injected logger
-type Client struct {
-    client *resty.Client
-    logger *slog.Logger
-}
-
-func New(apiKey string, logger *slog.Logger) *Client {
-    return &Client{client: client, logger: logger}
-}
-
-func (c *Client) FetchData(ctx context.Context) ([]Data, error) {
-    c.logger.Info("fetching data")
-    // ... pagination loop without per-page logging ...
-    c.logger.Info("fetch complete", "total", len(all), "duration", time.Since(start))
-    return all, nil
-}
-```
+- Don't log: expected client failures, per-iteration progress, skipped operations, redundant context
 
 **Data Model Notes**:
 - Tournament and golfer data is **shared** across all leagues
@@ -225,48 +162,18 @@ func (c *Client) FetchData(ctx context.Context) ([]Data, error) {
 - **Forms**: React Hook Form with Zod validation
 - **Real-time**: SSE (Server-Sent Events) for live tournament updates
 
-**Directory Layout**:
-```
-frontend/
-  app/                         # Next.js App Router
-    (dashboard)/               # Route group for authenticated pages
-    login/, callback/          # Auth flows
-    layout.tsx, globals.css    # Root layout & global styles
-  features/                    # Feature-organized code
-    tournaments/
-      queries.ts               # TanStack Query hooks/mutations
-      types.ts                 # Shared types/Zod schemas
-      components/              # Feature-specific UI components
-    picks/
-    leagues/
-    leaderboards/
-    users/
-  components/
-    shadcn/                    # Generated Shadcn UI (DO NOT hand-edit)
-    core/                      # Shared app-wide components
-  lib/
-    query/                     # API client, requestor, query setup
-    sse/                       # SSE client utilities for live updates
-    providers/                 # App-level providers
-    hooks/                     # Reusable hooks
-    types/                     # Shared types
-  stories/                     # Storybook stories
-  .storybook/                  # Storybook configuration
-```
+**Feature Module Pattern** (`features/<name>/`):
+- `queries.ts` - TanStack Query hooks/mutations
+- `types.ts` - Shared types/Zod schemas
+- `components/` - Feature-specific UI components
 
-**Feature Module Pattern**:
-- Data fetching/mutations in `queries.ts` at feature root
-- Types/schemas in `types.ts`
-- Feature-specific UI in `components/` subdirectory
-- Keep `components/core/` for truly shared, app-wide components only
+Features: admin, dashboard, golfers, leaderboards, leagues, payments, picks, tournaments, users
 
 **Key Conventions**:
 - **DO NOT hand-edit** `components/shadcn/` - these are generated; reconfigure Shadcn instead
 - Prefer feature-local components over promoting to `components/core/`
 - Use TanStack Query for all server state (see `lib/query/`)
 - Use SSE hooks from `lib/sse/` for live tournament data
-
-**Linting/Formatting**:
 - oxlint (fast) + eslint (thorough) via `bun run lint`
 - Prettier for formatting (2-space indent)
 - Components in PascalCase, hooks/utils in camelCase
@@ -274,27 +181,16 @@ frontend/
 ### Communication Between Frontend & Backend
 
 - **HTTP API**: Frontend uses `lib/query/api-client.ts` to call Fiber REST endpoints
-- **SSE**: Live tournament updates streamed from `/api/tournaments/:id/live` endpoint
+- **SSE**: Live tournament updates streamed from backend SSE endpoints
 - **Authentication**: WorkOS JWT tokens passed in Authorization header
-
-### Real-time Updates (SSE)
-
-The app uses Server-Sent Events for live tournament data during active tournaments:
-- Backend: `internal/sse/` manages SSE connections and broadcasts
-- Frontend: `lib/sse/` provides hooks for subscribing to tournament updates
-- TanStack Query integrates with SSE to automatically update cached data
 
 ## Development Workflow
 
-1. **Setup**: Follow root README.md - clone, install dependencies, populate `.env` files
+1. **Setup**: Clone, install dependencies, populate `.env` files from `.env.example` / `.env.local.example`
 2. **Running Locally**: `docker compose up --build` from repo root
 3. **Backend Changes**:
    - Make code changes in feature modules
-   - If Ent schemas changed:
-     - Run `go generate ./ent` to regenerate Ent code
-     - Run `atlas migrate diff <name> --env local` to create migration
-     - Review generated SQL in `migrations/`
-     - Run `atlas migrate apply --env local`
+   - If Ent schemas changed: `go generate ./ent` → `atlas migrate diff <name> --env local` → review SQL → `atlas migrate apply --env local`
    - Run tests: `go test ./...`
    - Lint: `golangci-lint run`
 4. **Frontend Changes**:
@@ -302,23 +198,6 @@ The app uses Server-Sent Events for live tournament data during active tournamen
    - Type check: `bun run tsc`
    - Lint/format: `bun run lint && bun run format`
 5. **Commits**: Use short, imperative style (e.g., "Add pick validation logic")
-
-## Product Context
-
-**Purpose**: GreenRats is a golf pick'em website where users pick one golfer per PGA Tour/major tournament throughout the season.
-
-**Core Mechanics**:
-- Users pick one golfer per tournament
-- Once a golfer is picked, they cannot be reused for the rest of the season
-- Leaderboards track cumulative earnings across all tournaments
-- Users compete within leagues
-
-**Key Entities**:
-- **Tournaments**: PGA Tour events and majors (shared across all leagues)
-- **Golfers**: Player profiles and stats (shared across all leagues)
-- **Picks**: User selections (league-scoped, one per tournament, no repeats)
-- **Leagues**: User groups with shared leaderboards
-- **Leaderboards**: Cumulative earnings rankings per league
 
 ## Testing
 
@@ -329,150 +208,18 @@ The app uses Server-Sent Events for live tournament data during active tournamen
 - Table-driven tests preferred for multiple cases
 - Tests live alongside code (`*_test.go` files)
 
-```go
-func TestPickService_ValidatePick(t *testing.T) {
-    tests := []struct {
-        name    string
-        pick    Pick
-        wantErr bool
-    }{
-        {"valid pick", Pick{...}, false},
-        {"duplicate golfer", Pick{...}, true},
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            // ...
-        })
-    }
-}
-```
-
 ### Frontend
 - Vitest for unit/interaction tests
 - Storybook for visual component testing
 
-## Linting Configuration
-
-### Backend (golangci-lint)
-Recommended `.golangci.yml` configuration:
-```yaml
-run:
-  timeout: 5m
-  go: "1.25"
-
-linters:
-  enable:
-    - errcheck        # Check for unchecked errors
-    - gosimple        # Simplify code
-    - govet           # Suspicious constructs
-    - ineffassign     # Unused assignments
-    - staticcheck     # Static analysis
-    - unused          # Unused code
-    - gofmt           # Formatting
-    - goimports       # Import organization
-    - misspell        # Spelling mistakes
-    - gocritic        # Opinionated linter
-    - errname         # Error naming conventions
-    - errorlint       # Error wrapping
-    - wrapcheck       # Error wrapping in public funcs
-
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-  gocritic:
-    enabled-tags:
-      - diagnostic
-      - style
-      - performance
-```
-
-### Pre-commit Hooks
-Recommended `.pre-commit-config.yaml`:
-```yaml
-repos:
-  - repo: local
-    hooks:
-      - id: go-fmt
-        name: go fmt
-        entry: go fmt ./...
-        language: system
-        files: \.go$
-        pass_filenames: false
-      - id: go-vet
-        name: go vet
-        entry: go vet ./...
-        language: system
-        files: \.go$
-        pass_filenames: false
-      - id: golangci-lint
-        name: golangci-lint
-        entry: golangci-lint run
-        language: system
-        files: \.go$
-        pass_filenames: false
-      - id: go-test
-        name: go test
-        entry: go test -short ./...
-        language: system
-        files: \.go$
-        pass_filenames: false
-```
-
 ## Environment & Configuration
 
-- Backend: `/backend/.env` (loaded via Viper)
-- Frontend: `/frontend/.env.local`
+- Backend: `/backend/.env` (see `.env.example`, loaded via Viper)
+- Frontend: `/frontend/.env.local` (see `.env.local.example`)
 - Never commit secrets—populate from secure source
-
-**Backend Config Pattern (Viper)**:
-```go
-type Config struct {
-    Port        int    `mapstructure:"PORT"`
-    DatabaseURL string `mapstructure:"DATABASE_URL"`
-    WorkOSClientID string `mapstructure:"WORKOS_CLIENT_ID"`
-    // ...
-}
-```
 
 ## Deployment
 
 - **Platform**: Railway.app for CI/CD and hosting
-- **Services**: API, Ingest (scheduled during tournaments), PostgreSQL
+- **Services**: API, Ingest, Frontend, PostgreSQL
 - **Environments**: Development (local), Staging, Production
-
-## Atlas Migration Workflow
-
-```bash
-# After modifying ent/schema/*.go files:
-
-# 1. Regenerate Ent code
-go generate ./ent
-
-# 2. Generate migration (compares schema to migration directory)
-atlas migrate diff add_leagues_table --env local
-
-# 3. Review the generated SQL file in migrations/
-# Look for any destructive operations (DROP, ALTER removing columns)
-
-# 4. Apply migration
-atlas migrate apply --env local
-
-# 5. If you need to edit a migration manually, rehash afterward
-atlas migrate hash --env local
-```
-
-**atlas.hcl example**:
-```hcl
-env "local" {
-  src = "ent://ent/schema"
-  dev = "docker://postgres/16/dev?search_path=public"
-  migration {
-    dir = "file://migrations"
-  }
-  format {
-    migrate {
-      diff = "{{ sql . \"  \" }}"
-    }
-  }
-}
-```
