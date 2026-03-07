@@ -3,5 +3,5 @@
     "enabled": true,
     "groups": [["^react$", "^next", "^[a-zA-Z]"], ["^@/"], ["^\\."], ["^\\u0000"]]
   },
-  "ignorePatterns": ["public"]
+  "ignorePatterns": ["public", "components/shadcn"]
 }

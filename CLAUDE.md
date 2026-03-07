@@ -66,8 +66,8 @@ bun run typegen                            # Generate Next.js types
 bun run tsc                                # Type check without emitting
 
 # Linting & Formatting
-bun run lint                               # oxlint + eslint with fixes
-bun run format                             # Format with Prettier
+bun run lint                               # oxlint with fixes
+bun run format                             # Format with oxfmt
 bun run format:check                       # Check formatting
 
 # Storybook
@@ -174,7 +174,7 @@ Features: admin, dashboard, golfers, leaderboards, leagues, payments, picks, tou
 - Prefer feature-local components over promoting to `components/core/`
 - Use TanStack Query for all server state (see `lib/query/`)
 - Use SSE hooks from `lib/sse/` for live tournament data
-- oxlint (fast) + eslint (thorough) via `bun run lint`
+- oxlint via `bun run lint`
 - Prettier for formatting (2-space indent)
 - Components in PascalCase, hooks/utils in camelCase
 

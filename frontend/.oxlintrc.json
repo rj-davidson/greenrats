@@ -1,6 +1,6 @@
 {
   "ignorePatterns": ["components/shadcn/**"],
-  "plugins": ["nextjs", "typescript", "unicorn", "eslint", "oxc", "import"],
+  "plugins": ["nextjs", "typescript", "unicorn", "eslint", "oxc", "import", "react"],
   "settings": {
     "better-tailwindcss": {
       "entryPoint": "app/globals.css"
@@ -11,6 +11,10 @@
     "typescript/ban-ts-comment": "error",
     "eslint/no-unused-vars": "error",
     "eslint/no-console": "warn",
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "typescript/no-unnecessary-condition": "warn",
+    "typescript/no-unnecessary-type-assertion": "warn",
     "better-tailwindcss/enforce-consistent-class-order": ["warn"],
     "better-tailwindcss/no-conflicting-classes": ["error"],
     "better-tailwindcss/no-duplicate-classes": ["warn"],
