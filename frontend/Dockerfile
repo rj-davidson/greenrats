@@ -18,6 +18,8 @@ COPY . .
 
 # Build the application
 ENV NEXT_TELEMETRY_DISABLED=1
+# Server env vars (WorkOS, etc.) are injected at runtime, not build time
+ENV SKIP_ENV_VALIDATION=1
 RUN bun run build
 
 # Runtime stage
