@@ -67,7 +67,7 @@ type TournamentResult struct {
 	PositionNumeric  int           `json:"position_numeric"`
 	TotalScore       int           `json:"total_score"`
 	ParRelativeScore int           `json:"par_relative_score"`
-	Earnings         *int          `json:"earnings"`
+	Earnings         *float64      `json:"earnings"`
 }
 
 type TournamentCourseStats struct {

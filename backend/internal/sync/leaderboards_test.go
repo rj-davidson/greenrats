@@ -22,7 +22,7 @@ func TestUpsertPlacement_SetsChampionPosition(t *testing.T) {
 	golferEntity := testutil.CreateGolfer(t, svc.db, "Scottie Scheffler", 100)
 	tournamentEntity := testutil.CreateTournament(t, svc.db, "The Masters", 2026)
 
-	earnings := 3600000
+	earnings := 3600000.0
 
 	result := &balldontlie.TournamentResult{
 		Tournament: balldontlie.TournamentRef{
@@ -69,7 +69,7 @@ func TestUpsertPlacement_SetsMultiplePositions(t *testing.T) {
 	results := []struct {
 		golfer   *balldontlie.Player
 		position int
-		earnings int
+		earnings float64
 	}{
 		{&balldontlie.Player{ID: 100, DisplayName: "Scottie Scheffler"}, 1, 3600000},
 		{&balldontlie.Player{ID: 101, DisplayName: "Collin Morikawa"}, 2, 2160000},
@@ -191,7 +191,7 @@ func TestUpsertPlacement_UpdatesExistingEntry(t *testing.T) {
 	assert.Equal(t, 5, *entry.PositionNumeric)
 	assert.Equal(t, placement.StatusFinished, entry.Status)
 
-	earnings := 4300000
+	earnings := 4300000.0
 
 	finalResult := &balldontlie.TournamentResult{
 		Tournament: balldontlie.TournamentRef{

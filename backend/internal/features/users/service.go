@@ -38,7 +38,6 @@ type GetOrCreateResult struct {
 	Created bool
 }
 
-// Handles race conditions by retrying fetch on constraint error.
 func (s *Service) GetOrCreate(ctx context.Context, params GetOrCreateParams) (*GetOrCreateResult, error) {
 	existingUser, err := s.db.User.
 		Query().

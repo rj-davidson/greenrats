@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -626,7 +627,7 @@ func (s *Service) UpsertPlacement(ctx context.Context, t *ent.Tournament, r *bal
 
 	earnings := 0
 	if r.Earnings != nil {
-		earnings = *r.Earnings
+		earnings = int(math.Round(*r.Earnings))
 	}
 
 	existing, err := s.db.Placement.Query().
