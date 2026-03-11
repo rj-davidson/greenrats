@@ -1,4 +1,4 @@
-import { PUBLIC_BACKEND_URL, PRIVATE_BACKEND_URL } from "@/lib/env";
+import { env } from "@/lib/env";
 
 export interface RequestConfig {
   token?: string;
@@ -74,7 +74,7 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestInit & RequestConfig = {},
 ): Promise<T> {
-  const { token, baseUrl = PUBLIC_BACKEND_URL, params, timeoutMs, userInfo, ...init } = options;
+  const { token, baseUrl = env.NEXT_PUBLIC_API_URL, params, timeoutMs, userInfo, ...init } = options;
 
   let url = `${baseUrl}${endpoint}`;
   if (params) {
@@ -152,7 +152,7 @@ export async function serverApiClient<T>(
 ): Promise<T> {
   return apiClient<T>(endpoint, {
     ...options,
-    baseUrl: options.baseUrl || PRIVATE_BACKEND_URL,
+    baseUrl: options.baseUrl || env.PRIVATE_API_URL || env.NEXT_PUBLIC_API_URL,
     timeoutMs: options.timeoutMs ?? DEFAULT_SERVER_API_TIMEOUT_MS,
   });
 }

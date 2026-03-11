@@ -1,6 +1,8 @@
 import { handleAuth } from "@workos-inc/authkit-nextjs";
 
+import { env } from "@/lib/env";
+
 export const GET = handleAuth({
   returnPathname: "/",
-  baseURL: process.env.BASE_URL || "https://greenrats.com",
+  baseURL: env.BASE_URL,
 });

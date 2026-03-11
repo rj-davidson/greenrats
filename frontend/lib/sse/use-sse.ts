@@ -1,9 +1,8 @@
 "use client";
 
+import { env } from "@/lib/env";
 import type { SSEMessage, SSEEventType } from "@/lib/sse/types";
 import { useEffect, useRef, useState } from "react";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 interface UseSSEOptions {
   topic: string;
@@ -30,7 +29,7 @@ export function useSSE({ topic, onMessage, onError, enabled = true }: UseSSEOpti
     const connect = () => {
       if (!enabled) return;
 
-      const url = `${API_BASE_URL}/api/v1/sse?topic=${encodeURIComponent(topic)}`;
+      const url = `${env.NEXT_PUBLIC_API_URL}/api/v1/sse?topic=${encodeURIComponent(topic)}`;
       const eventSource = new EventSource(url, { withCredentials: true });
       eventSourceRef.current = eventSource;
 
